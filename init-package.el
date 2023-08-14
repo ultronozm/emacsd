@@ -5,14 +5,10 @@
 (package-initialize)
 (setq custom-file (concat user-emacs-directory "init-custom.el"))
 ;; (load custom-file)
+(load (concat user-emacs-directory "init-personal.el"))
 (unless package-archive-contents
   (package-refresh-contents))
 (package-install-selected-packages)
-
-;;; ------------------------------ MINIMAL CONFIG ------------------------------
-
-(load (concat user-emacs-directory "init-bare.el"))
-(load (concat user-emacs-directory "init-personal.el"))
 
 ;;; ------------------------------ GENERAL ------------------------------
 
@@ -1060,7 +1056,7 @@ and highlight most recent entry."
   :vc (:url "https://github.com/ultronozm/sagemintex.el.git"
             :rev :newest)
   :ensure
-  :after latex mmm-mode
+  :after latex mmm-mode sage-shell-mode
   :demand t
   :custom
   (LaTeX-command "latex -shell-escape")
@@ -1072,6 +1068,17 @@ and highlight most recent entry."
   (mmm-sage-shell:sage-mode-enter . sagemintex-enable)
   (mmm-sage-shell:sage-mode-exit . sagemintex-disable))
 
+(use-package symtex
+  :vc (:url "https://github.com/ultronozm/symtex.el.git"
+            :rev :newest)
+  :after latex sage-shell-mode
+  :bind
+  (:map global-map
+        ("C-c V" . symtex-process))
+  (:map LaTeX-mode-map
+	("C-c v" . symtex-dwim)))
+
+
 
 
 ;;; ------------------------------ MISC ------------------------------
@@ -1081,7 +1088,7 @@ and highlight most recent entry."
 
 
 ; czm-dynexp
-; sagemintex
+; sagemintex - need to rewrite this to use ob-sagemath
 ; symtex
 ; arxiv/bib stuff
 ; publishing to ~/math
