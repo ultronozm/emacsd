@@ -14,8 +14,6 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-(load "~/.emacs.d/init-bare.el")
-
 (use-package exec-path-from-shell
   :straight exec-path-from-shell
   :init

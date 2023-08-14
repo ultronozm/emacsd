@@ -88,8 +88,6 @@
 		       "/usr/X11/bin:"
 		       (getenv "PATH")))
 
-(load "~/.emacs.d/init-bare.el")
-
 ;; (use-package s
 ;;   :ensure t)
 

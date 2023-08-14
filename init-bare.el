@@ -109,20 +109,19 @@ Otherwise, kill the region between START and END."
       (delete-region start end)
     (kill-region start end)))
 
+
+
 (defun czm/find-lisp-file ()
   "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory."
   (interactive)
-  (let* ((elisp-dir1 (expand-file-name "~/.emacs.d"))
-         (elisp-dir2 (expand-file-name "~/.emacs.d/lisp"))
+  (let* ((elisp-dir1 (expand-file-name czm-init-directory))
          (elisp-files (append
-                       (directory-files elisp-dir1 t "\\.el$")
-                       (directory-files elisp-dir2 t "\\.el$")))
-         (default-elisp-file (expand-file-name "~/.emacs.d/init.el"))
+                       (directory-files elisp-dir1 t "\\.el$")))
+         (default-elisp-file (concat czm-init-directory "init.el"))
          (completion-fn czm/find-lisp-file-completion-fn)
          (selected-elisp-file (funcall completion-fn "Select elisp file: " elisp-files
                                        nil t nil nil default-elisp-file)))
     (when selected-elisp-file (find-file selected-elisp-file))))
-
 
 (dolist (key '(
 	       "s-C"
@@ -144,5 +143,3 @@ Otherwise, kill the region between START and END."
 	       "s-z"
 	       ))
   (global-unset-key (kbd key)))
-
-

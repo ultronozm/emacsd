@@ -3,7 +3,7 @@
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
-(setq custom-file "~/.emacs.d/init-custom.el")
+(setq custom-file (concat czm-init-directory "init-custom.el"))
 ;; (load custom-file)
 (unless package-archive-contents
   (package-refresh-contents))
@@ -11,8 +11,8 @@
 
 ;;; ------------------------------ MINIMAL CONFIG ------------------------------
 
-(load "~/.emacs.d/init-bare.el")
-(load "~/.emacs.d/init-personal.el")
+(load (concat czm-init-directory "init-bare.el"))
+(load (concat czm-init-directory "init-personal.el"))
 
 ;;; ------------------------------ GENERAL ------------------------------
 
@@ -145,19 +145,19 @@ DIR must include a .project file to be considered a project."
 
 (use-package emacs
   :custom
-  (abbrev-file-name "~/.emacs.d/abbrev_defs.el")
+  (abbrev-file-name (concat czm-init-directory "abbrev_defs.el"))
   (save-abbrevs 'silently)
   
   :hook
   (text-mode . abbrev-mode)
   
   :config
-  (quietly-read-abbrev-file "~/.emacs.d/abbrev_defs.el")
+  (quietly-read-abbrev-file (concat czm-init-directory "abbrev_defs.el"))
   (defun modify-abbrev-table (table abbrevs)
     "Define abbreviations in TABLE given by ABBREVS."
     (dolist (abbrev abbrevs)
       (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
-  (quietly-read-abbrev-file "~/.emacs.d/abbrev.el"))
+  (quietly-read-abbrev-file (concat czm-init-directory "abbrev.el")))
 
 (use-package czm-spell
   :vc (:url "https://github.com/ultronozm/czm-spell.el.git"
@@ -223,11 +223,11 @@ DIR must include a .project file to be considered a project."
 
 
 
-;; (use-package ef-themes
-;;   :ensure t
-;;   :demand t
-;;   :config
-;;   (load-theme 'ef-elea-dark t))
+(use-package ef-themes
+  :ensure t
+  :demand t
+  :config
+  (load-theme 'ef-elea-dark t))
 
 (use-package vertico
   :ensure
@@ -1076,9 +1076,8 @@ and highlight most recent entry."
 
 ;;; ------------------------------ MISC ------------------------------
 
-
-(find-file "~/.emacs.d/init-package.el")
 (find-file-other-window "~/emacs-bak/init-bak.el")
+(find-file-other-window (concat czm-init-directory "init-package.el"))
 
 
 ; czm-dynexp
