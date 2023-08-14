@@ -3,7 +3,7 @@
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
-(setq custom-file (concat czm-init-directory "init-custom.el"))
+(setq custom-file (concat user-emacs-directory "init-custom.el"))
 ;; (load custom-file)
 (unless package-archive-contents
   (package-refresh-contents))
@@ -11,8 +11,8 @@
 
 ;;; ------------------------------ MINIMAL CONFIG ------------------------------
 
-(load (concat czm-init-directory "init-bare.el"))
-(load (concat czm-init-directory "init-personal.el"))
+(load (concat user-emacs-directory "init-bare.el"))
+(load (concat user-emacs-directory "init-personal.el"))
 
 ;;; ------------------------------ GENERAL ------------------------------
 
@@ -145,19 +145,19 @@ DIR must include a .project file to be considered a project."
 
 (use-package emacs
   :custom
-  (abbrev-file-name (concat czm-init-directory "abbrev_defs.el"))
+  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
   (save-abbrevs 'silently)
   
   :hook
   (text-mode . abbrev-mode)
   
   :config
-  (quietly-read-abbrev-file (concat czm-init-directory "abbrev_defs.el"))
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev_defs.el"))
   (defun modify-abbrev-table (table abbrevs)
     "Define abbreviations in TABLE given by ABBREVS."
     (dolist (abbrev abbrevs)
       (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
-  (quietly-read-abbrev-file (concat czm-init-directory "abbrev.el")))
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
 
 (use-package czm-spell
   :vc (:url "https://github.com/ultronozm/czm-spell.el.git"
@@ -1077,7 +1077,7 @@ and highlight most recent entry."
 ;;; ------------------------------ MISC ------------------------------
 
 (find-file-other-window "~/emacs-bak/init-bak.el")
-(find-file-other-window (concat czm-init-directory "init-package.el"))
+(find-file-other-window (concat user-emacs-directory "init-package.el"))
 
 
 ; czm-dynexp

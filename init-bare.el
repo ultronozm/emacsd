@@ -114,10 +114,10 @@ Otherwise, kill the region between START and END."
 (defun czm/find-lisp-file ()
   "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory."
   (interactive)
-  (let* ((elisp-dir1 (expand-file-name czm-init-directory))
+  (let* ((elisp-dir1 (expand-file-name user-emacs-directory))
          (elisp-files (append
                        (directory-files elisp-dir1 t "\\.el$")))
-         (default-elisp-file (concat czm-init-directory "init.el"))
+         (default-elisp-file (concat user-emacs-directory "init.el"))
          (completion-fn czm/find-lisp-file-completion-fn)
          (selected-elisp-file (funcall completion-fn "Select elisp file: " elisp-files
                                        nil t nil nil default-elisp-file)))
