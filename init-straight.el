@@ -25,7 +25,29 @@
     :bind (:map copilot-completion-map
    		("§" . copilot-accept-completion)))
 
+(straight-use-package '(auctex :source el-get
+                        :files ("*.el" "*.info" "dir"
+                                "doc" "etc" "images" "latex" "style")))
+;; (require 'tex-site)
+;; (require 'preview-latex)
 
+(use-package latex
+  ;; :ensure auctex ; makes latex easier to use
+  :straight auctex
+  :demand t
+  :init
+  (setq TeX-PDF-mode t) ; compile tex as PDF
+  (setq TeX-command-force "LaTex") ; Don’t ask for options like View, Latex etc..
+  (setq TeX-view-program-list '(("zathura" "zathura %o"))
+            TeX-view-program-selection '((output-pdf "zathura")))
+  (add-hook 'LaTeX-mode-hook 'TeX-source-correlate-mode)
+  (setq TeX-source-correlate-start-server t)
+  (add-hook 'LaTeX-mode-hook
+        (lambda ()
+          (add-hook 'after-save-hook 'TeX-command-master nil t)))
+  :config
+  ;;(my/map-keys `(("C-c l l" ,#'Tex-command-master "pdf")) 'org-mode-map)
+)
     
 
 ;; (straight-use-package 'use-package)

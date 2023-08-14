@@ -13,9 +13,6 @@
 ;;; ------------------------------ GENERAL ------------------------------
 
 (use-package emacs
-  :bind
-  (:map global-map
-)
   :custom
   (use-dialog-box nil)
   (show-paren-delay 0)
