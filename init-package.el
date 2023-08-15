@@ -659,15 +659,17 @@ Never describe the results of running code.  Instead, wait for me to run the cod
 (use-package czm-tex-fold
   :vc (:url "https://github.com/ultronozm/czm-tex-fold.el.git"
             :rev :newest)  
-    :after latex
-    :bind
-    (:map TeX-fold-mode-map
-          ("C-c C-o C-s" . czm-tex-fold-fold-section)
-          ("C-c C-o s" . czm-tex-fold-clearout-section))
-    :config
-    (czm-tex-fold-setup)
-    :custom
-    (czm-tex-fold-bib-file "~/doit/refs.bib"))
+  :after latex
+  :bind
+  (:map TeX-fold-mode-map
+        ("C-c C-o C-s" . czm-tex-fold-fold-section)
+        ("C-c C-o s" . czm-tex-fold-clearout-section))
+  :config
+  (czm-tex-fold-setup)
+  :custom
+  (czm-tex-fold-bib-file "~/doit/refs.bib")
+  :hook
+  (LaTeX-mode . tex-fold-mode))
 
 ;; (use-package eros
 ;;   :ensure t
@@ -1084,7 +1086,7 @@ and highlight most recent entry."
 (find-file-other-window (concat user-emacs-directory "init-package.el"))
 
 
-; czm-dynexp
+; dynexp
 ; sagemintex - need to rewrite this to use ob-sagemath
 ; symtex
 ; arxiv/bib stuff

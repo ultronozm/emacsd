@@ -492,8 +492,7 @@ DIR must include a .project file to be considered a project."
   (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_API_KEY")))
 
 (use-package ai-threaded-chat
-  :elpaca (:url "https://github.com/ultronozm/ai-threaded-chat.el.git"
-            :rev :newest)
+  :elpaca (:host github :repo "ultronozm/ai-threaded-chat.el")
   :after gptel
     :bind
   (:map global-map
@@ -658,273 +657,483 @@ Never describe the results of running code.  Instead, wait for me to run the cod
              ("./configure" "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))")
              ("make")
              ("make" "install")))
-  :demand t)
-
-
-
-
-(when nil
-
-  (use-package latex
-    :elpaca  (auctex :host el-get
-                     :files ("*.el" "*.info" "dir"
-                             "doc" "etc" "images" "latex" "style")
-                     :pre-build 
-                     (("./autogen.sh")
-                      ("./configure" "--with-texmf-dir=/Users/paulnelson/Library")
-                      ("make")
-                      ("make" "install")))
-    :demand t)
-
-
-  
-  
-
-  
-  (use-package latex
-    :elpaca  (auctex :host el-get
-                     :files ("*.el" "*.info" "dir"
-                             "doc" "etc" "images" "latex" "style")
-                     :pre-build 
-                     (("./autogen.sh")
-                      ("texmfhome=$(kpsexpand '$TEXMFHOME')")
-                      ("parentdir=$(dirname" "\"$texmfhome\")")
-                      ("./configure" "--with-texmf-dir=\"$parentdir\"")
-                      ("make")
-                      ("echo" "sup > test.txt")
-                      ))
-    :demand t)
-
-
-  (elpaca (auctex :host el-get
-                  :files ("*.el" "*.info" "dir"
-                          "doc" "etc" "images" "latex" "style")
-                  :pre-build 
-                  ("./autogen.sh")
-                  ("texmfhome=$(kpsexpand '$TEXMFHOME')")
-                  ("parentdir=$(dirname \"$texmfhome\")")
-                  ("./configure --with-texmf-dir=\"$parentdir\"")
-                  ("make")))
-
-  (use-package latex
-    ;; :ensure auctex ; makes latex easier to use
-    :elpaca nil
-    :demand t
-    :init
-    (setq TeX-PDF-mode t) ; compile tex as PDF
-    (setq TeX-command-force "LaTex") ; Don’t ask for options like View, Latex etc..
-    (setq TeX-view-program-list '(("zathura" "zathura %o"))
-          TeX-view-program-selection '((output-pdf "zathura")))
-    (add-hook 'LaTeX-mode-hook 'TeX-source-correlate-mode)
-    (setq TeX-source-correlate-start-server t)
-    (add-hook 'LaTeX-mode-hook
-              (lambda ()
-                (add-hook 'after-save-hook 'TeX-command-master nil t)))
-    :config
-    ;;(my/map-keys `(("C-c l l" ,#'Tex-command-master "pdf")) 'org-mode-map)
-    )
-  (use-package lateex
-    :elpaca (auctex :host github :repo "emacs-straight/auctex"
-                    :pre-build (("chmod" "775" "autogen.sh") ("./autogen.sh"))))
-
-  (use-package latex
-    :elpaca (auctex
-             :pre-build 
-             ("./autogen.sh")
-             ("texmfhome=$(kpsexpand '$TEXMFHOME')")
-             ("parentdir=$(dirname \"$texmfhome\")")
-             ("./configure --with-texmf-dir=\"$parentdir\"")
-             ("make")))
-
-  ;; (use-package tex
-  ;; :elpaca auctex
-  ;;       :build =(("./autogen.sh")
-  ;;                ("./configure" "--with-lispdir==pwd=")
-  ;;                "make")  ;;etc
-  ;; )
-  
-  (elpaca
-      '(auctex
-        :type git
-        :repo "https://git.savannah.gnu.org/git/auctex.git"
-        :build =(("./autogen.sh")
-                 ("./configure" "--with-lispdir==pwd=")
-                 "make")))
-  (elpaca
-      '(auctex
-        :type git
-        :host github
-        :repo "dholm/auctex"
-        :build =(("./autogen.sh")
-                 ("./configure" "--with-lispdir==pwd=")
-                 "make")))
-  
-  (use-package latex
-    :elpaca (auctex :source "GNU-devel ELPA" :url "https://elpa.gnu.org/packages/auctex.html" :description "Integrated environment for *TeX*" :recipe (:package "auctex" :repo "https://git.savannah.gnu.org/git/auctex.git" :local-repo "auctex" :files ("*" (:exclude ".git"))))
-    :config
-    (put 'LaTeX-narrow-to-environment 'disabled nil)
-    (TeX-source-correlate-mode)
-    :custom
-    (TeX-auto-save t)
-    (TeX-parse-self t)
-    (preview-auto-cache-preamble t)
-    (preview-default-option-list
-     '("displaymath" "floats" "graphics" "textmath" "sections" "footnotes" "showlabels"))
+  :demand
+  :config
+  (put 'LaTeX-narrow-to-environment 'disabled nil)
+  (TeX-source-correlate-mode)
+  :custom
+  (TeX-auto-save t)
+  (TeX-parse-self t)
+  (preview-auto-cache-preamble t)
+  (preview-default-option-list
+   '("displaymath" "floats" "graphics" "textmath" "sections" "footnotes" "showlabels"))
                                         ;  (preview-gs-command "/usr/local/bin/gs")  ; compare with rungs?
                                         ;  (preview-image-type 'pnm) ; compare with png?
-    ;; (preview-scale-function 1.5) ; maybe enable, or see what else you were doing?
-    (reftex-derive-label-parameters
-     '(15 50 t 1 "-"
-	  ("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
-	  t))
-    )
+  ;; (preview-scale-function 1.5) ; maybe enable, or see what else you were doing?
+  (reftex-derive-label-parameters
+   '(15 50 t 1 "-"
+	("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
+	t)))
   
-  (use-package foldout
-    :ensure t)
+(use-package foldout
+  :elpaca nil)
 
-  (use-package spout
-    :vc (:url "https://github.com/ultronozm/spout.el.git"
-              :rev :newest)
-    :after latex
-    :hook
-    (LaTeX-mode . spout-mode)
-    :config
-    (require 'texmathp)
-    (defun LaTeX-skip-verbatim (orig-fun &rest args)
-      (if (eq major-mode 'latex-mode)
-          (let ((n 100))
-            (apply orig-fun args)
-            (while (and (LaTeX-verbatim-p) (> n 0))
-              (setq n (- n 1))
-              (apply orig-fun args)))
-        (apply orig-fun args)))
-    (dolist (f '(outline-next-heading
-                 outline-previous-heading
-                 outline-up-heading
-                 outline-forward-same-level
-                 outline-backward-same-level))
-      (advice-add f :around #'LaTeX-skip-verbatim)))
+(use-package spout
+  :elpaca (:host github :repo "ultronozm/spout.el")
+  :after latex
+  :hook
+  (LaTeX-mode . spout-mode)
+  :config
+  (require 'texmathp)
+  (defun LaTeX-skip-verbatim (orig-fun &rest args)
+    (if (eq major-mode 'latex-mode)
+        (let ((n 100))
+          (apply orig-fun args)
+          (while (and (LaTeX-verbatim-p) (> n 0))
+            (setq n (- n 1))
+            (apply orig-fun args)))
+      (apply orig-fun args)))
+  (dolist (f '(outline-next-heading
+               outline-previous-heading
+               outline-up-heading
+               outline-forward-same-level
+               outline-backward-same-level))
+    (advice-add f :around #'LaTeX-skip-verbatim)))
 
-  (use-package latex-extra
-    :ensure
-    :custom
-    (latex/override-preview-map nil)
-    :hook
-    (LaTeX-mode . latex-extra-mode))
+(use-package latex-extra
+  :custom
+  (latex/override-preview-map nil)
+  :hook
+  (LaTeX-mode . latex-extra-mode))
 
-  (use-package czm-tex-util
-    :vc (:url "https://github.com/ultronozm/czm-tex-util.el.git"
-              :rev :newest))
+(use-package czm-tex-util
+  :elpaca (:host github :repo "ultronozm/czm-tex-util.el"))
 
-  (use-package czm-tex-fold
-    :vc (:url "https://github.com/ultronozm/czm-tex-fold.el.git"
-              :rev :newest)  
-    :after latex
-    :bind
-    (:map TeX-fold-mode-map
-          ("C-c C-o C-s" . czm-tex-fold-fold-section)
-          ("C-c C-o s" . czm-tex-fold-clearout-section))
-    :config
-    (czm-tex-fold-setup)
-    :custom
-    (czm-tex-fold-bib-file "~/doit/refs.bib"))
+(use-package czm-tex-fold
+  :elpaca (:host github :repo "ultronozm/czm-tex-fold.el")  
+  :after latex
+  :demand
+  :bind
+  (:map TeX-fold-mode-map
+        ("C-c C-o C-s" . czm-tex-fold-fold-section)
+        ("C-c C-o s" . czm-tex-fold-clearout-section))
+  :config
+  (czm-tex-fold-setup)
+  :custom
+  (czm-tex-fold-bib-file "~/doit/refs.bib")
+  :hook
+  (LaTeX-mode . tex-fold-mode))
 
-  ;; (use-package eros
-  ;;   :ensure t
-  ;;   :hook
-  ;;   (emacs-lisp-mode . eros-mode))
+(use-package tex-follow-avy
+  :elpaca (:host github :repo "https://github.com/ultronozm/tex-follow-avy.el.git")
+  :after latex avy
+  :bind
+  (:map LaTeX-mode-map
+        ("s-r" . tex-follow-avy)))
 
-  ;; (use-package highlight-defined
-  ;;   :ensure t
-  ;;   :custom
-  ;;   (highlight-defined-face-use-itself t)
-  ;;   :hook
-  ;;   (help-mode . highlight-defined-mode)
-  ;;   (emacs-lisp-mode . highlight-defined-mode))
-  ;; (use-package highlight-sexp
-  ;;   :vc (:url "https://github.com/daimrod/highlight-sexp.git")
-  ;;   :hook
-  ;;   (clojure-mode . highlight-sexp-mode)
-  ;;   (emacs-lisp-mode . highlight-sexp-mode)
-  ;;   (lisp-mode . highlight-sexp-mode))
+(use-package sultex
+  :elpaca (:host github :repo "ultronozm/sultex.el")
+  :custom
+  (sultex-master-bib-file "~/doit/refs.bib")
+  (sultex-rearrange-bib-entries t)
+  :bind
+  (:map global-map
+	("C-c 0" . sultex-bib))
+  (:map LaTeX-mode-map
+	("C-c 9" . sultex-label)
+	("C-c 0" . sultex-bib)))
 
-  (use-package tex-follow-avy
-    :vc (:url "https://github.com/ultronozm/tex-follow-avy.el.git"
-              :rev :newest)
-    :after latex avy
-    :bind
-    (:map LaTeX-mode-map
-          ("s-r" . tex-follow-avy)))
-
-  (use-package sultex
-    :ensure
-    :vc (:url "https://github.com/ultronozm/sultex.el.git"
-              :rev :newest)
-    :custom
-    (sultex-master-bib-file "~/doit/refs.bib")
-    (sultex-rearrange-bib-entries t)
-    :bind
-    (:map global-map
-	  ("C-c 0" . sultex-bib))
-    (:map LaTeX-mode-map
-	  ("C-c 9" . sultex-label)
-	  ("C-c 0" . sultex-bib)))
-
-  (use-package attrap
-    :ensure
-    :after flycheck
-    :config
-    (defun czm-attrap-LaTeX-fixer (msg pos end)
-      (cond
-       ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")msg) 
-        (list (attrap-option 'fix-open-dquote
-                             (delete-region pos (1+ pos))
-                             (insert "``"))
-              (attrap-option 'fix-close-dquote
-                             (delete-region pos (1+ pos))
-                             (insert "''"))))
-       ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
-        (attrap-one-option 'non-breaking-space
-                           (if (looking-at (rx space))
-                               (delete-region pos (1+ pos))
-                             (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point)))
-                           (insert "~")))
-       ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.") msg)
-        (attrap-one-option 'use-interword-spacing
+(use-package attrap
+  :after flycheck
+  :config
+  (defun czm-attrap-LaTeX-fixer (msg pos end)
+    (cond
+     ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")msg) 
+      (list (attrap-option 'fix-open-dquote
                            (delete-region pos (1+ pos))
-                           (insert "\\ ")))
-       ((s-matches? (rx "Delete this space to maintain correct pagereferences.") msg)
-        (attrap-one-option 'fix-space-pageref
-                           (if (looking-back (rx bol (* space)))
-                               (progn (skip-chars-backward "\n\t ")
-                                      (insert "%"))
-                             (delete-region (point) (save-excursion (skip-chars-forward " \t") (point)))
-	                     )))
-       ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.") msg)
-        (attrap-one-option 'enclose-with-braces
-                           (insert "}")
-                           (save-excursion
-	                     (backward-char)
-	                     (backward-sexp)
-	                     (re-search-backward "[^[:alnum:]\\_\\/]")
-	                     (forward-char)
-	                     (insert "{")
-	                     )))
-       ((s-matches? (rx "You should not use punctuation in front of quotes.") msg)
-        (attrap-one-option 'swap-punctuation-with-quotes
-                           (progn
-	                     (delete-char 2)
-	                     (backward-char)
-	                     (insert "''"))
-                           )))
-      )
-    (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer))
-    (setq saved-match-data nil)
-    :bind
-    (:map flycheck-command-map
-	  ("f" . attrap-flycheck))))
+                           (insert "``"))
+            (attrap-option 'fix-close-dquote
+                           (delete-region pos (1+ pos))
+                           (insert "''"))))
+     ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
+      (attrap-one-option 'non-breaking-space
+                         (if (looking-at (rx space))
+                             (delete-region pos (1+ pos))
+                           (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point)))
+                         (insert "~")))
+     ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.") msg)
+      (attrap-one-option 'use-interword-spacing
+                         (delete-region pos (1+ pos))
+                         (insert "\\ ")))
+     ((s-matches? (rx "Delete this space to maintain correct pagereferences.") msg)
+      (attrap-one-option 'fix-space-pageref
+                         (if (looking-back (rx bol (* space)))
+                             (progn (skip-chars-backward "\n\t ")
+                                    (insert "%"))
+                           (delete-region (point) (save-excursion (skip-chars-forward " \t") (point)))
+	                   )))
+     ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.") msg)
+      (attrap-one-option 'enclose-with-braces
+                         (insert "}")
+                         (save-excursion
+	                   (backward-char)
+	                   (backward-sexp)
+	                   (re-search-backward "[^[:alnum:]\\_\\/]")
+	                   (forward-char)
+	                   (insert "{")
+	                   )))
+     ((s-matches? (rx "You should not use punctuation in front of quotes.") msg)
+      (attrap-one-option 'swap-punctuation-with-quotes
+                         (progn
+	                   (delete-char 2)
+	                   (backward-char)
+	                   (insert "''"))
+                         )))
+    )
+  (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer))
+  (setq saved-match-data nil)
+  :bind
+  (:map flycheck-command-map
+	("f" . attrap-flycheck)))
+
+;;; --------------------------------- PDF ---------------------------------
+
+(use-package pdf-tools
+  :mode ("\\.pdf\\'" . pdf-view-mode)
+  :custom
+  (TeX-view-program-selection '((output-pdf "PDF Tools")))
+  (global-auto-revert-ignore-modes '(pdf-view-mode))
+  (pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
+  :config
+  (pdf-tools-install :no-query)
+  (require 'pdf-occur))
 
 
+;;; ------------------------------ ORG ------------------------------
+
+(use-package emacs
+  :elpaca nil
+  :hook
+  (org-mode . visual-line-mode)
+  :custom
+  (org-default-notes-file (concat org-directory "doit/todo.org"))
+  (org-directory "~/")
+  (org-agenda-files (append '("~/doit/todo.org")
+                            (when (file-directory-p "~/ua")
+                              '("~/ua/ua-log.org"))))
+  (org-goto-auto-isearch nil)
+  (org-agenda-include-diary t)
+  (org-babel-load-languages '((latex . t) (emacs-lisp . t)))
+  (org-babel-python-command "python3")
+  (org-confirm-babel-evaluate nil)
+  (org-link-elisp-confirm-function nil)
+  (org-enforce-todo-dependencies t)
+  (org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default))) ; open pdfs in emacs
+  (org-hide-leading-stars t)
+  (org-list-allow-alphabetical t)
+  (org-odd-levels-only nil)
+  (org-refile-targets
+   '((org-agenda-files :regexp . "Notes")
+     ("~/doit/todo.org" :regexp . "Inbox")
+     ("~/doit/todo.org" :regexp . "Reference")
+     ("~/doit/todo.org" :regexp . "Someday")
+     ("~/doit/todo.org" :regexp . "Scheduler")
+     ("~/doit/todo.org" :regexp . "Tasks")
+     ("~/doit/proj-var2.org" :regexp . "Inbox")
+     ("~/doit/proj-var2.org" :regexp . "Backlog")
+     ("~/doit/todo.org" :regexp . "Backlog")
+     ("~/ua/ua-log.org" :regexp . "ua Inbox")))
+  (org-refile-use-outline-path t)
+; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
+  (org-src-preserve-indentation t)
+  (org-tags-column -70)
+  (org-use-speed-commands t)
+  (org-capture-templates
+   '(
+     ("i" "Inbox" entry (file+headline "~/doit/todo.org" "Inbox")
+      "* %?\n  %i")
+     ("t" "Tasks" entry (file+headline "~/doit/todo.org" "Tasks")
+      "* %?\n  %i")
+     ("o" "Inbox + link" entry (file+headline "~/doit/todo.org" "Inbox")
+      "* %?\n  %i\n  %a\n")
+     ("j" "Journal" entry (file+datetree "~/doit/log.org")
+      "* %?\nEntered on %U\n")
+     ("d" "Daily Review" entry (file+datetree "~/doit/log.org")
+      (file "~/doit/daily.org"))
+     ("w" "Weekly Review" entry (file+datetree "~/doit/log.org")
+      (file "~/doit/weekly.org"))
+     ("e" "Emacs quick reference" item (file+headline "~/doit/todo.org" "Emacs quick reference")
+      "- %?\n %x\n")
+     ("k" "Interruptions" entry (file+headline "~/doit/todo.org" "Interruptions")
+      "* %?\n%U\n" :clock-in t :clock-resume t))))
+
+(defun czm-org-edit-latex-with-preview ()
+  (interactive)
+  (let
+      ((src-buffer
+        (save-window-excursion
+          (org-edit-src-code)
+          (setq fill-column 999999) ; should this be in a latex mode hook?
+          (current-buffer))))
+    (switch-to-buffer src-buffer)))
+
+(defun czm-org-collect-entry-positions (match scope &rest skip)
+  "Collect buffer point positions for org entries.
+The list is ordered from bottom to top."
+  (let ((positions ()))
+    (org-map-entries 
+     (lambda () (setq positions (cons (point) positions))) match scope skip)
+    positions))
+
+(defun czm-org-archive-done-entries ()
+  (interactive)
+  (let ((positions (czm-org-collect-entry-positions "TODO={DONE\\|CANCELLED}" 'region-start-level)))
+    (dolist (pos positions)
+      (goto-char pos)
+      (save-mark-and-excursion
+        (deactivate-mark)
+        (org-archive-subtree)
+        ))))
+
+(use-package org
+  :elpaca nil
+  :bind
+  (:map org-mode-map
+        ("C-c 1" .
+         (lambda() (interactive)
+           (progn
+             (insert "#+begin_src latex")
+             (newline))))
+        ("C-c 2" .
+         (lambda() (interactive)
+           (progn
+             (insert "#+end_src")
+             (newline))))
+        ("C-c p" . czm-org-edit-latex-with-preview)))
+
+;;; ------------------------------ ERC ------------------------------
+
+(use-package erc
+  :elpaca nil
+  ;; :hook
+  ;; (erc-insert-post-hook . erc-save-buffer-in-logs)
+  :config
+  (erc-timestamp-mode)
+  
+  ;; (defadvice save-buffers-kill-emacs (before save-logs (arg) activate)
+  ;;   (save-some-buffers t (lambda () (when (and (eq major-mode 'erc-mode)
+  ;;                                              (not (null buffer-file-name)))))))
+
+
+  (defun oz/escape-applescript (str)
+    "Quote \\ and \"."
+    (replace-regexp-in-string "\\(\\\\\\|\"\\)" "\\\\\\1" str))
+
+  (defun oz/erc-notifications-notify (orig-fun nick msg)
+    "Notify that NICK send some MSG via AppleScript."
+    (ns-do-applescript
+     (concat "display notification \"" (oz/escape-applescript msg)
+             "\" with title \"" (oz/escape-applescript nick) "\"")))
+
+  (advice-add 'erc-notifications-notify :around #'oz/erc-notifications-notify)
+
+
+  :custom
+  (erc-nick '("czM" "czM_"))
+  (erc-user-full-name "Paul Nelson")
+  (erc-join-buffer 'bury)
+  (erc-timestamp-format "[%R-%m/%d]")
+  ;; (erc-join-buffer 'window)
+  )
+
+;; (use-package erc-join
+;;   :after erc
+;;   :config
+;;   (erc-autojoin-mode)
+;;   :custom
+;;   ;; (erc-autojoin-channels-alist '(("quakenet.org" "#ultrono")))
+;;   )
+
+;; (use-package erc-netsplit
+;;   :after erc
+;;   :config
+;;   (erc-netsplit-mode))
+
+
+
+;; logging doesn't seem to be working; not sure what the story is there.
+
+(use-package erc-log
+  :elpaca nil
+  :after erc
+  :config
+  (erc-log-mode)
+  :custom
+  (erc-log-channels-directory "~/.erc/logs/")
+  (erc-log-insert-log-on-open t)
+  (erc-log-write-after-send t)
+  (erc-log-write-after-insert t)
+  )
+
+;; (use-package erc-ring
+;;   :after erc
+;;   :config
+;;   (erc-ring-mode))
+
+;; (use-package erc-netsplit
+;;   :after erc
+;;   :config
+;;   (erc-netsplit-mode))
+
+(use-package erc-desktop-notifications
+  :elpaca nil
+  :after erc
+  ;; https://emacs.stackexchange.com/questions/28896/how-to-get-notifications-from-erc-in-macos
+  )
+
+; TODO:
+;; (erc-modules
+;;    '(autojoin button completion desktop-notifications fill imenu irccontrols list log match menu move-to-prompt netsplit networks noncommands notifications readonly ring stamp track))
+
+(defun czm/connect-znc ()
+  (interactive)
+  (require 'erc)
+  (require 'auth-source)
+  (let* ((znc-server "3.77.70.103")
+         (znc-port 1337)
+         (znc-username "ultrono")
+         (znc-network "quakenet")
+         (auth-info (auth-source-search :host znc-server :user (concat znc-username "/" znc-network)))
+         (znc-password (funcall (plist-get (car auth-info) :secret))))
+    (erc-tls :server znc-server
+             :port znc-port
+             :nick znc-username
+             :password (concat znc-username "/" znc-network ":" znc-password))))
+
+;; use erc-select multiple times to connect to multiple IRC servers?
+
+;; TODO: robust form of check-abbrev?
+
+;;; ------------------------------ SAGE ------------------------------
+
+(use-package sage-shell-mode
+  :custom
+  (sage-shell:use-prompt-toolkit nil)
+  (sage-shell:use-simple-prompt t)
+  (sage-shell:sage-root "~/sage/sage-9.8")
+  :bind
+  (:map sage-shell-mode-map
+        ("C-c n" . czm-sage-worksheet))
+  (:map sage-shell:sage-mode-map
+        ("C-c n" . czm-sage-worksheet))
+  :hook
+  ((sage-shell-mode sage-shell:sage-mode) . eldoc-mode)
+  (sage-shell-after-prompt . sage-shell-view-mode))
+
+(defun czm-sage-documentation ()
+  (interactive)
+  (other-window-prefix)
+  (eww-open-file
+   (concat sage-shell:sage-root
+           "/local/share/doc/sage/html/en/index.html")))
+
+(defun czm-sage-worksheet (arg)
+  "Create new sage file in ~/doit/sage/.
+If given a prefix argument, open a dired buffer to ~/doit/sage
+and highlight most recent entry."
+  (interactive "P")
+  (if (not arg)
+      (let ((filename (format-time-string "~/doit/sage/%Y%m%dT%H%M%S.sage")))
+	(find-file filename))
+    (progn
+      (dired "~/doit/sage/*.sage" "-alt"))))
+
+
+
+(use-package ob-sagemath
+  :config
+  ;; Ob-sagemath supports only evaluating with a session.
+  (setq org-babel-default-header-args:sage '((:session . t)
+                                             (:results . "output")))
+
+  ;; Show images after evaluating code blocks.
+  (add-hook 'org-babel-after-execute-hook 'org-display-inline-images))
+
+
+(defun calcFunc-sage-factor ()
+  "Use SAGE to factor the top element of the stack in Emacs Calc."
+  (interactive)
+  (if (equal (length calc-stack) 0)
+      (error "Stack is empty"))
+  (let* ((top-of-stack (calc-top))
+         (top-of-stack-string (math-format-value top-of-stack))
+         (sage-code
+	  (format "SR(\"%s\").factor()" top-of-stack-string))
+         (modified-string (symtex-evaluate sage-code))
+         (modified-value (math-read-exprs modified-string)))
+    (if (eq (car-safe modified-value) 'error)
+        (error "Parsing error: %s" (nth 1 modified-value))
+      (calc-pop 1)
+      (calc-push (car modified-value)))))
+
+(use-package mmm-mode
+  :custom
+  (mmm-global-mode 'maybe)
+  :custom-face
+  (mmm-default-submode-face ((t (:background "#ddffff")))))
+
+(use-package sagemintex
+  :elpaca (:host github :repo "ultronozm/sagemintex.el")
+  :after latex mmm-mode sage-shell-mode
+  :demand t
+  :custom
+  (LaTeX-command "latex -shell-escape")
+  :bind
+  (:map sagemintex-mode-map
+	("C-c C-c" . sagemintex-evaluate)
+	("C-c C-l" . sagemintex-evaluate-latex))
+  :hook
+  (mmm-sage-shell:sage-mode-enter . sagemintex-enable)
+  (mmm-sage-shell:sage-mode-exit . sagemintex-disable))
+
+(use-package symtex
+  :elpaca (:host github :repo "ultronozm/symtex.el")
+  :after latex sage-shell-mode
+  :bind
+  (:map global-map
+        ("C-c V" . symtex-process))
+  (:map LaTeX-mode-map
+	("C-c v" . symtex-dwim)))
+
+
+
+(use-package dynexp
+  :elpaca (:host github :repo "ultronozm/dynexp.el")
+  :after latex
+  :demand
+  :bind
+  (:map LaTeX-mode-map
+        ("SPC" . dynexp-space)
+        ("TAB" . dynexp-next)))
+
+
+;;; ------------------------------ MISC ------------------------------
+
+;; (find-file-other-window (concat user-emacs-directory "init-elpaca.el"))
+(find-file-other-window "~/emacs-bak/init-bak.el")
+
+
+; dynexp
+; sagemintex - need to rewrite this to use ob-sagemath
+; symtex - needs debugging
+; arxiv/bib stuff
+; publishing to ~/math
+
+; cmake-build.  stuff in custom, too.
+; (cmake-ide-build-dir . "build")
+
+; tramp stuff, which has some stuff in custom
+; gud?  what is that?
 
 
 
