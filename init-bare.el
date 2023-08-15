@@ -62,6 +62,10 @@
 	("s-." repeat)
 	("s-w" switch-to-buffer)
 	("s-i" czm/find-lisp-file)
+	("<up>" windmove-up)
+	("<down>" windmove-down)
+	("<right>" windmove-right)
+	("<left>" windmove-left)
 	)
       )
 

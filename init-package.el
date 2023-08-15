@@ -205,7 +205,9 @@ DIR must include a .project file to be considered a project."
   ; built-in
   :custom
   ;  (eldoc-echo-area-use-multiline-p truncate-sym-name-if-fiteldoc-echo-area-use-multiline-p)
-  (eldoc-echo-area-use-multiline-p t))
+  (eldoc-echo-area-use-multiline-p t)
+  (eldoc-idle-delay 0)
+  )
 
 (use-package copilot
   :vc (:url "https://github.com/ultronozm/copilot.el.git"

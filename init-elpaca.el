@@ -59,6 +59,7 @@
   :custom
   (use-dialog-box nil)
   (show-paren-delay 0)
+  (show-paren-style 'parenthesis)
   (ring-bell-function #'ignore)
   (initial-scratch-message nil)
   (inhibit-startup-message t)
@@ -76,7 +77,7 @@
   (large-file-warning-threshold 20000000)
   (tool-bar-mode nil)
   (vc-follow-symlinks t)
-  
+
   :config
   (electric-pair-mode)
   (put 'upcase-region 'disabled nil)
@@ -90,7 +91,8 @@
   (save-place-mode)
   (scroll-bar-mode 0)
   (line-number-mode)
-  (column-number-mode))
+  (column-number-mode)
+  (winner-mode))
 
 (use-package recentf
   :elpaca nil
@@ -141,7 +143,7 @@
       (message "No PDF files found in ~/Downloads."))))
 
 (defun czm/resize-frame-to-bottom-third ()
-  "Resize and reposition the current frame to occupy the bottom third of the screen"
+  "Reshape current frame to occupy bottom third of the screen."
   (interactive)
   (if (frame-parameter (selected-frame) 'fullscreen)
       (toggle-frame-fullscreen))
@@ -165,9 +167,12 @@
   :hook
   (prog-mode . outline-minor-mode)
   (prog-mode . hs-minor-mode))
+
 ;;; ------------------------------ PROJECT ------------------------------
 
+; this redefines something in project.el.  Why?
 (cl-defmethod project-root ((project (head local)))
+  "TODO."
   (cdr project))
 
 (defun czm/project-try-local (dir)
@@ -206,23 +211,6 @@ DIR must include a .project file to be considered a project."
   :elpaca (:host github :repo "ultronozm/czm-spell.el")
   :bind ("s-;" . czm-spell-then-abbrev))
 
-;;; --------------------------------- PROJECT ---------------------------------
-
-;; Declare directories with ".project" as a project
-(cl-defmethod project-root ((project (head local)))
-  (cdr project))
-
-(defun czm/project-try-local (dir)
-  "Determine if DIR is a non-Git project.
-DIR must include a .project file to be considered a project."
-  (let ((root (locate-dominating-file dir ".project")))
-    (and root (cons 'local root))))
-
-(use-package emacs
-  :elpaca nil
-  
-  :config
-  (add-to-list 'project-find-functions 'czm/project-try-local))
 
 ;;; ------------------------------ GIT ------------------------------
 
@@ -247,7 +235,9 @@ DIR must include a .project file to be considered a project."
 	       (msg (read-string "Commit message: " default-msg)))
 	  (magit-stage-file file)
 	  (magit-commit-create (list "-m" msg))
-	  (magit-push-current-to-upstream nil)))))))
+	  ;; call the following interactively: (magit-push-current-to-upstream nil)
+          (call-interactively 'magit-push-current-to-upstream)
+          ))))))
 
 ;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
 
@@ -255,7 +245,8 @@ DIR must include a .project file to be considered a project."
   :elpaca nil
   :custom
   ;  (eldoc-echo-area-use-multiline-p truncate-sym-name-if-fiteldoc-echo-area-use-multiline-p)
-  (eldoc-echo-area-use-multiline-p t))
+  (eldoc-echo-area-use-multiline-p t)
+  (eldoc-idle-delay 0.25))
 
 (use-package copilot
   :elpaca (:host github :repo "zerolfx/copilot.el")
@@ -280,7 +271,7 @@ DIR must include a .project file to be considered a project."
   :after vertico
   :config
   (marginalia-mode)
-  :bind (:map minibuffer-local-map                                          
+  :bind (:map minibuffer-local-map
          ("M-A" . marginalia-cycle)))
 
 (use-package orderless
@@ -548,7 +539,6 @@ Never describe the results of running code.  Instead, wait for me to run the cod
 
 (use-package avy
   :ensure t
-  :demand t
   :bind
   (:map global-map
         ("C-;" . avy-goto-line)
@@ -566,24 +556,8 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   ("C-x o" . ace-window))
 
 
-(use-package flycheck
-  :ensure t
-  :config
-  (defun repeatize (keymap)
-    "Add `repeat-mode' support to a KEYMAP."
-    (map-keymap
-     (lambda (_key cmd)
-       (when (symbolp cmd)
-         (put cmd 'repeat-map keymap)))
-     (symbol-value keymap)))
-  (repeatize 'flycheck-command-map)
-  :config
-  (setq flycheck-emacs-lisp-load-path 'inherit))
 
-(use-package flycheck-package
-  :ensure t
-  :hook
-  (emacs-lisp-mode . flycheck-package-setup))
+
 
 (use-package which-key
   :ensure t
@@ -602,6 +576,50 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   ("s-f" . zzz-to-char)
   :custom
   (zzz-to-char-reach 200))
+
+;;; ------------------------------ REPEAT ------------------------------
+
+(use-package repeat
+  :elpaca nil
+  :config
+  (setcdr other-window-repeat-map nil)
+  (repeat-mode))
+
+(defun repeatize (keymap)
+  "Add `repeat-mode' support to a KEYMAP."
+  (map-keymap
+   (lambda (_key cmd)
+     (when (symbolp cmd)
+       (put cmd 'repeat-map keymap)))
+   (symbol-value keymap)))
+
+;;; ------------------------------ FLYCHECK ------------------------------
+
+(use-package flycheck
+  :ensure t
+  :config
+  (setq flycheck-emacs-lisp-load-path 'inherit))
+
+
+(use-package flycheck-package
+  :ensure t
+  :hook
+  (emacs-lisp-mode . flycheck-package-setup))
+
+;;; ------------------------------ ATTRAP ------------------------------
+
+(use-package attrap
+  :after flycheck
+  :config
+  (setq saved-match-data nil))
+
+(use-package emacs
+  :elpaca nil
+  :after flycheck attrap repeat
+  :config
+  (define-key flycheck-command-map "f" 'attrap-flycheck)
+  (repeatize 'flycheck-command-map))
+
 
 ;;; ------------------------------ LISP ------------------------------
 
@@ -652,7 +670,7 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   :elpaca  (auctex
             :files ("*.el" "*.info" "dir"
                     "doc" "etc" "images" "latex" "style")
-            :pre-build 
+            :pre-build
             (("./autogen.sh")
              ("./configure" "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))")
              ("make")
@@ -710,7 +728,7 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   :elpaca (:host github :repo "ultronozm/czm-tex-util.el"))
 
 (use-package czm-tex-fold
-  :elpaca (:host github :repo "ultronozm/czm-tex-fold.el")  
+  :elpaca (:host github :repo "ultronozm/czm-tex-fold.el")
   :after latex
   :demand
   :bind
@@ -743,58 +761,55 @@ Never describe the results of running code.  Instead, wait for me to run the cod
 	("C-c 9" . sultex-label)
 	("C-c 0" . sultex-bib)))
 
-(use-package attrap
-  :after flycheck
+(defun czm-attrap-LaTeX-fixer (msg pos end)
+  (cond
+   ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")msg)
+    (list (attrap-option 'fix-open-dquote
+            (delete-region pos (1+ pos))
+            (insert "``"))
+          (attrap-option 'fix-close-dquote
+            (delete-region pos (1+ pos))
+            (insert "''"))))
+   ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
+    (attrap-one-option 'non-breaking-space
+      (if (looking-at (rx space))
+          (delete-region pos (1+ pos))
+        (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point)))
+      (insert "~")))
+   ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.") msg)
+    (attrap-one-option 'use-interword-spacing
+      (delete-region pos (1+ pos))
+      (insert "\\ ")))
+   ((s-matches? (rx "Delete this space to maintain correct pagereferences.") msg)
+    (attrap-one-option 'fix-space-pageref
+      (if (looking-back (rx bol (* space)))
+          (progn (skip-chars-backward "\n\t ")
+                 (insert "%"))
+        (delete-region (point) (save-excursion (skip-chars-forward " \t") (point)))
+	)))
+   ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.") msg)
+    (attrap-one-option 'enclose-with-braces
+      (insert "}")
+      (save-excursion
+	(backward-char)
+	(backward-sexp)
+	(re-search-backward "[^[:alnum:]\\_\\/]")
+	(forward-char)
+	(insert "{")
+	)))
+   ((s-matches? (rx "You should not use punctuation in front of quotes.") msg)
+    (attrap-one-option 'swap-punctuation-with-quotes
+      (progn
+	(delete-char 2)
+	(backward-char)
+	(insert "''"))
+      ))))
+
+(use-package emacs
+  :elpaca nil
+  :after flycheck attrap
   :config
-  (defun czm-attrap-LaTeX-fixer (msg pos end)
-    (cond
-     ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")msg) 
-      (list (attrap-option 'fix-open-dquote
-                           (delete-region pos (1+ pos))
-                           (insert "``"))
-            (attrap-option 'fix-close-dquote
-                           (delete-region pos (1+ pos))
-                           (insert "''"))))
-     ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
-      (attrap-one-option 'non-breaking-space
-                         (if (looking-at (rx space))
-                             (delete-region pos (1+ pos))
-                           (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point)))
-                         (insert "~")))
-     ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.") msg)
-      (attrap-one-option 'use-interword-spacing
-                         (delete-region pos (1+ pos))
-                         (insert "\\ ")))
-     ((s-matches? (rx "Delete this space to maintain correct pagereferences.") msg)
-      (attrap-one-option 'fix-space-pageref
-                         (if (looking-back (rx bol (* space)))
-                             (progn (skip-chars-backward "\n\t ")
-                                    (insert "%"))
-                           (delete-region (point) (save-excursion (skip-chars-forward " \t") (point)))
-	                   )))
-     ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.") msg)
-      (attrap-one-option 'enclose-with-braces
-                         (insert "}")
-                         (save-excursion
-	                   (backward-char)
-	                   (backward-sexp)
-	                   (re-search-backward "[^[:alnum:]\\_\\/]")
-	                   (forward-char)
-	                   (insert "{")
-	                   )))
-     ((s-matches? (rx "You should not use punctuation in front of quotes.") msg)
-      (attrap-one-option 'swap-punctuation-with-quotes
-                         (progn
-	                   (delete-char 2)
-	                   (backward-char)
-	                   (insert "''"))
-                         )))
-    )
-  (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer))
-  (setq saved-match-data nil)
-  :bind
-  (:map flycheck-command-map
-	("f" . attrap-flycheck)))
+  (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer)))
 
 ;;; --------------------------------- PDF ---------------------------------
 
@@ -1116,20 +1131,281 @@ and highlight most recent entry."
         ("SPC" . dynexp-space)
         ("TAB" . dynexp-next)))
 
+;;; ------------------------------ CPP ------------------------------
+
+
+
+(c-add-style "llvm4"
+	     '("gnu"
+	       (c-basic-offset . 2)	; Guessed value
+	       (c-offsets-alist
+		(access-label . -)	   ; Guessed value
+		(block-close . 0)	   ; Guessed value
+		(class-close . 0)	   ; Guessed value
+		(defun-block-intro . ++) ; Guessed value
+		;; (defun-block-intro . ++)	; Guessed value
+		(inclass . ++)	; Guessed value
+		(inline-close . 0)	; Guessed value
+		;; (inline-close . 0)			; Guessed value
+		(statement . 0)	       ; Guessed value
+		(statement-block-intro . ++) ; Guessed value
+		(statement-cont . llvm-lineup-statement) ; Guessed value
+		;; (statement-cont . ++)		; Guessed value
+		(substatement . ++)	   ; Guessed value
+		(topmost-intro . nil)	   ; Guessed value
+		(topmost-intro-cont . +) ; Guessed value
+		(annotation-top-cont . 0)
+		(annotation-var-cont . +)
+		(arglist-close . c-lineup-close-paren)
+		(arglist-cont c-lineup-gcc-asm-reg 0)
+		;; (arglist-cont-nonempty c-lineup-gcc-asm-reg 0)
+		(arglist-cont-nonempty . c-lineup-arglist)
+		(arglist-intro . ++)
+		;; (arglist-intro . c-lineup-arglist-intro-after-paren)
+		(block-open . 0)
+		(brace-entry-open . 0)
+		(brace-list-close . 0)
+		(brace-list-entry . c-lineup-string-cont)
+		(brace-list-intro first c-lineup-2nd-brace-entry-in-arglist c-lineup-class-decl-init-+ +)
+		(brace-list-open . +)
+		(c . c-lineup-C-comments)
+		(case-label . 0)
+		(catch-clause . 0)
+		(class-open . 0)
+		(comment-intro . c-lineup-comment)
+		(composition-close . 0)
+		(composition-open . 0)
+		(cpp-define-intro c-lineup-cpp-define +)
+		(cpp-macro . -1000)
+		(cpp-macro-cont . +)
+		(defun-close . 0)
+		(defun-open . 0)
+		(do-while-closure . 0)
+		(else-clause . 0)
+		(extern-lang-close . 0)
+		(extern-lang-open . 0)
+		(friend . 0)
+		(func-decl-cont . +)
+		(incomposition . +)
+		(inexpr-class . +)
+		(inexpr-statement . +)
+		(inextern-lang . +)
+		(inher-cont . c-lineup-multi-inher)
+		(inher-intro . +)
+		(inlambda . 0)
+		(inline-open . 0)
+		(inmodule . +)
+		(innamespace . +)
+		(knr-argdecl . 0)
+		(knr-argdecl-intro . 5)
+		(label . 0)
+		(lambda-intro-cont . +)
+		(member-init-cont . c-lineup-multi-inher)
+		(member-init-intro . 4)
+		(module-close . 0)
+		(module-open . 0)
+		(namespace-close . 0)
+		(namespace-open . 0)
+		(objc-method-args-cont . c-lineup-ObjC-method-args)
+		(objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
+		(objc-method-intro .
+				   [0])
+		(statement-case-intro . ++)
+		(statement-case-open . +)
+		(stream-op . c-lineup-streamop)
+		(string . c-lineup-string-cont)
+		(substatement-label . 0)
+		(substatement-open . 0)
+		(template-args-cont c-lineup-template-args +))))
+
+(defun czm-c-mode-common-hook ()
+  (c-set-style "llvm4")
+  (set-fill-column 120)
+  (setq next-error-function #'flymake-goto-next-error))
+
+(use-package emacs
+  :elpaca nil
+  :after cc-mode
+  :bind
+  ("C-c M-o" . ff-find-other-file)
+  :hook
+  (c-mode-common . c-toggle-hungry-state)
+  (c-mode-common . abbrev-mode)
+  (c-mode-common . czm-c-mode-common-hook)
+  :config
+  ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
+  (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024)))
+
+(use-package clang-format+
+  :hook
+  (c-mode-common . clang-format+-mode))
+
+;; maybe some of the following should be part of cmake-build.el?
+
+(defun czm-eshell-run (command buffer-name)
+  (eshell "new")
+  (rename-buffer buffer-name)
+  (insert command)
+  (eshell-send-input))
+
+(defun czm-cmake-build--invoke-eshell-run (config)
+  (let* ((cmake-build-run-config config)
+	 (config (cmake-build--get-run-config))
+	 (command (cmake-build--get-run-command config))
+	 (default-directory (cmake-build--get-run-directory config))
+	 (process-environment (append
+			       (list (concat "PROJECT_ROOT="
+					     (cmake-build--maybe-remote-project-root)))
+			       (cmake-build--get-run-config-env)
+			       process-environment))
+	 (buffer-name (string-replace "Run" "eshell-Run" (cmake-build--run-buffer-name))))
+    ;; with a bit more sophistication, you should be able to set up a
+    ;; proper dedicated window.  might be fun to look into.
+    (if (get-buffer buffer-name)
+	(switch-to-buffer buffer-name)
+      (czm-eshell-run command buffer-name))))
+
+(defun czm-cmake-build-eshell-run ()
+  (interactive)
+  (when (cmake-build--validate "run")
+    (let* ((this-root (cmake-build--project-root))
+           (this-run-config cmake-build-run-config)
+           (cmake-build-project-root this-root))
+      (if  (and nil cmake-build-before-run)
+          (cmake-build--invoke-build-current
+           (lambda (process event)
+	     (let* ((this-root this-root)
+		    (cmake-build-project-root this-root))
+	       (when (cl-equalp "finished\n" event)
+                 (czm-cmake-build--invoke-eshell-run this-run-config)))))
+	(czm-cmake-build--invoke-eshell-run this-run-config)))))
+
+(use-package cmake-build
+  :elpaca (:host github :repo "ultronozm/cmake-build.el")
+  :bind (("s-m m" . cmake-build-menu)
+	 ("s-m 1" . cmake-build-set-cmake-profile)
+	 ("s-m 2" . cmake-build-clear-cache-and-configure)
+	 ("s-m 3" . cmake-build-set-config)
+	 ("s-m b" . cmake-build-current)
+	 ("s-m o" . ff-find-other-file)
+	 ("s-m r" . cmake-build-run)
+	 ("s-m e" . czm-cmake-build-eshell-run)
+	 ("s-m c" . cmake-build-clean))
+  :custom
+  (cmake-build-override-compile-keymap nil)
+  ;; (cmake-build-run-function 'czm-eshell-run)
+  (cmake-build-export-compile-commands t)
+  (cmake-build-options "-j 1")
+  (cmake-build-options "-j 2")
+  (cmake-build-options "-j 16")
+  (cmake-build-options "-j 8 --verbose"))
+
+;; the following miscellaneous functions should probably be cleaned up
+;; into a library of cpp utility functions.
+
+(defun czm-cpp-init-header ()
+  (interactive)
+  (let ((guard
+	 (upcase
+	  (replace-regexp-in-string
+	   "[.-]" "_" 
+	   (concat
+	    (project-name (project-current))
+	    "_"
+	    (file-name-nondirectory (buffer-file-name)))
+	   )))
+	(notice nil)
+	)
+    (goto-char (point-min))
+    (if notice (progn (insert notice) (newline)))
+    (insert (concat "#ifndef " guard "\n" "#define " guard "\n\n"))
+    (goto-char (point-max))
+    (insert (concat "#endif // " guard "\n"))
+    (forward-line -2)))
+
+(defun czm-cpp-make-snake-case ()
+  (interactive)
+  (let ((symb (thing-at-point 'symbol t)))
+    (unless symb
+      (error "No symbol at point"))
+    (let* ((beg (car symb))
+	   (end (cdr symb))
+	   (camelCase (buffer-substring beg end))
+	   (snake_case (s-snake-case camelCase)))
+      (eglot-rename snake_case))))
+
+(defun czm-rename-then-save-all ()
+  (interactive)
+  (call-interactively 'lsp-rename)
+  (save-some-buffers t))
+
+(defun czm-cpp-new-project-relative (new-directory-name)
+  (interactive "sNew directory name (relative to current directory): ")
+  (let* ((new-directory-absolute (expand-file-name new-directory-name))
+         (template-directory-name "~/code/scratch/template/")
+         (template-src-directory-name "~/code/scratch/template/src/")
+         (new-src-directory-name (concat new-directory-absolute "/src/"))
+         (files-to-copy '(".clang-format" "CMakeLists.txt" ".cmake-build.el" ".project" ".gitignore"))
+         (src-files-to-copy '("CMakeLists.txt" "main.cpp")))
+    (unless (file-exists-p new-directory-absolute)
+      (make-directory new-directory-absolute t))
+    (unless (file-exists-p new-src-directory-name)
+      (make-directory new-src-directory-name t))
+    (dolist (file files-to-copy)
+      (copy-file (concat template-directory-name file) new-directory-absolute))
+    (dolist (file src-files-to-copy)
+      (copy-file (concat template-src-directory-name file) new-src-directory-name))
+    (magit-init new-directory-absolute)
+    (find-file (concat new-src-directory-name "main.cpp"))
+    (cmake-build-clear-cache-and-configure)
+    (cmake-build-set-config 'all)))
+
+(defun czm-cpp-new-project (new-directory-name)
+  (interactive "sNew directory name: ")
+  (let
+      ((template-directory-name (format-time-string "~/code/scratch/template/"))
+       (template-src-directory-name (format-time-string "~/code/scratch/template/src/"))
+       (new-src-directory-name (concat new-directory-name "src/"))
+       (files-to-copy '(".clang-format" "CMakeLists.txt" ".cmake-build.el" ".project" ".gitignore"))
+       (src-files-to-copy '("CMakeLists.txt" "main.cpp")))
+    (make-directory new-directory-name)
+    (make-directory new-src-directory-name)
+    (dolist (file files-to-copy)
+      (copy-file (concat template-directory-name file) new-directory-name))
+    (dolist (file src-files-to-copy)
+      (copy-file (concat template-src-directory-name file) new-src-directory-name))
+    ;; TODO: replace the following with something using eglot?
+    ;; (lsp-workspace-folders-add new-directory-name)
+    (magit-init new-directory-name)
+    (find-file (concat new-src-directory-name "main.cpp"))
+    (cmake-build-clear-cache-and-configure)
+    (cmake-build-set-config 'all)
+    ;; (cmake-build-current)
+    ))  
+
+(defun czm-cpp-scratch ()
+  (interactive)
+  (let ((directory (format-time-string "~/code/scratch/%Y-%m-%d-%H%M%S")))
+    (setq directory (read-string "Directory: " directory))
+    (czm-cpp-new-project
+     (concat directory "/")))
+  )
+
+(add-to-list 'auto-mode-alist '("\\.ixx\\'" . c++-mode))
 
 ;;; ------------------------------ MISC ------------------------------
 
-;; (find-file-other-window (concat user-emacs-directory "init-elpaca.el"))
-(find-file-other-window "~/emacs-bak/init-bak.el")
+;; (find-file (concat user-emacs-directory "init-elpaca.el"))
+;; (find-file-other-window "~/emacs-bak/init-bak.el")
 
 
-; dynexp
+
 ; sagemintex - need to rewrite this to use ob-sagemath
 ; symtex - needs debugging
 ; arxiv/bib stuff
 ; publishing to ~/math
 
-; cmake-build.  stuff in custom, too.
 ; (cmake-ide-build-dir . "build")
 
 ; tramp stuff, which has some stuff in custom
