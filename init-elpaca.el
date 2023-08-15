@@ -168,50 +168,6 @@
   (prog-mode . outline-minor-mode)
   (prog-mode . hs-minor-mode))
 
-;;; ------------------------------ PROJECT ------------------------------
-
-; this redefines something in project.el.  Why?
-(cl-defmethod project-root ((project (head local)))
-  "TODO."
-  (cdr project))
-
-(defun czm/project-try-local (dir)
-  "Determine if DIR is a non-Git project.
-DIR must include a .project file to be considered a project."
-  (let ((root (locate-dominating-file dir ".project")))
-    (and root (cons 'local root))))
-
-(use-package project
-  :elpaca nil
-  
-  :config
-  (add-to-list 'project-find-functions 'czm/project-try-local))
-
-;;; ------------------------------ ABBREV and SPELLING ------------------------------
-
-(use-package emacs
-  :elpaca nil
-  
-  :custom
-  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
-  (save-abbrevs 'silently)
-  
-  :hook
-  (text-mode . abbrev-mode)
-  
-  :config
-  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev_defs.el"))
-  (defun modify-abbrev-table (table abbrevs)
-    "Define abbreviations in TABLE given by ABBREVS."
-    (dolist (abbrev abbrevs)
-      (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
-  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
-
-(use-package czm-spell
-  :elpaca (:host github :repo "ultronozm/czm-spell.el")
-  :bind ("s-;" . czm-spell-then-abbrev))
-
-
 ;;; ------------------------------ GIT ------------------------------
 
 (use-package magit
@@ -236,8 +192,8 @@ DIR must include a .project file to be considered a project."
 	  (magit-stage-file file)
 	  (magit-commit-create (list "-m" msg))
 	  ;; call the following interactively: (magit-push-current-to-upstream nil)
-          (call-interactively 'magit-push-current-to-upstream)
-          ))))))
+          (call-interactively 'magit-push-current-to-upstream)))))))
+
 
 ;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
 
@@ -663,6 +619,66 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   (emacs-lisp-mode  . lispy-mode)
   (minibuffer-setup . czm-conditionally-enable-lispy))
 
+;;; ------------------------------ PROJECT ------------------------------
+
+; this redefines something in project.el.  Why?
+(cl-defmethod project-root ((project (head local)))
+  "TODO."
+  (cdr project))
+
+(defun czm/project-try-local (dir)
+  "Determine if DIR is a non-Git project.
+DIR must include a .project file to be considered a project."
+  (let ((root (locate-dominating-file dir ".project")))
+    (and root (cons 'local root))))
+
+(use-package project
+  :elpaca nil
+  
+  :config
+  (add-to-list 'project-find-functions 'czm/project-try-local))
+
+;;; ------------------------------ ABBREV and SPELLING ------------------------------
+
+(use-package emacs
+  :elpaca nil
+  
+  :custom
+  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
+  (save-abbrevs 'silently)
+  
+  :hook
+  (text-mode . abbrev-mode)
+  
+  :config
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev_defs.el"))
+  (defun modify-abbrev-table (table abbrevs)
+    "Define abbreviations in TABLE given by ABBREVS."
+    (dolist (abbrev abbrevs)
+      (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
+
+(use-package czm-spell
+  :elpaca (:host github :repo "ultronozm/czm-spell.el")
+  :bind ("s-;" . czm-spell-then-abbrev))
+
+
+;;; ------------------------------ PUBLISH ------------------------------
+
+(defun czm-file-is-tex-or-bib (file)
+  "Return t if FILE is a .tex or .bib file."
+  (or (string-suffix-p ".tex" file)
+      (string-suffix-p ".bib" file)))
+
+(use-package publish
+  :elpaca (:host github :repo "ultronozm/publish.el")
+  :custom
+  (publish-repo-root "~/math")
+  (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
+
+(use-package library
+  :elpaca (:host github :repo "ultronozm/library.el"))
+
 ;;; ------------------------------ LATEX ------------------------------
 
 
@@ -925,6 +941,17 @@ The list is ordered from bottom to top."
              (insert "#+end_src")
              (newline))))
         ("C-c p" . czm-org-edit-latex-with-preview)))
+
+(defun czm/org-tmp-new ()
+  "Create new temporary org buffer."
+  (interactive)
+  (let ((dir "~/doit/")
+	(filename (format-time-string "tmp-%Y%m%dT%H%M%S.org")))
+    (unless (file-directory-p dir)
+      (make-directory dir t))
+    (let ((filepath (expand-file-name filename dir)))
+      (find-file filepath)
+      (save-buffer))))
 
 ;;; ------------------------------ ERC ------------------------------
 
@@ -1404,7 +1431,6 @@ and highlight most recent entry."
 ; sagemintex - need to rewrite this to use ob-sagemath
 ; symtex - needs debugging
 ; arxiv/bib stuff
-; publishing to ~/math
 
 ; (cmake-ide-build-dir . "build")
 
