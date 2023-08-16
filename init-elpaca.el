@@ -170,8 +170,7 @@
 
 ;;; ------------------------------ GIT ------------------------------
 
-(use-package magit
-  :ensure)
+(use-package magit)
 
 (defun czm/git-update-commit-push-this-file ()
   "Update, commit, and push the current file."
@@ -204,25 +203,16 @@
   (eldoc-echo-area-use-multiline-p t)
   (eldoc-idle-delay 0.25))
 
-(use-package copilot
-  :elpaca (:host github :repo "zerolfx/copilot.el")
-  :hook ((prog-mode LaTeX-mode) . copilot-mode)
-  :bind (:map copilot-completion-map
-              ("§" . copilot-accept-completion)))
-
 (use-package ef-themes
-  :ensure t
-  :demand t
+  :demand
   :config
   (load-theme 'ef-elea-dark t))
 
 (use-package vertico
-  :ensure
   :config
   (vertico-mode))
 
 (use-package marginalia
-  :ensure
   :demand
   :after vertico
   :config
@@ -231,13 +221,11 @@
          ("M-A" . marginalia-cycle)))
 
 (use-package orderless
-  :ensure t
   :after vertico
   :custom
   (completion-styles '(orderless basic)))
 
 (use-package consult
-  :ensure t
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c M-x" . consult-mode-command)
@@ -368,8 +356,6 @@
 
 
 (use-package embark
-  :ensure t
-  
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
    ("M-." . embark-dwim)        ;; good alternative: M-.
@@ -389,7 +375,7 @@
                  (window-parameters (mode-line-format . none)))))
 
 (use-package embark-consult
-  :ensure t ; only need to install it, embark loads it after consult if found
+  ;; only need to install it, embark loads it after consult if found
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
@@ -402,7 +388,6 @@
 
 
 (use-package company
-  :ensure t
   ;; :config (global-company-mode 1) ;; doesn't work in magit, for instance
   :custom
   (company-idle-delay 0.5) ;; how long to wait until popup.  Consider changing to 0.0?
@@ -423,15 +408,58 @@
 
 
 
+
+(use-package avy
+  :bind
+  (:map global-map
+        ("C-;" . avy-goto-line)
+        ("C-M-; y" . avy-copy-region)
+        ("C-M-; n" . avy-kill-ring-save-region)
+        ("C-M-; t" . avy-move-region)
+        ("C-M-; x" . avy-kill-region))
+  (:map isearch-mode-map
+        ("M-j" . avy-isearch)))
+
+
+(use-package ace-window
+  :bind
+  ("C-x o" . ace-window))
+
+
+
+
+
+(use-package which-key
+  :config
+  (which-key-mode))
+
+(use-package ace-link ; activate using 'o' in info/help/(...)
+  :config
+  (ace-link-setup-default))
+
+(use-package zzz-to-char
+  :bind
+  ("s-t" . zzz-to-char-up-to-char)
+  ("s-f" . zzz-to-char)
+  :custom
+  (zzz-to-char-reach 200))
+
+;;; ------------------------------ AI ------------------------------
+
 ;; unless (string-equal system-type "windows-nt")
 
 (use-package exec-path-from-shell
-  :ensure
   :init
   (exec-path-from-shell-initialize))
 
+(use-package copilot
+  :elpaca (:host github :repo "zerolfx/copilot.el"
+                 :files ("*.el" "dist"))
+  :hook ((prog-mode LaTeX-mode) . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("§" . copilot-accept-completion)))
+
 (use-package gptel
-  :ensure
   :after exec-path-from-shell
   :custom
   (gptel-model "gpt-4")
@@ -493,46 +521,6 @@ Or if you need to solve an equation, use something like sympy:
 Never describe the results of running code.  Instead, wait for me to run the code and then ask you to continue."))
 
 
-(use-package avy
-  :ensure t
-  :bind
-  (:map global-map
-        ("C-;" . avy-goto-line)
-        ("C-M-; y" . avy-copy-region)
-        ("C-M-; n" . avy-kill-ring-save-region)
-        ("C-M-; t" . avy-move-region)
-        ("C-M-; x" . avy-kill-region))
-  (:map isearch-mode-map
-        ("M-j" . avy-isearch)))
-
-
-(use-package ace-window
-  :ensure t
-  :bind
-  ("C-x o" . ace-window))
-
-
-
-
-
-(use-package which-key
-  :ensure t
-  :config
-  (which-key-mode))
-
-(use-package ace-link ; activate using 'o' in info/help/(...)
-  :ensure t
-  :config
-  (ace-link-setup-default))
-
-(use-package zzz-to-char
-  :ensure t
-  :bind
-  ("s-t" . zzz-to-char-up-to-char)
-  ("s-f" . zzz-to-char)
-  :custom
-  (zzz-to-char-reach 200))
-
 ;;; ------------------------------ REPEAT ------------------------------
 
 (use-package repeat
@@ -552,13 +540,11 @@ Never describe the results of running code.  Instead, wait for me to run the cod
 ;;; ------------------------------ FLYCHECK ------------------------------
 
 (use-package flycheck
-  :ensure t
   :config
   (setq flycheck-emacs-lisp-load-path 'inherit))
 
 
 (use-package flycheck-package
-  :ensure t
   :hook
   (emacs-lisp-mode . flycheck-package-setup))
 
@@ -680,7 +666,6 @@ DIR must include a .project file to be considered a project."
   :elpaca (:host github :repo "ultronozm/library.el"))
 
 ;;; ------------------------------ LATEX ------------------------------
-
 
 (use-package latex
   :elpaca  (auctex

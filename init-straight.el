@@ -334,7 +334,7 @@
 
 
 (use-package embark
-  ::straight embark
+  :straight embark
   
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
@@ -582,6 +582,45 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   (emacs-lisp-mode  . lispy-mode)
   (minibuffer-setup . czm-conditionally-enable-lispy))
 
+;;; ------------------------------ PROJECT ------------------------------
+
+; this redefines something in project.el.  Why?
+(cl-defmethod project-root ((project (head local)))
+  "TODO."
+  (cdr project))
+
+(defun czm/project-try-local (dir)
+  "Determine if DIR is a non-Git project.
+DIR must include a .project file to be considered a project."
+  (let ((root (locate-dominating-file dir ".project")))
+    (and root (cons 'local root))))
+
+(use-package project
+  :config
+  (add-to-list 'project-find-functions 'czm/project-try-local))
+
+;;; ------------------------------ ABBREV and SPELLING ------------------------------
+
+(use-package emacs
+  :custom
+  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
+  (save-abbrevs 'silently)
+  
+  :hook
+  (text-mode . abbrev-mode)
+  
+  :config
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev_defs.el"))
+  (defun modify-abbrev-table (table abbrevs)
+    "Define abbreviations in TABLE given by ABBREVS."
+    (dolist (abbrev abbrevs)
+      (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
+
+(use-package czm-spell
+  :straight (:host github :repo "ultronozm/czm-spell.el")
+  :bind ("s-;" . czm-spell-then-abbrev))
+
 
 
 ;;; OLD: ------------------------------------------------------------
@@ -610,6 +649,14 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   :config
   ;;(my/map-keys `(("C-c l l" ,#'Tex-command-master "pdf")) 'org-mode-map)
 )
+
+(use-package latex-extra
+  :straight latex-extra
+  :custom
+  (latex/override-preview-map nil)
+  :hook
+  (LaTeX-mode . latex-extra-mode))
+
     
 
 ;; (straight-use-package 'use-package)
