@@ -667,6 +667,32 @@ DIR must include a .project file to be considered a project."
 
 ;;; ------------------------------ LATEX ------------------------------
 
+(defun czm-tex-buffer-face ()
+  (setq buffer-face-mode-face '(:height 260 :width normal :family "Lucida Grande"))
+  (buffer-face-mode))
+
+(defun czm-tex-setup-environments-and-outline-regexp
+    (LaTeX-add-environments
+     '("lemma" LaTeX-env-label)
+     '("exercise" LaTeX-env-label)
+     '("example" LaTeX-env-label)
+     '("proposition" LaTeX-env-label)
+     '("corollary" LaTeX-env-label)
+     '("remark" LaTeX-env-label)
+     '("definition" LaTeX-env-label)
+     '("theorem" LaTeX-env-label))
+  (setq-local outline-regexp
+	      (concat "\\\\"
+		      (regexp-opt (append latex-metasection-list
+					  (mapcar #'car latex-section-alist)
+					  '("bibliography"))
+				  t))))
+
+(defun czm-widen-first (orig-fun &rest args)
+  (save-restriction
+    (widen)
+    (apply orig-fun args)))
+
 (use-package latex
   :elpaca  (auctex
             :files ("*.el" "*.info" "dir"
@@ -677,9 +703,21 @@ DIR must include a .project file to be considered a project."
              ("make")
              ("make" "install")))
   :demand
+  
+  :hook
+  (LaTeX-mode . TeX-fold-mode)
+  (LaTeX-mode . turn-on-reftex)
+  (LaTeX-mode . czm-tex-setup-environments-and-outline-regexp)
+  (LaTeX-mode . czm-tex-buffer-face)
+
+  :bind
+  ("s-a" . abbrev-mode)
+  
   :config
   (put 'LaTeX-narrow-to-environment 'disabled nil)
   (TeX-source-correlate-mode)
+  (advice-add 'TeX-view :around #'czm-widen-first) ; fixes bug in TeX-view
+  
   :custom
   (TeX-auto-save t)
   (TeX-parse-self t)
@@ -702,6 +740,31 @@ DIR must include a .project file to be considered a project."
   :after latex
   :hook
   (LaTeX-mode . spout-mode)
+  :custom
+  (spout-keys
+   '(("n" outline-next-visible-heading)
+     ("p" outline-previous-visible-heading)
+     ("u" outline-up-heading)
+     ("f" outline-forward-same-level)
+     ("b" outline-backward-same-level)
+     ("<left>" outline-promote windmove-left)
+     ("<right>" outline-demote windmove-right)
+     ("<" beginning-of-buffer)
+     (">" end-of-buffer)
+     ("<up>" outline-move-subtree-up windmove-up)
+     ("<down>" outline-move-subtree-down windmove-down)
+     ("s" outline-show-subtree)
+     ("d" outline-hide-subtree)
+     ("a" outline-show-all)
+     ("q" outline-hide-sublevels)
+     ("t" outline-hide-body)
+     ("k" outline-show-branches)
+     ("l" outline-hide-leaves)
+     ("i" outline-insert-heading)
+     ("o" outline-hide-other)
+     ("@" outline-mark-subtree)
+     ("z" foldout-zoom-subtree)
+     ("x" foldout-exit-fold)))
   :config
   (require 'texmathp)
   (defun LaTeX-skip-verbatim (orig-fun &rest args)
@@ -742,6 +805,30 @@ DIR must include a .project file to be considered a project."
   (czm-tex-fold-bib-file "~/doit/refs.bib")
   :hook
   (LaTeX-mode . tex-fold-mode))
+
+;; the following should perhaps be part of czm-tex-fold:
+
+(defun czm-tex-fold-macro-previous-word ()
+  (interactive)
+  (if TeX-fold-mode
+      (save-excursion
+	(backward-word)
+	(TeX-fold-item 'macro))))
+
+(advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
+
+
+(defun my-yank-after-advice (&rest _)
+  "Fold any yanked ref or eqref."
+  (when (and (eq major-mode 'latex-mode)
+             TeX-fold-mode
+             (string-match "\\\\\\(ref\\|eqref\\){\\([^}]+\\)}"
+                           (current-kill 0)))
+    (czm-tex-fold-macro-previous-word)))
+
+(advice-add 'yank :after #'my-yank-after-advice)
+
+;;
 
 (use-package tex-follow-avy
   :elpaca (:host github :repo "https://github.com/ultronozm/tex-follow-avy.el.git")
@@ -811,6 +898,28 @@ DIR must include a .project file to be considered a project."
   :after flycheck attrap
   :config
   (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer)))
+
+(defun czm/latex-tmp-new ()
+  "Create new temporary LaTeX buffer."
+  (interactive)
+  (let ((dir "~/doit/")
+	(filename (format-time-string "tmp-%Y%m%dT%H%M%S.tex")))
+    (unless (file-directory-p dir)
+      (make-directory dir t))
+    (let ((filepath (expand-file-name filename dir)))
+      (find-file filepath)
+      (save-buffer)
+      (czm-preview-timer-toggle))))
+
+(use-package czm-tex-edit
+  :elpaca (:host github :repo "ultronozm/czm-tex-edit.el")
+  :after latex
+)
+
+(use-package czm-tex-compile
+  :elpaca (:host github :repo "ultronozm/czm-tex-compile.el")
+  :after latex
+)
 
 ;;; --------------------------------- PDF ---------------------------------
 
@@ -1112,7 +1221,7 @@ and highlight most recent entry."
 (use-package sagemintex
   :elpaca (:host github :repo "ultronozm/sagemintex.el")
   :after latex mmm-mode sage-shell-mode
-  :demand t
+  :demand
   :custom
   (LaTeX-command "latex -shell-escape")
   :bind
