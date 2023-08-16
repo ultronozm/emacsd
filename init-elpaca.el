@@ -663,7 +663,10 @@ DIR must include a .project file to be considered a project."
   (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
 
 (use-package library
-  :elpaca (:host github :repo "ultronozm/library.el"))
+  :after latex
+  :elpaca (:host github :repo "ultronozm/library.el")
+  :bind
+  ("C-c n" . library-clipboard-to-refs))
 
 ;;; ------------------------------ LATEX ------------------------------
 
@@ -671,16 +674,16 @@ DIR must include a .project file to be considered a project."
   (setq buffer-face-mode-face '(:height 260 :width normal :family "Lucida Grande"))
   (buffer-face-mode))
 
-(defun czm-tex-setup-environments-and-outline-regexp
-    (LaTeX-add-environments
-     '("lemma" LaTeX-env-label)
-     '("exercise" LaTeX-env-label)
-     '("example" LaTeX-env-label)
-     '("proposition" LaTeX-env-label)
-     '("corollary" LaTeX-env-label)
-     '("remark" LaTeX-env-label)
-     '("definition" LaTeX-env-label)
-     '("theorem" LaTeX-env-label))
+(defun czm-tex-setup-environments-and-outline-regexp ()
+  (LaTeX-add-environments
+   '("lemma" LaTeX-env-label)
+   '("exercise" LaTeX-env-label)
+   '("example" LaTeX-env-label)
+   '("proposition" LaTeX-env-label)
+   '("corollary" LaTeX-env-label)
+   '("remark" LaTeX-env-label)
+   '("definition" LaTeX-env-label)
+   '("theorem" LaTeX-env-label))
   (setq-local outline-regexp
 	      (concat "\\\\"
 		      (regexp-opt (append latex-metasection-list
@@ -702,7 +705,6 @@ DIR must include a .project file to be considered a project."
              ("./configure" "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))")
              ("make")
              ("make" "install")))
-  :demand
   
   :hook
   (LaTeX-mode . TeX-fold-mode)
@@ -712,6 +714,9 @@ DIR must include a .project file to be considered a project."
 
   :bind
   ("s-a" . abbrev-mode)
+  ("s-q" . LaTeX-fill-buffer)
+  ("C-c C-n" . nil) 		; TeX-normal-mode
+  ("C-c #" . nil)
   
   :config
   (put 'LaTeX-narrow-to-environment 'disabled nil)
@@ -793,8 +798,7 @@ DIR must include a .project file to be considered a project."
 
 (use-package czm-tex-fold
   :elpaca (:host github :repo "ultronozm/czm-tex-fold.el")
-  :after latex
-  :demand
+  :after tex-fold
   :bind
   (:map TeX-fold-mode-map
         ("C-c C-o C-s" . czm-tex-fold-fold-section)
@@ -914,12 +918,60 @@ DIR must include a .project file to be considered a project."
 (use-package czm-tex-edit
   :elpaca (:host github :repo "ultronozm/czm-tex-edit.el")
   :after latex
-)
+  :bind
+  ("C-c t i" . czm-latex-emphasize)
+  ("C-c t b" . czm-latex-bold)
+  ("C-c t l" . czm-latex-underline)
+  ("C-c t u" . czm-latex-unemphasize)
+  ("C-c t e" . czm-latex-external-document-link)
+  ("C-c p e" . czm-repeat-most-recent-equation)
+  ("C-c p d" . czm-repeat-line-contents)
+  ("C-c p r" . czm-repeat-region)
+  ("C-c p s" . czm-substackify)
+  ("C-c p i" . czm-yank-interior-delete-delim)
+  ("C-c p f" . czm-fractionify-region)
+  ("C-c p b" . czm-enlarge-parentheses)
+  ("C-c p h" . czm-split-equation)
+  ("C-c i" . czm-make-equation-inline)
+  ("C-c w" . czm-make-equation-align)
+  ("s-<return>" . czm-exit-equation-save-and-previous-or-insert-item-without-evil)
+  :config
+  (czm-latex-define-color-functions-and-bindings
+   (
+    ("red" . "r")
+    ("green" . "g")
+    ("blue" . "b")
+    ("yellow" . "y")
+    ("orange" . "o")
+    ("purple" . "p")
+    ("black" . "k")
+    ("white" . "w")
+    ("cyan" . "c")
+    ("magenta" . "m")
+    ("lime" . "l")
+    ("teal" . "t")
+    ("violet" . "v")
+    ("pink" . "i")
+    ("brown" . "n")
+    ("gray" . "a")
+    ("darkgreen" . "d")
+    ("lightblue" . "h")
+    ("lavender" . "e")
+    ("maroon" . "u")
+    ("beige" . "j")
+    ("indigo" . "x")
+    ("turquoise" . "q")
+    ("gold" . "f")
+    ("silver" . "s")
+    ("bronze" . "z"))))
 
 (use-package czm-tex-compile
   :elpaca (:host github :repo "ultronozm/czm-tex-compile.el")
   :after latex
-)
+  :bind
+  ("C-c k" . czm-latexmk-this)
+  ("s-{" . czm/latex-next-log-error)
+  ("s-}" . czm/latex-previous-log-error))
 
 ;;; --------------------------------- PDF ---------------------------------
 
@@ -1221,7 +1273,6 @@ and highlight most recent entry."
 (use-package sagemintex
   :elpaca (:host github :repo "ultronozm/sagemintex.el")
   :after latex mmm-mode sage-shell-mode
-  :demand
   :custom
   (LaTeX-command "latex -shell-escape")
   :bind
@@ -1246,7 +1297,6 @@ and highlight most recent entry."
 (use-package dynexp
   :elpaca (:host github :repo "ultronozm/dynexp.el")
   :after latex
-  :demand
   :bind
   (:map LaTeX-mode-map
         ("SPC" . dynexp-space)
