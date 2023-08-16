@@ -696,6 +696,25 @@ DIR must include a .project file to be considered a project."
     (widen)
     (apply orig-fun args)))
 
+
+(defun frame-on-primary-monitor-p (frame)
+  (let* ((monitors (display-monitor-attributes-list))
+	 (primary-monitor (car monitors))
+	 (frame-monitor (frame-monitor-attributes frame)))
+    (equal primary-monitor frame-monitor)))
+
+(defun my-preview-scale-function ()
+  (* 1.5 (funcall (preview-scale-from-face))))
+
+(defun my-preview-scale-function ()
+  (* (funcall (preview-scale-from-face))
+     (if (frame-on-primary-monitor-p (selected-frame))
+	 1.5
+       1.8
+       ;; 2.7
+       )))
+
+
 (use-package latex
   :elpaca  (auctex
             :files ("*.el" "*.info" "dir"
@@ -711,12 +730,14 @@ DIR must include a .project file to be considered a project."
   (LaTeX-mode . turn-on-reftex)
   (LaTeX-mode . czm-tex-setup-environments-and-outline-regexp)
   (LaTeX-mode . czm-tex-buffer-face)
+  (LaTeX-mode . outline-minor-mode)
 
   :bind
-  ("s-a" . abbrev-mode)
-  ("s-q" . LaTeX-fill-buffer)
-  ("C-c C-n" . nil) 		; TeX-normal-mode
-  ("C-c #" . nil)
+  (:map LaTeX-mode-map
+        ("s-a" . abbrev-mode)
+        ("s-q" . LaTeX-fill-buffer)
+        ("C-c C-n" . nil)               ; TeX-normal-mode
+        ("C-c #" . nil))
   
   :config
   (put 'LaTeX-narrow-to-environment 'disabled nil)
@@ -731,14 +752,27 @@ DIR must include a .project file to be considered a project."
    '("displaymath" "floats" "graphics" "textmath" "sections" "footnotes" "showlabels"))
                                         ;  (preview-gs-command "/usr/local/bin/gs")  ; compare with rungs?
                                         ;  (preview-image-type 'pnm) ; compare with png?
+
+
+  
+  (preview-scale-function #'my-preview-scale-function)
   ;; (preview-scale-function 1.5) ; maybe enable, or see what else you were doing?
   (reftex-derive-label-parameters
    '(15 50 t 1 "-"
 	("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
 	t)))
-  
+
+;;  don't want foldout to include "bibliography"
+(defun czm-LaTeX-outline-level-advice (orig-fun &rest args)
+  (if (looking-at "\\\\bibliography") 1 (apply orig-fun args)))
+
 (use-package foldout
-  :elpaca nil)
+  :elpaca nil
+  :config
+  (advice-add 'LaTeX-outline-level :around #'czm-LaTeX-outline-level-advice))
+
+
+
 
 (use-package spout
   :elpaca (:host github :repo "ultronozm/spout.el")
@@ -788,6 +822,13 @@ DIR must include a .project file to be considered a project."
     (advice-add f :around #'LaTeX-skip-verbatim)))
 
 (use-package latex-extra
+  :after latex
+  :bind
+  (:map latex-extra-mode-map
+        ("C-c f" . nil)
+        ("TAB" . nil)
+        ("C-M-a" . latex/beginning-of-environment)
+        ("C-M-e" . latex/end-of-environment))
   :custom
   (latex/override-preview-map nil)
   :hook
@@ -1641,3 +1682,53 @@ and highlight most recent entry."
 ;;  ;; Your init file should contain only one such instance.
 ;;  ;; If there is more than one, they won't work right.
 ;;  )
+
+
+(defun git-repos-with-changes ()
+    "Find git repositories in subdirectories of the current directory with changes."
+    (interactive)
+    (let ((current-directory default-directory))
+      (dolist (dir (directory-files current-directory t))
+        (when (and (file-directory-p dir)
+                   (not (member (file-name-nondirectory dir) '("." "..")))
+                   (magit-git-repo-p dir t))
+          (let ((default-directory dir))
+            (unless (string-empty-p (shell-command-to-string "git status --porcelain"))
+              (print (concat "Git repository with uncommitted changes: " dir))))))))
+
+
+(defun git-repos-with-changes-2 ()
+    "Find git repositories in subdirectories of the current directory with changes."
+    (interactive)
+    (let ((current-directory default-directory))
+      (dolist (dir (directory-files current-directory t))
+        (when (and (file-directory-p dir)
+                   (not (member (file-name-nondirectory dir) '("." "..")))
+                   (magit-git-repo-p dir t))
+          (let ((default-directory dir))
+            (unless (string-empty-p (shell-command-to-string
+                                     (concat "git log "
+                                             (magit-get-upstream-branch)
+                                             "..HEAD")))
+              (print (concat "Git repository with unpushed changes: " dir))))))))
+
+(defvar czm-package-repos-dir "~/.emacs.d/elpaca/repos")
+
+(defun czm-scan-package-repos ()
+  "Display a buffer explaining git package status.
+Say which repos have uncommitted changes, and which have unpushed
+commits."
+  (interactive)
+  (dolist (dir (directory-files czm-package-repos-dir t))
+    (when (and (file-directory-p dir)
+               (not (member (file-name-nondirectory dir) '("." "..")))
+               (magit-git-repo-p dir t))
+      (let ((default-directory dir))
+        (unless (string-empty-p (shell-command-to-string "git status --porcelain"))
+          (print (concat "Git repository with uncommitted changes: " dir)))            
+        (unless (string-empty-p (shell-command-to-string
+                                 (concat "git log "
+                                         (magit-get-upstream-branch)
+                                         "..HEAD")))
+          (print (concat "Git repository with unpushed changes: " dir))))))  
+  )
