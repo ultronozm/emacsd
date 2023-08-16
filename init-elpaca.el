@@ -799,6 +799,7 @@ DIR must include a .project file to be considered a project."
 (use-package czm-tex-fold
   :elpaca (:host github :repo "ultronozm/czm-tex-fold.el")
   :after tex-fold
+  :demand
   :bind
   (:map TeX-fold-mode-map
         ("C-c C-o C-s" . czm-tex-fold-fold-section)
@@ -972,6 +973,21 @@ DIR must include a .project file to be considered a project."
   ("C-c k" . czm-latexmk-this)
   ("s-{" . czm/latex-next-log-error)
   ("s-}" . czm/latex-previous-log-error))
+
+(use-package czm-preview
+  :elpaca (:host github :repo "ultronozm/czm-preview.el")
+  :after latex
+  :mode ("\\.tex\\'" . latex-mode)
+  :bind
+  (:map LaTeX-mode-map
+	("s-u" . czm-preview-timer-toggle)
+	("s-e" . czm-preview-current-environment)
+	("C-c p m" . czm-preview-toggle-master))
+  :config
+  :custom
+  (czm-preview-TeX-master "~/doit/preview-master.tex")
+  :hook
+  (LaTeX-mode . czm-preview-setup))
 
 ;;; --------------------------------- PDF ---------------------------------
 
