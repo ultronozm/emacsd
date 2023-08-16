@@ -4726,9 +4726,9 @@ typedef vector<int> VI;
     ("bms" "<+START+><+TAB+>\\begin{minted}{sage}
 <+++>
 <+TAB+>\\end{minted}<+END+>" dynexp-fold-and-mmm-parse)
-    ("ceq" "" czm-repeat-most-recent-equation)
-    ("cp" "" czm-repeat-most-recent-equation)
-    ("cal" "" czm-repeat-align-segment)
+    ("ceq" "" czm-tex-edit-repeat-most-recent-equation)
+    ("cp" "" czm-tex-edit-repeat-most-recent-equation)
+    ("cal" "" czm-tex-edit-repeat-align-segment)
     ("bds" "\\dotsb" nil)
     ("bea" "<+START+><+TAB+>\\begin{array}{ccc}
 <+TAB+><+++>
@@ -6899,7 +6899,7 @@ Publisher." nil)
     ("sst" "<+START+>\\sideset{}{<+++>}<++><+END+>" dynexp)
     ("sstu" "<+START+>\\sideset{<+++>}<++><+END+>" dynexp)
     ("ssz" " \\scriptstyle" nil)
-    ("stk" "" czm-substackify)
+    ("stk" "" czm-tex-edit-substackify)
     ("sube" "\\subseteq" nil)
     ("subne" "\\subsetneq" nil)
     ("subs" "\\subset" nil)

@@ -635,6 +635,7 @@ DIR must include a .project file to be considered a project."
   
   :hook
   (text-mode . abbrev-mode)
+  (prog-mode . abbrev-mode)
   
   :config
   (quietly-read-abbrev-file (concat user-emacs-directory "abbrev_defs.el"))
@@ -735,6 +736,7 @@ DIR must include a .project file to be considered a project."
   :bind
   (:map LaTeX-mode-map
         ("s-a" . abbrev-mode)
+	("s-c" . preview-clearout-at-point)
         ("s-q" . LaTeX-fill-buffer)
         ("C-c C-n" . nil)               ; TeX-normal-mode
         ("C-c #" . nil))
@@ -825,12 +827,12 @@ DIR must include a .project file to be considered a project."
   :after latex
   :bind
   (:map latex-extra-mode-map
-        ("C-c f" . nil)
         ("TAB" . nil)
         ("C-M-a" . latex/beginning-of-environment)
         ("C-M-e" . latex/end-of-environment))
   :custom
   (latex/override-preview-map nil)
+  (latex/override-font-map nil)
   :hook
   (LaTeX-mode . latex-extra-mode))
 
@@ -955,30 +957,33 @@ DIR must include a .project file to be considered a project."
     (let ((filepath (expand-file-name filename dir)))
       (find-file filepath)
       (save-buffer)
-      (czm-preview-timer-toggle))))
+      ;; (czm-preview-timer-toggle)
+      )))
 
 (use-package czm-tex-edit
   :elpaca (:host github :repo "ultronozm/czm-tex-edit.el")
-  :after latex
+  :after latex dynexp
   :bind
-  ("C-c t i" . czm-latex-emphasize)
-  ("C-c t b" . czm-latex-bold)
-  ("C-c t l" . czm-latex-underline)
-  ("C-c t u" . czm-latex-unemphasize)
-  ("C-c t e" . czm-latex-external-document-link)
-  ("C-c p e" . czm-repeat-most-recent-equation)
-  ("C-c p d" . czm-repeat-line-contents)
-  ("C-c p r" . czm-repeat-region)
-  ("C-c p s" . czm-substackify)
-  ("C-c p i" . czm-yank-interior-delete-delim)
-  ("C-c p f" . czm-fractionify-region)
-  ("C-c p b" . czm-enlarge-parentheses)
-  ("C-c p h" . czm-split-equation)
-  ("C-c i" . czm-make-equation-inline)
-  ("C-c w" . czm-make-equation-align)
-  ("s-<return>" . czm-exit-equation-save-and-previous-or-insert-item-without-evil)
+  (:map LaTeX-mode-map
+        ("C-c t i" . czm-tex-edit-emphasize)
+        ("C-c t b" . czm-tex-edit-bold)
+        ("C-c t l" . czm-tex-edit-underline)
+        ("C-c t u" . czm-tex-edit-unemphasize)
+        ("C-c t e" . czm-tex-edit-external-document-link)
+        ("C-c p e" . czm-tex-edit-repeat-most-recent-equation)
+        ("C-c p d" . czm-tex-edit-repeat-line-contents)
+        ("C-c p r" . czm-tex-edit-repeat-region)
+        ("C-c p s" . czm-tex-edit-substackify)
+        ("C-c p i" . czm-tex-edit-yank-interior-delete-delim)
+        ("C-c p f" . czm-tex-edit-fractionify-region)
+        ("C-c p b" . czm-tex-edit-enlarge-parentheses)
+        ("C-c p h" . czm-tex-edit-split-equation)
+        ("C-c e" . czm-tex-edit-make-equation-numbered)
+        ("C-c i" . czm-tex-edit-make-equation-inline)
+        ("C-c w" . czm-tex-edit-make-equation-align)
+        ("s-<return>" . czm-tex-edit-return))
   :config
-  (czm-latex-define-color-functions-and-bindings
+  (czm-tex-edit-define-color-functions-and-bindings
    (
     ("red" . "r")
     ("green" . "g")
@@ -1012,8 +1017,8 @@ DIR must include a .project file to be considered a project."
   :after latex
   :bind
   ("C-c k" . czm-latexmk-this)
-  ("s-{" . czm/latex-next-log-error)
-  ("s-}" . czm/latex-previous-log-error))
+  ("s-[" . czm/latex-next-log-error)
+  ("s-]" . czm/latex-previous-log-error))
 
 (use-package czm-preview
   :elpaca (:host github :repo "ultronozm/czm-preview.el")
@@ -1021,7 +1026,7 @@ DIR must include a .project file to be considered a project."
   :mode ("\\.tex\\'" . latex-mode)
   :bind
   (:map LaTeX-mode-map
-	("s-u" . czm-preview-timer-toggle)
+	("s-u" . czm-preview-mode)
 	("s-e" . czm-preview-current-environment)
 	("C-c p m" . czm-preview-toggle-master))
   :config
@@ -1712,7 +1717,7 @@ and highlight most recent entry."
                                              "..HEAD")))
               (print (concat "Git repository with unpushed changes: " dir))))))))
 
-(defvar czm-package-repos-dir "~/.emacs.d/elpaca/repos")
+(defvar czm-package-repos-dir (concat user-emacs-directory "elpaca/repos"))
 
 (defun czm-scan-package-repos ()
   "Display a buffer explaining git package status.
