@@ -588,6 +588,9 @@ Never describe the results of running code.  Instead, wait for me to run the cod
     (lispy-define-key map "c" 'lispy-clone)
     (lispy-define-key map ";" 'lispy-comment)
     (define-key map (kbd "\"") 'lispy-quotes)
+    (define-key map (kbd "M-1") 'lispy-describe-inline)
+    (define-key map (kbd "M-2") 'lispy-arglist-inline)
+    
     ;; (lispy-define-key map "w" 'lispy-move-up)
     ;; (lispy-define-key map "s" 'lispy-move-down)
     ;; (lispy-define-key map "r" 'lispy-raise)
