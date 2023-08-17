@@ -113,7 +113,8 @@ Otherwise, kill the region between START and END."
       (delete-region start end)
     (kill-region start end)))
 
-
+;; TODO: add "burp.el" functionality here, since it's very handy when
+;; working with startup configs
 
 (defun czm/find-lisp-file ()
   "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory."
