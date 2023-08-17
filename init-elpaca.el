@@ -168,6 +168,51 @@
   (prog-mode . outline-minor-mode)
   (prog-mode . hs-minor-mode))
 
+;;; ------------------------------ LISP ------------------------------
+
+(use-package emacs
+  :elpaca nil
+
+  :custom
+  (delete-pair-blink-delay 0)
+  :bind
+  (:map emacs-lisp-mode-map
+        ("M-_" . delete-pair)
+        ("M-+" . kill-backward-up-list)))
+
+(use-package lispy
+  :ensure
+  :config
+  (setcdr lispy-mode-map nil)
+  (let ((map lispy-mode-map))
+    (lispy-define-key map ">" 'lispy-slurp-or-barf-right)
+    (lispy-define-key map "<" 'lispy-slurp-or-barf-left)
+    (lispy-define-key map "/" 'lispy-splice)
+    (lispy-define-key map "+" 'lispy-join)
+    (define-key map (kbd "C-M-j") 'lispy-split)
+    (lispy-define-key map "c" 'lispy-clone)
+    (lispy-define-key map ";" 'lispy-comment)
+    (define-key map (kbd "\"") 'lispy-quotes)
+    (define-key map (kbd "M-1") 'lispy-describe-inline)
+    (define-key map (kbd "M-2") 'lispy-arglist-inline)
+
+    ;; (lispy-define-key map "w" 'lispy-move-up)
+    ;; (lispy-define-key map "s" 'lispy-move-down)
+    ;; (lispy-define-key map "r" 'lispy-raise)
+    ;; (lispy-define-key map "A" 'lispy-beginning-of-defun)
+    ;; (lispy-define-key map "C" 'lispy-convolute)
+    ;; (lispy-define-key map "X" 'lispy-convolute-left)
+    ;; (lispy-define-key map "q" 'lispy-ace-paren)
+    ;; (lispy-define-key map "-" 'lispy-ace-subword)
+    ;; (lispy-define-key map "e" 'lispy-eval)
+    map)
+  (defun czm-conditionally-enable-lispy ()
+    (when (eq this-command 'eval-expression)
+      (lispy-mode 1)))
+  :hook
+  (emacs-lisp-mode  . lispy-mode)
+  (minibuffer-setup . czm-conditionally-enable-lispy))
+
 ;;; ------------------------------ GIT ------------------------------
 
 (use-package magit)
@@ -209,19 +254,19 @@
   (load-theme 'ef-elea-dark t))
 
 (use-package vertico
+  :demand
   :config
   (vertico-mode))
 
 (use-package marginalia
   :demand
-  :after vertico
   :config
   (marginalia-mode)
   :bind (:map minibuffer-local-map
          ("M-A" . marginalia-cycle)))
 
 (use-package orderless
-  :after vertico
+  :demand
   :custom
   (completion-styles '(orderless basic)))
 
@@ -563,50 +608,6 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   (repeatize 'flycheck-command-map))
 
 
-;;; ------------------------------ LISP ------------------------------
-
-(use-package emacs
-  :elpaca nil
-  
-  :custom
-  (delete-pair-blink-delay 0)
-  :bind
-  (:map emacs-lisp-mode-map
-        ("M-_" . delete-pair)
-        ("M-+" . kill-backward-up-list)))
-
-(use-package lispy
-  :ensure
-  :config
-  (setcdr lispy-mode-map nil)
-  (let ((map lispy-mode-map))
-    (lispy-define-key map ">" 'lispy-slurp-or-barf-right)
-    (lispy-define-key map "<" 'lispy-slurp-or-barf-left)
-    (lispy-define-key map "/" 'lispy-splice)
-    (lispy-define-key map "+" 'lispy-join)
-    (define-key map (kbd "C-M-j") 'lispy-split)
-    (lispy-define-key map "c" 'lispy-clone)
-    (lispy-define-key map ";" 'lispy-comment)
-    (define-key map (kbd "\"") 'lispy-quotes)
-    (define-key map (kbd "M-1") 'lispy-describe-inline)
-    (define-key map (kbd "M-2") 'lispy-arglist-inline)
-    
-    ;; (lispy-define-key map "w" 'lispy-move-up)
-    ;; (lispy-define-key map "s" 'lispy-move-down)
-    ;; (lispy-define-key map "r" 'lispy-raise)
-    ;; (lispy-define-key map "A" 'lispy-beginning-of-defun)
-    ;; (lispy-define-key map "C" 'lispy-convolute)
-    ;; (lispy-define-key map "X" 'lispy-convolute-left)
-    ;; (lispy-define-key map "q" 'lispy-ace-paren)
-    ;; (lispy-define-key map "-" 'lispy-ace-subword)
-    ;; (lispy-define-key map "e" 'lispy-eval)
-    map)
-  (defun czm-conditionally-enable-lispy ()
-    (when (eq this-command 'eval-expression)
-      (lispy-mode 1)))
-  :hook
-  (emacs-lisp-mode  . lispy-mode)
-  (minibuffer-setup . czm-conditionally-enable-lispy))
 
 ;;; ------------------------------ PROJECT ------------------------------
 
@@ -637,8 +638,8 @@ DIR must include a .project file to be considered a project."
     ; appropriate major mode was loaded.  Hence the ":after" entries
     ; in the use-package declaration below
     (error "Abbrev table does not exist" table))
-  (dolist (abbrev ,abbrevs)
-    (define-abbrev ,table (car abbrev) (cadr abbrev) (caddr abbrev))))
+  (dolist (abbrev abbrevs)
+    (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
 (use-package emacs
   :elpaca nil
@@ -651,7 +652,6 @@ DIR must include a .project file to be considered a project."
   
   :hook
   (text-mode . abbrev-mode)
-  (prog-mode . abbrev-mode)
   
   :config
   (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
@@ -663,25 +663,10 @@ DIR must include a .project file to be considered a project."
   :elpaca (:host github :repo "ultronozm/czm-spell.el")
   :bind ("s-;" . czm-spell-then-abbrev))
 
-
-;;; ------------------------------ PUBLISH ------------------------------
-
-(defun czm-file-is-tex-or-bib (file)
-  "Return t if FILE is a .tex or .bib file."
-  (or (string-suffix-p ".tex" file)
-      (string-suffix-p ".bib" file)))
-
-(use-package publish
-  :elpaca (:host github :repo "ultronozm/publish.el")
-  :custom
-  (publish-repo-root "~/math")
-  (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
-
-(use-package library
-  :after latex
-  :elpaca (:host github :repo "ultronozm/library.el")
-  :bind
-  ("C-c n" . library-clipboard-to-refs))
+;; Forcing this to load so that c++-mode-abbrev-table is defined.
+(use-package cc-mode 
+  :elpaca nil
+  :demand)
 
 ;;; ------------------------------ LATEX ------------------------------
 
@@ -729,16 +714,22 @@ DIR must include a .project file to be considered a project."
        ;; 2.7
        )))
 
-
 (use-package latex
   :elpaca  (auctex
             :files ("*.el" "*.info" "dir"
                     "doc" "etc" "images" "latex" "style")
             :pre-build
             (("./autogen.sh")
-             ("./configure" "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))")
+             ("./configure"
+              "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))"
+              "--with-lispdir=."
+              ;; "--with-emacs=\"$(PWD)/Emacs\""
+              ;; (concat "--with-emacs=" (concat invocation-directory invocation-name))
+              )
              ("make")
              ("make" "install")))
+  
+  :demand ; otherwise, madness ensues.
   
   :hook
   (LaTeX-mode . TeX-fold-mode)
@@ -746,6 +737,7 @@ DIR must include a .project file to be considered a project."
   (LaTeX-mode . czm-tex-setup-environments-and-outline-regexp)
   (LaTeX-mode . czm-tex-buffer-face)
   (LaTeX-mode . outline-minor-mode)
+  (LaTeX-mode . abbrev-mode)
 
   :bind
   (:map LaTeX-mode-map
@@ -786,8 +778,6 @@ DIR must include a .project file to be considered a project."
   :elpaca nil
   :config
   (advice-add 'LaTeX-outline-level :around #'czm-LaTeX-outline-level-advice))
-
-
 
 
 (use-package spout
@@ -856,8 +846,8 @@ DIR must include a .project file to be considered a project."
 
 (use-package czm-tex-fold
   :elpaca (:host github :repo "ultronozm/czm-tex-fold.el")
-  :after tex-fold
-  :demand
+  :demand ; otherwise, this doesn't work until the second time you
+          ; open a .tex file.  but it needs to be loaded after auctex.
   :bind
   (:map TeX-fold-mode-map
         ("C-c C-o C-s" . czm-tex-fold-fold-section)
@@ -1048,7 +1038,8 @@ DIR must include a .project file to be considered a project."
   :custom
   (czm-preview-TeX-master "~/doit/preview-master.tex")
   :hook
-  (LaTeX-mode . czm-preview-setup))
+  (LaTeX-mode . czm-preview-setup)
+  (LaTeX-mode . czm-preview-mode))
 
 ;;; --------------------------------- PDF ---------------------------------
 
@@ -1175,6 +1166,25 @@ The list is ordered from bottom to top."
     (let ((filepath (expand-file-name filename dir)))
       (find-file filepath)
       (save-buffer))))
+
+;;; ------------------------------ PUBLISH ------------------------------
+
+(defun czm-file-is-tex-or-bib (file)
+  "Return t if FILE is a .tex or .bib file."
+  (or (string-suffix-p ".tex" file)
+      (string-suffix-p ".bib" file)))
+
+(use-package publish
+  :elpaca (:host github :repo "ultronozm/publish.el")
+  :custom
+  (publish-repo-root "~/math")
+  (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
+
+(use-package library
+  :after latex czm-tex-util
+  :elpaca (:host github :repo "ultronozm/library.el")
+  :bind
+  ("C-c n" . library-clipboard-to-refs))
 
 ;;; ------------------------------ ERC ------------------------------
 
