@@ -629,8 +629,21 @@ DIR must include a .project file to be considered a project."
 
 ;;; ------------------------------ ABBREV and SPELLING ------------------------------
 
+
+(defun modify-abbrev-table (table abbrevs)
+  "Define abbreviations in TABLE given by ABBREVS."
+  (unless table
+    ; This probably means that you called this function before the
+    ; appropriate major mode was loaded.  Hence the ":after" entries
+    ; in the use-package declaration below
+    (error "Abbrev table does not exist" table))
+  (dolist (abbrev ,abbrevs)
+    (define-abbrev ,table (car abbrev) (cadr abbrev) (caddr abbrev))))
+
 (use-package emacs
   :elpaca nil
+
+  :after latex cc-mode
   
   :custom
   (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
@@ -641,11 +654,9 @@ DIR must include a .project file to be considered a project."
   (prog-mode . abbrev-mode)
   
   :config
-  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev_defs.el"))
-  (defun modify-abbrev-table (table abbrevs)
-    "Define abbreviations in TABLE given by ABBREVS."
-    (dolist (abbrev abbrevs)
-      (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
+  (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
+    (when (file-exists-p abbrev-file)
+      (quietly-read-abbrev-file abbrev-file)))
   (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
 
 (use-package czm-spell
@@ -840,7 +851,8 @@ DIR must include a .project file to be considered a project."
   (LaTeX-mode . latex-extra-mode))
 
 (use-package czm-tex-util
-  :elpaca (:host github :repo "ultronozm/czm-tex-util.el"))
+  :elpaca (:host github :repo "ultronozm/czm-tex-util.el")
+  :after latex)
 
 (use-package czm-tex-fold
   :elpaca (:host github :repo "ultronozm/czm-tex-fold.el")
