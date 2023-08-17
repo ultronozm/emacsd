@@ -251,7 +251,9 @@
 (use-package ef-themes
   :demand
   :config
-  (load-theme 'ef-elea-dark t))
+  (load-theme 'ef-frost t)
+  ;; (load-theme 'ef-elea-dark t)
+  )
 
 (use-package vertico
   :demand
@@ -491,10 +493,9 @@
 
 ;;; ------------------------------ AI ------------------------------
 
-;; unless (string-equal system-type "windows-nt")
-
 (use-package exec-path-from-shell
-  :init
+  :if (memq window-system '(mac ns))
+  :config 
   (exec-path-from-shell-initialize))
 
 (use-package copilot
@@ -723,6 +724,7 @@ DIR must include a .project file to be considered a project."
              ("./configure"
               "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))"
               "--with-lispdir=."
+              "--with-emacs=/Users/paulnelson/gnu-emacs6/nextstep/Emacs.app/Contents/MacOS/Emacs"
               ;; "--with-emacs=\"$(PWD)/Emacs\""
               ;; (concat "--with-emacs=" (concat invocation-directory invocation-name))
               )
