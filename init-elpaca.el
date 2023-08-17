@@ -1535,7 +1535,8 @@ and highlight most recent entry."
   (cmake-build-options "-j 8 --verbose"))
 
 (use-package czm-cpp
-  :elpaca (:host github :repo "ultronozm/czm-cpp.el"))
+  :elpaca (:host github :repo "ultronozm/czm-cpp.el")
+  :after cmake-build)
 
 ;;; ------------------------------ MISC ------------------------------
 
