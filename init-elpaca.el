@@ -250,7 +250,8 @@
 (use-package ef-themes
   :demand
   :config
-  (load-theme 'ef-frost t)
+  (load-theme 'modus-vivendi t)
+  ;; (load-theme 'ef-frost t)
   ;; (load-theme 'ef-elea-dark t)
   )
 
