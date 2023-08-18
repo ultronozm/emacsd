@@ -167,6 +167,15 @@
   (prog-mode . outline-minor-mode)
   (prog-mode . hs-minor-mode))
 
+;;; ------------------------------ EXEC-PATH ------------------------------
+
+(use-package exec-path-from-shell
+  :demand
+  :if (memq window-system '(mac ns))
+  :config 
+  (exec-path-from-shell-initialize))
+
+
 ;;; ------------------------------ LISP ------------------------------
 
 (use-package emacs
@@ -250,7 +259,8 @@
 (use-package ef-themes
   :demand
   :config
-  (load-theme 'modus-vivendi t)
+  ;; (load-theme 'modus-vivendi t)
+  (load-theme 'modus-operandi t)
   ;; (load-theme 'ef-frost t)
   ;; (load-theme 'ef-elea-dark t)
   )
@@ -493,11 +503,6 @@
 
 ;;; ------------------------------ AI ------------------------------
 
-(use-package exec-path-from-shell
-  :if (memq window-system '(mac ns))
-  :config 
-  (exec-path-from-shell-initialize))
-
 (use-package copilot
   :elpaca (:host github :repo "zerolfx/copilot.el"
                  :files ("*.el" "dist"))
@@ -677,19 +682,33 @@ DIR must include a .project file to be considered a project."
 
 (use-package latex
   :elpaca  (auctex
-            :files ("*.el" "*.info" "dir"
-                    "doc" "etc" "images" "latex" "style")
+            :files
+            ("*")
+            ;; ("*.el" "*.info" "dir"
+            ;; ;;  "*.el.in"
+            ;;  ;; "*.sh" "configure" "Makefile.in" "Makefile" "*.m4" "install-sh"
+            ;;  "doc" "etc" "images" "latex" "style")
             :pre-build
-            (("./autogen.sh")
+            (
+             ("./autogen.sh")
              ("./configure"
               "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))"
-              "--with-lispdir=."
-              "--with-emacs=/Users/paulnelson/gnu-emacs6/nextstep/Emacs.app/Contents/MacOS/Emacs"
-              ;; "--with-emacs=\"$(PWD)/Emacs\""
-              ;; (concat "--with-emacs=" (concat invocation-directory invocation-name))
-              )
+              "--with-lispdir=.")
+             ;; ("cp" "-L" "lpath.el" "lpath.tmp")
+             ;; ("rm" "lpath.el")
+             ;; ("cp" "lpath.tmp" "lpath.el")
              ("make")
-             ("make" "install")))
+             ("make" "install")
+             )
+            :build (:not elpaca--byte-compile)
+            :post-build
+            (
+             ;; ("cp" "-L" "lpath.el" "lpath.tmp")
+             ;; ("rm" "lpath.el")
+             ;; ("cp" "lpath.tmp" "lpath.el")
+             ;; ("make")
+             ;; ("make" "install")
+             ))
   
   :demand ; otherwise, madness ensues.
 
@@ -735,7 +754,6 @@ DIR must include a .project file to be considered a project."
    '(15 50 t 1 "-"
 	("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
 	t)))
-(elpaca-wait) ; wait for auctex to finish building
 
 ;;  don't want foldout to include "bibliography"
 (defun czm-LaTeX-outline-level-advice (orig-fun &rest args)
@@ -1502,6 +1520,7 @@ and highlight most recent entry."
   (setq read-process-output-max (* 1024 1024)))
 
 (use-package clang-format+
+  :after clang-format
   :hook
   (c-mode-common . clang-format+-mode))
 
@@ -1624,3 +1643,11 @@ and highlight most recent entry."
                     "sultex"
                     "symtex"
                     "tex-follow-avy"))
+
+(defun czm-repos-uncompiled ()
+  (interactive)
+  (dolist (name czm-repos)
+    (let ((elc-file
+           (concat "~/.emacs.d/elpaca/builds/" name "/" name ".elc")))
+      (unless (file-exists-p elc-file)
+        (message "%s.elc not found" name)))))
