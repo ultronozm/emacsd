@@ -732,6 +732,10 @@ DIR must include a .project file to be considered a project."
              ("make" "install")))
   
   :demand ; otherwise, madness ensues.
+
+  :config
+  (setq TeX-data-directory (expand-file-name  "~/.emacs.d/elpaca/builds/auctex"))
+  (setq TeX-lisp-directory TeX-data-directory)
   
   :hook
   (LaTeX-mode . TeX-fold-mode)
