@@ -83,7 +83,6 @@
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
   (fset 'yes-or-no-p 'y-or-n-p)
-  (global-hl-line-mode)
   (minibuffer-depth-indicate-mode)
   (global-auto-revert-mode)
   (setq-default indent-tabs-mode nil)
@@ -1678,4 +1677,10 @@ commits."
                                          (magit-get-upstream-branch)
                                          "..HEAD")))
           (print (concat "Git repository with unpushed changes: " dir))))))  
+  )
+
+(use-package pulsar
+  :config
+  (add-to-list 'pulsar-pulse-functions #'avy-goto-line)
+  (pulsar-global-mode)
   )
