@@ -17,3 +17,4 @@
               "/usr/local/var/homebrew/linked/gcc/lib/gcc/13/gcc/x86_64-apple-darwin21/13/")
             ":"))))
 
+(setq use-package-enable-imenu-support t)
