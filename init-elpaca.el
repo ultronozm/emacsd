@@ -44,7 +44,14 @@
   ;; Assume :elpaca t unless otherwise specified.
   (setq elpaca-use-package-by-default t))
 
-;; Block until current queue processed.
+(elpaca-wait)
+
+(use-package exec-path-from-shell
+  :demand
+  :if (memq window-system '(mac ns))
+  :config 
+  (exec-path-from-shell-initialize))
+
 (elpaca-wait)
 
 ;;; ------------------------------ GENERAL ------------------------------
@@ -166,14 +173,6 @@
   :hook
   (prog-mode . outline-minor-mode)
   (prog-mode . hs-minor-mode))
-
-;;; ------------------------------ EXEC-PATH ------------------------------
-
-(use-package exec-path-from-shell
-  :demand
-  :if (memq window-system '(mac ns))
-  :config 
-  (exec-path-from-shell-initialize))
 
 
 ;;; ------------------------------ LISP ------------------------------
@@ -683,31 +682,14 @@ DIR must include a .project file to be considered a project."
 (use-package latex
   :elpaca  (auctex
             :files
-            ("*")
-            ;; ("*.el" "*.info" "dir"
-            ;; ;;  "*.el.in"
-            ;;  ;; "*.sh" "configure" "Makefile.in" "Makefile" "*.m4" "install-sh"
-            ;;  "doc" "etc" "images" "latex" "style")
+            ("*.el" "*.info" "dir" "doc" "etc" "images" "latex" "style")
             :pre-build
-            (
-             ("./autogen.sh")
+            (("./autogen.sh")
              ("./configure"
               "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))"
               "--with-lispdir=.")
-             ;; ("cp" "-L" "lpath.el" "lpath.tmp")
-             ;; ("rm" "lpath.el")
-             ;; ("cp" "lpath.tmp" "lpath.el")
              ("make")
              ("make" "install")
-             )
-            :build (:not elpaca--byte-compile)
-            :post-build
-            (
-             ;; ("cp" "-L" "lpath.el" "lpath.tmp")
-             ;; ("rm" "lpath.el")
-             ;; ("cp" "lpath.tmp" "lpath.el")
-             ;; ("make")
-             ;; ("make" "install")
              ))
   
   :demand ; otherwise, madness ensues.

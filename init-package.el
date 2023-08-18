@@ -12,10 +12,17 @@
 
 ;;; ------------------------------ GENERAL ------------------------------
 
+(setq custom-file (concat user-emacs-directory "init-custom.el"))
+;; (load custom-file)
+(load (concat user-emacs-directory "init-personal.el"))
+
 (use-package emacs
+  :elpaca nil
+  
   :custom
   (use-dialog-box nil)
   (show-paren-delay 0)
+  (show-paren-style 'parenthesis)
   (ring-bell-function #'ignore)
   (initial-scratch-message nil)
   (inhibit-startup-message t)
@@ -33,13 +40,12 @@
   (large-file-warning-threshold 20000000)
   (tool-bar-mode nil)
   (vc-follow-symlinks t)
-  
+
   :config
   (electric-pair-mode)
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
   (fset 'yes-or-no-p 'y-or-n-p)
-  (global-hl-line-mode)
   (minibuffer-depth-indicate-mode)
   (global-auto-revert-mode)
   (setq-default indent-tabs-mode nil)
@@ -47,9 +53,12 @@
   (save-place-mode)
   (scroll-bar-mode 0)
   (line-number-mode)
-  (column-number-mode))
+  (column-number-mode)
+  (winner-mode))
 
 (use-package recentf
+  :elpaca nil
+  
   :custom
   (recentf-max-saved-items 500)
   :config
@@ -96,7 +105,7 @@
       (message "No PDF files found in ~/Downloads."))))
 
 (defun czm/resize-frame-to-bottom-third ()
-  "Resize and reposition the current frame to occupy the bottom third of the screen"
+  "Reshape current frame to occupy bottom third of the screen."
   (interactive)
   (if (frame-parameter (selected-frame) 'fullscreen)
       (toggle-frame-fullscreen))
@@ -116,67 +125,69 @@
     (set-frame-size (selected-frame) frame-width frame-height t)))
 
 (use-package prog-mode
+  :elpaca nil
   :hook
   (prog-mode . outline-minor-mode)
   (prog-mode . hs-minor-mode))
-;;; ------------------------------ PROJECT ------------------------------
 
-(cl-defmethod project-root ((project (head local)))
-  (cdr project))
+;;; ------------------------------ EXEC-PATH ------------------------------
 
-(defun czm/project-try-local (dir)
-  "Determine if DIR is a non-Git project.
-DIR must include a .project file to be considered a project."
-  (let ((root (locate-dominating-file dir ".project")))
-    (and root (cons 'local root))))
+(use-package exec-path-from-shell
+  :demand
+  :if (memq window-system '(mac ns))
+  :config 
+  (exec-path-from-shell-initialize))
 
-(use-package project
-  :config
-  (add-to-list 'project-find-functions 'czm/project-try-local))
 
-;;; ------------------------------ ABBREV and SPELLING ------------------------------
+;;; ------------------------------ LISP ------------------------------
 
 (use-package emacs
+  :elpaca nil
+
   :custom
-  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
-  (save-abbrevs 'silently)
-  
+  (delete-pair-blink-delay 0)
+  :bind
+  (:map emacs-lisp-mode-map
+        ("M-_" . delete-pair)
+        ("M-+" . kill-backward-up-list)))
+
+(use-package lispy
+  :ensure
+  :config
+  (setcdr lispy-mode-map nil)
+  (let ((map lispy-mode-map))
+    (lispy-define-key map ">" 'lispy-slurp-or-barf-right)
+    (lispy-define-key map "<" 'lispy-slurp-or-barf-left)
+    (lispy-define-key map "/" 'lispy-splice)
+    (lispy-define-key map "+" 'lispy-join)
+    (define-key map (kbd "C-M-j") 'lispy-split)
+    (lispy-define-key map "c" 'lispy-clone)
+    (lispy-define-key map ";" 'lispy-comment)
+    (define-key map (kbd "\"") 'lispy-quotes)
+    (define-key map (kbd "M-1") 'lispy-describe-inline)
+    (define-key map (kbd "M-2") 'lispy-arglist-inline)
+
+    ;; (lispy-define-key map "w" 'lispy-move-up)
+    ;; (lispy-define-key map "s" 'lispy-move-down)
+    ;; (lispy-define-key map "r" 'lispy-raise)
+    ;; (lispy-define-key map "A" 'lispy-beginning-of-defun)
+    ;; (lispy-define-key map "C" 'lispy-convolute)
+    ;; (lispy-define-key map "X" 'lispy-convolute-left)
+    ;; (lispy-define-key map "q" 'lispy-ace-paren)
+    ;; (lispy-define-key map "-" 'lispy-ace-subword)
+    ;; (lispy-define-key map "e" 'lispy-eval)
+    map)
+  (defun czm-conditionally-enable-lispy ()
+    (when (eq this-command 'eval-expression)
+      (lispy-mode 1)))
   :hook
-  (text-mode . abbrev-mode)
-  
-  :config
-  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev_defs.el"))
-  (defun modify-abbrev-table (table abbrevs)
-    "Define abbreviations in TABLE given by ABBREVS."
-    (dolist (abbrev abbrevs)
-      (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
-  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
-
-(use-package czm-spell
-  :vc (:url "https://github.com/ultronozm/czm-spell.el.git"
-            :rev :newest)
-  :bind ("s-;" . czm-spell-then-abbrev))
-
-;;; --------------------------------- PROJECT ---------------------------------
-
-;; Declare directories with ".project" as a project
-(cl-defmethod project-root ((project (head local)))
-  (cdr project))
-
-(defun czm/project-try-local (dir)
-  "Determine if DIR is a non-Git project.
-DIR must include a .project file to be considered a project."
-  (let ((root (locate-dominating-file dir ".project")))
-    (and root (cons 'local root))))
-
-(use-package emacs
-  :config
-  (add-to-list 'project-find-functions 'czm/project-try-local))
+  (emacs-lisp-mode  . lispy-mode)
+  (emacs-lisp-mode  . lisp-interaction-mode)
+  (minibuffer-setup . czm-conditionally-enable-lispy))
 
 ;;; ------------------------------ GIT ------------------------------
 
-(use-package magit
-  :ensure)
+(use-package magit)
 
 (defun czm/git-update-commit-push-this-file ()
   "Update, commit, and push the current file."
@@ -196,56 +207,46 @@ DIR must include a .project file to be considered a project."
 	       (msg (read-string "Commit message: " default-msg)))
 	  (magit-stage-file file)
 	  (magit-commit-create (list "-m" msg))
-	  (magit-push-current-to-upstream nil)))))))
+	  ;; call the following interactively: (magit-push-current-to-upstream nil)
+          (call-interactively 'magit-push-current-to-upstream)))))))
 
 
 ;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
 
 (use-package eldoc
-  ; built-in
+  :elpaca nil
   :custom
   ;  (eldoc-echo-area-use-multiline-p truncate-sym-name-if-fiteldoc-echo-area-use-multiline-p)
   (eldoc-echo-area-use-multiline-p t)
-  (eldoc-idle-delay 0)
-  )
-
-(use-package copilot
-  :vc (:url "https://github.com/ultronozm/copilot.el.git"
-            :rev :newest)
-  :hook ((prog-mode LaTeX-mode) . copilot-mode)
-  :bind (:map copilot-completion-map
-              ("§" . copilot-accept-completion)))
-
-
+  (eldoc-idle-delay 0.25))
 
 (use-package ef-themes
-  :ensure t
-  :demand t
+  :demand
   :config
-  (load-theme 'ef-elea-dark t))
+  ;; (load-theme 'modus-vivendi t)
+  (load-theme 'modus-operandi t)
+  ;; (load-theme 'ef-frost t)
+  ;; (load-theme 'ef-elea-dark t)
+  )
 
 (use-package vertico
-  :ensure
+  :demand
   :config
   (vertico-mode))
 
 (use-package marginalia
-  :ensure
   :demand
-  :after vertico
   :config
   (marginalia-mode)
-  :bind (:map minibuffer-local-map                                          
+  :bind (:map minibuffer-local-map
          ("M-A" . marginalia-cycle)))
 
 (use-package orderless
-  :ensure t
-  :after vertico
+  :demand
   :custom
   (completion-styles '(orderless basic)))
 
 (use-package consult
-  :ensure t
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c M-x" . consult-mode-command)
@@ -376,8 +377,6 @@ DIR must include a .project file to be considered a project."
 
 
 (use-package embark
-  :ensure t
-  
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
    ("M-." . embark-dwim)        ;; good alternative: M-.
@@ -397,7 +396,7 @@ DIR must include a .project file to be considered a project."
                  (window-parameters (mode-line-format . none)))))
 
 (use-package embark-consult
-  :ensure t ; only need to install it, embark loads it after consult if found
+  ;; only need to install it, embark loads it after consult if found
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
@@ -410,7 +409,6 @@ DIR must include a .project file to be considered a project."
 
 
 (use-package company
-  :ensure t
   ;; :config (global-company-mode 1) ;; doesn't work in magit, for instance
   :custom
   (company-idle-delay 0.5) ;; how long to wait until popup.  Consider changing to 0.0?
@@ -431,15 +429,52 @@ DIR must include a .project file to be considered a project."
 
 
 
-;; unless (string-equal system-type "windows-nt")
 
-(use-package exec-path-from-shell
-  :ensure
-  :init
-  (exec-path-from-shell-initialize))
+(use-package avy
+  :bind
+  (:map global-map
+        ("C-;" . avy-goto-line)
+        ("C-M-; y" . avy-copy-region)
+        ("C-M-; n" . avy-kill-ring-save-region)
+        ("C-M-; t" . avy-move-region)
+        ("C-M-; x" . avy-kill-region))
+  (:map isearch-mode-map
+        ("M-j" . avy-isearch)))
+
+
+(use-package ace-window
+  :bind
+  ("C-x o" . ace-window))
+
+
+
+
+
+(use-package which-key
+  :config
+  (which-key-mode))
+
+(use-package ace-link ; activate using 'o' in info/help/(...)
+  :config
+  (ace-link-setup-default))
+
+(use-package zzz-to-char
+  :bind
+  ("s-t" . zzz-to-char-up-to-char)
+  ("s-f" . zzz-to-char)
+  :custom
+  (zzz-to-char-reach 200))
+
+;;; ------------------------------ AI ------------------------------
+
+(use-package copilot
+  :elpaca (:host github :repo "zerolfx/copilot.el"
+                 :files ("*.el" "dist"))
+  :hook ((prog-mode LaTeX-mode) . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("§" . copilot-accept-completion)))
 
 (use-package gptel
-  :ensure
   :after exec-path-from-shell
   :custom
   (gptel-model "gpt-4")
@@ -447,8 +482,7 @@ DIR must include a .project file to be considered a project."
   (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_API_KEY")))
 
 (use-package ai-threaded-chat
-  :vc (:url "https://github.com/ultronozm/ai-threaded-chat.el.git"
-            :rev :newest)
+  :elpaca (:host github :repo "ultronozm/ai-threaded-chat.el")
   :after gptel
     :bind
   (:map global-map
@@ -502,134 +536,229 @@ Or if you need to solve an equation, use something like sympy:
 Never describe the results of running code.  Instead, wait for me to run the code and then ask you to continue."))
 
 
-(use-package avy
-  :ensure t
-  :demand t
-  :bind
-  (:map global-map
-        ("C-;" . avy-goto-line)
-        ("C-M-; y" . avy-copy-region)
-        ("C-M-; n" . avy-kill-ring-save-region)
-        ("C-M-; t" . avy-move-region)
-        ("C-M-; x" . avy-kill-region))
-  (:map isearch-mode-map
-        ("M-j" . avy-isearch)))
+;;; ------------------------------ REPEAT ------------------------------
 
+(use-package repeat
+  :elpaca nil
+  :config
+  (setcdr other-window-repeat-map nil)
+  (repeat-mode))
 
-(use-package ace-window
-  :ensure t
-  :bind
-  ("C-x o" . ace-window))
+(defun repeatize (keymap)
+  "Add `repeat-mode' support to a KEYMAP."
+  (map-keymap
+   (lambda (_key cmd)
+     (when (symbolp cmd)
+       (put cmd 'repeat-map keymap)))
+   (symbol-value keymap)))
 
+;;; ------------------------------ FLYCHECK ------------------------------
 
 (use-package flycheck
-  :ensure t
-  :config
-  (defun repeatize (keymap)
-    "Add `repeat-mode' support to a KEYMAP."
-    (map-keymap
-     (lambda (_key cmd)
-       (when (symbolp cmd)
-         (put cmd 'repeat-map keymap)))
-     (symbol-value keymap)))
-  (repeatize 'flycheck-command-map)
   :config
   (setq flycheck-emacs-lisp-load-path 'inherit))
 
+
 (use-package flycheck-package
-  :ensure t
   :hook
   (emacs-lisp-mode . flycheck-package-setup))
 
-(use-package which-key
-  :ensure t
+;;; ------------------------------ ATTRAP ------------------------------
+
+(use-package attrap
+  :after flycheck
   :config
-  (which-key-mode))
-
-(use-package ace-link ; activate using 'o' in info/help/(...)
-  :ensure t
-  :config
-  (ace-link-setup-default))
-
-(use-package zzz-to-char
-  :ensure t
-  :bind
-  ("s-t" . zzz-to-char-up-to-char)
-  ("s-f" . zzz-to-char)
-  :custom
-  (zzz-to-char-reach 200))
-
-;;; ------------------------------ LISP ------------------------------
+  (setq saved-match-data nil))
 
 (use-package emacs
-  :custom
-  (delete-pair-blink-delay 0)
-  :bind
-  (:map emacs-lisp-mode-map
-        ("M-_" . delete-pair)
-        ("M-+" . kill-backward-up-list)))
-
-(use-package lispy
-  :ensure
+  :elpaca nil
+  :after flycheck attrap repeat
   :config
-  (setcdr lispy-mode-map nil)
-  (let ((map lispy-mode-map))
-    (lispy-define-key map ">" 'lispy-slurp-or-barf-right)
-    (lispy-define-key map "<" 'lispy-slurp-or-barf-left)
-    (lispy-define-key map "/" 'lispy-splice)
-    (lispy-define-key map "+" 'lispy-join)
-    (define-key map (kbd "C-M-j") 'lispy-split)
-    (lispy-define-key map "c" 'lispy-clone)
-    (lispy-define-key map ";" 'lispy-comment)
-    (define-key map (kbd "\"") 'lispy-quotes)
-    ;; (lispy-define-key map "w" 'lispy-move-up)
-    ;; (lispy-define-key map "s" 'lispy-move-down)
-    ;; (lispy-define-key map "r" 'lispy-raise)
-    ;; (lispy-define-key map "A" 'lispy-beginning-of-defun)
-    ;; (lispy-define-key map "C" 'lispy-convolute)
-    ;; (lispy-define-key map "X" 'lispy-convolute-left)
-    ;; (lispy-define-key map "q" 'lispy-ace-paren)
-    ;; (lispy-define-key map "-" 'lispy-ace-subword)
-    ;; (lispy-define-key map "e" 'lispy-eval)
-    map)
-  (defun czm-conditionally-enable-lispy ()
-    (when (eq this-command 'eval-expression)
-      (lispy-mode 1)))
-  :hook
-  (emacs-lisp-mode  . lispy-mode)
-  (minibuffer-setup . czm-conditionally-enable-lispy))
+  (define-key flycheck-command-map "f" 'attrap-flycheck)
+  (repeatize 'flycheck-command-map))
+
+
+
+;;; ------------------------------ PROJECT ------------------------------
+
+; this redefines something in project.el.  Why?
+(cl-defmethod project-root ((project (head local)))
+  "TODO."
+  (cdr project))
+
+(defun czm/project-try-local (dir)
+  "Determine if DIR is a non-Git project.
+DIR must include a .project file to be considered a project."
+  (let ((root (locate-dominating-file dir ".project")))
+    (and root (cons 'local root))))
+
+(use-package project
+  :elpaca nil
+  
+  :config
+  (add-to-list 'project-find-functions 'czm/project-try-local))
 
 ;;; ------------------------------ LATEX ------------------------------
 
+(defun czm-tex-buffer-face ()
+  (setq buffer-face-mode-face '(:height 260 :width normal :family "Lucida Grande"))
+  (buffer-face-mode))
+
+(defun czm-tex-setup-environments-and-outline-regexp ()
+  (LaTeX-add-environments
+   '("lemma" LaTeX-env-label)
+   '("exercise" LaTeX-env-label)
+   '("example" LaTeX-env-label)
+   '("proposition" LaTeX-env-label)
+   '("corollary" LaTeX-env-label)
+   '("remark" LaTeX-env-label)
+   '("definition" LaTeX-env-label)
+   '("theorem" LaTeX-env-label))
+  (setq-local outline-regexp
+	      (concat "\\\\"
+		      (regexp-opt (append latex-metasection-list
+					  (mapcar #'car latex-section-alist)
+					  '("bibliography"))
+				  t))))
+
+(defun czm-widen-first (orig-fun &rest args)
+  (save-restriction
+    (widen)
+    (apply orig-fun args)))
+
+
+(defun frame-on-primary-monitor-p (frame)
+  (let* ((monitors (display-monitor-attributes-list))
+	 (primary-monitor (car monitors))
+	 (frame-monitor (frame-monitor-attributes frame)))
+    (equal primary-monitor frame-monitor)))
+
+(defun my-preview-scale-function ()
+  (* 1.5 (funcall (preview-scale-from-face))))
+
+(defun my-preview-scale-function ()
+  (* (funcall (preview-scale-from-face))
+     (if (frame-on-primary-monitor-p (selected-frame))
+	 1.5
+       1.8
+       ;; 2.7
+       )))
+
 (use-package latex
-  :ensure auctex
+  :elpaca  (auctex
+            :files
+            ("*")
+            ;; ("*.el" "*.info" "dir"
+            ;; ;;  "*.el.in"
+            ;;  ;; "*.sh" "configure" "Makefile.in" "Makefile" "*.m4" "install-sh"
+            ;;  "doc" "etc" "images" "latex" "style")
+            :pre-build
+            (
+             ("./autogen.sh")
+             ("./configure"
+              "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))"
+              "--with-lispdir=.")
+             ;; ("cp" "-L" "lpath.el" "lpath.tmp")
+             ;; ("rm" "lpath.el")
+             ;; ("cp" "lpath.tmp" "lpath.el")
+             ("make")
+             ("make" "install")
+             )
+            :build (:not elpaca--byte-compile)
+            :post-build
+            (
+             ;; ("cp" "-L" "lpath.el" "lpath.tmp")
+             ;; ("rm" "lpath.el")
+             ;; ("cp" "lpath.tmp" "lpath.el")
+             ;; ("make")
+             ;; ("make" "install")
+             ))
+  
+  :demand ; otherwise, madness ensues.
+
+  :config
+  (setq TeX-data-directory (expand-file-name  "~/.emacs.d/elpaca/builds/auctex"))
+  (setq TeX-lisp-directory TeX-data-directory)
+  
+  :hook
+  (LaTeX-mode . TeX-fold-mode)
+  (LaTeX-mode . turn-on-reftex)
+  (LaTeX-mode . czm-tex-setup-environments-and-outline-regexp)
+  (LaTeX-mode . czm-tex-buffer-face)
+  (LaTeX-mode . outline-minor-mode)
+  (LaTeX-mode . abbrev-mode)
+
+  :bind
+  (:map LaTeX-mode-map
+        ("s-a" . abbrev-mode)
+	("s-c" . preview-clearout-at-point)
+        ("s-q" . LaTeX-fill-buffer)
+        ("C-c C-n" . nil)               ; TeX-normal-mode
+        ("C-c #" . nil))
+  
   :config
   (put 'LaTeX-narrow-to-environment 'disabled nil)
   (TeX-source-correlate-mode)
+  (advice-add 'TeX-view :around #'czm-widen-first) ; fixes bug in TeX-view
+  
   :custom
   (TeX-auto-save t)
   (TeX-parse-self t)
   (preview-auto-cache-preamble t)
   (preview-default-option-list
    '("displaymath" "floats" "graphics" "textmath" "sections" "footnotes" "showlabels"))
-;  (preview-gs-command "/usr/local/bin/gs")  ; compare with rungs?
-;  (preview-image-type 'pnm) ; compare with png?
+                                        ;  (preview-gs-command "/usr/local/bin/gs")  ; compare with rungs?
+                                        ;  (preview-image-type 'pnm) ; compare with png?
+
+
+  
+  (preview-scale-function #'my-preview-scale-function)
   ;; (preview-scale-function 1.5) ; maybe enable, or see what else you were doing?
   (reftex-derive-label-parameters
    '(15 50 t 1 "-"
 	("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
-	t))
-  )
+	t)))
+
+;;  don't want foldout to include "bibliography"
+(defun czm-LaTeX-outline-level-advice (orig-fun &rest args)
+  (if (looking-at "\\\\bibliography") 1 (apply orig-fun args)))
 
 (use-package foldout
-  :ensure t)
+  :elpaca nil
+  :config
+  (advice-add 'LaTeX-outline-level :around #'czm-LaTeX-outline-level-advice))
+
 
 (use-package spout
-  :vc (:url "https://github.com/ultronozm/spout.el.git"
-            :rev :newest)
+  :elpaca (:host github :repo "ultronozm/spout.el")
   :after latex
   :hook
   (LaTeX-mode . spout-mode)
+  :custom
+  (spout-keys
+   '(("n" outline-next-visible-heading)
+     ("p" outline-previous-visible-heading)
+     ("u" outline-up-heading)
+     ("f" outline-forward-same-level)
+     ("b" outline-backward-same-level)
+     ("<left>" outline-promote windmove-left)
+     ("<right>" outline-demote windmove-right)
+     ("<" beginning-of-buffer)
+     (">" end-of-buffer)
+     ("<up>" outline-move-subtree-up windmove-up)
+     ("<down>" outline-move-subtree-down windmove-down)
+     ("s" outline-show-subtree)
+     ("d" outline-hide-subtree)
+     ("a" outline-show-all)
+     ("q" outline-hide-sublevels)
+     ("t" outline-hide-body)
+     ("k" outline-show-branches)
+     ("l" outline-hide-leaves)
+     ("i" outline-insert-heading)
+     ("o" outline-hide-other)
+     ("@" outline-mark-subtree)
+     ("z" foldout-zoom-subtree)
+     ("x" foldout-exit-fold)))
   :config
   (require 'texmathp)
   (defun LaTeX-skip-verbatim (orig-fun &rest args)
@@ -648,20 +777,26 @@ Never describe the results of running code.  Instead, wait for me to run the cod
     (advice-add f :around #'LaTeX-skip-verbatim)))
 
 (use-package latex-extra
-  :ensure
+  :after latex
+  :bind
+  (:map latex-extra-mode-map
+        ("TAB" . nil)
+        ("C-M-a" . latex/beginning-of-environment)
+        ("C-M-e" . latex/end-of-environment))
   :custom
   (latex/override-preview-map nil)
+  (latex/override-font-map nil)
   :hook
   (LaTeX-mode . latex-extra-mode))
 
 (use-package czm-tex-util
-  :vc (:url "https://github.com/ultronozm/czm-tex-util.el.git"
-            :rev :newest))
+  :elpaca (:host github :repo "ultronozm/czm-tex-util.el")
+  :after latex)
 
 (use-package czm-tex-fold
-  :vc (:url "https://github.com/ultronozm/czm-tex-fold.el.git"
-            :rev :newest)  
-  :after latex
+  :elpaca (:host github :repo "ultronozm/czm-tex-fold.el")
+  :demand ; otherwise, this doesn't work until the second time you
+          ; open a .tex file.  but it needs to be loaded after auctex.
   :bind
   (:map TeX-fold-mode-map
         ("C-c C-o C-s" . czm-tex-fold-fold-section)
@@ -673,37 +808,39 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   :hook
   (LaTeX-mode . tex-fold-mode))
 
-;; (use-package eros
-;;   :ensure t
-;;   :hook
-;;   (emacs-lisp-mode . eros-mode))
+;; the following should perhaps be part of czm-tex-fold:
 
-;; (use-package highlight-defined
-;;   :ensure t
-;;   :custom
-;;   (highlight-defined-face-use-itself t)
-;;   :hook
-;;   (help-mode . highlight-defined-mode)
-;;   (emacs-lisp-mode . highlight-defined-mode))
-;; (use-package highlight-sexp
-;;   :vc (:url "https://github.com/daimrod/highlight-sexp.git")
-;;   :hook
-;;   (clojure-mode . highlight-sexp-mode)
-;;   (emacs-lisp-mode . highlight-sexp-mode)
-;;   (lisp-mode . highlight-sexp-mode))
+(defun czm-tex-fold-macro-previous-word ()
+  (interactive)
+  (if TeX-fold-mode
+      (save-excursion
+	(backward-word)
+	(TeX-fold-item 'macro))))
+
+(advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
+
+
+(defun my-yank-after-advice (&rest _)
+  "Fold any yanked ref or eqref."
+  (when (and (eq major-mode 'latex-mode)
+             TeX-fold-mode
+             (string-match "\\\\\\(ref\\|eqref\\){\\([^}]+\\)}"
+                           (current-kill 0)))
+    (czm-tex-fold-macro-previous-word)))
+
+(advice-add 'yank :after #'my-yank-after-advice)
+
+;;
 
 (use-package tex-follow-avy
-  :vc (:url "https://github.com/ultronozm/tex-follow-avy.el.git"
-            :rev :newest)
+  :elpaca (:host github :repo "https://github.com/ultronozm/tex-follow-avy.el.git")
   :after latex avy
   :bind
   (:map LaTeX-mode-map
         ("s-r" . tex-follow-avy)))
 
 (use-package sultex
-  :ensure
-  :vc (:url "https://github.com/ultronozm/sultex.el.git"
-            :rev :newest)
+  :elpaca (:host github :repo "ultronozm/sultex.el")
   :custom
   (sultex-master-bib-file "~/doit/refs.bib")
   (sultex-rearrange-bib-entries t)
@@ -714,65 +851,187 @@ Never describe the results of running code.  Instead, wait for me to run the cod
 	("C-c 9" . sultex-label)
 	("C-c 0" . sultex-bib)))
 
-(use-package attrap
-  :ensure
-  :after flycheck
-  :config
-  (defun czm-attrap-LaTeX-fixer (msg pos end)
-    (cond
-     ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")msg) 
-      (list (attrap-option 'fix-open-dquote
-                           (delete-region pos (1+ pos))
-                           (insert "``"))
-            (attrap-option 'fix-close-dquote
-                           (delete-region pos (1+ pos))
-                           (insert "''"))))
-     ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
-      (attrap-one-option 'non-breaking-space
-                         (if (looking-at (rx space))
-                             (delete-region pos (1+ pos))
-                           (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point)))
-                         (insert "~")))
-     ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.") msg)
-      (attrap-one-option 'use-interword-spacing
-                         (delete-region pos (1+ pos))
-                         (insert "\\ ")))
-     ((s-matches? (rx "Delete this space to maintain correct pagereferences.") msg)
-      (attrap-one-option 'fix-space-pageref
-                         (if (looking-back (rx bol (* space)))
-                             (progn (skip-chars-backward "\n\t ")
-                                    (insert "%"))
-                           (delete-region (point) (save-excursion (skip-chars-forward " \t") (point)))
-	                   )))
-     ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.") msg)
-      (attrap-one-option 'enclose-with-braces
-                         (insert "}")
-                         (save-excursion
-	                   (backward-char)
-	                   (backward-sexp)
-	                   (re-search-backward "[^[:alnum:]\\_\\/]")
-	                   (forward-char)
-	                   (insert "{")
-	                   )))
-     ((s-matches? (rx "You should not use punctuation in front of quotes.") msg)
-      (attrap-one-option 'swap-punctuation-with-quotes
-                         (progn
-	                   (delete-char 2)
-	                   (backward-char)
-	                   (insert "''"))
-                         )))
-    )
-  (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer))
-  (setq saved-match-data nil)
-  :bind
-  (:map flycheck-command-map
-	("f" . attrap-flycheck)))
+(defun czm-attrap-LaTeX-fixer (msg pos end)
+  (cond
+   ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")msg)
+    (list (attrap-option 'fix-open-dquote
+            (delete-region pos (1+ pos))
+            (insert "``"))
+          (attrap-option 'fix-close-dquote
+            (delete-region pos (1+ pos))
+            (insert "''"))))
+   ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
+    (attrap-one-option 'non-breaking-space
+      (if (looking-at (rx space))
+          (delete-region pos (1+ pos))
+        (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point)))
+      (insert "~")))
+   ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.") msg)
+    (attrap-one-option 'use-interword-spacing
+      (delete-region pos (1+ pos))
+      (insert "\\ ")))
+   ((s-matches? (rx "Delete this space to maintain correct pagereferences.") msg)
+    (attrap-one-option 'fix-space-pageref
+      (if (looking-back (rx bol (* space)))
+          (progn (skip-chars-backward "\n\t ")
+                 (insert "%"))
+        (delete-region (point) (save-excursion (skip-chars-forward " \t") (point)))
+	)))
+   ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.") msg)
+    (attrap-one-option 'enclose-with-braces
+      (insert "}")
+      (save-excursion
+	(backward-char)
+	(backward-sexp)
+	(re-search-backward "[^[:alnum:]\\_\\/]")
+	(forward-char)
+	(insert "{")
+	)))
+   ((s-matches? (rx "You should not use punctuation in front of quotes.") msg)
+    (attrap-one-option 'swap-punctuation-with-quotes
+      (progn
+	(delete-char 2)
+	(backward-char)
+	(insert "''"))
+      ))))
 
+(use-package emacs
+  :elpaca nil
+  :after flycheck attrap
+  :config
+  (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer)))
+
+(defun czm/latex-tmp-new ()
+  "Create new temporary LaTeX buffer."
+  (interactive)
+  (let ((dir "~/doit/")
+	(filename (format-time-string "tmp-%Y%m%dT%H%M%S.tex")))
+    (unless (file-directory-p dir)
+      (make-directory dir t))
+    (let ((filepath (expand-file-name filename dir)))
+      (find-file filepath)
+      (save-buffer)
+      ;; (czm-preview-timer-toggle)
+      )))
+
+(use-package czm-tex-edit
+  :elpaca (:host github :repo "ultronozm/czm-tex-edit.el")
+  :after latex dynexp
+  :bind
+  (:map LaTeX-mode-map
+        ("C-c t i" . czm-tex-edit-emphasize)
+        ("C-c t b" . czm-tex-edit-bold)
+        ("C-c t l" . czm-tex-edit-underline)
+        ("C-c t u" . czm-tex-edit-unemphasize)
+        ("C-c t e" . czm-tex-edit-external-document-link)
+        ("C-c p e" . czm-tex-edit-repeat-most-recent-equation)
+        ("C-c p d" . czm-tex-edit-repeat-line-contents)
+        ("C-c p r" . czm-tex-edit-repeat-region)
+        ("C-c p s" . czm-tex-edit-substackify)
+        ("C-c p i" . czm-tex-edit-yank-interior-delete-delim)
+        ("C-c p f" . czm-tex-edit-fractionify-region)
+        ("C-c p b" . czm-tex-edit-enlarge-parentheses)
+        ("C-c p h" . czm-tex-edit-split-equation)
+        ("C-c e" . czm-tex-edit-make-equation-numbered)
+        ("C-c i" . czm-tex-edit-make-equation-inline)
+        ("C-c w" . czm-tex-edit-make-equation-align)
+        ("s-<return>" . czm-tex-edit-return))
+  :config
+  (czm-tex-edit-define-color-functions-and-bindings
+   (
+    ("red" . "r")
+    ("green" . "g")
+    ("blue" . "b")
+    ("yellow" . "y")
+    ("orange" . "o")
+    ("purple" . "p")
+    ("black" . "k")
+    ("white" . "w")
+    ("cyan" . "c")
+    ("magenta" . "m")
+    ("lime" . "l")
+    ("teal" . "t")
+    ("violet" . "v")
+    ("pink" . "i")
+    ("brown" . "n")
+    ("gray" . "a")
+    ("darkgreen" . "d")
+    ("lightblue" . "h")
+    ("lavender" . "e")
+    ("maroon" . "u")
+    ("beige" . "j")
+    ("indigo" . "x")
+    ("turquoise" . "q")
+    ("gold" . "f")
+    ("silver" . "s")
+    ("bronze" . "z"))))
+
+(use-package czm-tex-compile
+  :elpaca (:host github :repo "ultronozm/czm-tex-compile.el")
+  :after latex
+  :bind
+  ("C-c k" . czm-tex-compile-start-latexmk-eshell)
+  ("s-[" . czm-tex-compile-next-log-error)
+  ("s-]" . czm-tex-compile-previous-log-error))
+
+(use-package czm-preview
+  :elpaca (:host github :repo "ultronozm/czm-preview.el")
+  :after latex
+  :mode ("\\.tex\\'" . latex-mode)
+  :bind
+  (:map LaTeX-mode-map
+	("s-u" . czm-preview-mode)
+	("s-e" . czm-preview-current-environment)
+	("C-c p m" . czm-preview-toggle-master))
+  :config
+  :custom
+  (czm-preview-TeX-master "~/doit/preview-master.tex")
+  :hook
+  (LaTeX-mode . czm-preview-setup)
+  (LaTeX-mode . czm-preview-mode))
+
+;;; ------------------------------ ABBREV and SPELLING ------------------------------
+
+(defun modify-abbrev-table (table abbrevs)
+  "Define abbreviations in TABLE given by ABBREVS."
+  (unless table
+    ; This probably means that you called this function before the
+    ; appropriate major mode was loaded.  Hence the ":after" entries
+    ; in the use-package declaration below
+    (error "Abbrev table does not exist" table))
+  (dolist (abbrev abbrevs)
+    (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
+
+(use-package emacs
+  :elpaca nil
+
+  :after latex cc-mode
+  
+  :custom
+  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
+  (save-abbrevs 'silently)
+  
+  :hook
+  (text-mode . abbrev-mode)
+  
+  :config
+  (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
+    (when (file-exists-p abbrev-file)
+      (quietly-read-abbrev-file abbrev-file)))
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
+
+(use-package czm-spell
+  :elpaca (:host github :repo "ultronozm/czm-spell.el")
+  :bind ("s-;" . czm-spell-then-abbrev))
+
+;; Forcing this to load so that c++-mode-abbrev-table is defined.
+(use-package cc-mode 
+  :elpaca nil
+  :demand)
 
 ;;; --------------------------------- PDF ---------------------------------
 
 (use-package pdf-tools
-  :ensure t
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :custom
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
@@ -782,9 +1041,11 @@ Never describe the results of running code.  Instead, wait for me to run the cod
   (pdf-tools-install :no-query)
   (require 'pdf-occur))
 
+
 ;;; ------------------------------ ORG ------------------------------
 
 (use-package emacs
+  :elpaca nil
   :hook
   (org-mode . visual-line-mode)
   :custom
@@ -868,6 +1129,7 @@ The list is ordered from bottom to top."
         ))))
 
 (use-package org
+  :elpaca nil
   :bind
   (:map org-mode-map
         ("C-c 1" .
@@ -882,9 +1144,40 @@ The list is ordered from bottom to top."
              (newline))))
         ("C-c p" . czm-org-edit-latex-with-preview)))
 
+(defun czm/org-tmp-new ()
+  "Create new temporary org buffer."
+  (interactive)
+  (let ((dir "~/doit/")
+	(filename (format-time-string "tmp-%Y%m%dT%H%M%S.org")))
+    (unless (file-directory-p dir)
+      (make-directory dir t))
+    (let ((filepath (expand-file-name filename dir)))
+      (find-file filepath)
+      (save-buffer))))
+
+;;; ------------------------------ PUBLISH ------------------------------
+
+(defun czm-file-is-tex-or-bib (file)
+  "Return t if FILE is a .tex or .bib file."
+  (or (string-suffix-p ".tex" file)
+      (string-suffix-p ".bib" file)))
+
+(use-package publish
+  :elpaca (:host github :repo "ultronozm/publish.el")
+  :custom
+  (publish-repo-root "~/math")
+  (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
+
+(use-package library
+  :after latex czm-tex-util
+  :elpaca (:host github :repo "ultronozm/library.el")
+  :bind
+  ("C-c n" . library-clipboard-to-refs))
+
 ;;; ------------------------------ ERC ------------------------------
 
 (use-package erc
+  :elpaca nil
   ;; :hook
   ;; (erc-insert-post-hook . erc-save-buffer-in-logs)
   :config
@@ -934,6 +1227,7 @@ The list is ordered from bottom to top."
 ;; logging doesn't seem to be working; not sure what the story is there.
 
 (use-package erc-log
+  :elpaca nil
   :after erc
   :config
   (erc-log-mode)
@@ -955,6 +1249,7 @@ The list is ordered from bottom to top."
 ;;   (erc-netsplit-mode))
 
 (use-package erc-desktop-notifications
+  :elpaca nil
   :after erc
   ;; https://emacs.stackexchange.com/questions/28896/how-to-get-notifications-from-erc-in-macos
   )
@@ -985,7 +1280,6 @@ The list is ordered from bottom to top."
 ;;; ------------------------------ SAGE ------------------------------
 
 (use-package sage-shell-mode
-  :ensure
   :custom
   (sage-shell:use-prompt-toolkit nil)
   (sage-shell:use-simple-prompt t)
@@ -1020,7 +1314,6 @@ and highlight most recent entry."
 
 
 (use-package ob-sagemath
-  :ensure
   :config
   ;; Ob-sagemath supports only evaluating with a session.
   (setq org-babel-default-header-args:sage '((:session . t)
@@ -1047,18 +1340,14 @@ and highlight most recent entry."
       (calc-push (car modified-value)))))
 
 (use-package mmm-mode
-  :ensure
   :custom
   (mmm-global-mode 'maybe)
   :custom-face
   (mmm-default-submode-face ((t (:background "#ddffff")))))
 
 (use-package sagemintex
-  :vc (:url "https://github.com/ultronozm/sagemintex.el.git"
-            :rev :newest)
-  :ensure
+  :elpaca (:host github :repo "ultronozm/sagemintex.el")
   :after latex mmm-mode sage-shell-mode
-  :demand t
   :custom
   (LaTeX-command "latex -shell-escape")
   :bind
@@ -1070,8 +1359,7 @@ and highlight most recent entry."
   (mmm-sage-shell:sage-mode-exit . sagemintex-disable))
 
 (use-package symtex
-  :vc (:url "https://github.com/ultronozm/symtex.el.git"
-            :rev :newest)
+  :elpaca (:host github :repo "ultronozm/symtex.el")
   :after latex sage-shell-mode
   :bind
   (:map global-map
@@ -1081,22 +1369,249 @@ and highlight most recent entry."
 
 
 
+(use-package dynexp
+  :elpaca (:host github :repo "ultronozm/dynexp.el")
+  :after latex
+  :bind
+  (:map LaTeX-mode-map
+        ("SPC" . dynexp-space)
+        ("TAB" . dynexp-next)))
+
+;;; ------------------------------ CPP ------------------------------
+
+
+
+(c-add-style "llvm4"
+	     '("gnu"
+	       (c-basic-offset . 2)	; Guessed value
+	       (c-offsets-alist
+		(access-label . -)	   ; Guessed value
+		(block-close . 0)	   ; Guessed value
+		(class-close . 0)	   ; Guessed value
+		(defun-block-intro . ++) ; Guessed value
+		;; (defun-block-intro . ++)	; Guessed value
+		(inclass . ++)	; Guessed value
+		(inline-close . 0)	; Guessed value
+		;; (inline-close . 0)			; Guessed value
+		(statement . 0)	       ; Guessed value
+		(statement-block-intro . ++) ; Guessed value
+		(statement-cont . llvm-lineup-statement) ; Guessed value
+		;; (statement-cont . ++)		; Guessed value
+		(substatement . ++)	   ; Guessed value
+		(topmost-intro . nil)	   ; Guessed value
+		(topmost-intro-cont . +) ; Guessed value
+		(annotation-top-cont . 0)
+		(annotation-var-cont . +)
+		(arglist-close . c-lineup-close-paren)
+		(arglist-cont c-lineup-gcc-asm-reg 0)
+		;; (arglist-cont-nonempty c-lineup-gcc-asm-reg 0)
+		(arglist-cont-nonempty . c-lineup-arglist)
+		(arglist-intro . ++)
+		;; (arglist-intro . c-lineup-arglist-intro-after-paren)
+		(block-open . 0)
+		(brace-entry-open . 0)
+		(brace-list-close . 0)
+		(brace-list-entry . c-lineup-string-cont)
+		(brace-list-intro first c-lineup-2nd-brace-entry-in-arglist c-lineup-class-decl-init-+ +)
+		(brace-list-open . +)
+		(c . c-lineup-C-comments)
+		(case-label . 0)
+		(catch-clause . 0)
+		(class-open . 0)
+		(comment-intro . c-lineup-comment)
+		(composition-close . 0)
+		(composition-open . 0)
+		(cpp-define-intro c-lineup-cpp-define +)
+		(cpp-macro . -1000)
+		(cpp-macro-cont . +)
+		(defun-close . 0)
+		(defun-open . 0)
+		(do-while-closure . 0)
+		(else-clause . 0)
+		(extern-lang-close . 0)
+		(extern-lang-open . 0)
+		(friend . 0)
+		(func-decl-cont . +)
+		(incomposition . +)
+		(inexpr-class . +)
+		(inexpr-statement . +)
+		(inextern-lang . +)
+		(inher-cont . c-lineup-multi-inher)
+		(inher-intro . +)
+		(inlambda . 0)
+		(inline-open . 0)
+		(inmodule . +)
+		(innamespace . +)
+		(knr-argdecl . 0)
+		(knr-argdecl-intro . 5)
+		(label . 0)
+		(lambda-intro-cont . +)
+		(member-init-cont . c-lineup-multi-inher)
+		(member-init-intro . 4)
+		(module-close . 0)
+		(module-open . 0)
+		(namespace-close . 0)
+		(namespace-open . 0)
+		(objc-method-args-cont . c-lineup-ObjC-method-args)
+		(objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
+		(objc-method-intro .
+				   [0])
+		(statement-case-intro . ++)
+		(statement-case-open . +)
+		(stream-op . c-lineup-streamop)
+		(string . c-lineup-string-cont)
+		(substatement-label . 0)
+		(substatement-open . 0)
+		(template-args-cont c-lineup-template-args +))))
+
+(defun czm-c-mode-common-hook ()
+  (c-set-style "llvm4")
+  (set-fill-column 120)
+  (setq next-error-function #'flymake-goto-next-error))
+
+(use-package emacs
+  :elpaca nil
+  :after cc-mode
+  :bind
+  ("C-c M-o" . ff-find-other-file)
+  :hook
+  (c-mode-common . c-toggle-hungry-state)
+  (c-mode-common . abbrev-mode)
+  (c-mode-common . czm-c-mode-common-hook)
+  :config
+  ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
+  (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024)))
+
+(use-package clang-format+
+  :after clang-format
+  :hook
+  (c-mode-common . clang-format+-mode))
+
+;; maybe some of the following should be part of cmake-build.el?
+
+(defun czm-eshell-run (command buffer-name)
+  (eshell "new")
+  (rename-buffer buffer-name)
+  (insert command)
+  (eshell-send-input))
+
+(defun czm-cmake-build--invoke-eshell-run (config)
+  (let* ((cmake-build-run-config config)
+	 (config (cmake-build--get-run-config))
+	 (command (cmake-build--get-run-command config))
+	 (default-directory (cmake-build--get-run-directory config))
+	 (process-environment (append
+			       (list (concat "PROJECT_ROOT="
+					     (cmake-build--maybe-remote-project-root)))
+			       (cmake-build--get-run-config-env)
+			       process-environment))
+	 (buffer-name (string-replace "Run" "eshell-Run" (cmake-build--run-buffer-name))))
+    ;; with a bit more sophistication, you should be able to set up a
+    ;; proper dedicated window.  might be fun to look into.
+    (if (get-buffer buffer-name)
+	(switch-to-buffer buffer-name)
+      (czm-eshell-run command buffer-name))))
+
+(defun czm-cmake-build-eshell-run ()
+  (interactive)
+  (when (cmake-build--validate "run")
+    (let* ((this-root (cmake-build--project-root))
+           (this-run-config cmake-build-run-config)
+           (cmake-build-project-root this-root))
+      (if  (and nil cmake-build-before-run)
+          (cmake-build--invoke-build-current
+           (lambda (process event)
+	     (let* ((this-root this-root)
+		    (cmake-build-project-root this-root))
+	       (when (cl-equalp "finished\n" event)
+                 (czm-cmake-build--invoke-eshell-run this-run-config)))))
+	(czm-cmake-build--invoke-eshell-run this-run-config)))))
+
+(use-package cmake-build
+  :elpaca (:host github :repo "ultronozm/cmake-build.el")
+  :bind (("s-m m" . cmake-build-menu)
+	 ("s-m 1" . cmake-build-set-cmake-profile)
+	 ("s-m 2" . cmake-build-clear-cache-and-configure)
+	 ("s-m 3" . cmake-build-set-config)
+	 ("s-m b" . cmake-build-current)
+	 ("s-m o" . ff-find-other-file)
+	 ("s-m r" . cmake-build-run)
+	 ("s-m e" . czm-cmake-build-eshell-run)
+	 ("s-m c" . cmake-build-clean))
+  :custom
+  (cmake-build-override-compile-keymap nil)
+  ;; (cmake-build-run-function 'czm-eshell-run)
+  (cmake-build-export-compile-commands t)
+  (cmake-build-options "-j 1")
+  (cmake-build-options "-j 2")
+  (cmake-build-options "-j 16")
+  (cmake-build-options "-j 8 --verbose"))
+
+(use-package czm-cpp
+  :elpaca (:host github :repo "ultronozm/czm-cpp.el")
+  :after cmake-build)
 
 ;;; ------------------------------ MISC ------------------------------
 
-(find-file-other-window "~/emacs-bak/init-bak.el")
-(find-file-other-window (concat user-emacs-directory "init-package.el"))
+;; (find-file (concat user-emacs-directory "init-elpaca.el"))
+;; (find-file-other-window "~/emacs-bak/init-bak.el")
 
 
-; dynexp
+
 ; sagemintex - need to rewrite this to use ob-sagemath
-; symtex
+; symtex - needs debugging
 ; arxiv/bib stuff
-; publishing to ~/math
 
-; cmake-build.  stuff in custom, too.
 ; (cmake-ide-build-dir . "build")
 
 ; tramp stuff, which has some stuff in custom
 ; gud?  what is that?
 
+
+
+
+
+
+;;When installing a package which modifies a form used at the top-level
+;;(e.g. a package which adds a use-package key word),
+;;use `elpaca-wait' to block until that package has been installed/configured.
+;;For example:
+;;(use-package general :demand t)
+;;(elpaca-wait)
+
+;; Expands to: (elpaca evil (use-package evil :demand t))
+;; (use-package evil :demand t)
+
+(use-package repo-scan
+  :elpaca (:host github :repo "ultronozm/repo-scan.el"))
+
+(use-package pulsar
+  :config
+  (add-to-list 'pulsar-pulse-functions #'avy-goto-line)
+  (pulsar-global-mode))
+
+(defvar czm-repos '("ai-threaded-chat"
+                    "czm-cpp"
+                    "czm-preview"
+                    "czm-spell"
+                    "czm-tex-compile"
+                    "czm-tex-edit"
+                    "czm-tex-fold"
+                    "czm-tex-util"
+                    "dynexp"
+                    "library"
+                    "publish"
+                    "sagemintex"
+                    "spout"
+                    "sultex"
+                    "symtex"
+                    "tex-follow-avy"))
+
+(defun czm-repos-uncompiled ()
+  (interactive)
+  (dolist (name czm-repos)
+    (let ((elc-file
+           (concat "~/.emacs.d/elpaca/builds/" name "/" name ".elc")))
+      (unless (file-exists-p elc-file)
+        (message "%s.elc not found" name)))))
