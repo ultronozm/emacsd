@@ -629,46 +629,6 @@ DIR must include a .project file to be considered a project."
   :config
   (add-to-list 'project-find-functions 'czm/project-try-local))
 
-;;; ------------------------------ ABBREV and SPELLING ------------------------------
-
-
-(defun modify-abbrev-table (table abbrevs)
-  "Define abbreviations in TABLE given by ABBREVS."
-  (unless table
-    ; This probably means that you called this function before the
-    ; appropriate major mode was loaded.  Hence the ":after" entries
-    ; in the use-package declaration below
-    (error "Abbrev table does not exist" table))
-  (dolist (abbrev abbrevs)
-    (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
-
-(use-package emacs
-  :elpaca nil
-
-  :after latex cc-mode
-  
-  :custom
-  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
-  (save-abbrevs 'silently)
-  
-  :hook
-  (text-mode . abbrev-mode)
-  
-  :config
-  (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
-    (when (file-exists-p abbrev-file)
-      (quietly-read-abbrev-file abbrev-file)))
-  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
-
-(use-package czm-spell
-  :elpaca (:host github :repo "ultronozm/czm-spell.el")
-  :bind ("s-;" . czm-spell-then-abbrev))
-
-;; Forcing this to load so that c++-mode-abbrev-table is defined.
-(use-package cc-mode 
-  :elpaca nil
-  :demand)
-
 ;;; ------------------------------ LATEX ------------------------------
 
 (defun czm-tex-buffer-face ()
@@ -775,6 +735,7 @@ DIR must include a .project file to be considered a project."
    '(15 50 t 1 "-"
 	("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
 	t)))
+(elpaca-wait) ; wait for auctex to finish building
 
 ;;  don't want foldout to include "bibliography"
 (defun czm-LaTeX-outline-level-advice (orig-fun &rest args)
@@ -1046,6 +1007,45 @@ DIR must include a .project file to be considered a project."
   :hook
   (LaTeX-mode . czm-preview-setup)
   (LaTeX-mode . czm-preview-mode))
+
+;;; ------------------------------ ABBREV and SPELLING ------------------------------
+
+(defun modify-abbrev-table (table abbrevs)
+  "Define abbreviations in TABLE given by ABBREVS."
+  (unless table
+    ; This probably means that you called this function before the
+    ; appropriate major mode was loaded.  Hence the ":after" entries
+    ; in the use-package declaration below
+    (error "Abbrev table does not exist" table))
+  (dolist (abbrev abbrevs)
+    (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
+
+(use-package emacs
+  :elpaca nil
+
+  :after latex cc-mode
+  
+  :custom
+  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
+  (save-abbrevs 'silently)
+  
+  :hook
+  (text-mode . abbrev-mode)
+  
+  :config
+  (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
+    (when (file-exists-p abbrev-file)
+      (quietly-read-abbrev-file abbrev-file)))
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
+
+(use-package czm-spell
+  :elpaca (:host github :repo "ultronozm/czm-spell.el")
+  :bind ("s-;" . czm-spell-then-abbrev))
+
+;; Forcing this to load so that c++-mode-abbrev-table is defined.
+(use-package cc-mode 
+  :elpaca nil
+  :demand)
 
 ;;; --------------------------------- PDF ---------------------------------
 
@@ -1600,88 +1600,27 @@ and highlight most recent entry."
 ;; Expands to: (elpaca evil (use-package evil :demand t))
 ;; (use-package evil :demand t)
 
-
-
-
-;; (use-package s
-;;   :ensure t)
-
-;; (use-package editorconfig
-;;   :ensure t)
-
-;; (use-package copilot
-;;   :vc (:url "https://github.com/zerolfx/copilot.el.git"
-;; 	    :rev :newest)
-;;   :init
-;;   (copilot-login))
-
-;; (custom-set-variables
-;;  ;; custom-set-variables was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  '(package-selected-packages '(copilot editorconfig s magit))
-;;  '(package-vc-selected-packages
-;;    '((copilot :url "https://github.com/zerolfx/copilot.el.git"))))
-;; (custom-set-faces
-;;  ;; custom-set-faces was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  )
-
-
-(defun git-repos-with-changes ()
-    "Find git repositories in subdirectories of the current directory with changes."
-    (interactive)
-    (let ((current-directory default-directory))
-      (dolist (dir (directory-files current-directory t))
-        (when (and (file-directory-p dir)
-                   (not (member (file-name-nondirectory dir) '("." "..")))
-                   (magit-git-repo-p dir t))
-          (let ((default-directory dir))
-            (unless (string-empty-p (shell-command-to-string "git status --porcelain"))
-              (print (concat "Git repository with uncommitted changes: " dir))))))))
-
-
-(defun git-repos-with-changes-2 ()
-    "Find git repositories in subdirectories of the current directory with changes."
-    (interactive)
-    (let ((current-directory default-directory))
-      (dolist (dir (directory-files current-directory t))
-        (when (and (file-directory-p dir)
-                   (not (member (file-name-nondirectory dir) '("." "..")))
-                   (magit-git-repo-p dir t))
-          (let ((default-directory dir))
-            (unless (string-empty-p (shell-command-to-string
-                                     (concat "git log "
-                                             (magit-get-upstream-branch)
-                                             "..HEAD")))
-              (print (concat "Git repository with unpushed changes: " dir))))))))
-
-(defvar czm-package-repos-dir (concat user-emacs-directory "elpaca/repos"))
-
-(defun czm-scan-package-repos ()
-  "Display a buffer explaining git package status.
-Say which repos have uncommitted changes, and which have unpushed
-commits."
-  (interactive)
-  (dolist (dir (directory-files czm-package-repos-dir t))
-    (when (and (file-directory-p dir)
-               (not (member (file-name-nondirectory dir) '("." "..")))
-               (magit-git-repo-p dir t))
-      (let ((default-directory dir))
-        (unless (string-empty-p (shell-command-to-string "git status --porcelain"))
-          (print (concat "Git repository with uncommitted changes: " dir)))            
-        (unless (string-empty-p (shell-command-to-string
-                                 (concat "git log "
-                                         (magit-get-upstream-branch)
-                                         "..HEAD")))
-          (print (concat "Git repository with unpushed changes: " dir))))))  
-  )
+(use-package repo-scan
+  :elpaca (:host github :repo "ultronozm/repo-scan.el"))
 
 (use-package pulsar
   :config
   (add-to-list 'pulsar-pulse-functions #'avy-goto-line)
-  (pulsar-global-mode)
-  )
+  (pulsar-global-mode))
+
+(defvar czm-repos '("ai-threaded-chat"
+                    "czm-cpp"
+                    "czm-preview"
+                    "czm-spell"
+                    "czm-tex-compile"
+                    "czm-tex-edit"
+                    "czm-tex-fold"
+                    "czm-tex-util"
+                    "dynexp"
+                    "library"
+                    "publish"
+                    "sagemintex"
+                    "spout"
+                    "sultex"
+                    "symtex"
+                    "tex-follow-avy"))
