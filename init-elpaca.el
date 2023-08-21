@@ -1030,12 +1030,30 @@ DIR must include a .project file to be considered a project."
 	("s-u" . czm-preview-mode)
 	("s-e" . czm-preview-current-environment)
 	("C-c p m" . czm-preview-toggle-master))
-  :config
   :custom
   (czm-preview-TeX-master "~/doit/preview-master.tex")
+  (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
+  (TeX-PDF-mode 0)
   :hook
-  (LaTeX-mode . czm-preview-setup)
-  (LaTeX-mode . czm-preview-mode))
+  (LaTeX-mode . czm-preview-mode)
+
+  :config
+
+  ;; because texlive 2023 seems super slow
+  (when (equal (system-name) "Pauls-MBP-3")
+    (setq czm-preview-latex-prefix-directory "/usr/local/texlive/2020/bin/x86_64-darwin/"))
+  ;; (setq czm-preview-latex-prefix-directory "/usr/local/texlive/2023/bin/universal-darwin/")
+  ;; /usr/local/texlive/2023/bin/universal-darwin/
+
+  (with-eval-after-load 'preview
+    (setq preview-LaTeX-command
+	  `(
+	    ,(concat
+	      "%`"
+	      czm-preview-latex-prefix-directory
+	      "%l \"\\nonstopmode\\nofiles\\PassOptionsToPackage{")
+	    ("," . preview-required-option-list)
+	    "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\""))))
 
 ;;; ------------------------------ ABBREV and SPELLING ------------------------------
 
