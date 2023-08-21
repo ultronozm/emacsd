@@ -551,8 +551,7 @@
   :after gptel
     :bind
   (:map global-map
-        ("s-/" . ai-threaded-chat-new)
-        ("C-M-; /" . czm/avy-ai-chat-new-region))
+        ("s-/" . ai-threaded-chat-new))
   (:map ai-threaded-chat-minor-mode
         ("s-<return>" . ai-threaded-chat-respond)
         ("C-c n" . ai-threaded-chat-append-top-level-heading))
