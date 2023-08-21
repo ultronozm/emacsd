@@ -1675,3 +1675,8 @@ and highlight most recent entry."
       (erase-buffer)
       (pp-display-expression advice-list "*advice display*"))))
 
+(defmacro computation-time (&rest body)
+  "Compute the time it takes to evaluate BODY."
+  `(let ((start-time (current-time)))
+     ,@body
+     (float-time (time-subtract (current-time) start-time))))
