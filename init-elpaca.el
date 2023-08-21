@@ -1661,3 +1661,17 @@ and highlight most recent entry."
            (concat "~/.emacs.d/elpaca/builds/" name "/" name ".elc")))
       (unless (file-exists-p elc-file)
         (message "%s.elc not found" name)))))
+
+(defun czm-show-advice (function-symbol)
+  "Display all advice associated with FUNCTION-SYMBOL in *advice display* buffer."
+  (interactive "aFunction: ")
+  (let ((advice-list '())
+        (display-buffer (get-buffer-create "*advice display*")))
+    (advice-mapc
+     (lambda (advice _props)
+       (push advice advice-list))
+     function-symbol)
+    (with-current-buffer display-buffer
+      (erase-buffer)
+      (pp-display-expression advice-list "*advice display*"))))
+
