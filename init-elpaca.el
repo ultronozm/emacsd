@@ -1066,9 +1066,18 @@ DIR must include a .project file to be considered a project."
       (quietly-read-abbrev-file abbrev-file)))
   (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
 
+(defun czm-avy-transpose-recent-space ()
+  (interactive)
+  (save-excursion
+    (avy-goto-char-in-line ?\s)
+    (transpose-chars 1)))
+
+(define-key global-map (kbd "s-:") 'czm-avy-transpose-recent-space)
+
 (use-package czm-spell
   :elpaca (:host github :repo "ultronozm/czm-spell.el")
-  :bind ("s-;" . czm-spell-then-abbrev))
+  :bind
+  ("s-;" . czm-spell-then-abbrev))
 
 ;; Forcing this to load so that c++-mode-abbrev-table is defined.
 (use-package cc-mode 
