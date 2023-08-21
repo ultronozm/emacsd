@@ -1017,9 +1017,9 @@ DIR must include a .project file to be considered a project."
   :elpaca (:host github :repo "ultronozm/czm-tex-compile.el")
   :after latex
   :bind
-  ("C-c k" . czm-tex-compile-start-latexmk-eshell)
-  ("s-[" . czm-tex-compile-next-log-error)
-  ("s-]" . czm-tex-compile-previous-log-error))
+  ("C-c k" . czm-tex-compile)
+  ("s-]" . czm-tex-compile-next-error)
+  ("s-[" . czm-tex-compile-previous-error))
 
 (use-package czm-preview
   :elpaca (:host github :repo "ultronozm/czm-preview.el")
