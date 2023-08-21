@@ -217,7 +217,6 @@
         ("M-+" . kill-backward-up-list)))
 
 (use-package lispy
-  :ensure
   :config
   (setcdr lispy-mode-map nil)
   (let ((map lispy-mode-map))
