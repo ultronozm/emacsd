@@ -1709,6 +1709,13 @@ and highlight most recent entry."
      ,@body
      (float-time (time-subtract (current-time) start-time))))
 
+(defun czm-pull-my-stuff ()
+  (interactive)
+  (let ((repos (append
+                '("~/.emacs.d" "~/.emacs.d/emacsd" "~/doit")
+                czm-repos)))
+    (repo-scan-pull repos)))
+
 (setq debug-on-message nil)
 (setq czm-preview--debug t)
 (setq czm-preview--debug nil)
