@@ -1708,3 +1708,9 @@ and highlight most recent entry."
   `(let ((start-time (current-time)))
      ,@body
      (float-time (time-subtract (current-time) start-time))))
+
+(setq debug-on-message nil)
+(setq czm-preview--debug t)
+(setq czm-preview--debug nil)
+
+
