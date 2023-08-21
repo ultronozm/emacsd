@@ -547,7 +547,8 @@
   (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_API_KEY")))
 
 (use-package ai-threaded-chat
-  :elpaca (:host github :repo "ultronozm/ai-threaded-chat.el")
+  :elpaca (:host github :repo "ultronozm/ai-threaded-chat.el"
+                 :depth nil)
   :after gptel
     :bind
   (:map global-map
@@ -777,7 +778,8 @@ DIR must include a .project file to be considered a project."
 
 
 (use-package spout
-  :elpaca (:host github :repo "ultronozm/spout.el")
+  :elpaca (:host github :repo "ultronozm/spout.el"
+                 :depth nil)
   :after latex
   :hook
   (LaTeX-mode . spout-mode)
@@ -837,11 +839,13 @@ DIR must include a .project file to be considered a project."
   (LaTeX-mode . latex-extra-mode))
 
 (use-package czm-tex-util
-  :elpaca (:host github :repo "ultronozm/czm-tex-util.el")
+  :elpaca (:host github :repo "ultronozm/czm-tex-util.el"
+                 :depth nil)
   :after latex)
 
 (use-package czm-tex-fold
-  :elpaca (:host github :repo "ultronozm/czm-tex-fold.el")
+  :elpaca (:host github :repo "ultronozm/czm-tex-fold.el"
+                 :depth nil)
   :demand ; otherwise, this doesn't work until the second time you
           ; open a .tex file.  but it needs to be loaded after auctex.
   :bind
@@ -849,7 +853,8 @@ DIR must include a .project file to be considered a project."
         ("C-c C-o C-s" . czm-tex-fold-fold-section)
         ("C-c C-o s" . czm-tex-fold-clearout-section))
   :config
-  (czm-tex-fold-setup)
+  (czm-tex-fold-set-defaults)
+  (czm-tex-fold-misc-install)
   :custom
   (czm-tex-fold-bib-file "~/doit/refs.bib")
   :hook
@@ -880,14 +885,16 @@ DIR must include a .project file to be considered a project."
 ;;
 
 (use-package tex-follow-avy
-  :elpaca (:host github :repo "https://github.com/ultronozm/tex-follow-avy.el.git")
+  :elpaca (:host github :repo "https://github.com/ultronozm/tex-follow-avy.el.git"
+                 :depth nil)
   :after latex avy
   :bind
   (:map LaTeX-mode-map
         ("s-r" . tex-follow-avy)))
 
 (use-package sultex
-  :elpaca (:host github :repo "ultronozm/sultex.el")
+  :elpaca (:host github :repo "ultronozm/sultex.el"
+                 :depth nil)
   :custom
   (sultex-master-bib-file "~/doit/refs.bib")
   (sultex-rearrange-bib-entries t)
@@ -962,7 +969,8 @@ DIR must include a .project file to be considered a project."
       )))
 
 (use-package czm-tex-edit
-  :elpaca (:host github :repo "ultronozm/czm-tex-edit.el")
+  :elpaca (:host github :repo "ultronozm/czm-tex-edit.el"
+                 :depth nil)
   :after latex dynexp
   :bind
   (:map LaTeX-mode-map
@@ -983,7 +991,7 @@ DIR must include a .project file to be considered a project."
         ("C-c i" . czm-tex-edit-make-equation-inline)
         ("C-c w" . czm-tex-edit-make-equation-align)
         ("s-<return>" . czm-tex-edit-return))
-  :config
+  :init
   (czm-tex-edit-define-color-functions-and-bindings
    (
     ("red" . "r")
@@ -1014,7 +1022,8 @@ DIR must include a .project file to be considered a project."
     ("bronze" . "z"))))
 
 (use-package czm-tex-compile
-  :elpaca (:host github :repo "ultronozm/czm-tex-compile.el")
+  :elpaca (:host github :repo "ultronozm/czm-tex-compile.el"
+                 :depth nil)
   :after latex
   :bind
   ("C-c k" . czm-tex-compile)
@@ -1022,7 +1031,8 @@ DIR must include a .project file to be considered a project."
   ("s-[" . czm-tex-compile-previous-error))
 
 (use-package czm-preview
-  :elpaca (:host github :repo "ultronozm/czm-preview.el")
+  :elpaca (:host github :repo "ultronozm/czm-preview.el"
+                 :depth nil)
   :after latex
   :mode ("\\.tex\\'" . latex-mode)
   :bind
@@ -1094,7 +1104,8 @@ DIR must include a .project file to be considered a project."
 (define-key global-map (kbd "s-:") 'czm-avy-transpose-recent-space)
 
 (use-package czm-spell
-  :elpaca (:host github :repo "ultronozm/czm-spell.el")
+  :elpaca (:host github :repo "ultronozm/czm-spell.el"
+                 :depth nil)
   :bind
   ("s-;" . czm-spell-then-abbrev))
 
@@ -1237,14 +1248,16 @@ The list is ordered from bottom to top."
       (string-suffix-p ".bib" file)))
 
 (use-package publish
-  :elpaca (:host github :repo "ultronozm/publish.el")
+  :elpaca (:host github :repo "ultronozm/publish.el"
+                 :depth nil)
   :custom
   (publish-repo-root "~/math")
   (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
 
 (use-package library
   :after latex czm-tex-util
-  :elpaca (:host github :repo "ultronozm/library.el")
+  :elpaca (:host github :repo "ultronozm/library.el"
+                 :depth nil)
   :bind
   ("C-c n" . library-clipboard-to-refs))
 
@@ -1420,7 +1433,8 @@ and highlight most recent entry."
   (mmm-default-submode-face ((t (:background "#ddffff")))))
 
 (use-package sagemintex
-  :elpaca (:host github :repo "ultronozm/sagemintex.el")
+  :elpaca (:host github :repo "ultronozm/sagemintex.el"
+                 :depth nil)
   :after latex mmm-mode sage-shell-mode
   :custom
   (LaTeX-command "latex -shell-escape")
@@ -1433,7 +1447,8 @@ and highlight most recent entry."
   (mmm-sage-shell:sage-mode-exit . sagemintex-disable))
 
 (use-package symtex
-  :elpaca (:host github :repo "ultronozm/symtex.el")
+  :elpaca (:host github :repo "ultronozm/symtex.el"
+                 :depth nil)
   :after latex sage-shell-mode
   :bind
   (:map global-map
@@ -1444,8 +1459,9 @@ and highlight most recent entry."
 
 
 (use-package dynexp
-  :elpaca (:host github :repo "ultronozm/dynexp.el")
-  :after latex
+  :elpaca (:host github :repo "ultronozm/dynexp.el"
+                 :depth nil)
+  :demand ; but after auctex
   :bind
   (:map LaTeX-mode-map
         ("SPC" . dynexp-space)
@@ -1603,7 +1619,8 @@ and highlight most recent entry."
 	(czm-cmake-build--invoke-eshell-run this-run-config)))))
 
 (use-package cmake-build
-  :elpaca (:host github :repo "ultronozm/cmake-build.el")
+  :elpaca (:host github :repo "ultronozm/cmake-build.el"
+                 :depth nil)
   :bind (("s-m m" . cmake-build-menu)
 	 ("s-m 1" . cmake-build-set-cmake-profile)
 	 ("s-m 2" . cmake-build-clear-cache-and-configure)
@@ -1623,7 +1640,8 @@ and highlight most recent entry."
   (cmake-build-options "-j 8 --verbose"))
 
 (use-package czm-cpp
-  :elpaca (:host github :repo "ultronozm/czm-cpp.el")
+  :elpaca (:host github :repo "ultronozm/czm-cpp.el"
+                 :depth nil)
   :after cmake-build)
 
 ;;; ------------------------------ MISC ------------------------------
@@ -1658,7 +1676,8 @@ and highlight most recent entry."
 ;; (use-package evil :demand t)
 
 (use-package repo-scan
-  :elpaca (:host github :repo "ultronozm/repo-scan.el"))
+  :elpaca (:host github :repo "ultronozm/repo-scan.el"
+                 :depth nil))
 
 (use-package pulsar
   :config
