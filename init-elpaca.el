@@ -227,6 +227,8 @@
     (define-key map (kbd "C-M-j") 'lispy-split)
     (lispy-define-key map "c" 'lispy-clone)
     (lispy-define-key map ";" 'lispy-comment)
+    (lispy-define-key map "o" 'lispy-oneline)
+    (lispy-define-key map "i" 'lispy-tab)
     (define-key map (kbd "\"") 'lispy-quotes)
     (define-key map (kbd "M-1") 'lispy-describe-inline)
     (define-key map (kbd "M-2") 'lispy-arglist-inline)
