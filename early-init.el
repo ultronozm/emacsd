@@ -4,9 +4,9 @@
   (setenv "LIBRARY_PATH"
           (mapconcat
            #'identity
-           ("/opt/homebrew/opt/gcc/lib/gcc/13"
-            "/opt/homebrew/opt/libgccjit/lib/gcc/13"
-            "/opt/homebrew/opt/gcc/lib/gcc/13/gcc/aarch64-apple-darwin22/13")
+           '("/opt/homebrew/opt/gcc/lib/gcc/13"
+             "/opt/homebrew/opt/libgccjit/lib/gcc/13"
+             "/opt/homebrew/opt/gcc/lib/gcc/13/gcc/aarch64-apple-darwin22/13")
            ":")))
  ((equal (system-name) "Pauls-MBP-3")
    (setenv "LIBRARY_PATH"
