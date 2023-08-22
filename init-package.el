@@ -839,17 +839,17 @@ DIR must include a .project file to be considered a project."
   (:map LaTeX-mode-map
         ("s-r" . tex-follow-avy)))
 
-(use-package sultex
-  :elpaca (:host github :repo "ultronozm/sultex.el")
+(use-package czm-tex-ref
+  :elpaca (:host github :repo "ultronozm/czm-tex-ref.el")
   :custom
-  (sultex-master-bib-file "~/doit/refs.bib")
-  (sultex-rearrange-bib-entries t)
+  (czm-tex-ref-master-bib-file "~/doit/refs.bib")
+  (czm-tex-ref-rearrange-bib-entries t)
   :bind
   (:map global-map
-	("C-c 0" . sultex-bib))
+	("C-c 0" . czm-tex-ref-bib))
   (:map LaTeX-mode-map
-	("C-c 9" . sultex-label)
-	("C-c 0" . sultex-bib)))
+	("C-c 9" . czm-tex-ref-label)
+	("C-c 0" . czm-tex-ref-bib)))
 
 (defun czm-attrap-LaTeX-fixer (msg pos end)
   (cond
@@ -1604,7 +1604,7 @@ and highlight most recent entry."
                     "publish"
                     "sagemintex"
                     "spout"
-                    "sultex"
+                    "czm-tex-ref"
                     "symtex"
                     "tex-follow-avy"))
 

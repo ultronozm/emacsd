@@ -111,7 +111,6 @@
   (dired-isearch-filenames t)
   (dired-vc-rename-file t)
   (large-file-warning-threshold 20000000)
-  (tool-bar-mode nil)
   (vc-follow-symlinks t)
 
   :config
@@ -124,6 +123,7 @@
   (setq-default indent-tabs-mode nil)
 ; (warning-suppress-log-types '((comp))) ; don't care about this anymore?
   (save-place-mode)
+  (tool-bar-mode 0)
   (scroll-bar-mode 0)
   (line-number-mode)
   (column-number-mode)
@@ -476,8 +476,15 @@
 (use-package company
   ;; :config (global-company-mode 1) ;; doesn't work in magit, for instance
   :custom
+  (company-begin-commands '(self-insert-command))
   (company-idle-delay 0.5) ;; how long to wait until popup.  Consider changing to 0.0?
+  (company-minimum-prefix-length 2)
+  (copamny-show-numbers t)
+  (company-tooltip-align-annotations t)
   ;; (company-begin-commands nil) ;; uncomment to disable popup
+
+  ;; not using it at the moment because it doesn't seem to work well
+  ;; :config (global-company-mode)
   :bind
   (:map company-active-map
         ("C-n". company-select-next)
@@ -489,10 +496,6 @@
         ("TAB". tab-indent-or-complete)))
 
 ; TODO: activate company mode?  what does this do, anyway?
-
-
-
-
 
 
 (use-package avy
@@ -854,7 +857,7 @@ DIR must include a .project file to be considered a project."
         ("C-c C-o s" . czm-tex-fold-clearout-section))
   :config
   (czm-tex-fold-set-defaults)
-  (czm-tex-fold-misc-install)
+  (czm-tex-fold-install)
   :custom
   (czm-tex-fold-bib-file "~/doit/refs.bib")
   :hook
@@ -884,26 +887,26 @@ DIR must include a .project file to be considered a project."
 
 ;;
 
-(use-package tex-follow-avy
-  :elpaca (:host github :repo "https://github.com/ultronozm/tex-follow-avy.el.git"
+(use-package czm-tex-jump
+  :elpaca (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git"
                  :depth nil)
   :after latex avy
   :bind
   (:map LaTeX-mode-map
-        ("s-r" . tex-follow-avy)))
+        ("s-r" . czm-tex-jump)))
 
-(use-package sultex
-  :elpaca (:host github :repo "ultronozm/sultex.el"
+(use-package czm-tex-ref
+  :elpaca (:host github :repo "ultronozm/czm-tex-ref.el"
                  :depth nil)
   :custom
-  (sultex-master-bib-file "~/doit/refs.bib")
-  (sultex-rearrange-bib-entries t)
+  (czm-tex-ref-master-bib-file "~/doit/refs.bib")
+  (czm-tex-ref-rearrange-bib-entries t)
   :bind
   (:map global-map
-	("C-c 0" . sultex-bib))
+	("C-c 0" . czm-tex-ref-bib))
   (:map LaTeX-mode-map
-	("C-c 9" . sultex-label)
-	("C-c 0" . sultex-bib)))
+	("C-c 9" . czm-tex-ref-label)
+	("C-c 0" . czm-tex-ref-bib)))
 
 (defun czm-attrap-LaTeX-fixer (msg pos end)
   (cond
@@ -1697,9 +1700,9 @@ and highlight most recent entry."
                     "publish"
                     "sagemintex"
                     "spout"
-                    "sultex"
+                    "czm-tex-ref"
                     "symtex"
-                    "tex-follow-avy"))
+                    "czm-tex-jump"))
 
 (defun czm-repos-uncompiled ()
   (interactive)
