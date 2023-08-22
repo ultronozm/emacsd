@@ -239,10 +239,12 @@ If the point is after a quote, barf the last sexp out of the quote.
 Otherwise, call `self-insert-command'."
   (interactive)
   (cond
-   ((eq (char-after) ?\()
-    (burp--barf-right))
+   ; prev is )
    ((eq (char-before) ?\))
     (burp--slurp-right))
+   ; next is (
+   ((eq (char-after) ?\()
+    (burp--barf-right))
    ((and (eq (char-before) ?\")
          (not (eq (char-after) ?\")))
     (burp--slurp-right))
