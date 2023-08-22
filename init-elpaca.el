@@ -112,6 +112,7 @@
   (dired-vc-rename-file t)
   (large-file-warning-threshold 20000000)
   (vc-follow-symlinks t)
+  (view-read-only t)
 
   :config
   (electric-pair-mode)
