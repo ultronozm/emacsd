@@ -69,6 +69,7 @@
 	("<down>" windmove-down)
 	("<right>" windmove-right)
 	("<left>" windmove-left)
+        ("s-SPC" cycle-spacing)
 	)
       )
 
