@@ -1724,6 +1724,12 @@ and highlight most recent entry."
                 czm-repos)))
     (repo-scan-pull repos)))
 
+(defun czm-rebuild-my-stuff ()
+  (interactive)
+  (dolist (repo czm-repos)
+    (let ((repo-symbol (intern repo)))
+      (elpaca-rebuild repo-symbol))))
+
 (setq debug-on-message nil)
 (setq czm-preview--debug t)
 (setq czm-preview--debug nil)
