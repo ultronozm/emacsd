@@ -1,4 +1,6 @@
 ;;-*-coding: utf-8;-*-
+
+;; adapted from FasTeX (http://www.cds.caltech.edu/~fastex/fastex.html)
 (modify-abbrev-table c++-mode-abbrev-table
   '(
     ("cppheader" "
@@ -6052,77 +6054,6 @@ F(b)-F(a)=\\int^b_af(x)\\, dx
 \\lefteqn{}\\\\
 & &
 \\end{eqnarray*}" nil)
-    ("letsago" "<+START+>%
-\\documentclass{amsart}
-\\usepackage{graphicx,amsfonts,amssymb,amsmath,amsthm}
-\\newcommand{\\bfi}{\\bfseries\\itshape}
-
-\\theoremstyle{plain} %--default
-\\newtheorem{theorem}             {Theorem}  [section]
-\\newtheorem{lemma}      [theorem]{Lemma}
-\\newtheorem{corollary}  [theorem]{Corollary}
-\\newtheorem{proposition}[theorem]{Proposition}
-\\newtheorem{algorithm}  [theorem]{Algorithm}
-\\newtheorem{criterion}  [theorem]{Criterion}
-\\newtheorem{conjecture} [theorem]{Conjecture}
-\\newtheorem{question}   [theorem]{Question}
-
-\\theoremstyle{definition}
-\\newtheorem{definition} [theorem]{Definition}
-\\newtheorem{condition}  [theorem]{Condition}
-\\newtheorem{example}    [theorem]{Example}
-\\newtheorem{problem}    [theorem]{Problem}
-\\newtheorem{solution}   [theorem]{Solution}
-
-\\theoremstyle{remark}
-\\newtheorem{remark}              {Remark}
-\\newtheorem{note}                {Note}
-\\newtheorem{claim}               {Claim}
-\\newtheorem{summary}             {Summary}
-\\newtheorem{case}                {Case}
-\\newtheorem{acknowledgment}      {Acknowledgments}
-\\newtheorem{conclusion}          {Conclusion}
-\\newtheorem{notation}            {Notation}
-
-\\setlength{\\evensidemargin}{0in} \\setlength{\\oddsidemargin}{0in}
-\\textwidth=6.5 true in
-\\textheight=8 true in
-\\topmargin 0cm
-
-\\numberwithin{equation}{section}
-
-%% --OPERDEFNS--
-
-% ----------------------------------------------------
-\\begin{document}
-
-\\title[Notes]%
-{Notes on\\\\
-  Math}
-
-\\author{Paul Nelson}
-%\\address{Department of Mathematics\\\\
-%  EPFL\\\\
-%  Lausanne, Switzerland 91125}%
-
-% \\subjclass{Primary 54C40, 14E20; Secondary 46E25, 20C20}
-% \\date     {July 2, 1991}
-% \\thanks{The first author was supported in part by NSF Grant \\#000000.}
-% \\dedicatory{}
-\\maketitle
-% \\begin{abstract} \\end{abstract}
-
-%\\tableofcontents
-
-\\section*{Introduction}
-Hello. <+++>
-
-% -----------------
-\\bibliography{refs}{}
-\\bibliographystyle{plain}
-% -----------------
-\\end{document}
-<+END+>" dynexp)
     ("lf" "_f" dynexp-delete-leading-space)
     ("lg" "_g" dynexp-delete-leading-space)
     ("lgn" "\\ln" nil)

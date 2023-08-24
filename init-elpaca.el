@@ -113,6 +113,10 @@
   (large-file-warning-threshold 20000000)
   (vc-follow-symlinks t)
   (view-read-only t)
+  (delete-by-moving-to-trash t)
+  (delete-old-versions t)
+  (help-window-select t)
+  (isearch-allow-scroll t)
 
   :config
   (electric-pair-mode)
@@ -225,11 +229,13 @@
     (lispy-define-key map "<" 'lispy-slurp-or-barf-left)
     (lispy-define-key map "/" 'lispy-splice)
     (lispy-define-key map "+" 'lispy-join)
-    (define-key map (kbd "C-M-j") 'lispy-split)
     (lispy-define-key map "c" 'lispy-clone)
     (lispy-define-key map ";" 'lispy-comment)
     (lispy-define-key map "o" 'lispy-oneline)
+    (lispy-define-key map "m" 'lispy-multiline)
     (lispy-define-key map "i" 'lispy-tab)
+    (define-key map (kbd "C-M-j") 'lispy-split)
+    (define-key map (kbd "M-+") 'lispy-raise)
     (define-key map (kbd "\"") 'lispy-quotes)
     (define-key map (kbd "M-1") 'lispy-describe-inline)
     (define-key map (kbd "M-2") 'lispy-arglist-inline)
@@ -289,8 +295,8 @@
 (use-package ef-themes
   :demand
   :config
-  ;; (load-theme 'modus-vivendi t)
-  (load-theme 'modus-operandi t)
+  (load-theme 'modus-vivendi t)
+  ;; (load-theme 'modus-operandi t)
   ;; (load-theme 'ef-frost t)
   ;; (load-theme 'ef-elea-dark t)
   )
@@ -550,59 +556,61 @@
   :config
   (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_API_KEY")))
 
-(use-package ai-threaded-chat
-  :elpaca (:host github :repo "ultronozm/ai-threaded-chat.el"
+(use-package ai-org-chat
+  :elpaca (:host github :repo "ultronozm/ai-org-chat.el"
                  :depth nil)
   :after gptel
     :bind
   (:map global-map
-        ("s-/" . ai-threaded-chat-new))
-  (:map ai-threaded-chat-minor-mode
-        ("s-<return>" . ai-threaded-chat-respond)
-        ("C-c n" . ai-threaded-chat-append-top-level-heading))
-  :commands (ai-threaded-chat-minor-mode) ; for manual activation
+        ("s-/" . ai-org-chat-new))
+  (:map ai-org-chat-minor-mode
+        ("s-<return>" . ai-org-chat-respond)
+        ("C-c n" . ai-org-chat-branch))
+  :commands (ai-org-chat-minor-mode) ; for manual activation
   :custom
-  (ai-threaded-chat-user-name "Paul")
-  (ai-threaded-chat-dir "~/gpt")
-  (ai-threaded-chat-prompt-preamble
-   "You are a brilliant and helpful assistant.
+  (ai-org-chat-user-name "Paul")
+  (ai-org-chat-dir "~/gpt")
+  (ai-org-chat-system-message nil)
+  ;; (ai-org-chat-prompt-preamble
+;;    "You are a brilliant and helpful assistant.
 
-You know everything about programming: languages, syntax, debugging techniques, software design, code optimization, documentation.
+;; You know everything about programming: languages, syntax, debugging techniques, software design, code optimization, documentation.
 
-Respond with Emacs org-mode syntax.  For example, when providing code examples, do NOT use triple backticks and markdown, but rather source blocks, e.g.:
-#+begin_src elisp
-  (number-sequence 0 9)
-#+end_src
+;; Respond with Emacs org-mode syntax.  For example, when providing code examples, do NOT use triple backticks and markdown, but rather source blocks, e.g.:
+;; #+begin_src elisp
+;;   (number-sequence 0 9)
+;; #+end_src
 
-Avoid attempting to give the answer right away.  Instead, begin by breaking any problem down into steps.
+;; Avoid attempting to give the answer right away.  Instead, begin by breaking any problem down into steps.
 
-Don't attempt nontrivial calculations directly.  In particular, you are unable to directly answer any question that requires analyzing text as a sequence of characters (e.g., counting length, reversing strings), counting of more than several items (e.g., words in a sequence or items in a list), or arithmetic that a human could not perform easily in their head.  In such cases, return a source block containing relevant elisp or Python code.  For example, if the question is \\"What is 7 + 19^3\\", you could return either of the following:
+;; Don't attempt nontrivial calculations directly.  In particular, you are unable to directly answer any question that requires analyzing text as a sequence of characters (e.g., counting length, reversing strings), counting of more than several items (e.g., words in a sequence or items in a list), or arithmetic that a human could not perform easily in their head.  In such cases, return a source block containing relevant elisp or Python code.  For example, if the question is \\"What is 7 + 19^3\\", you could return either of the following:
 
-#+begin_src elisp
-  (+ 7 (expt 19 3))
-#+end_src
+;; #+begin_src elisp
+;;   (+ 7 (expt 19 3))
+;; #+end_src
 
-#+begin_src python
-  return 7 + 19 ** 3
-#+end_src
+;; #+begin_src python
+;;   return 7 + 19 ** 3
+;; #+end_src
 
-When faced with a complicated word problem, reduce it first to a problem in algebra, then solve it using elisp or Python.  For example, if the problem reduces to computing the binomial coefficient \\"20 choose 13\\", then you could return:
+;; When faced with a complicated word problem, reduce it first to a problem in algebra, then solve it using elisp or Python.  For example, if the problem reduces to computing the binomial coefficient \\"20 choose 13\\", then you could return:
 
-#+begin_src python
-  from math import factorial
-  return factorial(20) / ( factorial(13) * factorial(20-13) )
-#+end_src
+;; #+begin_src python
+;;   from math import factorial
+;;   return factorial(20) / ( factorial(13) * factorial(20-13) )
+;; #+end_src
 
-Or if you need to solve an equation, use something like sympy:
+;; Or if you need to solve an equation, use something like sympy:
 
-#+begin_src python
-  from sympy import symbols, solve
-  x = symbols('x')
-  solution = solve([2*x + x + x + 2 - 26, x>0], x)
-  return solution
-#+end_src
+;; #+begin_src python
+;;   from sympy import symbols, solve
+;;   x = symbols('x')
+;;   solution = solve([2*x + x + x + 2 - 26, x>0], x)
+;;   return solution
+;; #+end_src
 
-Never describe the results of running code.  Instead, wait for me to run the code and then ask you to continue."))
+;; Never describe the results of running code.  Instead, wait for me to run the code and then ask you to continue.")
+  )
 
 
 ;;; ------------------------------ REPEAT ------------------------------
@@ -739,6 +747,7 @@ DIR must include a .project file to be considered a project."
   (LaTeX-mode . czm-tex-buffer-face)
   (LaTeX-mode . outline-minor-mode)
   (LaTeX-mode . abbrev-mode)
+  (LaTeX-mode . (lambda () (setq fill-column 999999)))
 
   :bind
   (:map LaTeX-mode-map
@@ -891,7 +900,7 @@ DIR must include a .project file to be considered a project."
 (use-package czm-tex-jump
   :elpaca (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git"
                  :depth nil)
-  :after latex avy
+  ;; :after avy
   :bind
   (:map LaTeX-mode-map
         ("s-r" . czm-tex-jump)))
@@ -997,38 +1006,12 @@ DIR must include a .project file to be considered a project."
         ("s-<return>" . czm-tex-edit-return))
   :init
   (czm-tex-edit-define-color-functions-and-bindings
-   (
-    ("red" . "r")
-    ("green" . "g")
-    ("blue" . "b")
-    ("yellow" . "y")
-    ("orange" . "o")
-    ("purple" . "p")
-    ("black" . "k")
-    ("white" . "w")
-    ("cyan" . "c")
-    ("magenta" . "m")
-    ("lime" . "l")
-    ("teal" . "t")
-    ("violet" . "v")
-    ("pink" . "i")
-    ("brown" . "n")
-    ("gray" . "a")
-    ("darkgreen" . "d")
-    ("lightblue" . "h")
-    ("lavender" . "e")
-    ("maroon" . "u")
-    ("beige" . "j")
-    ("indigo" . "x")
-    ("turquoise" . "q")
-    ("gold" . "f")
-    ("silver" . "s")
-    ("bronze" . "z"))))
+   "C-c t c"
+   (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
 (use-package czm-tex-compile
   :elpaca (:host github :repo "ultronozm/czm-tex-compile.el"
                  :depth nil)
-  :after latex
   :bind
   ("C-c k" . czm-tex-compile)
   ("s-]" . czm-tex-compile-next-error)
@@ -1042,7 +1025,6 @@ DIR must include a .project file to be considered a project."
   :bind
   (:map LaTeX-mode-map
 	("s-u" . czm-preview-mode)
-	("s-e" . czm-preview-current-environment)
 	("C-c p m" . czm-preview-toggle-master))
   :custom
   (czm-preview-TeX-master "~/doit/preview-master.tex")
@@ -1054,20 +1036,22 @@ DIR must include a .project file to be considered a project."
   :config
 
   ;; because texlive 2023 seems super slow
-  (when (equal (system-name) "Pauls-MBP-3")
-    (setq czm-preview-latex-prefix-directory "/usr/local/texlive/2020/bin/x86_64-darwin/"))
+  (with-eval-after-load 'preview
+    (let ((tex-dir (when (equal (system-name) "Pauls-MBP-3")
+                     "/usr/local/texlive/2020/bin/x86_64-darwin/")))
+      (setq preview-LaTeX-command
+	    `(
+	      ,(concat
+	        "%`"
+	        tex-dir
+	        "%l \"\\nonstopmode\\nofiles\\PassOptionsToPackage{")
+	      ("," . preview-required-option-list)
+	      "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\""))))
+  
   ;; (setq czm-preview-latex-prefix-directory "/usr/local/texlive/2023/bin/universal-darwin/")
   ;; /usr/local/texlive/2023/bin/universal-darwin/
 
-  (with-eval-after-load 'preview
-    (setq preview-LaTeX-command
-	  `(
-	    ,(concat
-	      "%`"
-	      czm-preview-latex-prefix-directory
-	      "%l \"\\nonstopmode\\nofiles\\PassOptionsToPackage{")
-	    ("," . preview-required-option-list)
-	    "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\""))))
+  )
 
 ;;; ------------------------------ ABBREV and SPELLING ------------------------------
 
@@ -1219,6 +1203,8 @@ The list is ordered from bottom to top."
 
 (use-package org
   :elpaca nil
+  :hook
+  (org-mode . (lambda () (setq fill-column 999999)))
   :bind
   (:map org-mode-map
         ("C-c 1" .
@@ -1688,7 +1674,7 @@ and highlight most recent entry."
   (add-to-list 'pulsar-pulse-functions #'avy-goto-line)
   (pulsar-global-mode))
 
-(defvar czm-repos '("ai-threaded-chat"
+(defvar czm-repos '("ai-org-chat"
                     "czm-cpp"
                     "czm-preview"
                     "czm-spell"

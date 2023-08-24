@@ -70,6 +70,7 @@
 	("<right>" windmove-right)
 	("<left>" windmove-left)
         ("s-SPC" cycle-spacing)
+        ("C-x C-M-t" transpose-regions)
 	)
       )
 
