@@ -114,7 +114,6 @@
   (vc-follow-symlinks t)
   (view-read-only t)
   (delete-by-moving-to-trash t)
-  (delete-old-versions t)
   (help-window-select t)
   (isearch-allow-scroll t)
 
