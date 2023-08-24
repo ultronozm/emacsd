@@ -257,17 +257,25 @@ Otherwise, call `self-insert-command'."
     (call-interactively #'self-insert-command))))
 
 
+;; (defun burp-unwrap ()
+;;   "Remove the next sexp from its list."
+;;   (interactive)
+;;   (condition-case nil
+;;       (delete-pair)
+;;     (error
+;;      (condition-case nil
+;;          (save-excursion
+;;            (backward-sexp)
+;;            (delete-pair))
+;;        (error (call-interactively #'self-insert-command))))))
+
 (defun burp-unwrap ()
   "Remove the next sexp from its list."
   (interactive)
   (condition-case nil
       (delete-pair)
     (error
-     (condition-case nil
-         (save-excursion
-           (backward-sexp)
-           (delete-pair))
-       (error (call-interactively #'self-insert-command))))))
+     (call-interactively #'self-insert-command))))
 
 
 (dolist (key '(

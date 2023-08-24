@@ -980,10 +980,20 @@ DIR must include a .project file to be considered a project."
       ;; (czm-preview-timer-toggle)
       )))
 
+(use-package dynexp
+  :elpaca (:host github :repo "ultronozm/dynexp.el"
+                 :depth nil)
+  :demand ; but after auctex
+  :bind
+  (:map LaTeX-mode-map
+        ("SPC" . dynexp-space)
+        ("TAB" . dynexp-next)))
+
 (use-package czm-tex-edit
   :elpaca (:host github :repo "ultronozm/czm-tex-edit.el"
                  :depth nil)
   :after latex dynexp
+  :demand ; should come after latex and dynexp
   :bind
   (:map LaTeX-mode-map
         ("C-c t i" . czm-tex-edit-emphasize)
@@ -1003,7 +1013,7 @@ DIR must include a .project file to be considered a project."
         ("C-c i" . czm-tex-edit-make-equation-inline)
         ("C-c w" . czm-tex-edit-make-equation-align)
         ("s-<return>" . czm-tex-edit-return))
-  :init
+  :config
   (czm-tex-edit-define-color-functions-and-bindings
    "C-c t c"
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
@@ -1446,15 +1456,6 @@ and highlight most recent entry."
 	("C-c v" . symtex-dwim)))
 
 
-
-(use-package dynexp
-  :elpaca (:host github :repo "ultronozm/dynexp.el"
-                 :depth nil)
-  :demand ; but after auctex
-  :bind
-  (:map LaTeX-mode-map
-        ("SPC" . dynexp-space)
-        ("TAB" . dynexp-next)))
 
 ;;; ------------------------------ CPP ------------------------------
 
