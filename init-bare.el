@@ -47,6 +47,8 @@
 	("s-<down>" (lambda () (interactive) (shrink-window 5)))
 	("s-o" other-window)
 	("s-O" (lambda () (interactive) (other-window -1)))
+	("C-s-o" other-frame)
+	("C-s-O" (lambda () (interactive) (other-frame -1)))
         ("s-'" nil)
         ("s-n" nil)
         ("s-N" make-frame)
