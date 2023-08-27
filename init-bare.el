@@ -47,6 +47,8 @@
 	("s-<down>" (lambda () (interactive) (shrink-window 5)))
 	("s-o" other-window)
 	("s-O" (lambda () (interactive) (other-window -1)))
+	("C-s-o" other-frame)
+	("C-s-O" (lambda () (interactive) (other-frame -1)))
         ("s-'" nil)
         ("s-n" nil)
         ("s-N" make-frame)
@@ -257,17 +259,25 @@ Otherwise, call `self-insert-command'."
     (call-interactively #'self-insert-command))))
 
 
+;; (defun burp-unwrap ()
+;;   "Remove the next sexp from its list."
+;;   (interactive)
+;;   (condition-case nil
+;;       (delete-pair)
+;;     (error
+;;      (condition-case nil
+;;          (save-excursion
+;;            (backward-sexp)
+;;            (delete-pair))
+;;        (error (call-interactively #'self-insert-command))))))
+
 (defun burp-unwrap ()
   "Remove the next sexp from its list."
   (interactive)
   (condition-case nil
       (delete-pair)
     (error
-     (condition-case nil
-         (save-excursion
-           (backward-sexp)
-           (delete-pair))
-       (error (call-interactively #'self-insert-command))))))
+     (call-interactively #'self-insert-command))))
 
 
 (dolist (key '(
