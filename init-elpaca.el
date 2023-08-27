@@ -1028,12 +1028,11 @@ DIR must include a .project file to be considered a project."
   :custom
   (czm-preview-TeX-master "~/doit/preview-master.tex")
   (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
-  (TeX-PDF-mode 0)
   :hook
   (LaTeX-mode . czm-preview-mode)
 
   :config
-
+  (setq-default TeX-PDF-mode nil)
   ;; because texlive 2023 seems super slow
   (with-eval-after-load 'preview
     (let ((tex-dir (when (equal (system-name) "Pauls-MBP-3")
