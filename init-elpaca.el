@@ -695,23 +695,26 @@ DIR must include a .project file to be considered a project."
   (dolist (abbrev abbrevs)
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
-(use-package emacs
-  :elpaca nil
+(unless (eq window-system 'w32)
+  (use-package emacs
+    :elpaca nil
 
-  :after latex cc-mode
+    :after latex cc-mode
   
-  :custom
-  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
-  (save-abbrevs 'silently)
+    :custom
+    (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
+    (save-abbrevs 'silently)
   
-  :hook
-  (text-mode . abbrev-mode)
+    :hook
+    (text-mode . abbrev-mode)
   
-  :config
-  (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
-    (when (file-exists-p abbrev-file)
-      (quietly-read-abbrev-file abbrev-file)))
-  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
+    :config
+    (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
+      (when (file-exists-p abbrev-file)
+        (quietly-read-abbrev-file abbrev-file)))
+    (quietly-read-abbrev-file (concat user-emacs-directory "
+abbrev.el"))))
+
 
 (defun czm-avy-transpose-recent-space ()
   (interactive)
