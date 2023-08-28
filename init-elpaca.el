@@ -680,7 +680,7 @@ DIR must include a .project file to be considered a project."
 ;;; ------------------------------ LATEX ------------------------------
 
 (unless (eq window-system 'w32)
-  (load (concat default-directory "init-elpaca-latex.el")))
+  (load (concat user-emacs-directory "init-elpaca-latex.el")))
 
 
 ;;; ------------------------------ ABBREV and SPELLING ------------------------------
@@ -983,7 +983,7 @@ The list is ordered from bottom to top."
 ;;; ------------------------------ SAGE ------------------------------
 
 (unless (eq window-system 'w32)
-  (load (concat default-directory "init-elpaca-sage.el")))
+  (load (concat user-emacs-directory "init-elpaca-sage.el")))
 
 ;;; ------------------------------ CPP ------------------------------
 
