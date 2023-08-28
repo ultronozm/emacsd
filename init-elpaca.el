@@ -52,36 +52,36 @@
 (use-package exec-path-from-shell
   :demand
   :if (memq window-system '(mac ns))
-  :config 
+  :config
   (exec-path-from-shell-initialize))
 
 (elpaca-wait)
 
 ;; (use-package org
 ;;   :elpaca `(org
-;; 	     :fork (:host nil
-;; 		    :repo "https://git.tecosaur.net/tec/org-mode.git"
-;; 		    :branch "dev"
-;; 		    :remote "tecosaur")
-;; 	     :files (:defaults "etc")
-;; 	     :build t
-;; 	     :pre-build
-;; 	     (with-temp-file "org-version.el"
-;; 	       (require 'lisp-mnt)
-;; 	       (let ((version
-;; 		     (with-temp-buffer
-;; 		       (insert-file-contents "lisp/org.el")
-;; 		       (lm-header "version")))
-;; 		     (git-version
-;; 		     (string-trim
-;; 		      (with-temp-buffer
-;; 			(call-process "git" nil t nil "rev-parse" "--short" "HEAD")
-;; 			(buffer-string)))))
-;; 		 (insert
-;; 		  (format "(defun org-release () \"The release version of Org.\" %S)\n" version)
-;; 		  (format "(defun org-git-version () \"The truncate git commit hash of Org mode.\" %S)\n" git-version)
-;; 		  "(provide 'org-version)\n")))
-;; 	     :pin nil))
+;;           :fork (:host nil
+;;                  :repo "https://git.tecosaur.net/tec/org-mode.git"
+;;                  :branch "dev"
+;;                  :remote "tecosaur")
+;;           :files (:defaults "etc")
+;;           :build t
+;;           :pre-build
+;;           (with-temp-file "org-version.el"
+;;             (require 'lisp-mnt)
+;;             (let ((version
+;;                   (with-temp-buffer
+;;                     (insert-file-contents "lisp/org.el")
+;;                     (lm-header "version")))
+;;                   (git-version
+;;                   (string-trim
+;;                    (with-temp-buffer
+;;                      (call-process "git" nil t nil "rev-parse" "--short" "HEAD")
+;;                      (buffer-string)))))
+;;               (insert
+;;                (format "(defun org-release () \"The release version of Org.\" %S)\n" version)
+;;                (format "(defun org-git-version () \"The truncate git commit hash of Org mode.\" %S)\n" git-version)
+;;                "(provide 'org-version)\n")))
+;;           :pin nil))
 
 (elpaca-wait)
 
@@ -94,7 +94,7 @@
 
 (use-package emacs
   :elpaca nil
-  
+
   :custom
   (use-dialog-box nil)
   (show-paren-delay 0)
@@ -138,7 +138,7 @@
 
 (use-package recentf
   :elpaca nil
-  
+
   :custom
   (recentf-max-saved-items 500)
   :config
@@ -276,12 +276,12 @@
       (message "Abort: There are staged changes in the repository."))
      (t
       (progn
-	;; stage, commit, and push
-	(let* ((default-msg (concat "Update " (file-name-nondirectory file)))
-	       (msg (read-string "Commit message: " default-msg)))
-	  (magit-stage-file file)
-	  (magit-commit-create (list "-m" msg))
-	  ;; call the following interactively: (magit-push-current-to-upstream nil)
+        ;; stage, commit, and push
+        (let* ((default-msg (concat "Update " (file-name-nondirectory file)))
+               (msg (read-string "Commit message: " default-msg)))
+          (magit-stage-file file)
+          (magit-commit-create (list "-m" msg))
+          ;; call the following interactively: (magit-push-current-to-upstream nil)
           (call-interactively 'magit-push-current-to-upstream)))))))
 
 
@@ -673,7 +673,7 @@ DIR must include a .project file to be considered a project."
 
 (use-package project
   :elpaca nil
-  
+
   :config
   (add-to-list 'project-find-functions 'czm/project-try-local))
 
@@ -700,14 +700,14 @@ DIR must include a .project file to be considered a project."
     :elpaca nil
 
     :after latex cc-mode
-  
+
     :custom
     (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
     (save-abbrevs 'silently)
-  
+
     :hook
     (text-mode . abbrev-mode)
-  
+
     :config
     (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
       (when (file-exists-p abbrev-file)
@@ -731,7 +731,7 @@ abbrev.el"))))
   ("s-;" . czm-spell-then-abbrev))
 
 ;; Forcing this to load so that c++-mode-abbrev-table is defined.
-(use-package cc-mode 
+(use-package cc-mode
   :elpaca nil
   :demand)
 
@@ -820,7 +820,7 @@ abbrev.el"))))
   "Collect buffer point positions for org entries.
 The list is ordered from bottom to top."
   (let ((positions ()))
-    (org-map-entries 
+    (org-map-entries
      (lambda () (setq positions (cons (point) positions))) match scope skip)
     positions))
 
@@ -856,7 +856,7 @@ The list is ordered from bottom to top."
   "Create new temporary org buffer."
   (interactive)
   (let ((dir "~/doit/")
-	(filename (format-time-string "tmp-%Y%m%dT%H%M%S.org")))
+        (filename (format-time-string "tmp-%Y%m%dT%H%M%S.org")))
     (unless (file-directory-p dir)
       (make-directory dir t))
     (let ((filepath (expand-file-name filename dir)))
@@ -885,7 +885,7 @@ The list is ordered from bottom to top."
   ;; (erc-insert-post-hook . erc-save-buffer-in-logs)
   :config
   (erc-timestamp-mode)
-  
+
   ;; (defadvice save-buffers-kill-emacs (before save-logs (arg) activate)
   ;;   (save-some-buffers t (lambda () (when (and (eq major-mode 'erc-mode)
   ;;                                              (not (null buffer-file-name)))))))
@@ -990,87 +990,87 @@ The list is ordered from bottom to top."
 
 
 (c-add-style "llvm4"
-	     '("gnu"
-	       (c-basic-offset . 2)	; Guessed value
-	       (c-offsets-alist
-		(access-label . -)	   ; Guessed value
-		(block-close . 0)	   ; Guessed value
-		(class-close . 0)	   ; Guessed value
-		(defun-block-intro . ++) ; Guessed value
-		;; (defun-block-intro . ++)	; Guessed value
-		(inclass . ++)	; Guessed value
-		(inline-close . 0)	; Guessed value
-		;; (inline-close . 0)			; Guessed value
-		(statement . 0)	       ; Guessed value
-		(statement-block-intro . ++) ; Guessed value
-		(statement-cont . llvm-lineup-statement) ; Guessed value
-		;; (statement-cont . ++)		; Guessed value
-		(substatement . ++)	   ; Guessed value
-		(topmost-intro . nil)	   ; Guessed value
-		(topmost-intro-cont . +) ; Guessed value
-		(annotation-top-cont . 0)
-		(annotation-var-cont . +)
-		(arglist-close . c-lineup-close-paren)
-		(arglist-cont c-lineup-gcc-asm-reg 0)
-		;; (arglist-cont-nonempty c-lineup-gcc-asm-reg 0)
-		(arglist-cont-nonempty . c-lineup-arglist)
-		(arglist-intro . ++)
-		;; (arglist-intro . c-lineup-arglist-intro-after-paren)
-		(block-open . 0)
-		(brace-entry-open . 0)
-		(brace-list-close . 0)
-		(brace-list-entry . c-lineup-string-cont)
-		(brace-list-intro first c-lineup-2nd-brace-entry-in-arglist c-lineup-class-decl-init-+ +)
-		(brace-list-open . +)
-		(c . c-lineup-C-comments)
-		(case-label . 0)
-		(catch-clause . 0)
-		(class-open . 0)
-		(comment-intro . c-lineup-comment)
-		(composition-close . 0)
-		(composition-open . 0)
-		(cpp-define-intro c-lineup-cpp-define +)
-		(cpp-macro . -1000)
-		(cpp-macro-cont . +)
-		(defun-close . 0)
-		(defun-open . 0)
-		(do-while-closure . 0)
-		(else-clause . 0)
-		(extern-lang-close . 0)
-		(extern-lang-open . 0)
-		(friend . 0)
-		(func-decl-cont . +)
-		(incomposition . +)
-		(inexpr-class . +)
-		(inexpr-statement . +)
-		(inextern-lang . +)
-		(inher-cont . c-lineup-multi-inher)
-		(inher-intro . +)
-		(inlambda . 0)
-		(inline-open . 0)
-		(inmodule . +)
-		(innamespace . +)
-		(knr-argdecl . 0)
-		(knr-argdecl-intro . 5)
-		(label . 0)
-		(lambda-intro-cont . +)
-		(member-init-cont . c-lineup-multi-inher)
-		(member-init-intro . 4)
-		(module-close . 0)
-		(module-open . 0)
-		(namespace-close . 0)
-		(namespace-open . 0)
-		(objc-method-args-cont . c-lineup-ObjC-method-args)
-		(objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
-		(objc-method-intro .
-				   [0])
-		(statement-case-intro . ++)
-		(statement-case-open . +)
-		(stream-op . c-lineup-streamop)
-		(string . c-lineup-string-cont)
-		(substatement-label . 0)
-		(substatement-open . 0)
-		(template-args-cont c-lineup-template-args +))))
+             '("gnu"
+               (c-basic-offset . 2)	; Guessed value
+               (c-offsets-alist
+                (access-label . -)	   ; Guessed value
+                (block-close . 0)	   ; Guessed value
+                (class-close . 0)	   ; Guessed value
+                (defun-block-intro . ++) ; Guessed value
+                ;; (defun-block-intro . ++)	; Guessed value
+                (inclass . ++)	; Guessed value
+                (inline-close . 0)	; Guessed value
+                ;; (inline-close . 0)			; Guessed value
+                (statement . 0)	       ; Guessed value
+                (statement-block-intro . ++) ; Guessed value
+                (statement-cont . llvm-lineup-statement) ; Guessed value
+                ;; (statement-cont . ++)		; Guessed value
+                (substatement . ++)	   ; Guessed value
+                (topmost-intro . nil)	   ; Guessed value
+                (topmost-intro-cont . +) ; Guessed value
+                (annotation-top-cont . 0)
+                (annotation-var-cont . +)
+                (arglist-close . c-lineup-close-paren)
+                (arglist-cont c-lineup-gcc-asm-reg 0)
+                ;; (arglist-cont-nonempty c-lineup-gcc-asm-reg 0)
+                (arglist-cont-nonempty . c-lineup-arglist)
+                (arglist-intro . ++)
+                ;; (arglist-intro . c-lineup-arglist-intro-after-paren)
+                (block-open . 0)
+                (brace-entry-open . 0)
+                (brace-list-close . 0)
+                (brace-list-entry . c-lineup-string-cont)
+                (brace-list-intro first c-lineup-2nd-brace-entry-in-arglist c-lineup-class-decl-init-+ +)
+                (brace-list-open . +)
+                (c . c-lineup-C-comments)
+                (case-label . 0)
+                (catch-clause . 0)
+                (class-open . 0)
+                (comment-intro . c-lineup-comment)
+                (composition-close . 0)
+                (composition-open . 0)
+                (cpp-define-intro c-lineup-cpp-define +)
+                (cpp-macro . -1000)
+                (cpp-macro-cont . +)
+                (defun-close . 0)
+                (defun-open . 0)
+                (do-while-closure . 0)
+                (else-clause . 0)
+                (extern-lang-close . 0)
+                (extern-lang-open . 0)
+                (friend . 0)
+                (func-decl-cont . +)
+                (incomposition . +)
+                (inexpr-class . +)
+                (inexpr-statement . +)
+                (inextern-lang . +)
+                (inher-cont . c-lineup-multi-inher)
+                (inher-intro . +)
+                (inlambda . 0)
+                (inline-open . 0)
+                (inmodule . +)
+                (innamespace . +)
+                (knr-argdecl . 0)
+                (knr-argdecl-intro . 5)
+                (label . 0)
+                (lambda-intro-cont . +)
+                (member-init-cont . c-lineup-multi-inher)
+                (member-init-intro . 4)
+                (module-close . 0)
+                (module-open . 0)
+                (namespace-close . 0)
+                (namespace-open . 0)
+                (objc-method-args-cont . c-lineup-ObjC-method-args)
+                (objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
+                (objc-method-intro .
+                                   [0])
+                (statement-case-intro . ++)
+                (statement-case-open . +)
+                (stream-op . c-lineup-streamop)
+                (string . c-lineup-string-cont)
+                (substatement-label . 0)
+                (substatement-open . 0)
+                (template-args-cont c-lineup-template-args +))))
 
 (defun czm-c-mode-common-hook ()
   (c-set-style "llvm4")
@@ -1106,19 +1106,19 @@ The list is ordered from bottom to top."
 
 (defun czm-cmake-build--invoke-eshell-run (config)
   (let* ((cmake-build-run-config config)
-	 (config (cmake-build--get-run-config))
-	 (command (cmake-build--get-run-command config))
-	 (default-directory (cmake-build--get-run-directory config))
-	 (process-environment (append
-			       (list (concat "PROJECT_ROOT="
-					     (cmake-build--maybe-remote-project-root)))
-			       (cmake-build--get-run-config-env)
-			       process-environment))
-	 (buffer-name (string-replace "Run" "eshell-Run" (cmake-build--run-buffer-name))))
+         (config (cmake-build--get-run-config))
+         (command (cmake-build--get-run-command config))
+         (default-directory (cmake-build--get-run-directory config))
+         (process-environment (append
+                               (list (concat "PROJECT_ROOT="
+                                             (cmake-build--maybe-remote-project-root)))
+                               (cmake-build--get-run-config-env)
+                               process-environment))
+         (buffer-name (string-replace "Run" "eshell-Run" (cmake-build--run-buffer-name))))
     ;; with a bit more sophistication, you should be able to set up a
     ;; proper dedicated window.  might be fun to look into.
     (if (get-buffer buffer-name)
-	(switch-to-buffer buffer-name)
+        (switch-to-buffer buffer-name)
       (czm-eshell-run command buffer-name))))
 
 (defun czm-cmake-build-eshell-run ()
@@ -1130,24 +1130,24 @@ The list is ordered from bottom to top."
       (if  (and nil cmake-build-before-run)
           (cmake-build--invoke-build-current
            (lambda (process event)
-	     (let* ((this-root this-root)
-		    (cmake-build-project-root this-root))
-	       (when (cl-equalp "finished\n" event)
+             (let* ((this-root this-root)
+                    (cmake-build-project-root this-root))
+               (when (cl-equalp "finished\n" event)
                  (czm-cmake-build--invoke-eshell-run this-run-config)))))
-	(czm-cmake-build--invoke-eshell-run this-run-config)))))
+        (czm-cmake-build--invoke-eshell-run this-run-config)))))
 
 (use-package cmake-build
   :elpaca (:host github :repo "ultronozm/cmake-build.el"
                  :depth nil)
   :bind (("s-m m" . cmake-build-menu)
-	 ("s-m 1" . cmake-build-set-cmake-profile)
-	 ("s-m 2" . cmake-build-clear-cache-and-configure)
-	 ("s-m 3" . cmake-build-set-config)
-	 ("s-m b" . cmake-build-current)
-	 ("s-m o" . ff-find-other-file)
-	 ("s-m r" . cmake-build-run)
-	 ("s-m e" . czm-cmake-build-eshell-run)
-	 ("s-m c" . cmake-build-clean))
+         ("s-m 1" . cmake-build-set-cmake-profile)
+         ("s-m 2" . cmake-build-clear-cache-and-configure)
+         ("s-m 3" . cmake-build-set-config)
+         ("s-m b" . cmake-build-current)
+         ("s-m o" . ff-find-other-file)
+         ("s-m r" . cmake-build-run)
+         ("s-m e" . czm-cmake-build-eshell-run)
+         ("s-m c" . cmake-build-clean))
   :custom
   (cmake-build-override-compile-keymap nil)
   ;; (cmake-build-run-function 'czm-eshell-run)
@@ -1280,4 +1280,3 @@ The list is ordered from bottom to top."
      (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
-
