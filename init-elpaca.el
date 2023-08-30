@@ -712,8 +712,7 @@ DIR must include a .project file to be considered a project."
     (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
       (when (file-exists-p abbrev-file)
         (quietly-read-abbrev-file abbrev-file)))
-    (quietly-read-abbrev-file (concat user-emacs-directory "
-abbrev.el"))))
+    (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
 
 
 (defun czm-avy-transpose-recent-space ()
