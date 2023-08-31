@@ -35,12 +35,14 @@
   (* 1.5 (funcall (preview-scale-from-face))))
 
 (defun my-preview-scale-function ()
-  (* (funcall (preview-scale-from-face))
-     (if (frame-on-primary-monitor-p (selected-frame))
-	 1.5
-       1.8
-       ;; 2.7
-       )))
+  (*
+   (expt text-scale-mode-step text-scale-mode-amount)
+   (funcall (preview-scale-from-face))
+   (if (frame-on-primary-monitor-p (selected-frame))
+       1.5
+     1.8
+     ;; 2.7
+     )))
 
 (use-package latex
   :elpaca  (auctex
