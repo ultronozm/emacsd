@@ -1290,3 +1290,7 @@ The list is ordered from bottom to top."
 (use-package info-colors
   :elpaca (:host github :repo "ubolonton/info-colors")
   :hook (Info-selection . info-colors-fontify-node))
+
+(use-package expand-region
+  :bind
+  (("C-=" . er/expand-region)))
