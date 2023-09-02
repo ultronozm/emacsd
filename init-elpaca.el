@@ -1198,7 +1198,12 @@ The list is ordered from bottom to top."
 
 (use-package pulsar
   :config
-  (add-to-list 'pulsar-pulse-functions #'avy-goto-line)
+mqy  (dolist (fn '(avy-goto-line
+                diff-hunk-prev
+                diff-hunk-next
+                diff-file-next
+                diff-file-prev))
+    (add-to-list 'pulsar-pulse-functions fn))
   (pulsar-global-mode))
 
 (defvar czm-repos '("ai-org-chat"
