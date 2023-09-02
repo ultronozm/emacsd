@@ -299,9 +299,13 @@
   :config
   ;; (load-theme 'modus-vivendi t)
   ;; (load-theme 'modus-operandi t)
-  (load-theme 'ef-frost t)
+  ;; (load-theme 'ef-frost t)
   ;; (load-theme 'ef-elea-dark t)
-  )
+
+  (let ((hour (string-to-number (substring (current-time-string) 11 13))))
+    (if (or (< hour 7) (> hour 20))
+        (load-theme 'modus-vivendi t)
+      (load-theme 'ef-frost t))))
 
 (use-package vertico
   :demand
