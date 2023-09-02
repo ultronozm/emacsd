@@ -1200,7 +1200,7 @@ The list is ordered from bottom to top."
 
 (use-package pulsar
   :config
-mqy  (dolist (fn '(avy-goto-line
+  (dolist (fn '(avy-goto-line
                 diff-hunk-prev
                 diff-hunk-next
                 diff-file-next
