@@ -297,9 +297,9 @@
 (use-package ef-themes
   :demand
   :config
-  (load-theme 'modus-vivendi t)
+  ;; (load-theme 'modus-vivendi t)
   ;; (load-theme 'modus-operandi t)
-  ;; (load-theme 'ef-frost t)
+  (load-theme 'ef-frost t)
   ;; (load-theme 'ef-elea-dark t)
   )
 
@@ -545,7 +545,9 @@
 ;;; ------------------------------ AI ------------------------------
 
 (use-package copilot
-  :elpaca (:host github :repo "zerolfx/copilot.el"
+  :elpaca (:host github
+                 ;; :repo "zerolfx/copilot.el"
+                 :repo "ultronozm/copilot.el"
                  :files ("*.el" "dist"))
   :hook ((prog-mode LaTeX-mode) . copilot-mode)
   :bind (:map copilot-completion-map
@@ -1284,3 +1286,7 @@ mqy  (dolist (fn '(avy-goto-line
      (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+
+(use-package info-colors
+  :elpaca (:host github :repo "ubolonton/info-colors")
+  :hook (Info-selection . info-colors-fontify-node))
