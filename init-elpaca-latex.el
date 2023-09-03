@@ -1,5 +1,9 @@
 (defun czm-tex-buffer-face ()
-  (setq buffer-face-mode-face '(:height 260 :width normal :family "Lucida Grande"))
+  (interactive)
+  (setq buffer-face-mode-face '(:height 260 :width normal
+                                        ;; :family "Lucida Grande")
+                                        :family "Courier New")
+        )
   (buffer-face-mode))
 
 (defun czm-tex-setup-environments-and-outline-regexp ()
