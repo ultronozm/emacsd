@@ -552,7 +552,8 @@
   :elpaca (:host github
                  ;; :repo "zerolfx/copilot.el"
                  :repo "ultronozm/copilot.el"
-                 :files ("*.el" "dist"))
+                 :files ("*.el" "dist")
+                 :depth nil)
   :hook ((prog-mode LaTeX-mode) . copilot-mode)
   :bind (:map copilot-completion-map
               ("§" . copilot-accept-completion)
