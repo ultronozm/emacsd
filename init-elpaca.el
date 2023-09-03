@@ -1304,3 +1304,32 @@ The list is ordered from bottom to top."
 (use-package expand-region
   :bind
   (("C-=" . er/expand-region)))
+
+
+
+
+(let ((parameters
+       '(window-parameters . ((no-other-window . t)
+                              (no-delete-other-windows . t)))))
+  (setq
+   display-buffer-alist
+   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+      nil
+      (window-parameters (mode-line-format . none)))
+     ("\\*\\(?:help\\|grep\\|Completions\\|Occur\\)\\*"
+      display-buffer-in-side-window
+      (side . bottom) (slot . -1) (preserve-size . (nil . t))
+      ,parameters))))
+(let ((parameters
+       '(window-parameters . ((no-other-window . t)
+                              (no-delete-other-windows . t)))))
+  (setq
+   display-buffer-alist
+   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+      nil
+      (window-parameters (mode-line-format . none))))))
+
+
+    
+    
+    
