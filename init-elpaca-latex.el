@@ -1,12 +1,24 @@
 (defun czm-tex-buffer-face ()
   (interactive)
   (setq buffer-face-mode-face '(:height 260 :width normal
-                                        ;; :family "Lucida Grande"
-                                        ;; :family "DejaVu Mono-12"
-                                        ;; :family "Lucida Typewriter"
-                                        :family "Courier New"
+                                        :family
+                                        ;; "Lucida Grande"
+                                        ;; "Papyrus"
+                                        ;; "PT Mono"
+                                        ;; "Andale Mono"
+                                        ;; "Baskerville"
+                                        ;; "Hoefler Text"
+                                        "Didot"
+                                        ;; "Monaco"
+                                        ;; "Verdana"
+                                        ;; "Menlo"
+                                        ;; "DejaVu Mono-12"
+                                        ;; "Lucida Typewriter"
+                                        ;; "Courier New"
                                         )
         )
+  (unless buffer-face-mode
+    (buffer-face-mode 0))
   (buffer-face-mode))
 
 (defun czm-tex-setup-environments-and-outline-regexp ()
