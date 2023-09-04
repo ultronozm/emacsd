@@ -119,7 +119,7 @@
   (delete-by-moving-to-trash t)
   (help-window-select t)
   (isearch-allow-scroll t)
-  (doc-view-resolution 200)
+  (doc-view-resolution 300)
 
   :config
   (electric-pair-mode)
@@ -1333,7 +1333,4 @@ The list is ordered from bottom to top."
       nil
       (window-parameters (mode-line-format . none))))))
 
-
-    
-    
     

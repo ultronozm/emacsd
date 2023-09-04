@@ -2,13 +2,13 @@
   (interactive)
   (setq buffer-face-mode-face '(:height 260 :width normal
                                         :family
+                                        ;; "Didot"
+                                        "Andale Mono"
                                         ;; "Lucida Grande"
                                         ;; "Papyrus"
                                         ;; "PT Mono"
-                                        ;; "Andale Mono"
                                         ;; "Baskerville"
                                         ;; "Hoefler Text"
-                                        "Didot"
                                         ;; "Monaco"
                                         ;; "Verdana"
                                         ;; "Menlo"
