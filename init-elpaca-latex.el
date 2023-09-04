@@ -190,6 +190,7 @@
   :custom
   (latex/override-preview-map nil)
   (latex/override-font-map nil)
+  (latex/override-fill-map nil)
   :hook
   (LaTeX-mode . latex-extra-mode))
 
