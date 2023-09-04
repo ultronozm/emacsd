@@ -133,6 +133,7 @@
   (save-place-mode)
   (tool-bar-mode 0)
   (scroll-bar-mode 0)
+  (transient-mark-mode 0)
   (line-number-mode)
   (column-number-mode)
   (winner-mode))
