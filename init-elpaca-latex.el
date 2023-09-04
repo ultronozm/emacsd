@@ -1,8 +1,11 @@
 (defun czm-tex-buffer-face ()
   (interactive)
   (setq buffer-face-mode-face '(:height 260 :width normal
-                                        ;; :family "Lucida Grande")
-                                        :family "Courier New")
+                                        ;; :family "Lucida Grande"
+                                        ;; :family "DejaVu Mono-12"
+                                        ;; :family "Lucida Typewriter"
+                                        :family "Courier New"
+                                        )
         )
   (buffer-face-mode))
 
