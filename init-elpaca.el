@@ -1265,9 +1265,12 @@ The list is ordered from bottom to top."
 
 (defun czm-pull-my-stuff ()
   (interactive)
-  (let ((repos (append
-                '("~/.emacs.d" "~/.emacs.d/emacsd" "~/doit")
-                czm-repos)))
+  (let* ((repos (append
+                 ;; '("~/.emacs.d" "~/.emacs.d/emacsd" "~/doit")
+                 (mapcar
+                  (lambda (name)
+                    (concat user-emacs-directory "elpaca/repos/" name))
+                  czm-repos))))
     (repo-scan-pull repos)))
 
 (defun czm-rebuild-my-stuff ()
