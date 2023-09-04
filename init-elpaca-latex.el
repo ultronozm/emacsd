@@ -356,6 +356,7 @@
         ("C-c e" . czm-tex-edit-make-equation-numbered)
         ("C-c i" . czm-tex-edit-make-equation-inline)
         ("C-c w" . czm-tex-edit-make-equation-align)
+        ("C-c q" . czm-tex-edit-make-equation-multline)
         ("s-<return>" . czm-tex-edit-return))
   :config
   (czm-tex-edit-define-color-functions-and-bindings
