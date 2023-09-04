@@ -398,10 +398,10 @@
   ("C-c n" . library-clipboard-to-refs))
 
 
-;; testing this out for a bit, to make sure it works as you hoped
-(defun LaTeX-env-beginning-pos-col ()
-  "Return a cons: (POINT . COLUMN) for current environment's beginning."
-  (save-excursion
-    (LaTeX-find-matching-begin)
-    (LaTeX-back-to-indentation)
-    (cons (point) (current-column))))
+;; ;; testing this out for a bit, to make sure it works as you hoped
+;; (defun LaTeX-env-beginning-pos-col ()
+;;   "Return a cons: (POINT . COLUMN) for current environment's beginning."
+;;   (save-excursion
+;;     (LaTeX-find-matching-begin)
+;;     (LaTeX-back-to-indentation)
+;;     (cons (point) (current-column))))
