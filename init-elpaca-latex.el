@@ -1,22 +1,33 @@
 (defun czm-tex-buffer-face ()
   (interactive)
-  (setq buffer-face-mode-face '(:height 260 :width normal
-                                        :family
-                                        ;; "Didot"
-                                        "Andale Mono"
-                                        ;; "Lucida Grande"
-                                        ;; "Papyrus"
-                                        ;; "PT Mono"
-                                        ;; "Baskerville"
-                                        ;; "Hoefler Text"
-                                        ;; "Monaco"
-                                        ;; "Verdana"
-                                        ;; "Menlo"
-                                        ;; "DejaVu Mono-12"
-                                        ;; "Lucida Typewriter"
-                                        ;; "Courier New"
-                                        )
-        )
+  (setq buffer-face-mode-face
+        '(:height 260
+                  :width normal
+                  :family
+                  "Andale Mono"
+                  )
+        ;; '(:height 260
+        ;;           :width normal
+        ;;           :family
+        ;;           "Lucida Grande"
+        ;;           )
+  ;; '(:height 260 :width normal
+  ;;                                 :family
+  ;;                                 ;; "Didot"
+  ;;                                 "Andale Mono"
+  ;;                                 ;; "Lucida Grande"
+  ;;                                 ;; "Papyrus"
+  ;;                                 ;; "PT Mono"
+  ;;                                 ;; "Baskerville"
+  ;;                                 ;; "Hoefler Text"
+  ;;                                 ;; "Monaco"
+  ;;                                 ;; "Verdana"
+  ;;                                 ;; "Menlo"
+  ;;                                 ;; "DejaVu Mono-12"
+  ;;                                 ;; "Lucida Typewriter"
+  ;;                                 ;; "Courier New"
+  ;;                                 )
+  )
   (unless buffer-face-mode
     (buffer-face-mode 0))
   (buffer-face-mode))
