@@ -28,8 +28,8 @@
   ;;                                 ;; "Courier New"
   ;;                                 )
   )
-  (unless buffer-face-mode
-    (buffer-face-mode 0))
+  ;; (unless buffer-face-mode
+  ;;   (buffer-face-mode 0))
   (buffer-face-mode))
 
 (defun czm-tex-setup-environments-and-outline-regexp ()
