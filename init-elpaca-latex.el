@@ -289,7 +289,8 @@
       (insert "~")))
    ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.") msg)
     (attrap-one-option 'use-interword-spacing
-      (delete-region pos (1+ pos))
+      (delete-region (1-  (point))
+                     (point))
       (insert "\\ ")))
    ((s-matches? (rx "Delete this space to maintain correct pagereferences.") msg)
     (attrap-one-option 'fix-space-pageref
