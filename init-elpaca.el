@@ -305,9 +305,13 @@
   ;; (load-theme 'ef-elea-dark t)
 
   (let ((hour (string-to-number (substring (current-time-string) 11 13))))
-    (if (or (< hour 7) (> hour 20))
-        (load-theme 'modus-vivendi t)
-      (load-theme 'ef-frost t))))
+    (cond
+     ((<= hour 7)
+      (load-theme 'modus-vivendi t))
+     ((<= hour 19)
+      (load-theme 'ef-frost t))
+     (t
+      (load-theme 'ef-autumn t)))))
 
 (use-package vertico
   :demand
