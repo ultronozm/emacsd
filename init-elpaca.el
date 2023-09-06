@@ -1094,6 +1094,12 @@ The list is ordered from bottom to top."
   (set-fill-column 120)
   (setq next-error-function #'flymake-goto-next-error))
 
+(use-package flymake
+  :bind
+  (:map flymake-mode-map
+        ("M-n" . flymake-goto-next-error)
+        ("M-p" . flymake-goto-prev-error)))
+
 (use-package emacs
   :elpaca nil
   :after cc-mode
