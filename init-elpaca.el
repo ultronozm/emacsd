@@ -1226,7 +1226,9 @@ The list is ordered from bottom to top."
                 diff-hunk-prev
                 diff-hunk-next
                 diff-file-next
-                diff-file-prev))
+                diff-file-prev
+                flycheck-previous-error
+                flycheck-next-error))
     (add-to-list 'pulsar-pulse-functions fn))
   (pulsar-global-mode))
 
