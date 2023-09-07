@@ -1382,3 +1382,22 @@ The list is ordered from bottom to top."
 (global-set-key "\M-I" #'tab-to-tab-stop)
 
 
+(defun czm-set-margins (width)
+  (interactive)
+  (set-window-margins (selected-window) width width)
+  (setq left-margin-width with right-margin-width width))
+
+(defvar czm-margin-width 25)
+
+(defun czm-toggle-margins (&optional width)
+  (interactive)
+  (unless width
+    (setq width czm-margin-width))
+  (if (eq left-margin-width 0)
+      (progn
+        (setq left-margin-width czm-margin-width
+              right-margin-width czm-margin-width)
+        (set-window-margins (selected-window) width width))
+    (setq left-margin-width 0)
+    (setq right-margin-width 0)
+    (set-window-margins (selected-window) 0 0)))
