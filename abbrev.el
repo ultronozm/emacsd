@@ -4836,6 +4836,7 @@ Publisher." nil)
     ("blskp" "\\baselineskip" nil)
     ("blstr" "\\renewcommand{\\baselinestretch}{1.5}" nil)
     ("blt" "\\bullet" nil)
+    ("hblt" "^{\\bullet}" dynexp-delete-leading-space)
     ("bm" "\\mathbf{m}" nil)
     ("bma" "<+START+><+TAB+>\\begin{math}
 <+TAB+><+++>
