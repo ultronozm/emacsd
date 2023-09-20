@@ -4,6 +4,7 @@
         '(:height 260
                   :width normal
                   :family
+                  ;; "Monaco"
                   "Andale Mono"
                   )
         ;; '(:height 260

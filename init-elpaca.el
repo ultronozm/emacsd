@@ -263,7 +263,8 @@
 
 ;;; ------------------------------ GIT ------------------------------
 
-(use-package magit)
+(use-package magit
+  :defer t)
 
 (defun czm/git-update-commit-push-this-file ()
   "Update, commit, and push the current file."
@@ -571,6 +572,7 @@
 
 (use-package gptel
   :after exec-path-from-shell
+  :defer t
   :custom
   (gptel-model "gpt-4")
   :config
@@ -580,7 +582,7 @@
   :elpaca (:host github :repo "ultronozm/ai-org-chat.el"
                  :depth nil)
   :after gptel
-    :bind
+  :bind
   (:map global-map
         ("s-/" . ai-org-chat-new))
   (:map ai-org-chat-minor-mode
@@ -652,11 +654,13 @@
 ;;; ------------------------------ FLYCHECK ------------------------------
 
 (use-package flycheck
+  :defer t
   :config
   (setq flycheck-emacs-lisp-load-path 'inherit))
 
 
 (use-package flycheck-package
+  :defer t
   :hook
   (emacs-lisp-mode . flycheck-package-setup))
 
@@ -890,6 +894,7 @@ The list is ordered from bottom to top."
 (use-package publish
   :elpaca (:host github :repo "ultronozm/publish.el"
                  :depth nil)
+  :defer t
   :custom
   (publish-repo-root "~/math")
   (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
@@ -898,6 +903,7 @@ The list is ordered from bottom to top."
 
 (use-package erc
   :elpaca nil
+  :defer t
   ;; :hook
   ;; (erc-insert-post-hook . erc-save-buffer-in-logs)
   :config
@@ -1218,7 +1224,8 @@ The list is ordered from bottom to top."
 
 (use-package repo-scan
   :elpaca (:host github :repo "ultronozm/repo-scan.el"
-                 :depth nil))
+                 :depth nil)
+  :defer t)
 
 (use-package pulsar
   :config
@@ -1383,11 +1390,16 @@ The list is ordered from bottom to top."
 
 
 (defun czm-set-margins (width)
-  (interactive)
-  (set-window-margins (selected-window) width width)
-  (setq left-margin-width with right-margin-width width))
+  "Set the margins of the current window to WIDTH.
+Interactively, prompt for WIDTH."
+  (interactive "nWidth: ")
+  (setq left-margin-width width right-margin-width width)
+  (set-window-margins (selected-window) width width))
 
-(defvar czm-margin-width 25)
+(defvar czm-margin-width
+  (if (equal system-name "d51735")
+      80
+    25))
 
 (defun czm-toggle-margins (&optional width)
   (interactive)

@@ -1,4 +1,5 @@
 (use-package sage-shell-mode
+  :defer t
   :custom
   (sage-shell:use-prompt-toolkit nil)
   (sage-shell:use-simple-prompt t)
@@ -33,6 +34,7 @@ and highlight most recent entry."
 
 
 (use-package ob-sagemath
+  :defer t
   :config
   ;; Ob-sagemath supports only evaluating with a session.
   (setq org-babel-default-header-args:sage '((:session . t)
@@ -59,12 +61,14 @@ and highlight most recent entry."
       (calc-push (car modified-value)))))
 
 (use-package mmm-mode
+  :defer t
   :custom
   (mmm-global-mode 'maybe)
   :custom-face
   (mmm-default-submode-face ((t (:background "#ddffff")))))
 
 (use-package sagemintex
+  :defer t
   :elpaca (:host github :repo "ultronozm/sagemintex.el"
                  :depth nil)
   :after latex mmm-mode sage-shell-mode
