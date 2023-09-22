@@ -354,6 +354,7 @@
   :bind
   (:map LaTeX-mode-map
         ("C-c t i" . czm-tex-edit-emphasize)
+        ("C-c t a" . czm-tex-edit-alertify)
         ("C-c t b" . czm-tex-edit-bold)
         ("C-c t l" . czm-tex-edit-underline)
         ("C-c t u" . czm-tex-edit-unemphasize)
