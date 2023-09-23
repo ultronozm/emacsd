@@ -787,7 +787,8 @@ DIR must include a .project file to be considered a project."
   (org-confirm-babel-evaluate nil)
   (org-link-elisp-confirm-function nil)
   (org-enforce-todo-dependencies t)
-  (org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default))) ; open pdfs in emacs
+  ;; (org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)))
+                                        ; open pdfs in emacs
   (org-hide-leading-stars t)
   (org-list-allow-alphabetical t)
   (org-odd-levels-only nil)
