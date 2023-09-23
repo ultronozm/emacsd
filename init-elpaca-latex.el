@@ -198,7 +198,12 @@
   (:map latex-extra-mode-map
         ("TAB" . nil)
         ("C-M-a" . latex/beginning-of-environment)
-        ("C-M-e" . latex/end-of-environment))
+        ("C-M-e" . latex/end-of-environment)
+        ("C-M-f" . forward-sexp)
+        ("C-M-b" . backward-sexp)
+        ("C-s-n" . latex/forward-environment)
+        ("C-s-p" . latex/backward-environment)
+        )
   :custom
   (latex/override-preview-map nil)
   (latex/override-font-map nil)
