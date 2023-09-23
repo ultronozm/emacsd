@@ -581,7 +581,6 @@
 (use-package ai-org-chat
   :elpaca (:host github :repo "ultronozm/ai-org-chat.el"
                  :depth nil)
-  :after gptel
   :bind
   (:map global-map
         ("s-/" . ai-org-chat-new))
