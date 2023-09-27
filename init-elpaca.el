@@ -142,7 +142,7 @@
   :elpaca nil
 
   :custom
-  (recentf-max-saved-items 500)
+  (recentf-max-saved-items 100)
   :config
   (recentf-mode))
 
