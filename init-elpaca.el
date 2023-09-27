@@ -1397,7 +1397,9 @@ Interactively, prompt for WIDTH."
   (set-window-margins (selected-window) width width))
 
 (defvar czm-margin-width
-  (if (equal system-name "d51735")
+  (if (and
+       nil
+       (equal system-name "d51735"))
       80
     25))
 
