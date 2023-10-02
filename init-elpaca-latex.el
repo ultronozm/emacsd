@@ -441,3 +441,14 @@
 ;;     (LaTeX-find-matching-begin)
 ;;     (LaTeX-back-to-indentation)
 ;;     (cons (point) (current-column))))
+
+(use-package symtex
+  :after latex
+  :elpaca (:host github :repo "ultronozm/symtex.el"
+                 :depth nil)
+  :bind
+  ("C-c V" . symtex-process)
+  :bind
+  (:map LaTeX-mode-map
+	("C-c v" . symtex-dwim)
+	("C-M-; v" . czm/avy-symtex-dwim-region)))
