@@ -782,7 +782,7 @@ DIR must include a .project file to be considered a project."
                               '("~/ua/ua-log.org"))))
   (org-goto-auto-isearch nil)
   (org-agenda-include-diary t)
-  (org-babel-load-languages '((latex . t) (emacs-lisp . t)))
+  (org-babel-load-languages '((latex . t) (emacs-lisp . t) (python . t)))
   (org-babel-python-command "python3")
   (org-confirm-babel-evaluate nil)
   (org-link-elisp-confirm-function nil)
