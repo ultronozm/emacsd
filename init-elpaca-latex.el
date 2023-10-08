@@ -433,6 +433,11 @@
   :after latex czm-tex-util
   :elpaca (:host github :repo "ultronozm/library.el"
                  :depth nil)
+  :custom
+  (library-pdf-directory "~/Dropbox/math documents/unsorted/")
+  (library-bibtex-file "~/doit/refs.bib")
+  (library-download-directory "~/Downloads/")
+  (library-org-capture-template-key "j")
   :bind
   ("C-c n" . library-clipboard-to-refs))
 
