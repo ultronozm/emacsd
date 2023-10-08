@@ -6,6 +6,9 @@
                   :family
                   ;; "Monaco"
                   "Andale Mono"
+                  ;; "Lucida Grande"
+                   ;; "Papyrus"
+                  ;; "Hoefler Text"
                   )
         ;; '(:height 260
         ;;           :width normal
