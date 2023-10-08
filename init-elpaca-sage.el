@@ -95,9 +95,11 @@ and highlight most recent entry."
   (mmm-sage-shell:sage-mode-exit . sagemintex-disable))
 
 (use-package symtex
-  :elpaca (:host github :repo "ultronozm/symtex.el"
+  :elpaca (:host github
+                 :repo "ultronozm/symtex.el"
+                 :files ("*.el" "*.py")
                  :depth nil)
-  :after latex sage-shell-mode
+  :after latex
   :bind
   (:map global-map
         ("C-c V" . symtex-process))
