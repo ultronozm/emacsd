@@ -78,12 +78,14 @@ and highlight most recent entry."
     (set-face-attribute 'mmm-default-submode-face nil :background "#ddffff")))
 
 (use-package sagemintex
-  :defer t
   :elpaca (:host github :repo "ultronozm/sagemintex.el"
                  :depth nil)
-  :after latex mmm-mode sage-shell-mode
+  :after latex mmm-mode
+  :demand t
   :custom
   (LaTeX-command "latex -shell-escape")
+  :config
+  (sagemintex-initialize)
   :bind
   (:map sagemintex-mode-map
 	("C-c C-c" . sagemintex-evaluate)
