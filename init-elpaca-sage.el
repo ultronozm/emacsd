@@ -64,8 +64,18 @@ and highlight most recent entry."
   :defer t
   :custom
   (mmm-global-mode 'maybe)
-  :custom-face
-  (mmm-default-submode-face ((t (:background "#ddffff")))))
+  :config
+  (face-spec-set 'mmm-default-submode-face
+               '((((background light)) (:background "#ddffff"))
+                 (((background dark)) (:background "#004444")))
+               'face-defface-spec))
+
+;; (remove-hook 'ef-themes-post-load-hook #'my-update-mmm-face)
+(defun set-mmm-submode-face ()
+  (interactive)
+  (if (eq (frame-parameter nil 'background-mode) 'dark)
+      (set-face-attribute 'mmm-default-submode-face nil :background "#004444")
+    (set-face-attribute 'mmm-default-submode-face nil :background "#ddffff")))
 
 (use-package sagemintex
   :defer t
