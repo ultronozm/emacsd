@@ -173,19 +173,6 @@
 (define-key minibuffer-local-map (kbd "C-c d") 'czm/insert-date)
 
 
-(defun czm/find-newest-pdf-in-Downloads ()
-  "Find the newest PDF file in ~/Downloads."
-  (interactive)
-  (let* ((downloads-dir (expand-file-name "~/Downloads"))
-         (pdf-files (directory-files downloads-dir t "\\.pdf$"))
-         (pdf-files-sorted (sort pdf-files
-                                 (lambda (a b)
-                                  (time-less-p (nth 5 (file-attributes b))
-                                               (nth 5 (file-attributes a)))))))
-    (if pdf-files
-        (find-file (car pdf-files-sorted))
-      (message "No PDF files found in ~/Downloads."))))
-
 (defun czm/resize-frame-to-bottom-third ()
   "Reshape current frame to occupy bottom third of the screen."
   (interactive)
