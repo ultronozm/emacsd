@@ -548,7 +548,11 @@
                  :repo "ultronozm/copilot.el"
                  :files ("*.el" "dist")
                  :depth nil)
-  :hook ((prog-mode LaTeX-mode) . copilot-mode)
+  :hook
+  ((prog-mode LaTeX-mode) . copilot-mode)
+  (emacs-lisp-mode . (lambda () (setq tab-width 1)))
+
+  :custom (copilot-indent-warning-suppress t)
   :bind (:map copilot-completion-map
               ("§" . copilot-accept-completion)
               ("M-§" . copilot-accept-completion-by-word)
