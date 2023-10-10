@@ -70,29 +70,22 @@ and highlight most recent entry."
                  (((background dark)) (:background "#004444")))
                'face-defface-spec))
 
-;; (remove-hook 'ef-themes-post-load-hook #'my-update-mmm-face)
-(defun set-mmm-submode-face ()
-  (interactive)
-  (if (eq (frame-parameter nil 'background-mode) 'dark)
-      (set-face-attribute 'mmm-default-submode-face nil :background "#004444")
-    (set-face-attribute 'mmm-default-submode-face nil :background "#ddffff")))
-
-(use-package sagemintex
-  :elpaca (:host github :repo "ultronozm/sagemintex.el"
+(use-package czm-tex-mint
+  :elpaca (:host github :repo "ultronozm/czm-tex-mint.el"
                  :depth nil)
   :after latex mmm-mode
   :demand t
   :custom
   (LaTeX-command "latex -shell-escape")
   :config
-  (sagemintex-initialize)
+  (czm-tex-mint--initialize)
   :bind
-  (:map sagemintex-mode-map
-	("C-c C-c" . sagemintex-evaluate)
-	("C-c C-l" . sagemintex-evaluate-latex))
+  (:map czm-tex-mint--mode-map
+        ("C-c C-c" . czm-tex-mint-evaluate)
+        ("C-c C-l" . czm-tex-mint-evaluate-latex))
   :hook
-  (mmm-sage-shell:sage-mode-enter . sagemintex-enable)
-  (mmm-sage-shell:sage-mode-exit . sagemintex-disable))
+  (mmm-sage-shell:sage-mode-enter . czm-tex-mint--enable)
+  (mmm-sage-shell:sage-mode-exit . czm-tex-mint--disable))
 
 (use-package symtex
   :elpaca (:host github
