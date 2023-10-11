@@ -406,7 +406,7 @@
   (czm-preview-TeX-master "~/doit/preview-master.tex")
   (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
   :hook
-  (LaTeX-mode . czm-preview-mode)
+  (LaTeX-mode . czm-preview-mode-conditionally-enable)
 
   :config
   (setq-default TeX-PDF-mode nil)
