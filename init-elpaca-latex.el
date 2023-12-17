@@ -58,25 +58,45 @@
     (widen)
     (apply orig-fun args)))
 
+(defvar czm-preview-scales
+  '(
+    ((1434 806) . 5)
+    ((602 338) . 2.7)
+    ((344 22) . 1.5)
+    )
+  "Alist that maps monitors to preview scales, where monitors are
+described by their mm-size, and preview scales are numbers.")
+
 
 (defun frame-on-primary-monitor-p (frame)
   (let* ((monitors (display-monitor-attributes-list))
-	 (primary-monitor (car monitors))
-	 (frame-monitor (frame-monitor-attributes frame)))
+	        (primary-monitor (car monitors))
+	        (frame-monitor (frame-monitor-attributes frame)))
     (equal primary-monitor frame-monitor)))
 
-(defun my-preview-scale-function ()
-  (* 1.5 (funcall (preview-scale-from-face))))
+;; (defun my-preview-scale-function ()
+;;   (* 1.5 (funcall (preview-scale-from-face)))
+;;   ;; (* 2.6 (funcall (preview-scale-from-face)))
+;;   )
+
+;; (defun my-preview-scale-function ()
+;;   (*
+;;    (expt text-scale-mode-step text-scale-mode-amount)
+;;    (funcall (preview-scale-from-face))
+;;    (if (frame-on-primary-monitor-p (selected-frame))
+;;        1.5
+;;      ;; 2.3
+;;      ;; 1.8
+;;      ;; 2.7
+;;      5
+;;      )))
 
 (defun my-preview-scale-function ()
   (*
    (expt text-scale-mode-step text-scale-mode-amount)
    (funcall (preview-scale-from-face))
-   (if (frame-on-primary-monitor-p (selected-frame))
-       1.5
-     1.8
-     ;; 2.7
-     )))
+   (let ((mm-size (cdr (assoc 'mm-size (frame-monitor-attributes)))))
+     (or (cdr (assoc mm-size czm-preview-scales)) 1.5))))
 
 (use-package latex
   :elpaca  (auctex
