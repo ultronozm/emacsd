@@ -90,7 +90,9 @@
 
 (setq custom-file (concat user-emacs-directory "init-custom.el"))
 ;; (load custom-file)
-(load (concat user-emacs-directory "init-personal.el"))
+
+(when (file-exists-p (concat user-emacs-directory "init-personal.el"))
+  (load (concat user-emacs-directory "init-personal.el")))
 
 (use-package emacs
   :elpaca nil
@@ -551,6 +553,7 @@
   :hook
   ((prog-mode LaTeX-mode) . copilot-mode)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
+  (lean4-mode . (lambda () (setq tab-width 2)))
 
   :custom (copilot-indent-warning-suppress t)
   :bind (:map copilot-completion-map
@@ -1405,3 +1408,38 @@ Interactively, prompt for WIDTH."
     (setq left-margin-width 0)
     (setq right-margin-width 0)
     (set-window-margins (selected-window) 0 0)))
+
+(defun czm-cheap-beginning-of-defun ()
+  "Go up just before hitting a blank line."
+  (interactive)
+  (unless (bobp)
+   (backward-char)
+   (goto-char (line-beginning-position))
+   (while (and (not (bobp))
+               (save-excursion
+                 (forward-line -1)
+                 (not (looking-at-p "^\\s-*$"))))
+     (forward-line -1))))
+
+(defun czm-cheap-end-of-defun ()
+  "Move to first blank line after some non-blank."
+  (interactive)
+  ; first, we move to the first non-blank line, after or at the current one.
+  (while (and (not (eobp)) (looking-at-p "^\\s-*$"))
+    (forward-line 1))
+  (while (and (not (eobp)) (not (looking-at-p "^\\s-*$")))
+    (forward-line 1)))
+
+(defun czm-lean4-mode-hook ()
+  (setq-local beginning-of-defun-function #'czm-cheap-beginning-of-defun)
+  (setq-local end-of-defun-function #'czm-cheap-end-of-defun))
+
+(use-package lean4-mode
+  ;; :elpaca (:host github :repo "bustercopley/lean4-mode"
+                 ;; :branch "eglot"
+  :elpaca (:host github :repo "leanprover/lean4-mode"
+                 :files ("*.el" "data"))
+  :hook (lean4-mode . czm-lean4-mode-hook)
+  :commands (lean4-mode)
+  :defer t)
+
