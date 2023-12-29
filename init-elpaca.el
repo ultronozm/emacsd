@@ -1521,3 +1521,39 @@ If major-mode is lean4-mode, then don't do anything."
     (1- (line-number-at-pos point))))
 
 (advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
+
+
+(use-package outline
+  :elpaca nil
+  :bind (:map outline-navigation-repeat-map
+              ("C-x" . foldout-exit-fold)
+              ("x" . foldout-exit-fold)
+              ("C-z" . foldout-zoom-subtree)
+              ("z" . foldout-zoom-subtree)
+              ("C-a" . outline-show-all)
+              ("a" . outline-show-all)
+              ("C-c" . outline-hide-entry)
+              ("c" . outline-hide-entry)
+              ("C-d" . outline-hide-subtree)
+              ("d" . outline-hide-subtree)
+              ("C-e" . outline-show-entry)
+              ("e" . outline-show-entry)
+              ("TAB" . outline-show-children)
+              ("C-k" . outline-show-branches)
+              ("k" . outline-show-branches)
+              ("C-l" . outline-hide-leaves)
+              ("l" . outline-hide-leaves)
+              ("RET" . outline-insert-heading)
+              ("C-o" . outline-hide-other)
+              ("o" . outline-hide-other)
+              ("C-q" . outline-hide-sublevels)
+              ("q" . outline-hide-sublevels)
+              ("C-s" . outline-show-subtree)
+              ("s" . outline-show-subtree)
+              ("C-t" . outline-hide-body)
+              ("t" . outline-hide-body)
+              ("@" . outline-mark-subtree))
+  :config
+  (repeatize 'outline-navigation-repeat-map))
+
+
