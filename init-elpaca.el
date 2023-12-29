@@ -1420,6 +1420,7 @@ Interactively, prompt for WIDTH."
   :elpaca (:host github :repo "leanprover/lean4-mode"
                  :files ("*.el" "data"))
   :hook (lean4-mode . czm-lean4-mode-hook)
+  :hook (lean4-mode . spout-mode)
   :commands (lean4-mode)
   :bind (:map lean4-mode-map
               ("C-c v" . czm-lean4-show-variables))
