@@ -467,7 +467,8 @@
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
-                 (window-parameters (mode-line-format . none)))))
+                 (window-parameters (mode-line-format . none)))
+               ))
 
 (use-package embark-consult
   ;; only need to install it, embark loads it after consult if found
@@ -500,9 +501,10 @@
         ("C-p". company-select-previous)
         ("M-<". company-select-first)
         ("M->". company-select-last))
-  (:map company-mode-map
-        ("<tab>". tab-indent-or-complete)
-        ("TAB". tab-indent-or-complete)))
+  ;; (:map company-mode-map
+  ;;       ("<tab>". tab-indent-or-complete)
+  ;;       ("TAB". tab-indent-or-complete))
+  )
 
 ; TODO: activate company mode?  what does this do, anyway?
 
@@ -1430,9 +1432,67 @@ Interactively, prompt for WIDTH."
   (while (and (not (eobp)) (not (looking-at-p "^\\s-*$")))
     (forward-line 1)))
 
+
+(use-package pos-tip)
+
+(defun czm-lean4-show-variables (&optional prefix)
+  "Show all lines above the current one which start with 'section', 'namespace', 'end' or 'variable'.
+If no prefix argument is given, show the result in a pop-up with pos-tip-show.
+On 'end' line, remove lines from stack until 'section' line."
+  (interactive "P")
+  (let ((my-stack '())
+        (indent-level 0)
+        (case-fold-search nil)
+        (pos (point)))
+    (save-restriction
+      (widen)
+      (save-excursion
+        (goto-char (point-min))
+        (while
+            (and
+             (re-search-forward "^\\(section\\|namespace\\|end\\|variable\\).*" nil t)
+             (< (point) pos))
+          (let ((matched (match-string 0)))
+            (cond
+             ((string-match "^end" matched)
+              (progn
+                (while (not (string-match "^\\(section\\|namespace\\)" (car my-stack)))
+                  (pop my-stack))
+                (pop my-stack)
+                (setq indent-level (max 0 (1- indent-level)))))
+             ((string-match "^\\(section\\|namespace\\)" matched)
+              (progn
+                (push (concat (make-string indent-level ? ) matched) my-stack)
+                (setq indent-level (1+ indent-level))))
+             (t
+              (push (concat (make-string indent-level ? ) matched) my-stack)))))))
+    (let ((output (mapconcat 'identity (nreverse my-stack) "\n")))
+      (if (<= (prefix-numeric-value prefix) 1)
+          (pos-tip-show output nil nil nil 60)
+        (with-output-to-temp-buffer "/Variable context/"
+          (princ output))))))
+
 (defun czm-lean4-mode-hook ()
   (setq-local beginning-of-defun-function #'czm-cheap-beginning-of-defun)
-  (setq-local end-of-defun-function #'czm-cheap-end-of-defun))
+  (setq-local end-of-defun-function #'czm-cheap-end-of-defun)
+  (setq-local outline-regexp "\\(namespace\\|section\\)\\>")
+  (setq-local outline-level 'czm-lean4-outline-level)
+  )
+
+(defun czm-lean4-outline-level ()
+  (let ((count 0))
+    (save-restriction
+      (widen)
+      (save-excursion 
+        (beginning-of-line)
+        (while (> (point)
+                  (point-min))
+          (cond ((looking-at outline-regexp)
+                 (cl-incf count))
+                ((looking-at "end ")
+                 (cl-decf count)))
+          (forward-line -1))))
+    count))
 
 (use-package lean4-mode
   ;; :elpaca (:host github :repo "bustercopley/lean4-mode"
@@ -1441,5 +1501,125 @@ Interactively, prompt for WIDTH."
                  :files ("*.el" "data"))
   :hook (lean4-mode . czm-lean4-mode-hook)
   :commands (lean4-mode)
+  :bind (:map lean4-mode-map
+              ("C-c v" . czm-lean4-show-variables))
   :defer t)
 
+(use-package czm-lean4
+  :elpaca (:host github :repo "ultronozm/czm-lean4.el"
+                 :depth nil)
+  :after lean4-mode)
+
+(defvar fov/lean4-pause-info nil "If non-nil, pause info buffer updates.")
+
+(defun fov/lean4-info-buffer-redisplay (old-fun &rest args)
+  "Suppress call to OLD-FUN if `fov/lean4-pause-info' is non-nil.  Otherwise call with ARGS."
+  (unless fov/lean4-pause-info
+    (apply old-fun args)))
+
+(defun fov/lean4-toggle-info-pause ()
+  "Toggle pausing of automatic info refresh."
+  (interactive)
+  (setq fov/lean4-pause-info (not fov/lean4-pause-info)))
+
+
+;; (define-key lean4-mode-map (kbd "C-c C-p C-p") #'czm-lean4-toggle-info-pause)
+
+(defvar lean4-mode-map)
+(with-eval-after-load 'lean4-mode
+  (advice-add 'lean4-info-buffer-redisplay :around #'fov/lean4-info-buffer-redisplay)
+  (define-key lean4-mode-map (kbd "C-c C-p C-p") #'fov/lean4-toggle-info-pause))
+
+
+(add-to-list 'display-buffer-alist
+             '("*Lean Goal*"
+               (display-buffer-below-selected display-buffer-reuse-window)
+               (window-height . 0.3)))
+
+
+;; (use-package company-box
+;;   :hook (company-mode . company-box-mode))
+
+;; (defun display-eldoc-in-popup (format-string &rest args)
+;;   (when format-string
+;;     (popup-tip (apply 'format format-string args)
+;;                :nowait t)))
+
+;; (use-package pos-tip)
+;; (defun display-eldoc-in-popup (format-string &rest args)
+;;   (when format-string
+;;     (pos-tip-show (apply 'format format-string args) nil nil nil 10)))
+;; (defun display-eldoc-in-popup (format-string &rest args)
+;;   (when format-string
+;;     (let ((popup (popup-tip (apply 'format format-string args) :nowait t)))
+;;     (run-at-time 2 nil 'popup-delete popup))))
+;; (setq eldoc-message-function #'display-eldoc-in-popup)
+
+;; (use-package flycheck-pos-tip
+;;   :hook (flycheck-mode . flycheck-pos-tip-mode)
+;;   :custom
+;;   (flycheck-pos-tip-timeout 10))
+
+
+;; (defun my-eldoc-display ()
+;;   (interactive)
+;;   (eldoc-doc-buffer
+;;    (car (run-hook-wrapped
+;;          'eldoc-documentation-functions
+;;          #'eldoc-documentation-default))))
+
+;; (defun my-eldoc-display ()
+;;   (interactive)
+;;   (let* ((eldoc-documentation-function #'eldoc-documentation-default)
+;;          (doc (run-hook-with-args-until-success 'eldoc-documentation-functions #'ignore)))
+;;     (when doc
+;;       (message doc))))
+
+;; (global-set-key (kbd "C-c e") 'my-eldoc-display)
+
+;; (global-set-key (kbd "C-c e") #'describe-symbol-at-point)
+
+
+
+
+
+
+;; (setq flycheck-display-errors-function nil)
+;; (setq flycheck-display-errors-function #'flycheck-display-error-messages)
+;; (setq message-truncate-lines nil)
+;; (setq message-truncate-lines t)
+
+(defun czm-flycheck-display-error-messages (errors)
+  "Display ERRORS using `message'.
+If major-mode is lean4-mode, then don't do anything."
+  (unless (eq major-mode 'lean4-mode)
+    (let ((message-truncate-lines t))
+      (flycheck-display-error-messages errors))))
+(setq flycheck-display-errors-function #'czm-flycheck-display-error-messages)
+
+(use-package eldoc-box
+  :commands (eldoc-box-help-at-point))
+
+(global-set-key (kbd "C-c e") #'eldoc-box-help-at-point)
+
+;; (setq eldoc-message-function #'eldoc-minibuffer-message)
+
+
+;; (defun my-eldoc-message-function (format-string &rest args)
+;;   (when format-string
+;;     (eldoc-box-help-at-point               )))
+
+;; (setq eldoc-message-function #'my-eldoc-message-function)
+
+
+
+; override this function so that it is wrapped by a call to widen:
+;; (defun lsp--cur-line (&optional point)
+;;   (1- (line-number-at-pos point)))
+
+(defun my-lsp--cur-line (&optional point)
+  (save-restriction
+    (widen)
+    (1- (line-number-at-pos point))))
+
+(advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
