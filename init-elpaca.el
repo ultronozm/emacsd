@@ -199,7 +199,8 @@
   :elpaca nil
   :hook
   (prog-mode . outline-minor-mode)
-  (prog-mode . hs-minor-mode))
+  ;; (prog-mode . hs-minor-mode)
+  )
 
 
 ;;; ------------------------------ LISP ------------------------------
