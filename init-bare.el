@@ -41,6 +41,7 @@
 	("C-w" czm/kill-or-delete-region)
 	("C-M-z" zap-up-to-char)
 	("C-M-g" down-list)
+ ("M-+" raise-sexp)
 	("s-<left>" previous-buffer)
 	("s-<right>" next-buffer)
 	("s-<up>" (lambda () (interactive) (enlarge-window 5)))
