@@ -247,9 +247,12 @@
   (defun czm-conditionally-enable-lispy ()
     (when (eq this-command 'eval-expression)
       (lispy-mode 1)))
+  :bind
+  (("C-M-K" . lispy-kill))
   :hook
   (emacs-lisp-mode  . lispy-mode)
   (minibuffer-setup . czm-conditionally-enable-lispy))
+
 
 ;;; ------------------------------ GIT ------------------------------
 
