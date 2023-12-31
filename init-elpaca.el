@@ -1419,7 +1419,6 @@ Interactively, prompt for WIDTH."
                  ;; :branch "eglot"
   :elpaca (:host github :repo "leanprover/lean4-mode"
                  :files ("*.el" "data"))
-  :hook (lean4-mode . czm-lean4-mode-hook)
   :hook (lean4-mode . spout-mode)
   :commands (lean4-mode)
   :custom
@@ -1434,6 +1433,7 @@ Interactively, prompt for WIDTH."
                  :depth nil)
   :after lean4-mode
   :hook (lean4-mode . czm-lean4-mode-hook)
+  :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
   :bind (:map lean4-mode-map
               ("C-c v" . czm-lean4-show-variables)
               ("C-c C-p C-p" . czm-lean4-toggle-info-pause)
