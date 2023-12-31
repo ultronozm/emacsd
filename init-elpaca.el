@@ -1422,18 +1422,48 @@ Interactively, prompt for WIDTH."
   :hook (lean4-mode . czm-lean4-mode-hook)
   :hook (lean4-mode . spout-mode)
   :commands (lean4-mode)
-  :bind (:map lean4-mode-map
-              ("C-c v" . czm-lean4-show-variables))
+  :custom
+  ;; (lean4-keybinding-lean4-toggle-info (kbd "C-c C-o"))
+  (lean4-keybinding-lean4-toggle-info (kbd "C-c C-y"))
+  :config
+  (setq lsp-enable-file-watchers nil)
   :defer t)
 
 (use-package czm-lean4
   :elpaca (:host github :repo "ultronozm/czm-lean4.el"
                  :depth nil)
+  :after lean4-mode
+  :hook (lean4-mode . czm-lean4-mode-hook)
+  :bind (:map lean4-mode-map
+              ("C-c v" . czm-lean4-show-variables)
+              ("C-c C-p C-p" . czm-lean4-toggle-info-pause)
+              ("C-c C-m C-m" . czm-lean4-search-mathlib)
+              ("C-c C-m C-h" . czm-lean4-search-mathlib-headings)
+              ("C-c C-," . czm-lean4-insert-section-or-namespace)
+              ("C-c C-i" . czm-lean4-toggle-info-split-below)
+              ("C-c C-o" . czm-lean4-toggle-info-split-right))
+  :custom
+  (czm-lean4-info-window-height-fraction 0.4)
+  (czm-lean4-info-window-width-fraction 0.4)
+  :config
+  (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
+  
 
-(add-to-list 'display-buffer-alist
-             '("*Lean Goal*"
-               (display-buffer-below-selected display-buffer-reuse-window)
-               (window-height . 0.3)))
+(defun lean4-toggle-info-split-right ()
+  "Show informations at the current point, split right."
+  (interactive)
+  (let ((display-buffer-base-action '((display-buffer-reuse-window display-buffer-at-bottom)
+                                      (window-height . 0.4))))
+    (lean4-toggle-info-buffer lean4-info-buffer-name)
+    (lean4-info-buffer-refresh)))
+
+
+
+
+;; (add-to-list 'display-buffer-alist
+;;              '("*Lean Goal*"
+;;                (display-buffer-below-selected display-buffer-reuse-window)
+;;                (window-height . 0.3)))
 
 
 ;; (use-package company-box
@@ -1558,3 +1588,33 @@ If major-mode is lean4-mode, then don't do anything."
   (repeatize 'outline-navigation-repeat-map))
 
 
+(set-face-attribute 'default nil :height 150)
+
+(defun czm-get-mark-and-pop ()
+  "Get mark and pop it."
+  (let ((pos (mark t)))
+    (pop-mark)
+    pos))
+
+(defun czm-transpose-abc-to-cab ()
+  "Swap outermost regions delimited by point and last three marks."
+  (interactive)
+  (let ((points
+         (sort
+          (list
+           (point)
+           (my-get-mark-and-pop)
+           (my-get-mark-and-pop)
+           (my-get-mark-and-pop))
+          #'<)))
+    (cl-destructuring-bind (pos-a pos-b pos-c end)
+        points
+      (let ((region-a (buffer-substring pos-a pos-b))
+            (region-b (buffer-substring pos-b pos-c))
+            (region-c (buffer-substring pos-c end)))
+        (save-excursion
+          (goto-char pos-a)
+          (delete-region pos-a end)
+          (insert region-c region-b region-a))))))
+
+(global-set-key (kbd "C-M-T") #'my-transpose-abc-to-cab)
