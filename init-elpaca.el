@@ -1,4 +1,4 @@
-;;; ------------------------------ ELPACA ------------------------------
+;; ; ------------------------------ ELPACA ------------------------------
 
 (defvar elpaca-installer-version 0.5)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
@@ -248,7 +248,8 @@
     (when (eq this-command 'eval-expression)
       (lispy-mode 1)))
   :bind
-  (("C-M-K" . lispy-kill))
+  ;; (("C-M-K" . lispy-kill))
+  (("C-M-k" . kill-sexp))
   :hook
   (emacs-lisp-mode  . lispy-mode)
   (minibuffer-setup . czm-conditionally-enable-lispy))
@@ -1417,17 +1418,33 @@ Interactively, prompt for WIDTH."
 
 (use-package pos-tip)
 
-(use-package lean4-mode
+;; (setq lsp-log-io t)
+(with-eval-after-load 'lsp-mode
+  (setq lsp-log-io t))
+
   ;; :elpaca (:host github :repo "bustercopley/lean4-mode"
                  ;; :branch "eglot"
-  :elpaca (:host github :repo "leanprover/lean4-mode"
+
+  ;; (lean4-keybinding-lean4-toggle-info (kbd "C-c C-o"))
+
+;; (with-eval-after-load 'lean4-mode
+;;   (define-key lean4-mode-map [?\t] #'company-indent-or-complete-common)
+;;   (add-hook 'lean4-mode-hook #'company-mode))
+
+(use-package lean4-mode
+  :elpaca (:host github :repo "bustercopley/lean4-mode"
                  :files ("*.el" "data"))
   :hook (lean4-mode . spout-mode)
+  :hook (lean4-mode . company-mode)
   :commands (lean4-mode)
   :custom
-  ;; (lean4-keybinding-lean4-toggle-info (kbd "C-c C-o"))
   (lean4-keybinding-lean4-toggle-info (kbd "C-c C-y"))
+  :bind (:map lean4-mode-map
+              ("RET" . newline)
+              ("C-j" . default-indent-new-line)
+              ("C-M-i" . company-indent-or-complete-common))
   :config
+  ;; disable annoying file watcher spam
   (setq lsp-enable-file-watchers nil)
   :defer t)
 
@@ -1443,22 +1460,51 @@ Interactively, prompt for WIDTH."
               ("C-c C-m C-m" . czm-lean4-search-mathlib)
               ("C-c C-m C-h" . czm-lean4-search-mathlib-headings)
               ("C-c C-," . czm-lean4-insert-section-or-namespace)
+              ("C-c C-." . czm-lean4-insert-comment-block)
               ("C-c C-i" . czm-lean4-toggle-info-split-below)
-              ("C-c C-o" . czm-lean4-toggle-info-split-right))
+              ("C-c C-o" . czm-lean4-toggle-info-split-right)
+              ("M-]" . czm-lean4-cycle-delimiter-forward)
+              ("§" . copilot-accept-completion)
+              ("M-§" . copilot-accept-completion-by-word)
+              ("C-§" . copilot-accept-completion-by-line)
+              ("C-M-§" . copilot-accept-completion-by-paragraph)
+              ("M-[" . czm-lean4-cycle-delimiter-backward))
   :custom
   (czm-lean4-info-window-height-fraction 0.4)
   (czm-lean4-info-window-width-fraction 0.4)
   :config
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
-  
 
-(defun lean4-toggle-info-split-right ()
-  "Show informations at the current point, split right."
-  (interactive)
-  (let ((display-buffer-base-action '((display-buffer-reuse-window display-buffer-at-bottom)
-                                      (window-height . 0.4))))
-    (lean4-toggle-info-buffer lean4-info-buffer-name)
-    (lean4-info-buffer-refresh)))
+;; by default, flycheck for lean4-mode causes the minibuffer to flicker.
+;; the following code disables that.
+(defun czm-flycheck-display-error-messages (errors)
+  "Display ERRORS using `message'.
+If major-mode is lean4-mode, then don't do anything."
+  (unless (eq major-mode 'lean4-mode)
+    (let ((message-truncate-lines t))
+      (flycheck-display-error-messages errors))))
+(setq flycheck-display-errors-function #'czm-flycheck-display-error-messages)
+
+;; lsp-mode calculates line numbers without first calling widen.
+;; let's fix that, so that line numbers work in narrowed buffers, too.
+(defun my-lsp--cur-line (&optional point)
+  (save-restriction
+    (widen)
+    (1- (line-number-at-pos point))))
+(advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
+
+(use-package eldoc-box
+  :commands (eldoc-box-help-at-point))
+
+(global-set-key (kbd "C-c e") #'eldoc-box-help-at-point)
+
+(use-package eldoc-icebox
+  :elpaca (:host github :repo "ultronozm/eldoc-icebox.el"
+                 :depth nil)
+  :bind (("C-c C-h" . eldoc-icebox-store)
+         ("C-c C-n" . eldoc-icebox-toggle-display)))
+
+
 
 
 
@@ -1521,18 +1567,6 @@ Interactively, prompt for WIDTH."
 ;; (setq message-truncate-lines nil)
 ;; (setq message-truncate-lines t)
 
-(defun czm-flycheck-display-error-messages (errors)
-  "Display ERRORS using `message'.
-If major-mode is lean4-mode, then don't do anything."
-  (unless (eq major-mode 'lean4-mode)
-    (let ((message-truncate-lines t))
-      (flycheck-display-error-messages errors))))
-(setq flycheck-display-errors-function #'czm-flycheck-display-error-messages)
-
-(use-package eldoc-box
-  :commands (eldoc-box-help-at-point))
-
-(global-set-key (kbd "C-c e") #'eldoc-box-help-at-point)
 
 ;; (setq eldoc-message-function #'eldoc-minibuffer-message)
 
@@ -1548,13 +1582,6 @@ If major-mode is lean4-mode, then don't do anything."
 ; override this function so that it is wrapped by a call to widen:
 ;; (defun lsp--cur-line (&optional point)
 ;;   (1- (line-number-at-pos point)))
-
-(defun my-lsp--cur-line (&optional point)
-  (save-restriction
-    (widen)
-    (1- (line-number-at-pos point))))
-
-(advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
 
 
 (use-package outline
@@ -1606,9 +1633,9 @@ If major-mode is lean4-mode, then don't do anything."
          (sort
           (list
            (point)
-           (my-get-mark-and-pop)
-           (my-get-mark-and-pop)
-           (my-get-mark-and-pop))
+           (czm-get-mark-and-pop)
+           (czm-get-mark-and-pop)
+           (czm-get-mark-and-pop))
           #'<)))
     (cl-destructuring-bind (pos-a pos-b pos-c end)
         points
@@ -1620,4 +1647,96 @@ If major-mode is lean4-mode, then don't do anything."
           (delete-region pos-a end)
           (insert region-c region-b region-a))))))
 
-(global-set-key (kbd "C-M-T") #'my-transpose-abc-to-cab)
+(global-set-key (kbd "C-M-T") #'czm-transpose-abc-to-cab)
+
+(defun get-superproject (dir)
+  "Get the superproject of DIR."
+  (let ((result dir))
+    (while (file-name-parent-directory dir)
+      (setq dir (directory-file-name dir))
+      (let ((current (file-name-nondirectory dir))
+            (parent (file-name-directory dir)))
+        (when (equal current  ".lake")
+          (setq result parent))
+        (setq dir parent)))
+    result))
+
+; (load (concat user-emacs-directory "uniteai.el"))
+
+
+(defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
+(defun edebug-compute-previous-result (previous-value)
+  (if edebug-unwrap-results
+      (setq previous-value
+	    (edebug-unwrap* previous-value)))
+  (setq edebug-previous-result-raw previous-value)
+  (setq edebug-previous-result
+	(concat "Result: "
+		(edebug-safe-prin1-to-string previous-value)
+		(eval-expression-print-format previous-value))))
+
+(defun czm-split-line-below ()
+  (interactive)
+  (forward-line)
+  (split-line))
+
+(global-set-key (kbd "M-o") 'czm-split-line-below)
+
+(defun delete-repeated-whitespace-in-region (start end)
+  "Delete repeated whitespace in region."
+  (interactive "r")
+  (let ((end-marker (copy-marker end)))
+    (save-excursion
+      (goto-char start)
+      (while (re-search-forward "\\s-+" end-marker t)
+        (replace-match " ")))))
+
+(defun delete-repeated-whitespace-on-line ()
+  "Delete repeated whitespace on line."
+  (interactive)
+  (delete-repeated-whitespace-in-region
+   (line-beginning-position)
+   (line-end-position)))
+
+(global-set-key (kbd "C-s-SPC") 'delete-repeated-whitespace-on-line)
+
+(use-package emacs
+  :elpaca nil
+  :bind ())
+
+;; (defun my-avy-action-copy-and-yank (pt)
+;;   "Copy and yank sexp starting on PT."
+;;   (avy-action-copy pt)
+;;   (yank))
+
+;; (setq avy-dispatch-alist '((?c . avy-action-copy)
+;;                            (?k . avy-action-kill-move)
+;;                            (?K . avy-action-kill-stay)
+;;                            (?m . avy-action-mark)
+;;                            (?p . my-avy-action-copy-and-yank)))
+
+(defun czm-avy-copy-sexp (arg)
+  "Goto or copy sexp selected with avy.
+The prefix ARG specifies whether to copy instead of goto."
+  (interactive "P")
+  (if arg
+      (let ((avy-action #'avy-action-copy))
+        (when (avy-jump "(")
+          (yank)))
+    (let ((avy-action #'avy-action-goto))
+      (avy-jump "("))))
+
+(global-set-key (kbd "M-c") 'czm-avy-copy-sexp)
+
+(defun czm-show-ovs-at-pt ()
+  (interactive)
+  (pp-display-expression (mapcar (lambda (ov) (overlay-properties ov)) (overlays-at (point))) "*ovs*"))
+
+(global-set-key (kbd "s-8") 'czm-show-ovs-at-pt)
+
+
+        ;; ("s-6" (lambda () (interactive) (delete-indentation nil)))
+        ;; ("s-7" (lambda () (interactive) (delete-indentation t)))
+
+(global-set-key (kbd "s-6") (lambda () (interactive) (delete-indentation nil)))
+(global-set-key (kbd "s-7") (lambda () (interactive) (delete-indentation t)))
