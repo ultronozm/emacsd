@@ -58,65 +58,30 @@
     (widen)
     (apply orig-fun args)))
 
-(defvar czm-preview-scales
-  '(
-    ((1434 806) . 5)
-    ((602 338) . 2.7)
-    ((344 22) . 1.5)
-    )
-  "Alist that maps monitors to preview scales, where monitors are
-described by their mm-size, and preview scales are numbers.")
-
-
 (defun frame-on-primary-monitor-p (frame)
   (let* ((monitors (display-monitor-attributes-list))
 	        (primary-monitor (car monitors))
 	        (frame-monitor (frame-monitor-attributes frame)))
     (equal primary-monitor frame-monitor)))
 
-;; (defun my-preview-scale-function ()
-;;   (* 1.5 (funcall (preview-scale-from-face)))
-;;   ;; (* 2.6 (funcall (preview-scale-from-face)))
-;;   )
-
-;; (defun my-preview-scale-function ()
-;;   (*
-;;    (expt text-scale-mode-step text-scale-mode-amount)
-;;    (funcall (preview-scale-from-face))
-;;    (if (frame-on-primary-monitor-p (selected-frame))
-;;        1.5
-;;      ;; 2.3
-;;      ;; 1.8
-;;      ;; 2.7
-;;      5
-;;      )))
-
-(defun my-preview-scale-function ()
-  (*
-   (expt text-scale-mode-step text-scale-mode-amount)
-   (funcall (preview-scale-from-face))
-   (let ((mm-size (cdr (assoc 'mm-size (frame-monitor-attributes)))))
-     (or (cdr (assoc mm-size czm-preview-scales)) 1.5))))
-
 (use-package latex
-  :elpaca  (auctex
-            :files
-            ("*.el" "*.info" "dir" "doc" "etc" "images" "latex" "style")
-            :pre-build
-            (("./autogen.sh")
-             ("./configure"
-              "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))"
-              "--with-lispdir=.")
-             ("make")
-             ("make" "install")
-             ))
-  
-  :demand ; otherwise, madness ensues.
+  :elpaca (auctex
+           :files
+           ("*.el" "*.info" "dir" "doc" "etc" "images" "latex" "style")
+           :pre-build
+           (("./autogen.sh")
+            ("./configure"
+             "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))"
+             "--with-lispdir=.")
+            ("make")
+            ("make" "install")))
+
+  :demand                               ; otherwise, madness ensues.
 
   :config
-  (setq TeX-data-directory (expand-file-name  "~/.emacs.d/elpaca/builds/auctex"))
+  (setq TeX-data-directory (expand-file-name "~/.emacs.d/elpaca/builds/auctex"))
   (setq TeX-lisp-directory TeX-data-directory)
-  
+
   :hook
   (LaTeX-mode . TeX-fold-mode)
   (LaTeX-mode . turn-on-reftex)
@@ -124,21 +89,24 @@ described by their mm-size, and preview scales are numbers.")
   (LaTeX-mode . czm-tex-buffer-face)
   (LaTeX-mode . outline-minor-mode)
   (LaTeX-mode . abbrev-mode)
-  (LaTeX-mode . (lambda () (setq fill-column 999999)))
+  (LaTeX-mode . (lambda ()
+                  (setq fill-column 999999)))
 
   :bind
   (:map LaTeX-mode-map
         ("s-a" . abbrev-mode)
-	("s-c" . preview-clearout-at-point)
+        ("s-c" . preview-clearout-at-point)
         ("s-q" . LaTeX-fill-buffer)
-        ("C-c C-n" . nil)               ; TeX-normal-mode
+        ("C-c C-n" . nil)
+                                        ; TeX-normal-mode
         ("C-c #" . nil))
-  
+
   :config
   (put 'LaTeX-narrow-to-environment 'disabled nil)
   (TeX-source-correlate-mode)
-  (advice-add 'TeX-view :around #'czm-widen-first) ; fixes bug in TeX-view
-  
+  (advice-add 'TeX-view :around #'czm-widen-first)
+                                        ; fixes bug in TeX-view
+
   :custom
   (TeX-auto-save t)
   (TeX-parse-self t)
@@ -149,17 +117,50 @@ described by their mm-size, and preview scales are numbers.")
                                         ;  (preview-image-type 'pnm) ; compare with png?
 
 
-  
-  (preview-scale-function #'my-preview-scale-function)
-  ;; (preview-scale-function 1.5) ; maybe enable, or see what else you were doing?
+
   (reftex-derive-label-parameters
    '(15 50 t 1 "-"
-	("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
-	t)))
+        ("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
+        t)))
 
 ;;  don't want foldout to include "bibliography"
 (defun czm-LaTeX-outline-level-advice (orig-fun &rest args)
   (if (looking-at "\\\\bibliography") 1 (apply orig-fun args)))
+
+(defun my-preview-tailor-factor-function ()
+  "ez"
+  (if (string-suffix-p ".lean" (buffer-file-name)) 0.6 1.0))
+
+(use-package preview-tailor
+  :elpaca (:host github :repo "ultronozm/preview-tailor.el"
+                 :depth nil)
+  :after latex
+  :config
+  (preview-tailor-init)
+  :custom
+  (preview-tailor-additional-factor-function #'my-preview-tailor-factor-function)
+  (preview-tailor-multipliers
+   '((((geometry 0 -2520 1920 1080)
+       (workarea 0 -2520 1920 1080)
+       (mm-size 1434 806)
+       (source . "NS"))
+      . 4)
+     (((geometry -832 -1440 2560 1440)
+       (workarea -832 -1440 2560 1440)
+       (mm-size 602 338)
+       (source . "NS"))
+      . 1.2)
+     (((geometry 0 0 1728 1117)
+       (workarea 0 32 1728 1085)
+       (mm-size 344 222)
+       (source . "NS"))
+      . 1.2)
+     (((geometry 0 -1440 2560 1440)
+       (workarea 0 -1440 2560 1440)
+       (mm-size 602 338)
+       (source . "NS"))
+      . 1.2)
+     (nil . 1.2))))
 
 (use-package foldout
   :elpaca nil
