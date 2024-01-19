@@ -502,14 +502,13 @@
 ;;   :init
 ;;   (savehist-mode))
 
-
 (use-package company
   ;; :config (global-company-mode 1) ;; doesn't work in magit, for instance
   :custom
   (company-begin-commands '(self-insert-command))
   (company-idle-delay 0.5) ;; how long to wait until popup.  Consider changing to 0.0?
   (company-minimum-prefix-length 2)
-  (copamny-show-numbers t)
+  (company-show-numbers t)
   (company-tooltip-align-annotations t)
   ;; (company-begin-commands nil) ;; uncomment to disable popup
 
@@ -1265,7 +1264,7 @@ The list is ordered from bottom to top."
                     "dynexp"
                     "library"
                     "publish"
-                    "sagemintex"
+                    "czm-tex-mint"
                     "spout"
                     "czm-tex-ref"
                     "symtex"
@@ -1446,8 +1445,10 @@ Interactively, prompt for WIDTH."
 ;;   (define-key lean4-mode-map [?\t] #'company-indent-or-complete-common)
 ;;   (add-hook 'lean4-mode-hook #'company-mode))
 
+(use-package consult-company)
+
 (use-package lean4-mode
-  :elpaca (:host github :repo "bustercopley/lean4-mode"
+  :elpaca (:host github :repo "ultronozm/lean4-mode"
                  :files ("*.el" "data"))
   :hook (lean4-mode . spout-mode)
   :hook (lean4-mode . company-mode)
@@ -1457,10 +1458,8 @@ Interactively, prompt for WIDTH."
   :bind (:map lean4-mode-map
               ("RET" . newline)
               ("C-j" . default-indent-new-line)
-              ("C-M-i" . company-indent-or-complete-common))
+              ("C-M-i" . consult-company))
   :config
-  ;; disable annoying file watcher spam
-  (setq lsp-enable-file-watchers nil)
   :defer t)
 
 (use-package czm-lean4
@@ -1486,40 +1485,51 @@ Interactively, prompt for WIDTH."
               ("M-[" . czm-lean4-cycle-delimiter-backward))
   :custom
   (czm-lean4-info-window-height-fraction 0.4)
-  (czm-lean4-info-window-width-fraction 0.4)
+  (czm-lean4-info-window-width-fraction 0.47)
   :config
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
 
-;; by default, flycheck for lean4-mode causes the minibuffer to flicker.
-;; the following code disables that.
-(defun czm-flycheck-display-error-messages (errors)
-  "Display ERRORS using `message'.
-If major-mode is lean4-mode, then don't do anything."
-  (unless (eq major-mode 'lean4-mode)
-    (let ((message-truncate-lines t))
-      (flycheck-display-error-messages errors))))
-(setq flycheck-display-errors-function #'czm-flycheck-display-error-messages)
-
-;; lsp-mode calculates line numbers without first calling widen.
-;; let's fix that, so that line numbers work in narrowed buffers, too.
-(defun my-lsp--cur-line (&optional point)
-  (save-restriction
-    (widen)
-    (1- (line-number-at-pos point))))
-(advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
-
 (use-package eldoc-box
-  :commands (eldoc-box-help-at-point))
+  :commands (eldoc-box-help-at-point)
+  :bind
+  (:map global-map ("C-c e" . eldoc-box-help-at-point)))
 
-(global-set-key (kbd "C-c e") #'eldoc-box-help-at-point)
+(defun czm-colorize-lean4-signature ()
+  "Highlights the name of each required variable to a Lean4 theorem."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (while (and (< (point) (point-max))
+                (not (eq (char-after (1+ (point))) ?\:)))
+      (forward-list)
+      (when (eq (char-before) ?\) )
+        (save-excursion
+          (backward-list)
+          ;; do the following unless there's an error, in which case ignore it
+          (let ((inhibit-read-only t)
+                (start (point))
+                (end (save-excursion (forward-list) (point)))
+                (end-first-symbol (save-excursion (forward-word) (point)))
+                (end-symbols (save-excursion (when (search-forward " : " nil t) (- (point) 3)))))
+            (when end-symbols
+              (put-text-property start end 'face '(underline))
+              ; shr-mark doesn't work anymore?
+              (put-text-property (1+ start) end-symbols 'face '(highlight underline))
+              )))))))
+
+(defun czm-add-lean4-eldoc ()
+  (add-hook 'eldoc-documentation-functions #'lean4-info-eldoc-function
+            nil t))
 
 (use-package eldoc-icebox
   :elpaca (:host github :repo "ultronozm/eldoc-icebox.el"
                  :depth nil)
   :bind (("C-c C-h" . eldoc-icebox-store)
-         ("C-c C-n" . eldoc-icebox-toggle-display)))
-
-
+         ("C-c C-n" . eldoc-icebox-toggle-display))
+  :hook
+  (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
+  (eldoc-icebox-post-display . czm-colorize-lean4-signature)
+  (eldoc-icebox-post-display . czm-add-lean4-eldoc))
 
 
 
@@ -1641,7 +1651,7 @@ If major-mode is lean4-mode, then don't do anything."
     (pop-mark)
     pos))
 
-(defun czm-transpose-abc-to-cab ()
+(defun czm-transpose-abc-to-cba ()
   "Swap outermost regions delimited by point and last three marks."
   (interactive)
   (let ((points
@@ -1662,7 +1672,8 @@ If major-mode is lean4-mode, then don't do anything."
           (delete-region pos-a end)
           (insert region-c region-b region-a))))))
 
-(global-set-key (kbd "C-M-T") #'czm-transpose-abc-to-cab)
+(global-set-key (kbd "s-t") #'czm-transpose-abc-to-cba)
+(global-set-key (kbd "C-M-t") #'transpose-sexps)
 
 (defun get-superproject (dir)
   "Get the superproject of DIR."
@@ -1683,12 +1694,12 @@ If major-mode is lean4-mode, then don't do anything."
 (defun edebug-compute-previous-result (previous-value)
   (if edebug-unwrap-results
       (setq previous-value
-	    (edebug-unwrap* previous-value)))
+	           (edebug-unwrap* previous-value)))
   (setq edebug-previous-result-raw previous-value)
   (setq edebug-previous-result
-	(concat "Result: "
-		(edebug-safe-prin1-to-string previous-value)
-		(eval-expression-print-format previous-value))))
+	       (concat "Result: "
+		              (edebug-safe-prin1-to-string previous-value)
+		              (eval-expression-print-format previous-value))))
 
 (defun czm-split-line-below ()
   (interactive)
@@ -1697,7 +1708,7 @@ If major-mode is lean4-mode, then don't do anything."
 
 (global-set-key (kbd "M-o") 'czm-split-line-below)
 
-(defun delete-repeated-whitespace-in-region (start end)
+(defun delete-horizontal-space-in-region (start end)
   "Delete repeated whitespace in region."
   (interactive "r")
   (let ((end-marker (copy-marker end)))
@@ -1706,14 +1717,14 @@ If major-mode is lean4-mode, then don't do anything."
       (while (re-search-forward "\\s-+" end-marker t)
         (replace-match " ")))))
 
-(defun delete-repeated-whitespace-on-line ()
+(defun delete-horizontal-space-on-line ()
   "Delete repeated whitespace on line."
   (interactive)
-  (delete-repeated-whitespace-in-region
+  (delete-horizontal-space-in-region
    (line-beginning-position)
    (line-end-position)))
 
-(global-set-key (kbd "C-s-SPC") 'delete-repeated-whitespace-on-line)
+(global-set-key (kbd "C-s-SPC") 'delete-horizontal-space-on-line)
 
 (use-package emacs
   :elpaca nil
@@ -1730,6 +1741,14 @@ If major-mode is lean4-mode, then don't do anything."
 ;;                            (?m . avy-action-mark)
 ;;                            (?p . my-avy-action-copy-and-yank)))
 
+(setq avy-all-windows-alt nil)
+
+(defun czm-avy-test ()
+  (interactive)
+  (let ((avy-action #'avy-action-copy))
+    (when (avy-jump "(")
+      (yank))))
+
 (defun czm-avy-copy-sexp (arg)
   "Goto or copy sexp selected with avy.
 The prefix ARG specifies whether to copy instead of goto."
@@ -1742,6 +1761,10 @@ The prefix ARG specifies whether to copy instead of goto."
       (avy-jump "("))))
 
 (global-set-key (kbd "M-c") 'czm-avy-copy-sexp)
+(global-set-key (kbd "s-c") (lambda () (interactive) (czm-avy-copy-sexp t)))
+
+
+(global-set-key (kbd "M-l") 'avy-copy-line)
 
 (defun czm-show-ovs-at-pt ()
   (interactive)
@@ -1750,8 +1773,148 @@ The prefix ARG specifies whether to copy instead of goto."
 (global-set-key (kbd "s-8") 'czm-show-ovs-at-pt)
 
 
-        ;; ("s-6" (lambda () (interactive) (delete-indentation nil)))
-        ;; ("s-7" (lambda () (interactive) (delete-indentation t)))
+(defun czm-delete-indentation-t ()
+  (interactive)
+  (delete-indentation t))
 
-(global-set-key (kbd "s-6") (lambda () (interactive) (delete-indentation nil)))
-(global-set-key (kbd "s-7") (lambda () (interactive) (delete-indentation t)))
+(defun czm-delete-indentation-nil ()
+  (interactive)
+  (delete-indentation nil))
+
+(global-set-key (kbd "s-6") 'czm-delete-indentation-nil)
+(global-set-key (kbd "s-7") 'czm-delete-indentation-t)
+
+
+
+(defvar my-dired-buffer nil)
+
+(defun my-dired-popup ()
+  "Toggle a pop-up buffer with `dired'."
+  (interactive)
+  (if (and my-dired-buffer (get-buffer-window my-dired-buffer))
+      (delete-window (get-buffer-window my-dired-buffer))
+    (let ((buffer (dired-noselect default-directory)))
+      (setq my-dired-buffer buffer)
+      (display-buffer-in-side-window buffer '((side . right) (slot . -1))))))
+
+(define-key global-map (kbd "C-x j") 'my-dired-popup)
+
+
+
+(define-key global-map (kbd "s-@") (lambda () (interactive) (delete-other-windows) (split-window-below) (other-window 1) (next-buffer) (other-window 1)))
+(define-key global-map (kbd "s-#") (lambda () (interactive) (delete-other-windows) (split-window-right) (other-window 1) (next-buffer) (other-window 1)))
+
+
+(defun calcFunc-sage-factor ()
+  "Use SAGE to factor the top element of the stack in Emacs Calc."
+  (interactive)
+  (if (equal (length calc-stack) 0)
+      (error "Stack is empty"))
+  (let* ((top-of-stack (calc-top))
+         (top-of-stack-string (math-format-value top-of-stack))
+	 (sage-code
+	  (format "SR(\"%s\").factor()" top-of-stack-string))
+         (modified-string (symtex-evaluate sage-code))
+         (modified-value (math-read-exprs modified-string)))
+    (if (eq (car-safe modified-value) 'error)
+        (error "Parsing error: %s" (nth 1 modified-value))
+      (calc-pop 1)
+      (calc-push (car modified-value)))))
+
+(defun czm/parse-latex-region (&optional lang)
+  (interactive)
+  (unless lang
+    (setq lang 'giac))
+  (let* ((expr (buffer-substring-no-properties (region-beginning)
+                                               (region-end)))
+         (parsed
+          (let ((calc-language 'latex))
+            (math-read-big-expr expr)))
+         (composed
+          (let ((calc-language lang))
+            (math-compose-expr parsed 0))))
+    (czm/format-list composed)))
+
+(defun czm/format-list (list)
+  (mapconcat (lambda (item)
+               (cond ((listp item)
+                      (czm/format-list item))
+                     ((stringp item)
+                      (cond
+                       ((equal item "^")
+                        "**")
+                       (t
+                        item)))))
+             list))
+
+(czm-show-advice 'math-read-expr)
+
+(defun my-math-read-expr-filter (list-args)
+  ;; Apply function foo to the first argument of the list
+  (when (eq calc-language 'latex)
+    (setcar list-args (symtex--preprocess-for-calc (car list-args))))
+  ;; Return the modified list
+  list-args)
+
+(advice-add 'math-read-expr :filter-args #'my-math-read-expr-filter)
+;; (czm-show-advice #'math-read-expr)
+;; (advice-remove 'math-read-expr #'my-math-read-expr-filter)
+
+
+;; lsp-mode calculates line numbers without first calling widen.
+;; let's fix that, so that line numbers work in narrowed buffers, too.
+(defun my-lsp--cur-line (&optional point)
+  (save-restriction
+    (widen)
+    (1- (line-number-at-pos point))))
+(advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
+
+
+(defun czm-reload-file ()
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (kill-buffer (current-buffer))
+    (find-file filename)))
+
+(defun czm-lean4-format-function ()
+  (interactive)
+  (let* ((beg (point))
+         (end (save-excursion (end-of-defun)
+                              (point)))
+         (colon-equals (save-excursion
+                         (search-forward ":=" end t)
+                         (while
+                             (or
+                              (> (car (syntax-ppss)) 0)
+                              (save-excursion
+                                     (beginning-of-line)
+                                     (search-forward "let" (line-end-position) t)))
+                           (search-forward ":=" end t))
+                         (point)))
+         (colon-equals-line-number (line-number-at-pos colon-equals)))
+    ;; for lines below the current line up through the colon-equals
+    ;; line, we make sure that they begin with four spaces.
+    (save-excursion
+      (goto-char beg)
+      (forward-line)
+      (while (and (< (point)
+                     end)
+                  (<= (line-number-at-pos)
+                      colon-equals-line-number))
+        (beginning-of-line)
+        (when (looking-at " ")
+          (delete-horizontal-space)
+          (insert "    "))
+        (forward-line)))))
+
+(defun czm-lean4-format-functions ()
+  (interactive)
+  (goto-char (point-max))
+  (while (> (point) (point-min))
+    (beginning-of-defun)
+    (when (looking-at
+           (regexp-opt
+            (append czm-lean4-headings czm-lean4-heading-prefixes '("open" "@["))))
+      (czm-lean4-format-function))))
+
+(setq lean4-info-plain)
