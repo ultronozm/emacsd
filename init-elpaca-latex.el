@@ -507,3 +507,19 @@ Otherwise, return nil."
 ;;     (LaTeX-back-to-indentation)
 ;;     (cons (point) (current-column))))
 
+
+
+(defun preview--skip-preamble-region (region-text region-offset)
+  "Skip preamble for the sake of predumped formats.
+Helper function of `TeX-region-create'.
+
+If REGION-TEXT doesn't contain preamble, it returns nil.
+Otherwise, it returns cons (ALTERED-TEXT . ALTERED-OFFSET) where
+ALTERED-TEXT is REGION-TEXT without the preamble part and
+ALTERED-OFFSET is REGION-OFFSET increased by the number of lines
+of the preamble part of REGION-TEXT."
+  (if (and TeX-header-end (string-match TeX-header-end region-text))
+      (cons (substring region-text (match-end 0))
+            (with-temp-buffer
+              (insert (substring region-text 0 (match-end 0)))
+              (+ region-offset (TeX-current-offset))))))
