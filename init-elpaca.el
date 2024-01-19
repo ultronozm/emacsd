@@ -202,6 +202,8 @@
   ;; (prog-mode . hs-minor-mode)
   )
 
+(use-package aggressive-indent)
+
 
 ;;; ------------------------------ LISP ------------------------------
 
