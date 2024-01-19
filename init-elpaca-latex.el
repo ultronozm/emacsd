@@ -421,11 +421,18 @@
   :mode ("\\.tex\\'" . latex-mode)
   :bind
   (:map LaTeX-mode-map
-	("s-u" . czm-preview-mode)
-	("C-c p m" . czm-preview-toggle-master))
+	       ("s-u" . czm-preview-mode)
+	       ("C-c p m" . czm-preview-toggle-master))
   :custom
   (czm-preview-TeX-master "~/doit/preview-master.tex")
   (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
+  (czm-preview-allowed-files
+   '("\\.tex\\(<\\([^>]+\\)>\\)*$"
+     "\\[ latex \\]\\*\\(<\\([^>]+\\)>\\)*$"
+     "\\.lean$"
+     "\\.org$"
+     ))
+  (czm-preview-predicate #'my-czm-preview-predicate)
   :hook
   (LaTeX-mode . czm-preview-mode-conditionally-enable)
 
@@ -433,22 +440,51 @@
   (setq-default TeX-PDF-mode nil)
   ;; because texlive 2023 seems super slow
   (with-eval-after-load 'preview
-    (let ((tex-dir (when (equal (system-name) "Pauls-MBP-3")
+    (let ((tex-dir (when (equal (system-name)
+                                "Pauls-MBP-3")
                      "/usr/local/texlive/2020/bin/x86_64-darwin/")))
       (setq preview-LaTeX-command
-	    `(
-	      ,(concat
-	        "%`"
-	        tex-dir
-	        "%l \"\\nonstopmode\\nofiles\\PassOptionsToPackage{")
-	      ("," . preview-required-option-list)
-	      "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\""))))
+	           `(
+	             ,(concat
+	               "%`"
+	               tex-dir
+	               "%l \"\\nonstopmode\\nofiles\\PassOptionsToPackage{")
+	             ("," . preview-required-option-list)
+	             "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\""))))
   
   ;; (setq czm-preview-latex-prefix-directory "/usr/local/texlive/2023/bin/universal-darwin/")
   ;; /usr/local/texlive/2023/bin/universal-darwin/
 
   )
 
+(defun current-mmm-mode ()
+  "Return current mmm-mode at point."
+  (let ((overlays (overlays-at (point)))
+        result)
+    (while (and overlays (not result))
+      (let* ((overlay (car overlays))
+             (properties (overlay-properties overlay))
+             (mmm-mode (plist-get properties 'mmm-mode)))
+        (setq result mmm-mode)
+        (setq overlays (cdr overlays))))
+    result))
+
+(defun my-czm-preview-predicate ()
+  "Predicate for determining whether to preview.
+
+If major-mode is latex-mode, then return t.
+
+If major-mode is lean4-mode, and if mmm-mode is activated, then
+return t precisely when the current mmm-mode is latex-mode.
+
+Otherwise, return nil."
+  (cond
+   (mmm-mode
+    (or (eq mmm-primary-mode 'latex-mode)
+        (eq (current-mmm-mode) 'latex-mode)))
+   ((eq major-mode 'latex-mode) t)
+   ;;((eq-major-mode 'org-mode))
+   ))
 
 (use-package library
   :after latex czm-tex-util
