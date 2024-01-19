@@ -216,17 +216,77 @@
                outline-backward-same-level))
     (advice-add f :around #'LaTeX-skip-verbatim)))
 
+(defun latex/kill-environment (arg)
+  "Kill forward to end of environment.
+With ARG N, kill forward to Nth end of environment;
+negative ARG -N means kill backward to Nth start of environment."
+  (interactive "p")
+  (kill-region (point) (progn (latex/forward-environment arg) (point))))
+
+(defun latex/backward-kill-environment (arg)
+  "Kill back to start of environment.
+With ARG N, kill back to Nth start of environment;
+negative ARG -N means kill forward to Nth end of environment."
+  (interactive "p")
+  (kill-region (point) (progn (latex/backward-environment arg) (point))))
+
+(defun latex/kill-sexp-or-environment (arg)
+  (interactive "p")
+  (if (looking-at "\\\\begin")
+      (latex/kill-environment arg)
+    (kill-sexp arg)))
+
+(defun latex/backward-kill-sexp-or-environment (arg)
+  (interactive "p")
+  (backward-kill-sexp arg))
+
+(defun latex/backward-up-list-or-beginning-of-environment (arg)
+  (interactive "p")
+  (condition-case nil
+      (backward-up-list arg)
+    (scan-error (latex/beginning-of-environment arg))))
+
+(defun latex/down-list-or-enter-environment (arg)
+  (interactive "p")
+  (if (looking-at "\\\\begin")
+      (progn
+        (forward-line)
+        (back-to-indentation)
+        )
+    (down-list arg)))
+
+(global-set-key (kbd "M-u") 'up-list)
+
+(defun latex/mark-sexp-or-environment (arg)
+  (interactive "p")
+  (if (looking-at "\\\\begin")
+      (progn (push-mark
+              (save-excursion
+                (latex/forward-environment arg)
+                (point)))
+             (activate-mark))
+    (spw/mark-sexp)))
+
 (use-package latex-extra
   :after latex
   :bind
   (:map latex-extra-mode-map
         ("TAB" . nil)
-        ("C-M-a" . latex/beginning-of-environment)
-        ("C-M-e" . latex/end-of-environment)
+        ("C-M-SPC" . latex/mark-sexp-or-environment)
+        ("C-M-u" . latex/backward-up-list-or-beginning-of-environment)
+        ("C-M-g" . latex/down-list-or-enter-environment)
+        ("C-M-e" . latex/forward-environment)
+        ("C-M-a" . latex/backward-environment)
         ("C-M-f" . forward-sexp)
         ("C-M-b" . backward-sexp)
+        ("C-M-k" . latex/kill-sexp-or-environment)
+        ("C-M-<backspace>" . latex/backward-kill-sexp-or-environment)
         ("C-s-n" . latex/forward-environment)
         ("C-s-p" . latex/backward-environment)
+        ("C-s-e" . latex/forward-environment)
+        ("C-s-a" . latex/backward-environment)
+        ("C-s-k" . latex/kill-environment)
+        ("C-s-<backspace>" . latex/backward-kill-environment)
         )
   :custom
   (latex/override-preview-map nil)
