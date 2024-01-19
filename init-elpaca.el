@@ -205,6 +205,18 @@
 (use-package aggressive-indent)
 
 
+(use-package emacs
+  :elpaca nil
+  :after outline
+  :bind (:map outline-minor-mode-map
+              ("C-M-<down-mouse-1>" . nil)
+              ("C-M-<down-mouse-2>" . nil)
+              ("C-M-<down-mouse-3>" . nil)
+              ("<right-margin> S-<mouse-1>" . nil)
+              ("<right-margin> <mouse-1>" . nil)
+              ("<left-margin> S-<mouse-1>" . nil)
+              ("<left-margin> <mouse-1>" . nil)))
+
 ;;; ------------------------------ LISP ------------------------------
 
 (use-package emacs
