@@ -1,12 +1,12 @@
 ;; ; ------------------------------ ELPACA ------------------------------
 
-(defvar elpaca-installer-version 0.5)
+(defvar elpaca-installer-version 0.6)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
                               :ref nil
-                              :files (:defaults (:exclude "extensions"))
+                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
                               :build (:not elpaca--activate-package)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
@@ -272,8 +272,19 @@
 
 ;;; ------------------------------ GIT ------------------------------
 
+
+(defun +elpaca-unload-seq (e) "Unload seq before continuing the elpaca build, then continue to build the recipe E."
+       (and (featurep 'seq) (unload-feature 'seq t))
+       (elpaca--continue-build e))
+(elpaca `(seq :build ,(append (butlast (if (file-exists-p (expand-file-name "seq" elpaca-builds-directory))
+                                          elpaca--pre-built-steps
+                                        elpaca-build-steps))
+                             (list '+elpaca-unload-seq 'elpaca--activate-package))))
+
 (use-package magit
   :defer t)
+
+
 
 (defun czm/git-update-commit-push-this-file ()
   "Update, commit, and push the current file."
@@ -1134,10 +1145,10 @@ The list is ordered from bottom to top."
   (setq gc-cons-threshold 100000000)
   (setq read-process-output-max (* 1024 1024)))
 
-(use-package clang-format+
-  :after clang-format
-  :hook
-  (c-mode-common . clang-format+-mode))
+;; (use-package clang-format+
+;;   :after clang-format
+;;   :hook
+;;   (c-mode-common . clang-format+-mode))
 
 ;; maybe some of the following should be part of cmake-build.el?
 
@@ -1458,6 +1469,7 @@ Interactively, prompt for WIDTH."
   :bind (:map lean4-mode-map
               ("RET" . newline)
               ("C-j" . default-indent-new-line)
+              ("C-c C-q" . eglot-code-action-quickfix)
               ("C-M-i" . consult-company))
   :config
   :defer t)
@@ -1496,30 +1508,39 @@ Interactively, prompt for WIDTH."
 
 (defun czm-colorize-lean4-signature ()
   "Highlights the name of each required variable to a Lean4 theorem."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (while (and (< (point) (point-max))
-                (not (eq (char-after (1+ (point))) ?\:)))
-      (forward-list)
-      (when (eq (char-before) ?\) )
-        (save-excursion
-          (backward-list)
-          ;; do the following unless there's an error, in which case ignore it
-          (let ((inhibit-read-only t)
-                (start (point))
-                (end (save-excursion (forward-list) (point)))
-                (end-first-symbol (save-excursion (forward-word) (point)))
-                (end-symbols (save-excursion (when (search-forward " : " nil t) (- (point) 3)))))
-            (when end-symbols
-              (put-text-property start end 'face '(underline))
-              ; shr-mark doesn't work anymore?
-              (put-text-property (1+ start) end-symbols 'face '(highlight underline))
-              )))))))
+  (when 
+      (with-current-buffer eldoc-icebox-parent-buffer
+        (or
+         (eq major-mode 'lean4-mode)
+         (eq (buffer-name) "*Lean Goal*")))
+    (save-excursion
+      (goto-char (point-min))
+      (while (and (< (point) (point-max))
+                  (not (eq (char-after (1+ (point))) ?\:)))
+        (forward-list)
+        (when (eq (char-before) ?\) )
+          (save-excursion
+            (backward-list)
+            ;; do the following unless there's an error, in which case ignore it
+            (let ((inhibit-read-only t)
+                  (start (point))
+                  (end (save-excursion (forward-list) (point)))
+                  (end-first-symbol (save-excursion (forward-word) (point)))
+                  (end-symbols (save-excursion (when (search-forward " : " nil t) (- (point) 3)))))
+              (when end-symbols
+                (put-text-property start end 'face '(underline))
+                                        ; shr-mark doesn't work anymore?
+                (put-text-property (1+ start) end-symbols 'face '(highlight underline))
+                ))))))))
 
 (defun czm-add-lean4-eldoc ()
-  (add-hook 'eldoc-documentation-functions #'lean4-info-eldoc-function
-            nil t))
+  (when
+      (with-current-buffer eldoc-icebox-parent-buffer
+        (or
+         (eq major-mode 'lean4-mode)
+         (eq (buffer-name) "*Lean Goal*")))
+    (add-hook 'eldoc-documentation-functions #'lean4-info-eldoc-function
+              nil t)))
 
 (use-package eldoc-icebox
   :elpaca (:host github :repo "ultronozm/eldoc-icebox.el"
@@ -1917,4 +1938,65 @@ The prefix ARG specifies whether to copy instead of goto."
             (append czm-lean4-headings czm-lean4-heading-prefixes '("open" "@["))))
       (czm-lean4-format-function))))
 
-(setq lean4-info-plain)
+
+;; doesn't work out of the box with lean4-mode because the "contact"
+;; argument to eglot ends up with a non-string argument, which it
+;; shouldn't?  you're not exactly sure what's going on there.
+
+;; (use-package eglot-booster
+;; 	 :elpaca (:host github :repo "jdtsmith/eglot-booster"
+;;                  :depth nil)
+;;   :after eglot
+;; 	 :config	(eglot-booster-mode))
+
+(setq calc-kill-line-numbering nil)
+
+(defun czm-calc-grab-TeX-region (beg end arg)
+  (interactive "r\nP")
+  (with-calc-language 'latex
+    (calc-grab-region beg end arg))
+  (calc-refresh))
+
+(use-package xr)
+
+(defun czm-yank-escaped-string ()
+  (interactive)
+  (insert (prin1-to-string (substring-no-properties (current-kill 0)))))
+
+(defmacro with-calc-language (lang &rest body)
+  "Execute the forms in BODY with `calc-language` set to LANG.
+The value of `calc-language` is restored after BODY has been processed."
+  `(let ((old-lang calc-language))
+     (unwind-protect
+         (progn
+           (calc-set-language ,lang)
+           ,@body)
+       (calc-set-language old-lang))))
+
+
+
+(defun count-lines-matching-regex-in-dir (regex)
+  (interactive (list (read-regexp "Regex: ")))
+  (let* ((total-lines 0)
+         (output-buffer (get-buffer-create "*File Line Counts*"))
+         (current-directory default-directory)
+         (directory-string (format "Directory: %s\n" current-directory))
+         (regex-string (format "Regex: %s\n\n" regex)))
+    (with-current-buffer output-buffer
+      (erase-buffer)
+      (insert directory-string)
+      (insert regex-string)
+      (dolist (file (directory-files-recursively current-directory regex))
+        (when (and (not (file-directory-p file))
+                   (string-match-p regex file))
+          (let ((line-count 0))
+            (with-temp-buffer
+              (insert-file-contents file)
+              (setq line-count (count-lines (point-min)
+                                            (point-max))))
+            (setq total-lines (+ total-lines line-count))
+            (insert (format "%s : %d\n" (file-relative-name file current-directory)
+                            line-count))))))
+    (with-current-buffer output-buffer
+      (insert (format "\nTotal lines in files matching %s: %d" regex total-lines)))
+    (display-buffer output-buffer)))

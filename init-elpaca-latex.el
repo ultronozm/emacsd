@@ -64,6 +64,40 @@
 	        (frame-monitor (frame-monitor-attributes frame)))
     (equal primary-monitor frame-monitor)))
 
+(defun latex-math-from-calc ()
+  "Evaluate `calc' on the contents of line at point."
+  (interactive)
+  (cond ((region-active-p)
+         (let* ((beg (region-beginning))
+                (end (region-end))
+                (string (buffer-substring-no-properties beg end)))
+           (kill-region beg end)
+           (insert (calc-eval `(,string calc-language latex
+                                        calc-prefer-frac t
+                                        calc-angle-mode rad)))))
+        (t (let ((l (thing-at-point 'line)))
+             (end-of-line 1) (kill-line 0)
+             (insert (calc-eval `(,l
+                                  calc-language latex
+                                  calc-prefer-frac t
+                                  calc-angle-mode rad)))))))
+
+(defun czm-latex-calc-grab (beg end)
+  (interactive "r")
+  ;; (let ((old-lang calc-language))
+  ;;   (unwind-protect
+  ;;       (progn
+  ;;         (save-excursion
+  ;;           (calc-create-buffer))
+  ;;         (calc-set-language 'latex)
+  ;;         (calc-grab-region beg end '(4)))
+  ;;     (when old-lang
+  ;;       (calc-set-language old-lang))))
+  ;; (calc-grab-region beg end '(4))
+  (symtex-with-calc-language 'latex
+                             (calc-grab-region beg end '(4)))
+  )
+
 (use-package latex
   :elpaca (auctex
            :files
@@ -97,6 +131,9 @@
         ("s-a" . abbrev-mode)
         ("s-c" . preview-clearout-at-point)
         ("s-q" . LaTeX-fill-buffer)
+
+        ("C-c C-l" . latex-math-from-calc)
+        ("C-c C-g" . czm-latex-calc-grab)
         ("C-c C-n" . nil)
                                         ; TeX-normal-mode
         ("C-c #" . nil))
