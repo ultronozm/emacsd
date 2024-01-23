@@ -791,7 +791,10 @@ DIR must include a .project file to be considered a project."
   (pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
   :config
   (pdf-tools-install :no-query)
-  (require 'pdf-occur))
+  (require 'pdf-occur)
+  :bind (:map pdf-view-mode-map
+              ("<down>" . nil)
+              ("<up>" . nil)))
 
 
 ;;; ------------------------------ ORG ------------------------------
