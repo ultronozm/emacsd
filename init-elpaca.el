@@ -2000,3 +2000,9 @@ The value of `calc-language` is restored after BODY has been processed."
     (with-current-buffer output-buffer
       (insert (format "\nTotal lines in files matching %s: %d" regex total-lines)))
     (display-buffer output-buffer)))
+
+(defun czm-search-log ()
+  "Search your log files with `rg'."
+  (interactive)
+  (let ((log-files '("~/doit/log.org" "~/doit/log-old.org" "~/doit/todo.org")))
+    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
