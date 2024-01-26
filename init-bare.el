@@ -7,6 +7,8 @@
       (w32-register-hot-key [s-])
       (w32-register-hot-key [s])))
 
+
+
 (mapc (lambda (keybind)
 	       (let ((key (car keybind))
 	             (cmd (cadr keybind)))
@@ -22,13 +24,11 @@
 	       ("s-1" delete-other-windows)
 	       ("s-2" split-window-below)
 	       ("s-3" split-window-right)
-	       ("s-4" double-split-window-below-and-delete)
-	       ("s-5" double-split-window-right-and-delete)
-	       ;; (,(kbd "C-x C-f") counsel-find-file)
 	       ("C-m" newline-and-indent)
 	       ("M-n" next-error)
 	       ("M-p" previous-error)
 	       ("M-/" hippie-expand)
+        ("C-c d" czm/open-downloads-dired)
 	       ("C-c m" compile)
 	       ("C-c r" org-capture)
 	       ("C-c o" org-open-at-point-global)
@@ -40,9 +40,9 @@
 	       ("C-h C-f" find-function)
 	       ("C-h C-v" find-variable)
 	       ("C-h C-l" find-library)
-	       ("C-w" czm/kill-or-delete-region)
 	       ("C-M-z" zap-up-to-char)
 	       ("C-M-g" down-list)
+	       ("C-M-t" transpose-sexps)
         ("M-+" raise-sexp)
 	       ("s-<left>" previous-buffer)
 	       ("s-<right>" next-buffer)
@@ -68,10 +68,7 @@
 	       ("s-k" kill-current-buffer)
 	       ("s-s" save-buffer)
 	       ("s-v" view-mode)
-	       ("s-f" zap-to-char)
-	       ("s-F" czm/zap-to-char-backwards)
-	       ("s-t" zap-up-to-char)
-	       ("s-T" czm/zap-up-to-char-backwards)
+        ;; s-f and s-t are unoccupied!
 	       ("s-." repeat)
 	       ("s-w" switch-to-buffer)
 	       ("s-i" czm/find-lisp-file)
@@ -89,49 +86,9 @@
 	       )
       )
 
-(defun czm/zap-to-char-backwards (char)
-  "Zap to CHAR backwards."
-  (interactive "cZap to char (backwards): ")
-  (zap-to-char -1 char))
-
-(defun czm/zap-up-to-char-backwards (char)
-  "Zap up to CHAR backwards."
-  (interactive "cZap up to char (backwards): ")
-  (zap-up-to-char -1 char))
-
 (defvar czm/find-lisp-file-completion-fn 'completing-read
   "The completion function to use for the `find-elisp-file-variable` function.
 Possible values: completing-read, ivy-read.")
-
-(defun double-split-window-below-and-delete ()
-  "Split the window below twice, visit the previous window and then remove the current window"
-  (interactive)
-  (split-window-below)
-  (other-window 1)
-  (split-window-below)
-  (delete-window)
-  (other-window 1)
-  (next-buffer))
-
-(defun double-split-window-right-and-delete ()
-  "Split the window to the right twice, visit the previous window and then remove the current window"
-  (interactive)
-  (split-window-right)
-  (other-window 1)
-  (split-window-right)
-  (delete-window)
-  (other-window 1)
-  (next-buffer))
-
-(defun czm/kill-or-delete-region (start end &optional arg)
-  "Kill or delete region based on the presence of an optional argument.
-
-If called with a prefix argument (C-u), delete the region between START and END.
-Otherwise, kill the region between START and END."
-  (interactive "r\nP")
-  (if arg
-      (delete-region start end)
-    (kill-region start end)))
 
 ;; TODO: add "burp.el" functionality here, since it's very handy when
 ;; working with startup configs
@@ -147,6 +104,12 @@ Otherwise, kill the region between START and END."
          (selected-elisp-file (funcall completion-fn "Select elisp file: " elisp-files
                                        nil t nil nil default-elisp-file)))
     (when selected-elisp-file (find-file selected-elisp-file))))
+
+
+(defun czm/open-downloads-dired ()
+  "Open the '~/Downloads' directory in Dired mode."
+  (interactive)
+  (dired "~/Downloads"))
 
 (defun burp--matching-delim (char)
   "Return the matching delimiter for CHAR, or nil if none."

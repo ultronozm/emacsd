@@ -164,52 +164,29 @@
   :config
   (recentf-mode))
 
-(defun czm/clone-indirect-buffer-same-window ()
-    "Clone the current buffer in-place."
-    (interactive)
-    (let (buf)
-      (save-window-excursion
-        (setq buf
-              (call-interactively #'clone-indirect-buffer)))
-      (switch-to-buffer buf)))
 
-(define-key global-map (kbd "C-x c") 'czm/clone-indirect-buffer-same-window)
+(use-package czm-misc
+  :elpaca (:host github :repo "ultronozm/czm-misc.el"
+                 :depth nil)
+  :bind (("s-@" . czm-misc-split-window-below-variant)
+         ("s-#" . czm-misc-split-window-right-variant)
+	        ("s-4" . czm-misc-double-split-window-below-and-delete)
+	        ("s-5" . czm-misc-double-split-window-right-and-delete)
+         ("s-6" . czm-misc-delete-indentation-nil)
+         ("s-7" . czm-misc-delete-indentation-t)
+         ("s-8" . czm-misc-show-overlays-at-pt)
+	        ("C-w" . czm-misc-kill-or-delete-region)
+         ("C-x c" . czm-misc-clone-indirect-buffer-same-window)
+         ("s-t" . czm-misc-transpose-abc-to-cba)
+         ("M-o" . czm-misc-split-line-below)
+         ("C-S-SPC" . czm-misc-delete-horizontal-space-on-line)
+         ("M-c" . czm-misc-avy-copy-sexp)
+         ("s-c" . czm-misc-avy-copy-sexp-t)
+         ("M-l" . avy-copy-line)
+         ("C-x j" . czm-misc-dired-popup))
+  (:map minibuffer-local-map
+        ("C-c d" . czm-misc-insert-date)))
 
-(defun czm/open-downloads-dired ()
-  "Open the '~/Downloads' directory in Dired mode."
-  (interactive)
-  (dired "~/Downloads"))
-
-(define-key global-map (kbd "C-c d") 'czm/open-downloads-dired)
-
-(defun czm/insert-date ()
-    "Insert the current date and time."
-    (interactive)
-    (insert (format-time-string "%Y%m%dT%H%M%S")))
-
-
-(define-key minibuffer-local-map (kbd "C-c d") 'czm/insert-date)
-
-
-(defun czm/resize-frame-to-bottom-third ()
-  "Reshape current frame to occupy bottom third of the screen."
-  (interactive)
-  (if (frame-parameter (selected-frame) 'fullscreen)
-      (toggle-frame-fullscreen))
-  (redisplay)
-  (let* ((window-system-frame-alist
-          (cdr (assq initial-window-system
-                     window-system-default-frame-alist)))
-         (screen-width (display-pixel-width))
-         (screen-height (display-pixel-height))
-         (frame-padding-chars (frame-parameter nil 'internal-border-width))
-         (frame-padding (* (frame-char-height) frame-padding-chars))
-         (frame-top (- screen-height (/ screen-height 3)))
-         (frame-height (- (/ screen-height 3) (* 2 frame-padding)))
-         (frame-width (- screen-width frame-padding))
-         (frame-left 0))
-    (set-frame-position (selected-frame) frame-left frame-top)
-    (set-frame-size (selected-frame) frame-width frame-height t)))
 
 (use-package prog-mode
   :elpaca nil
@@ -285,22 +262,16 @@
   (emacs-lisp-mode  . lispy-mode)
   (minibuffer-setup . czm-conditionally-enable-lispy))
 
+(defun czm-edebug-eval-hook ()
+  (lispy-mode 0)
+  (copilot-mode 0))
+(add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
 ;;; ------------------------------ GIT ------------------------------
 
 
-(defun +elpaca-unload-seq (e) "Unload seq before continuing the elpaca build, then continue to build the recipe E."
-       (and (featurep 'seq) (unload-feature 'seq t))
-       (elpaca--continue-build e))
-(elpaca `(seq :build ,(append (butlast (if (file-exists-p (expand-file-name "seq" elpaca-builds-directory))
-                                          elpaca--pre-built-steps
-                                        elpaca-build-steps))
-                             (list '+elpaca-unload-seq 'elpaca--activate-package))))
-
 (use-package magit
   :defer t)
-
-
 
 (defun czm/git-update-commit-push-this-file ()
   "Update, commit, and push the current file."
@@ -594,8 +565,8 @@
 
 (use-package copilot
   :elpaca (:host github
-                 ;; :repo "zerolfx/copilot.el"
-                 :repo "ultronozm/copilot.el"
+                 :repo "zerolfx/copilot.el"
+                 ;; :repo "ultronozm/copilot.el"
                  :files ("*.el" "dist")
                  :depth nil)
   :hook
@@ -748,6 +719,8 @@ DIR must include a .project file to be considered a project."
 
 ;;; ------------------------------ ABBREV and SPELLING ------------------------------
 
+;; this could be its own package, accomodating git-friendly abbrev storage?
+;; need a good way to update the source.
 (defun modify-abbrev-table (table abbrevs)
   "Define abbreviations in TABLE given by ABBREVS."
   (unless table
@@ -777,14 +750,6 @@ DIR must include a .project file to be considered a project."
         (quietly-read-abbrev-file abbrev-file)))
     (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
 
-
-(defun czm-avy-transpose-recent-space ()
-  (interactive)
-  (save-excursion
-    (avy-goto-char-in-line ?\s)
-    (transpose-chars 1)))
-
-(define-key global-map (kbd "s-:") 'czm-avy-transpose-recent-space)
 
 (use-package czm-spell
   :elpaca (:host github :repo "ultronozm/czm-spell.el"
@@ -917,7 +882,7 @@ The list is ordered from bottom to top."
              (newline))))
         ("C-c p" . czm-org-edit-latex-with-preview)))
 
-(defun czm/org-tmp-new ()
+(defun czm-new-tmp-org ()
   "Create new temporary org buffer."
   (interactive)
   (let ((dir "~/doit/")
