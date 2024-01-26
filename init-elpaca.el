@@ -1,4 +1,7 @@
-;; ; ------------------------------ ELPACA ------------------------------
+;;; -*- lexical-binding: t; -*-
+
+
+;;; ------------------------------ ELPACA ------------------------------
 
 (defvar elpaca-installer-version 0.6)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
