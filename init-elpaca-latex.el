@@ -61,6 +61,7 @@
     (apply orig-fun args)))
 
 ;; taken from
+;; https://karthinks.com/software/latex-input-for-impatient-scholars/
 (defun latex-math-from-calc ()
   "Evaluate `calc' on the contents of line at point."
   (interactive)
