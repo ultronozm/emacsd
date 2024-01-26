@@ -58,12 +58,7 @@
     (widen)
     (apply orig-fun args)))
 
-(defun frame-on-primary-monitor-p (frame)
-  (let* ((monitors (display-monitor-attributes-list))
-	        (primary-monitor (car monitors))
-	        (frame-monitor (frame-monitor-attributes frame)))
-    (equal primary-monitor frame-monitor)))
-
+;; taken from
 (defun latex-math-from-calc ()
   "Evaluate `calc' on the contents of line at point."
   (interactive)
