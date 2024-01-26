@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t; -*-
+
 (defun czm-tex-buffer-face ()
   (interactive)
   (setq buffer-face-mode-face
