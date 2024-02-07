@@ -4430,6 +4430,7 @@ typedef vector<int> VI;
     ("Kahler" "K\\\"{a}hler" nil)
     ("Kuhne" "K{\\\"u}hne" nil)
     ("Lindelof" "Lindel\\\"{o}f" nil)
+    ("Neron" "N{\\'e}ron" nil)
     ("NN" "\\mathbb{N}" nil)
     ("Plucker" "Pl\\\"{u}cker" nil)
     ("Poincare" "Poincar{\\'e}" nil)
@@ -4785,13 +4786,14 @@ typedef vector<int> VI;
     ("bfiu" "<+START+>{\\bfi <+++>}<++><+END+>" dynexp)
     ("bfj" "\\mathbf{j}" nil)
     ("bfk" "\\mathbf{k}" nil)
-    ("bfl" "<+START+>\\lfloor <+++> \\rfloor<++><+END+>" dynexp)
+    ("bfl" "<+START+>\\left\\lfloor <+++> \\right\\rfloor<++><+END+>" dynexp)
+    ("bflr" "<+START+>\\left\\lfloor <+++> \\right\\rfloor<++><+END+>" dynexp)
     ("bfll" "<+START+><+TAB+>\\begin{flushleft}
 <+TAB+><+++>
 <+TAB+>\\end{flushleft}<++><+END+>" dynexp)
-    ("bflr" "<+START+><+TAB+>\\begin{flushright}
-<+TAB+><+++>
-<+TAB+>\\end{flushright}<++><+END+>" dynexp)
+    ;; ("bflr" "<+START+><+TAB+>\\begin{flushright}
+;; <+TAB+><+++>
+;; <+TAB+>\\end{flushright}<++><+END+>" dynexp)
     ("bfu" "<+START+>\\textbf{<+++>}<++><+END+>" dynexp)
     ("bg" "\\mathbf{g}" nil)
     ("bga" "<+START+><+TAB+>\\begin{gather}
@@ -6196,6 +6198,8 @@ F(b)-F(a)=\\int^b_af(x)\\, dx
     ("mlem" "\\newtheorem{lemma}{Lemma}
 " nil)
     ("mlt" "\\ll" nil)
+    ("lta" "\\lessapprox" nil)
+    ("gta" "\\gtrapprox" nil)
     ("mn" "\\min" nil)
     ("mo" "-1" nil)
     ("mopu" "<+START+>\\mathop{<+++>}<++><+END+>" dynexp)
