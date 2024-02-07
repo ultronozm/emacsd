@@ -110,6 +110,39 @@
 (when (file-exists-p (concat user-emacs-directory "init-personal.el"))
   (load (concat user-emacs-directory "init-personal.el")))
 
+(use-package avy
+  :bind
+  (:map global-map
+        ("C-;" . avy-goto-line)
+        ("C-M-; y" . avy-copy-region)
+        ("C-M-; n" . avy-kill-ring-save-region)
+        ("C-M-; t" . avy-move-region)
+        ("C-M-; x" . avy-kill-region))
+  (:map isearch-mode-map
+        ("M-j" . avy-isearch)))
+
+(use-package czm-misc
+  :elpaca (:host github :repo "ultronozm/czm-misc.el"
+                 :depth nil)
+  :bind (("s-@" . czm-misc-split-window-below-variant)
+         ("s-#" . czm-misc-split-window-right-variant)
+	        ("s-4" . czm-misc-double-split-window-below-and-delete)
+	        ("s-5" . czm-misc-double-split-window-right-and-delete)
+         ("s-6" . czm-misc-delete-indentation-nil)
+         ("s-7" . czm-misc-delete-indentation-t)
+         ("s-8" . czm-misc-show-overlays-at-pt)
+	        ("C-w" . czm-misc-kill-or-delete-region)
+         ("C-x c" . czm-misc-clone-indirect-buffer-same-window)
+         ("s-t" . czm-misc-transpose-abc-to-cba)
+         ("M-o" . czm-misc-split-line-below)
+         ("C-S-SPC" . czm-misc-delete-horizontal-space-on-line)
+         ("M-c" . czm-misc-avy-copy-sexp)
+         ("s-c" . czm-misc-avy-copy-sexp-t)
+         ("M-l" . avy-copy-line)
+         ("C-x j" . czm-misc-dired-popup))
+  (:map minibuffer-local-map
+        ("C-c d" . czm-misc-insert-date)))
+
 (use-package emacs
   :elpaca nil
 
@@ -137,7 +170,10 @@
   (delete-by-moving-to-trash t)
   (help-window-select t)
   (isearch-allow-scroll t)
-  (doc-view-resolution 300)
+  (doc-view-resolution 300))
+
+(use-package emacs
+  :elpaca nil
 
   :config
   (electric-pair-mode)
@@ -164,28 +200,6 @@
   :config
   (recentf-mode))
 
-
-(use-package czm-misc
-  :elpaca (:host github :repo "ultronozm/czm-misc.el"
-                 :depth nil)
-  :bind (("s-@" . czm-misc-split-window-below-variant)
-         ("s-#" . czm-misc-split-window-right-variant)
-	        ("s-4" . czm-misc-double-split-window-below-and-delete)
-	        ("s-5" . czm-misc-double-split-window-right-and-delete)
-         ("s-6" . czm-misc-delete-indentation-nil)
-         ("s-7" . czm-misc-delete-indentation-t)
-         ("s-8" . czm-misc-show-overlays-at-pt)
-	        ("C-w" . czm-misc-kill-or-delete-region)
-         ("C-x c" . czm-misc-clone-indirect-buffer-same-window)
-         ("s-t" . czm-misc-transpose-abc-to-cba)
-         ("M-o" . czm-misc-split-line-below)
-         ("C-S-SPC" . czm-misc-delete-horizontal-space-on-line)
-         ("M-c" . czm-misc-avy-copy-sexp)
-         ("s-c" . czm-misc-avy-copy-sexp-t)
-         ("M-l" . avy-copy-line)
-         ("C-x j" . czm-misc-dired-popup))
-  (:map minibuffer-local-map
-        ("C-c d" . czm-misc-insert-date)))
 
 
 (use-package prog-mode
@@ -234,6 +248,7 @@
     (lispy-define-key map ";" 'lispy-comment)
     (lispy-define-key map "o" 'lispy-oneline)
     (lispy-define-key map "m" 'lispy-multiline)
+    (lispy-define-key map "SPC" 'lispy-space)
     (lispy-define-key map "i" 'lispy-tab)
     (define-key map (kbd "C-M-j") 'lispy-split)
     ;; (define-key map (kbd "M-+") 'lispy-raise)
@@ -297,12 +312,12 @@
 
 ;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
 
-(use-package eldoc
-  :elpaca nil
-  :custom
-  ;  (eldoc-echo-area-use-multiline-p truncate-sym-name-if-fiteldoc-echo-area-use-multiline-p)
-  (eldoc-echo-area-use-multiline-p t)
-  (eldoc-idle-delay 0.25))
+;; (use-package eldoc
+;;   :elpaca nil
+;;   :custom
+;;   ;  (eldoc-echo-area-use-multiline-p truncate-sym-name-if-fiteldoc-echo-area-use-multiline-p)
+;;   (eldoc-echo-area-use-multiline-p t)
+;;   (eldoc-idle-delay 0.25))
 
 (use-package ef-themes
   :demand
@@ -526,16 +541,7 @@
 ; TODO: activate company mode?  what does this do, anyway?
 
 
-(use-package avy
-  :bind
-  (:map global-map
-        ("C-;" . avy-goto-line)
-        ("C-M-; y" . avy-copy-region)
-        ("C-M-; n" . avy-kill-ring-save-region)
-        ("C-M-; t" . avy-move-region)
-        ("C-M-; x" . avy-kill-region))
-  (:map isearch-mode-map
-        ("M-j" . avy-isearch)))
+
 
 
 (use-package ace-window
@@ -574,7 +580,8 @@
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
   (lean4-mode . (lambda () (setq tab-width 2)))
 
-  :custom (copilot-indent-warning-suppress t)
+  :custom
+  (copilot-indent-offset-warning-disable t)
   :bind (:map copilot-completion-map
               ("§" . copilot-accept-completion)
               ("M-§" . copilot-accept-completion-by-word)
@@ -655,6 +662,7 @@
   (setcdr other-window-repeat-map nil)
   (repeat-mode))
 
+;; https://karthinks.com/software/it-bears-repeating/
 (defun repeatize (keymap)
   "Add `repeat-mode' support to a KEYMAP."
   (map-keymap
@@ -1109,7 +1117,24 @@ The list is ordered from bottom to top."
   (set-fill-column 120)
   (setq next-error-function #'flymake-goto-next-error))
 
+;; defvar-keymap
+;; define-keymap
+
+(defvar flymake-repeat-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "n") 'flymake-goto-next-error)
+    (define-key map (kbd "p") 'flymake-goto-prev-error)
+    (define-key map (kbd "f") 'attrap-flymake)
+    (define-key map (kbd "M-n") 'flymake-goto-next-error)
+    (define-key map (kbd "M-p") 'flymake-goto-prev-error)
+    map))
+
 (use-package flymake
+  :elpaca nil
+  :custom
+  (flymake-show-diagnostics-at-end-of-line t)
+  :config
+  (repeatize 'flymake-repeat-map)
   :bind
   (:map flymake-mode-map
         ("M-n" . flymake-goto-next-error)
@@ -1200,6 +1225,174 @@ The list is ordered from bottom to top."
                  :depth nil)
   :after cmake-build)
 
+;;; ------------------------------ CALC ------------------------------
+
+(defun calcFunc-sage-factor ()
+  "Use SAGE to factor the top element of the stack in Emacs Calc."
+  (interactive)
+  (if (equal (length calc-stack)
+             0)
+      (error "Stack is empty"))
+  (let* ((top-of-stack (calc-top))
+         (top-of-stack-string (math-format-value top-of-stack))
+	        (sage-code
+	         (format "SR(\"%s\").factor()" top-of-stack-string))
+         (modified-string (symtex-evaluate sage-code))
+         (modified-value (math-read-exprs modified-string)))
+    (if (eq (car-safe modified-value)
+            'error)
+        (error "Parsing error: %s" (nth 1 modified-value))
+      (calc-pop 1)
+      (calc-push (car modified-value)))))
+
+;; (defun my-math-read-expr-filter (list-args)
+;;   ;; Apply function foo to the first argument of the list
+;;   (when (eq calc-language 'latex)
+;;     (setcar list-args (symtex--preprocess-for-calc (car list-args))))
+;;   ;; Return the modified list
+;;   list-args)
+
+;; (advice-add 'math-read-expr :filter-args #'my-math-read-expr-filter)
+;; (czm-misc-show-advice #'math-read-expr)
+;; (advice-remove 'math-read-expr #'my-math-read-expr-filter)
+
+
+(use-package calc
+  :elpaca nil
+  :custom
+  (calc-kill-line-numbering t))
+
+(defun czm-calc-grab-TeX-region (beg end arg)
+  (interactive "r\nP")
+  (with-calc-language 'latex
+    (calc-grab-region beg end arg))
+  (calc-refresh))
+
+(use-package xr)
+
+(defmacro with-calc-language (lang &rest body)
+  "Execute the forms in BODY with `calc-language` set to LANG.
+The value of `calc-language` is restored after BODY has been processed."
+  `(let ((old-lang calc-language))
+     (unwind-protect
+         (progn
+           (calc-set-language ,lang)
+           ,@body)
+       (calc-set-language old-lang))))
+
+
+;;; ------------------------------ LEAN ------------------------------
+
+;; taken from
+;; https://github.com/leanprover/lean-mode/commit/b224da9d2b339514c2577e5ee4c675b03c978bcd
+(defun czm-lean4-set-imenu-generic-expression ()
+  (setq imenu-generic-expression '(("Inductive" "^ *\\(?:@\\[.*\\]\\)? *inductive +\\([^\n ]+\\)" 1)
+                                   ("Function" "^ *\\(?:@\\[.*\\]\\)? *def +\\([^\n ]+\\)" 1)
+                                   ("Lemma" "^ *\\(?:@\\[.*\\]\\)? *lemma +\\([^\n ]+\\)" 1)
+                                   ("Theorem" "^ *\\(?:@\\[.*\\]\\)? *theorem +\\([^\n ]+\\)" 1)
+                                   ("Theorem" "^ *\\(?:@\\[.*\\]\\)? *theorem +\\([^\n ]+\\)" 1)
+                                   ("Namespace" "^ *\\(?:@\\[.*\\]\\)? *namespace +\\([^\n ]+\\)" 1))))
+
+;; (with-eval-after-load 'lean4-mode
+;;   (define-key lean4-mode-map [?\t] #'company-indent-or-complete-common)
+;;   (add-hook 'lean4-mode-hook #'company-mode))
+
+(use-package lean4-mode
+  :elpaca (:host github :repo "ultronozm/lean4-mode"
+                 :files ("*.el" "data"))
+  :hook (lean4-mode . spout-mode)
+  :hook (lean4-mode . company-mode)
+  :hook (lean4-mode . czm-lean4-set-imenu-generic-expression)
+  :commands (lean4-mode)
+  :custom
+  (lean4-keybinding-lean4-toggle-info (kbd "C-c C-y"))
+  (lean4-info-plain nil)
+  :bind (:map lean4-mode-map
+              ("RET" . newline)
+              ("C-j" . default-indent-new-line)
+              ("C-c C-q" . eglot-code-action-quickfix)
+              ("C-M-i" . consult-company))
+  :config
+  :defer t)
+
+(use-package czm-lean4
+  :elpaca (:host github :repo "ultronozm/czm-lean4.el"
+                 :depth nil)
+  :after lean4-mode
+  :hook (lean4-mode . czm-lean4-mode-hook)
+  :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
+  :bind (:map lean4-mode-map
+              ("C-c v" . czm-lean4-show-variables)
+              ("C-c C-p C-p" . czm-lean4-toggle-info-pause)
+              ("C-c C-m C-m" . czm-lean4-search-mathlib)
+              ("C-c C-m C-h" . czm-lean4-search-mathlib-headings)
+              ("C-c C-," . czm-lean4-insert-section-or-namespace)
+              ("C-c C-." . czm-lean4-insert-comment-block)
+              ("C-c C-i" . czm-lean4-toggle-info-split-below)
+              ("C-c C-o" . czm-lean4-toggle-info-split-right)
+              ("M-]" . czm-lean4-cycle-delimiter-forward)
+              ("§" . copilot-accept-completion)
+              ("M-§" . copilot-accept-completion-by-word)
+              ("C-§" . copilot-accept-completion-by-line)
+              ("C-M-§" . copilot-accept-completion-by-paragraph)
+              ("M-[" . czm-lean4-cycle-delimiter-backward))
+  :custom
+  (czm-lean4-info-window-height-fraction 0.4)
+  (czm-lean4-info-window-width-fraction 0.47)
+  :config
+  (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
+
+(use-package eldoc-box
+  :commands (eldoc-box-help-at-point)
+  :bind
+  (:map global-map ("C-c e" . eldoc-box-help-at-point)))
+
+(defun czm-colorize-lean4-signature ()
+  "Highlights the name of each required variable to a Lean4 theorem."
+  (when
+      (with-current-buffer eldoc-icebox-parent-buffer
+        (or
+         (eq major-mode 'lean4-mode)
+         (eq (buffer-name) "*Lean Goal*")))
+    (save-excursion
+      (goto-char (point-min))
+      (while (and (< (point) (point-max))
+                  (not (eq (char-after (1+ (point))) ?\:)))
+        (forward-list)
+        (when (eq (char-before) ?\))
+          (save-excursion
+            (backward-list)
+            (let ((inhibit-read-only t)
+                  (start (point))
+                  (end (save-excursion (forward-list) (point)))
+                  (end-first-symbol (save-excursion (forward-word) (point)))
+                  (end-symbols (save-excursion (when (search-forward " : " nil t) (- (point) 3)))))
+              (when end-symbols
+                (put-text-property start end 'face '(underline))
+                                        ; shr-mark doesn't work anymore?
+                (put-text-property (1+ start) end-symbols 'face '(highlight underline))))))))))
+
+(defun czm-add-lean4-eldoc ()
+  (when
+      (with-current-buffer eldoc-icebox-parent-buffer
+        (or
+         (eq major-mode 'lean4-mode)
+         (equal (buffer-name)
+                "*Lean Goal*")))
+    (add-hook 'eldoc-documentation-functions #'lean4-info-eldoc-function
+              nil t)
+    (eldoc-mode)))
+
+(use-package eldoc-icebox
+  :elpaca (:host github :repo "ultronozm/eldoc-icebox.el"
+                 :depth nil)
+  :bind (("C-c C-h" . eldoc-icebox-store)
+         ("C-c C-n" . eldoc-icebox-toggle-display))
+  :hook
+  (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
+  (eldoc-icebox-post-display . czm-colorize-lean4-signature)
+  (eldoc-icebox-post-display . czm-add-lean4-eldoc))
+
 ;;; ------------------------------ MISC ------------------------------
 
 ;; (find-file (concat user-emacs-directory "init-elpaca.el"))
@@ -1273,25 +1466,6 @@ The list is ordered from bottom to top."
       (unless (file-exists-p elc-file)
         (message "%s.elc not found" name)))))
 
-(defun czm-show-advice (function-symbol)
-  "Display all advice associated with FUNCTION-SYMBOL in *advice display* buffer."
-  (interactive "aFunction: ")
-  (let ((advice-list '())
-        (display-buffer (get-buffer-create "*advice display*")))
-    (advice-mapc
-     (lambda (advice _props)
-       (push advice advice-list))
-     function-symbol)
-    (with-current-buffer display-buffer
-      (erase-buffer)
-      (pp-display-expression advice-list "*advice display*"))))
-
-(defmacro computation-time (&rest body)
-  "Compute the time it takes to evaluate BODY."
-  `(let ((start-time (current-time)))
-     ,@body
-     (float-time (time-subtract (current-time) start-time))))
-
 (defun czm-pull-my-stuff ()
   (interactive)
   (let* ((repos (append
@@ -1363,7 +1537,7 @@ The list is ordered from bottom to top."
       (window-parameters (mode-line-format . none))))))
 
     
-(setq transient-mark-mode nil)
+;; copied from https://spwhitton.name/blog/entry/transient-mark-mode/
 (defun spw/remap-mark-command (command &optional map)
   "Remap a mark-* command to temporarily activate Transient Mark mode."
   (let* ((cmd (symbol-name command))
@@ -1405,6 +1579,12 @@ Interactively, prompt for WIDTH."
   (setq left-margin-width width right-margin-width width)
   (set-window-margins (selected-window) width width))
 
+;; this should be a per-monitor setting, like with preview-tailor.
+;; you should generalize that package to support other settings, I
+;; guess?  there should be a "tailor" package with the basic get/set
+;; functions.  that way, you can easily set margin widths for each
+;; monitor.
+
 (defvar czm-margin-width
   (if (and
        nil
@@ -1431,187 +1611,7 @@ Interactively, prompt for WIDTH."
 (with-eval-after-load 'lsp-mode
   (setq lsp-log-io t))
 
-  ;; :elpaca (:host github :repo "bustercopley/lean4-mode"
-                 ;; :branch "eglot"
-
-  ;; (lean4-keybinding-lean4-toggle-info (kbd "C-c C-o"))
-
-;; (with-eval-after-load 'lean4-mode
-;;   (define-key lean4-mode-map [?\t] #'company-indent-or-complete-common)
-;;   (add-hook 'lean4-mode-hook #'company-mode))
-
 (use-package consult-company)
-
-(use-package lean4-mode
-  :elpaca (:host github :repo "ultronozm/lean4-mode"
-                 :files ("*.el" "data"))
-  :hook (lean4-mode . spout-mode)
-  :hook (lean4-mode . company-mode)
-  :commands (lean4-mode)
-  :custom
-  (lean4-keybinding-lean4-toggle-info (kbd "C-c C-y"))
-  :bind (:map lean4-mode-map
-              ("RET" . newline)
-              ("C-j" . default-indent-new-line)
-              ("C-c C-q" . eglot-code-action-quickfix)
-              ("C-M-i" . consult-company))
-  :config
-  :defer t)
-
-(use-package czm-lean4
-  :elpaca (:host github :repo "ultronozm/czm-lean4.el"
-                 :depth nil)
-  :after lean4-mode
-  :hook (lean4-mode . czm-lean4-mode-hook)
-  :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
-  :bind (:map lean4-mode-map
-              ("C-c v" . czm-lean4-show-variables)
-              ("C-c C-p C-p" . czm-lean4-toggle-info-pause)
-              ("C-c C-m C-m" . czm-lean4-search-mathlib)
-              ("C-c C-m C-h" . czm-lean4-search-mathlib-headings)
-              ("C-c C-," . czm-lean4-insert-section-or-namespace)
-              ("C-c C-." . czm-lean4-insert-comment-block)
-              ("C-c C-i" . czm-lean4-toggle-info-split-below)
-              ("C-c C-o" . czm-lean4-toggle-info-split-right)
-              ("M-]" . czm-lean4-cycle-delimiter-forward)
-              ("§" . copilot-accept-completion)
-              ("M-§" . copilot-accept-completion-by-word)
-              ("C-§" . copilot-accept-completion-by-line)
-              ("C-M-§" . copilot-accept-completion-by-paragraph)
-              ("M-[" . czm-lean4-cycle-delimiter-backward))
-  :custom
-  (czm-lean4-info-window-height-fraction 0.4)
-  (czm-lean4-info-window-width-fraction 0.47)
-  :config
-  (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
-
-(use-package eldoc-box
-  :commands (eldoc-box-help-at-point)
-  :bind
-  (:map global-map ("C-c e" . eldoc-box-help-at-point)))
-
-(defun czm-colorize-lean4-signature ()
-  "Highlights the name of each required variable to a Lean4 theorem."
-  (when 
-      (with-current-buffer eldoc-icebox-parent-buffer
-        (or
-         (eq major-mode 'lean4-mode)
-         (eq (buffer-name) "*Lean Goal*")))
-    (save-excursion
-      (goto-char (point-min))
-      (while (and (< (point) (point-max))
-                  (not (eq (char-after (1+ (point))) ?\:)))
-        (forward-list)
-        (when (eq (char-before) ?\) )
-          (save-excursion
-            (backward-list)
-            ;; do the following unless there's an error, in which case ignore it
-            (let ((inhibit-read-only t)
-                  (start (point))
-                  (end (save-excursion (forward-list) (point)))
-                  (end-first-symbol (save-excursion (forward-word) (point)))
-                  (end-symbols (save-excursion (when (search-forward " : " nil t) (- (point) 3)))))
-              (when end-symbols
-                (put-text-property start end 'face '(underline))
-                                        ; shr-mark doesn't work anymore?
-                (put-text-property (1+ start) end-symbols 'face '(highlight underline))
-                ))))))))
-
-(defun czm-add-lean4-eldoc ()
-  (when
-      (with-current-buffer eldoc-icebox-parent-buffer
-        (or
-         (eq major-mode 'lean4-mode)
-         (eq (buffer-name) "*Lean Goal*")))
-    (add-hook 'eldoc-documentation-functions #'lean4-info-eldoc-function
-              nil t)))
-
-(use-package eldoc-icebox
-  :elpaca (:host github :repo "ultronozm/eldoc-icebox.el"
-                 :depth nil)
-  :bind (("C-c C-h" . eldoc-icebox-store)
-         ("C-c C-n" . eldoc-icebox-toggle-display))
-  :hook
-  (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
-  (eldoc-icebox-post-display . czm-colorize-lean4-signature)
-  (eldoc-icebox-post-display . czm-add-lean4-eldoc))
-
-
-
-
-;; (add-to-list 'display-buffer-alist
-;;              '("*Lean Goal*"
-;;                (display-buffer-below-selected display-buffer-reuse-window)
-;;                (window-height . 0.3)))
-
-
-;; (use-package company-box
-;;   :hook (company-mode . company-box-mode))
-
-;; (defun display-eldoc-in-popup (format-string &rest args)
-;;   (when format-string
-;;     (popup-tip (apply 'format format-string args)
-;;                :nowait t)))
-
-;; (use-package pos-tip)
-;; (defun display-eldoc-in-popup (format-string &rest args)
-;;   (when format-string
-;;     (pos-tip-show (apply 'format format-string args) nil nil nil 10)))
-;; (defun display-eldoc-in-popup (format-string &rest args)
-;;   (when format-string
-;;     (let ((popup (popup-tip (apply 'format format-string args) :nowait t)))
-;;     (run-at-time 2 nil 'popup-delete popup))))
-;; (setq eldoc-message-function #'display-eldoc-in-popup)
-
-;; (use-package flycheck-pos-tip
-;;   :hook (flycheck-mode . flycheck-pos-tip-mode)
-;;   :custom
-;;   (flycheck-pos-tip-timeout 10))
-
-
-;; (defun my-eldoc-display ()
-;;   (interactive)
-;;   (eldoc-doc-buffer
-;;    (car (run-hook-wrapped
-;;          'eldoc-documentation-functions
-;;          #'eldoc-documentation-default))))
-
-;; (defun my-eldoc-display ()
-;;   (interactive)
-;;   (let* ((eldoc-documentation-function #'eldoc-documentation-default)
-;;          (doc (run-hook-with-args-until-success 'eldoc-documentation-functions #'ignore)))
-;;     (when doc
-;;       (message doc))))
-
-;; (global-set-key (kbd "C-c e") 'my-eldoc-display)
-
-;; (global-set-key (kbd "C-c e") #'describe-symbol-at-point)
-
-
-
-
-
-
-;; (setq flycheck-display-errors-function nil)
-;; (setq flycheck-display-errors-function #'flycheck-display-error-messages)
-;; (setq message-truncate-lines nil)
-;; (setq message-truncate-lines t)
-
-
-;; (setq eldoc-message-function #'eldoc-minibuffer-message)
-
-
-;; (defun my-eldoc-message-function (format-string &rest args)
-;;   (when format-string
-;;     (eldoc-box-help-at-point               )))
-
-;; (setq eldoc-message-function #'my-eldoc-message-function)
-
-
-
-; override this function so that it is wrapped by a call to widen:
-;; (defun lsp--cur-line (&optional point)
-;;   (1- (line-number-at-pos point)))
 
 
 (use-package outline
@@ -1650,50 +1650,8 @@ Interactively, prompt for WIDTH."
 
 (set-face-attribute 'default nil :height 150)
 
-(defun czm-get-mark-and-pop ()
-  "Get mark and pop it."
-  (let ((pos (mark t)))
-    (pop-mark)
-    pos))
-
-(defun czm-transpose-abc-to-cba ()
-  "Swap outermost regions delimited by point and last three marks."
-  (interactive)
-  (let ((points
-         (sort
-          (list
-           (point)
-           (czm-get-mark-and-pop)
-           (czm-get-mark-and-pop)
-           (czm-get-mark-and-pop))
-          #'<)))
-    (cl-destructuring-bind (pos-a pos-b pos-c end)
-        points
-      (let ((region-a (buffer-substring pos-a pos-b))
-            (region-b (buffer-substring pos-b pos-c))
-            (region-c (buffer-substring pos-c end)))
-        (save-excursion
-          (goto-char pos-a)
-          (delete-region pos-a end)
-          (insert region-c region-b region-a))))))
-
-(global-set-key (kbd "s-t") #'czm-transpose-abc-to-cba)
-(global-set-key (kbd "C-M-t") #'transpose-sexps)
-
-(defun get-superproject (dir)
-  "Get the superproject of DIR."
-  (let ((result dir))
-    (while (file-name-parent-directory dir)
-      (setq dir (directory-file-name dir))
-      (let ((current (file-name-nondirectory dir))
-            (parent (file-name-directory dir)))
-        (when (equal current  ".lake")
-          (setq result parent))
-        (setq dir parent)))
-    result))
 
 ; (load (concat user-emacs-directory "uniteai.el"))
-
 
 (defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
 (defun edebug-compute-previous-result (previous-value)
@@ -1706,35 +1664,6 @@ Interactively, prompt for WIDTH."
 		              (edebug-safe-prin1-to-string previous-value)
 		              (eval-expression-print-format previous-value))))
 
-(defun czm-split-line-below ()
-  (interactive)
-  (forward-line)
-  (split-line))
-
-(global-set-key (kbd "M-o") 'czm-split-line-below)
-
-(defun delete-horizontal-space-in-region (start end)
-  "Delete repeated whitespace in region."
-  (interactive "r")
-  (let ((end-marker (copy-marker end)))
-    (save-excursion
-      (goto-char start)
-      (while (re-search-forward "\\s-+" end-marker t)
-        (replace-match " ")))))
-
-(defun delete-horizontal-space-on-line ()
-  "Delete repeated whitespace on line."
-  (interactive)
-  (delete-horizontal-space-in-region
-   (line-beginning-position)
-   (line-end-position)))
-
-(global-set-key (kbd "C-s-SPC") 'delete-horizontal-space-on-line)
-
-(use-package emacs
-  :elpaca nil
-  :bind ())
-
 ;; (defun my-avy-action-copy-and-yank (pt)
 ;;   "Copy and yank sexp starting on PT."
 ;;   (avy-action-copy pt)
@@ -1746,125 +1675,11 @@ Interactively, prompt for WIDTH."
 ;;                            (?m . avy-action-mark)
 ;;                            (?p . my-avy-action-copy-and-yank)))
 
-(setq avy-all-windows-alt nil)
-
-(defun czm-avy-test ()
+(defun czm-search-log ()
+  "Search your log files with `rg'."
   (interactive)
-  (let ((avy-action #'avy-action-copy))
-    (when (avy-jump "(")
-      (yank))))
-
-(defun czm-avy-copy-sexp (arg)
-  "Goto or copy sexp selected with avy.
-The prefix ARG specifies whether to copy instead of goto."
-  (interactive "P")
-  (if arg
-      (let ((avy-action #'avy-action-copy))
-        (when (avy-jump "(")
-          (yank)))
-    (let ((avy-action #'avy-action-goto))
-      (avy-jump "("))))
-
-(global-set-key (kbd "M-c") 'czm-avy-copy-sexp)
-(global-set-key (kbd "s-c") (lambda () (interactive) (czm-avy-copy-sexp t)))
-
-
-(global-set-key (kbd "M-l") 'avy-copy-line)
-
-(defun czm-show-ovs-at-pt ()
-  (interactive)
-  (pp-display-expression (mapcar (lambda (ov) (overlay-properties ov)) (overlays-at (point))) "*ovs*"))
-
-(global-set-key (kbd "s-8") 'czm-show-ovs-at-pt)
-
-
-(defun czm-delete-indentation-t ()
-  (interactive)
-  (delete-indentation t))
-
-(defun czm-delete-indentation-nil ()
-  (interactive)
-  (delete-indentation nil))
-
-(global-set-key (kbd "s-6") 'czm-delete-indentation-nil)
-(global-set-key (kbd "s-7") 'czm-delete-indentation-t)
-
-
-
-(defvar my-dired-buffer nil)
-
-(defun my-dired-popup ()
-  "Toggle a pop-up buffer with `dired'."
-  (interactive)
-  (if (and my-dired-buffer (get-buffer-window my-dired-buffer))
-      (delete-window (get-buffer-window my-dired-buffer))
-    (let ((buffer (dired-noselect default-directory)))
-      (setq my-dired-buffer buffer)
-      (display-buffer-in-side-window buffer '((side . right) (slot . -1))))))
-
-(define-key global-map (kbd "C-x j") 'my-dired-popup)
-
-
-
-(define-key global-map (kbd "s-@") (lambda () (interactive) (delete-other-windows) (split-window-below) (other-window 1) (next-buffer) (other-window 1)))
-(define-key global-map (kbd "s-#") (lambda () (interactive) (delete-other-windows) (split-window-right) (other-window 1) (next-buffer) (other-window 1)))
-
-
-(defun calcFunc-sage-factor ()
-  "Use SAGE to factor the top element of the stack in Emacs Calc."
-  (interactive)
-  (if (equal (length calc-stack) 0)
-      (error "Stack is empty"))
-  (let* ((top-of-stack (calc-top))
-         (top-of-stack-string (math-format-value top-of-stack))
-	 (sage-code
-	  (format "SR(\"%s\").factor()" top-of-stack-string))
-         (modified-string (symtex-evaluate sage-code))
-         (modified-value (math-read-exprs modified-string)))
-    (if (eq (car-safe modified-value) 'error)
-        (error "Parsing error: %s" (nth 1 modified-value))
-      (calc-pop 1)
-      (calc-push (car modified-value)))))
-
-(defun czm/parse-latex-region (&optional lang)
-  (interactive)
-  (unless lang
-    (setq lang 'giac))
-  (let* ((expr (buffer-substring-no-properties (region-beginning)
-                                               (region-end)))
-         (parsed
-          (let ((calc-language 'latex))
-            (math-read-big-expr expr)))
-         (composed
-          (let ((calc-language lang))
-            (math-compose-expr parsed 0))))
-    (czm/format-list composed)))
-
-(defun czm/format-list (list)
-  (mapconcat (lambda (item)
-               (cond ((listp item)
-                      (czm/format-list item))
-                     ((stringp item)
-                      (cond
-                       ((equal item "^")
-                        "**")
-                       (t
-                        item)))))
-             list))
-
-(czm-show-advice 'math-read-expr)
-
-(defun my-math-read-expr-filter (list-args)
-  ;; Apply function foo to the first argument of the list
-  (when (eq calc-language 'latex)
-    (setcar list-args (symtex--preprocess-for-calc (car list-args))))
-  ;; Return the modified list
-  list-args)
-
-(advice-add 'math-read-expr :filter-args #'my-math-read-expr-filter)
-;; (czm-show-advice #'math-read-expr)
-;; (advice-remove 'math-read-expr #'my-math-read-expr-filter)
-
+  (let ((log-files '("~/doit/log.org" "~/doit/log-old.org" "~/doit/todo.org")))
+    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
 
 ;; lsp-mode calculates line numbers without first calling widen.
 ;; let's fix that, so that line numbers work in narrowed buffers, too.
@@ -1873,55 +1688,6 @@ The prefix ARG specifies whether to copy instead of goto."
     (widen)
     (1- (line-number-at-pos point))))
 (advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
-
-
-(defun czm-reload-file ()
-  (interactive)
-  (let ((filename (buffer-file-name)))
-    (kill-buffer (current-buffer))
-    (find-file filename)))
-
-(defun czm-lean4-format-function ()
-  (interactive)
-  (let* ((beg (point))
-         (end (save-excursion (end-of-defun)
-                              (point)))
-         (colon-equals (save-excursion
-                         (search-forward ":=" end t)
-                         (while
-                             (or
-                              (> (car (syntax-ppss)) 0)
-                              (save-excursion
-                                     (beginning-of-line)
-                                     (search-forward "let" (line-end-position) t)))
-                           (search-forward ":=" end t))
-                         (point)))
-         (colon-equals-line-number (line-number-at-pos colon-equals)))
-    ;; for lines below the current line up through the colon-equals
-    ;; line, we make sure that they begin with four spaces.
-    (save-excursion
-      (goto-char beg)
-      (forward-line)
-      (while (and (< (point)
-                     end)
-                  (<= (line-number-at-pos)
-                      colon-equals-line-number))
-        (beginning-of-line)
-        (when (looking-at " ")
-          (delete-horizontal-space)
-          (insert "    "))
-        (forward-line)))))
-
-(defun czm-lean4-format-functions ()
-  (interactive)
-  (goto-char (point-max))
-  (while (> (point) (point-min))
-    (beginning-of-defun)
-    (when (looking-at
-           (regexp-opt
-            (append czm-lean4-headings czm-lean4-heading-prefixes '("open" "@["))))
-      (czm-lean4-format-function))))
-
 
 ;; doesn't work out of the box with lean4-mode because the "contact"
 ;; argument to eglot ends up with a non-string argument, which it
@@ -1933,60 +1699,20 @@ The prefix ARG specifies whether to copy instead of goto."
 ;;   :after eglot
 ;; 	 :config	(eglot-booster-mode))
 
-(setq calc-kill-line-numbering nil)
-
-(defun czm-calc-grab-TeX-region (beg end arg)
-  (interactive "r\nP")
-  (with-calc-language 'latex
-    (calc-grab-region beg end arg))
-  (calc-refresh))
-
-(use-package xr)
-
-(defun czm-yank-escaped-string ()
-  (interactive)
-  (insert (prin1-to-string (substring-no-properties (current-kill 0)))))
-
-(defmacro with-calc-language (lang &rest body)
-  "Execute the forms in BODY with `calc-language` set to LANG.
-The value of `calc-language` is restored after BODY has been processed."
-  `(let ((old-lang calc-language))
-     (unwind-protect
-         (progn
-           (calc-set-language ,lang)
-           ,@body)
-       (calc-set-language old-lang))))
+(use-package symbol-overlay
+    :bind (("M-s ," . symbol-overlay-put)
+           ("M-s n" . symbol-overlay-switch-forward)
+           ("M-s p" . symbol-overlay-switch-backward)
+           ("M-s m" . symbol-overlay-mode)
+           ("M-s n" . symbol-overlay-remove-all)))
 
 
+(setq backup-directory-alist
+      `(("." . ,(expand-file-name
+                 (concat user-emacs-directory "backups")))))
 
-(defun count-lines-matching-regex-in-dir (regex)
-  (interactive (list (read-regexp "Regex: ")))
-  (let* ((total-lines 0)
-         (output-buffer (get-buffer-create "*File Line Counts*"))
-         (current-directory default-directory)
-         (directory-string (format "Directory: %s\n" current-directory))
-         (regex-string (format "Regex: %s\n\n" regex)))
-    (with-current-buffer output-buffer
-      (erase-buffer)
-      (insert directory-string)
-      (insert regex-string)
-      (dolist (file (directory-files-recursively current-directory regex))
-        (when (and (not (file-directory-p file))
-                   (string-match-p regex file))
-          (let ((line-count 0))
-            (with-temp-buffer
-              (insert-file-contents file)
-              (setq line-count (count-lines (point-min)
-                                            (point-max))))
-            (setq total-lines (+ total-lines line-count))
-            (insert (format "%s : %d\n" (file-relative-name file current-directory)
-                            line-count))))))
-    (with-current-buffer output-buffer
-      (insert (format "\nTotal lines in files matching %s: %d" regex total-lines)))
-    (display-buffer output-buffer)))
+(setq auto-save-file-name-transforms
+      `((".*" ,(expand-file-name
+                (concat user-emacs-directory "auto-save/")) t)))
 
-(defun czm-search-log ()
-  "Search your log files with `rg'."
-  (interactive)
-  (let ((log-files '("~/doit/log.org" "~/doit/log-old.org" "~/doit/todo.org")))
-    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
+(setq ediff-window-setup-function 'ediff-setup-windows-plain)
