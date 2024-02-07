@@ -216,8 +216,8 @@
      ("u" outline-up-heading)
      ("f" outline-forward-same-level)
      ("b" outline-backward-same-level)
-     ("<left>" outline-promote windmove-left)
-     ("<right>" outline-demote windmove-right)
+     ("M-<left>" outline-promote left-word)
+     ("M-<right>" outline-demote right-word)
      ("<" beginning-of-buffer)
      (">" end-of-buffer)
      ("<up>" outline-move-subtree-up windmove-up)
@@ -397,49 +397,107 @@ negative ARG -N means kill forward to Nth end of environment."
 	("C-c 9" . czm-tex-ref-label)
 	("C-c 0" . czm-tex-ref-bib)))
 
-(defun czm-attrap-LaTeX-fixer (msg pos end)
+;; (defun czm-attrap-LaTeX-fixer (msg pos end)
+;;   (cond
+;;    ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")msg)
+;;     (list (attrap-option 'fix-open-dquote
+;;             (delete-region pos (1+ pos))
+;;             (insert "``"))
+;;           (attrap-option 'fix-close-dquote
+;;             (delete-region pos (1+ pos))
+;;             (insert "''"))))
+;;    ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
+;;     (attrap-one-option 'non-breaking-space
+;;       (if (looking-at (rx space))
+;;           (delete-region pos (1+ pos))
+;;         (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point)))
+;;       (insert "~")))
+;;    ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.") msg)
+;;     (attrap-one-option 'use-interword-spacing
+;;       (delete-region (1-  (point))
+;;                      (point))
+;;       (insert "\\ ")))
+;;    ((s-matches? (rx "Delete this space to maintain correct pagereferences.") msg)
+;;     (attrap-one-option 'fix-space-pageref
+;;       (if (looking-back (rx bol (* space)))
+;;           (progn (skip-chars-backward "\n\t ")
+;;                  (insert "%"))
+;;         (delete-region (point) (save-excursion (skip-chars-forward " \t") (point)))
+;; 	)))
+;;    ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.") msg)
+;;     (attrap-one-option 'enclose-with-braces
+;;       (insert "}")
+;;       (save-excursion
+;; 	(backward-char)
+;; 	(backward-sexp)
+;; 	(re-search-backward "[^[:alnum:]\\_\\/]")
+;; 	(forward-char)
+;; 	(insert "{")
+;; 	)))
+;;    ((s-matches? (rx "You should not use punctuation in front of quotes.") msg)
+;;     (attrap-one-option 'swap-punctuation-with-quotes
+;;       (progn
+;; 	(delete-char 2)
+;; 	(backward-char)
+;; 	(insert "''"))
+;;       ))))
+
+(defun czm-attrap-LaTeX-fixer-flymake (msg pos end)
   (cond
-   ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")msg)
+   ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")
+                msg)
     (list (attrap-option 'fix-open-dquote
             (delete-region pos (1+ pos))
             (insert "``"))
           (attrap-option 'fix-close-dquote
             (delete-region pos (1+ pos))
             (insert "''"))))
-   ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
+   ((s-matches? (rx "Non-breaking space (`~') should have been used.")
+                msg)
     (attrap-one-option 'non-breaking-space
       (if (looking-at (rx space))
           (delete-region pos (1+ pos))
-        (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point)))
+        (delete-region (save-excursion (skip-chars-backward "\n\t ")
+                                       (point))
+                       (point)))
       (insert "~")))
-   ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.") msg)
+   ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.")
+                msg)
     (attrap-one-option 'use-interword-spacing
-      (delete-region (1-  (point))
-                     (point))
+      (delete-region (point)
+                     (1+ (point)))
       (insert "\\ ")))
-   ((s-matches? (rx "Delete this space to maintain correct pagereferences.") msg)
+   ((s-matches? (rx "Delete this space to maintain correct pagereferences.")
+                msg)
+    ;; not yet fixed
     (attrap-one-option 'fix-space-pageref
       (if (looking-back (rx bol (* space)))
           (progn (skip-chars-backward "\n\t ")
                  (insert "%"))
-        (delete-region (point) (save-excursion (skip-chars-forward " \t") (point)))
-	)))
-   ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.") msg)
+        (delete-region (point)
+                       (save-excursion (skip-chars-forward " \t")
+                                       (point)))
+	       )))
+   ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.")
+                msg)
     (attrap-one-option 'enclose-with-braces
+      (forward-char)
       (insert "}")
       (save-excursion
-	(backward-char)
-	(backward-sexp)
-	(re-search-backward "[^[:alnum:]\\_\\/]")
-	(forward-char)
-	(insert "{")
-	)))
-   ((s-matches? (rx "You should not use punctuation in front of quotes.") msg)
+	       (backward-char)
+	       (backward-sexp)
+	       (re-search-backward "[^[:alnum:]\\_\\/]")
+	       (forward-char)
+	       (insert "{")
+	       )))
+   ((s-matches? (rx "You should not use punctuation in front of quotes.")
+                msg)
     (attrap-one-option 'swap-punctuation-with-quotes
       (progn
-	(delete-char 2)
-	(backward-char)
-	(insert "''"))
+	       (forward-char)
+        (delete-char 2)
+	       (backward-char)
+	       (insert "''"))
       ))))
 
 (use-package emacs
@@ -447,6 +505,14 @@ negative ARG -N means kill forward to Nth end of environment."
   :after flycheck attrap
   :config
   (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer)))
+
+(use-package latex-flymake
+  :elpaca nil
+  :after latex)
+
+(with-eval-after-load 'attrap
+  (setcdr (assoc 'LaTeX-flymake attrap-flymake-backends-alist)
+          #'czm-attrap-LaTeX-fixer-flymake))
 
 (defun czm/latex-tmp-new ()
   "Create new temporary LaTeX buffer."
@@ -505,9 +571,7 @@ negative ARG -N means kill forward to Nth end of environment."
   :elpaca (:host github :repo "ultronozm/czm-tex-compile.el"
                  :depth nil)
   :bind
-  ("C-c k" . czm-tex-compile)
-  ("s-]" . czm-tex-compile-next-error)
-  ("s-[" . czm-tex-compile-previous-error))
+  ("C-c k" . czm-tex-compile-toggle))
 
 (use-package czm-preview
   :elpaca (:host github :repo "ultronozm/czm-preview.el"
