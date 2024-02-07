@@ -170,7 +170,14 @@
   (delete-by-moving-to-trash t)
   (help-window-select t)
   (isearch-allow-scroll t)
-  (doc-view-resolution 300))
+  (doc-view-resolution 300)
+  (backup-directory-alist
+   `(("." . ,(expand-file-name
+              (concat user-emacs-directory "backups")))))
+  (auto-save-file-name-transforms
+   `((".*" ,(expand-file-name
+             (concat user-emacs-directory "auto-save/")) t)))
+  (ediff-window-setup-function 'ediff-setup-windows-plain))
 
 (use-package emacs
   :elpaca nil
@@ -1706,13 +1713,3 @@ Interactively, prompt for WIDTH."
            ("M-s m" . symbol-overlay-mode)
            ("M-s n" . symbol-overlay-remove-all)))
 
-
-(setq backup-directory-alist
-      `(("." . ,(expand-file-name
-                 (concat user-emacs-directory "backups")))))
-
-(setq auto-save-file-name-transforms
-      `((".*" ,(expand-file-name
-                (concat user-emacs-directory "auto-save/")) t)))
-
-(setq ediff-window-setup-function 'ediff-setup-windows-plain)
