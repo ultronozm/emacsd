@@ -216,7 +216,10 @@
   ;; (prog-mode . hs-minor-mode)
   )
 
-(use-package aggressive-indent)
+(use-package aggressive-indent
+  :hook
+  (emacs-lisp-mode . aggressive-indent-mode)
+  (LaTeX-mode . aggressive-indent-mode))
 
 
 (use-package emacs
