@@ -60,7 +60,6 @@
     (widen)
     (apply orig-fun args)))
 
-;; taken from
 ;; https://karthinks.com/software/latex-input-for-impatient-scholars/
 (defun latex-math-from-calc ()
   "Evaluate `calc' on the contents of line at point."
@@ -111,7 +110,7 @@
   :demand                               ; otherwise, madness ensues.
 
   :config
-  (setq TeX-data-directory (expand-file-name "~/.emacs.d/elpaca/builds/auctex"))
+  (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
   (setq TeX-lisp-directory TeX-data-directory)
 
   :hook
@@ -121,6 +120,8 @@
   (LaTeX-mode . czm-tex-buffer-face)
   (LaTeX-mode . outline-minor-mode)
   (LaTeX-mode . abbrev-mode)
+  (LaTeX-mode . toggle-word-wrap)
+  (LaTeX-mode . visual-line-mode)
   (LaTeX-mode . (lambda ()
                   (setq fill-column 999999)))
 

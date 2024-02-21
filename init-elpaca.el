@@ -126,12 +126,12 @@
                  :depth nil)
   :bind (("s-@" . czm-misc-split-window-below-variant)
          ("s-#" . czm-misc-split-window-right-variant)
-	        ("s-4" . czm-misc-double-split-window-below-and-delete)
-	        ("s-5" . czm-misc-double-split-window-right-and-delete)
+         ("s-4" . czm-misc-double-split-window-below-and-delete)
+         ("s-5" . czm-misc-double-split-window-right-and-delete)
          ("s-6" . czm-misc-delete-indentation-nil)
          ("s-7" . czm-misc-delete-indentation-t)
          ("s-8" . czm-misc-show-overlays-at-pt)
-	        ("C-w" . czm-misc-kill-or-delete-region)
+         ("C-w" . czm-misc-kill-or-delete-region)
          ("C-x c" . czm-misc-clone-indirect-buffer-same-window)
          ("s-t" . czm-misc-transpose-abc-to-cba)
          ("M-o" . czm-misc-split-line-below)
@@ -147,6 +147,9 @@
   :elpaca nil
 
   :custom
+  (safe-local-variable-values
+   '((czm-preview-TeX-master . "~/doit/preview-master-principal_cg.tex")
+     (cmake-build-options . "-j 6")))
   (use-dialog-box nil)
   (show-paren-delay 0)
   (show-paren-style 'parenthesis)
@@ -1041,22 +1044,22 @@ The list is ordered from bottom to top."
 
 (c-add-style "llvm4"
              '("gnu"
-               (c-basic-offset . 2)	; Guessed value
+               (c-basic-offset . 2)     ; Guessed value
                (c-offsets-alist
-                (access-label . -)	   ; Guessed value
-                (block-close . 0)	   ; Guessed value
-                (class-close . 0)	   ; Guessed value
+                (access-label . -)         ; Guessed value
+                (block-close . 0)          ; Guessed value
+                (class-close . 0)          ; Guessed value
                 (defun-block-intro . ++) ; Guessed value
-                ;; (defun-block-intro . ++)	; Guessed value
-                (inclass . ++)	; Guessed value
-                (inline-close . 0)	; Guessed value
-                ;; (inline-close . 0)			; Guessed value
-                (statement . 0)	       ; Guessed value
+                ;; (defun-block-intro . ++)     ; Guessed value
+                (inclass . ++)  ; Guessed value
+                (inline-close . 0)      ; Guessed value
+                ;; (inline-close . 0)                   ; Guessed value
+                (statement . 0)        ; Guessed value
                 (statement-block-intro . ++) ; Guessed value
                 (statement-cont . llvm-lineup-statement) ; Guessed value
-                ;; (statement-cont . ++)		; Guessed value
-                (substatement . ++)	   ; Guessed value
-                (topmost-intro . nil)	   ; Guessed value
+                ;; (statement-cont . ++)                ; Guessed value
+                (substatement . ++)        ; Guessed value
+                (topmost-intro . nil)      ; Guessed value
                 (topmost-intro-cont . +) ; Guessed value
                 (annotation-top-cont . 0)
                 (annotation-var-cont . +)
@@ -1245,8 +1248,8 @@ The list is ordered from bottom to top."
       (error "Stack is empty"))
   (let* ((top-of-stack (calc-top))
          (top-of-stack-string (math-format-value top-of-stack))
-	        (sage-code
-	         (format "SR(\"%s\").factor()" top-of-stack-string))
+                (sage-code
+                 (format "SR(\"%s\").factor()" top-of-stack-string))
          (modified-string (symtex-evaluate sage-code))
          (modified-value (math-read-exprs modified-string)))
     (if (eq (car-safe modified-value)
@@ -1667,12 +1670,12 @@ Interactively, prompt for WIDTH."
 (defun edebug-compute-previous-result (previous-value)
   (if edebug-unwrap-results
       (setq previous-value
-	           (edebug-unwrap* previous-value)))
+                   (edebug-unwrap* previous-value)))
   (setq edebug-previous-result-raw previous-value)
   (setq edebug-previous-result
-	       (concat "Result: "
-		              (edebug-safe-prin1-to-string previous-value)
-		              (eval-expression-print-format previous-value))))
+               (concat "Result: "
+                              (edebug-safe-prin1-to-string previous-value)
+                              (eval-expression-print-format previous-value))))
 
 ;; (defun my-avy-action-copy-and-yank (pt)
 ;;   "Copy and yank sexp starting on PT."
@@ -1704,10 +1707,10 @@ Interactively, prompt for WIDTH."
 ;; shouldn't?  you're not exactly sure what's going on there.
 
 ;; (use-package eglot-booster
-;; 	 :elpaca (:host github :repo "jdtsmith/eglot-booster"
+;;       :elpaca (:host github :repo "jdtsmith/eglot-booster"
 ;;                  :depth nil)
 ;;   :after eglot
-;; 	 :config	(eglot-booster-mode))
+;;       :config        (eglot-booster-mode))
 
 (use-package symbol-overlay
     :bind (("M-s ," . symbol-overlay-put)
