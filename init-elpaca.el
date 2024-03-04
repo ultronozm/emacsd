@@ -202,6 +202,15 @@
   (column-number-mode)
   (winner-mode))
 
+(use-package emacs
+  :elpaca nil
+
+  :custom
+  (display-time-default-load-average nil)
+
+  :config
+  (display-time-mode))
+
 (use-package recentf
   :elpaca nil
 
