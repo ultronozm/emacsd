@@ -683,3 +683,13 @@ of the preamble part of REGION-TEXT."
             (with-temp-buffer
               (insert (substring region-text 0 (match-end 0)))
               (+ region-offset (TeX-current-offset))))))
+
+
+(defun czm-copy-standard-tex-files ()
+  "Copy standard TeX files to the current directory."
+  (interactive)
+  (let ((files '("~/doit/common.tex" "~/doit/refs.bib")))
+    (dolist (file files)
+      (let ((source (expand-file-name file))
+            (dest (expand-file-name file default-directory)))
+        (copy-file source dest t)))))
