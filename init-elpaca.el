@@ -622,7 +622,26 @@
   :custom
   (gptel-model "gpt-4")
   :config
-  (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_API_KEY")))
+  (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_API_KEY"))
+  (gptel-make-anthropic "Claude"
+    :stream t
+    :key (exec-path-from-shell-getenv "CLAUDE_API_KEY")))
+
+
+(defun czm-gptel-claude ()
+  (interactive)
+  (setq-default
+   gptel-model "claude-3-sonnet-20240229" ;  "claude-3-opus-20240229" also available
+   gptel-backend (gptel-make-anthropic "Claude"
+                   :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
+
+(defun czm-gptel-gpt4 ()
+  (interactive)
+  (setq-default
+   gptel-model "gpt-4"
+   gptel-backend gptel--openai
+   ))
+
 
 (use-package ai-org-chat
   :elpaca (:host github :repo "ultronozm/ai-org-chat.el"
