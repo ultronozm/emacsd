@@ -185,7 +185,7 @@
        (workarea -832 -1440 2560 1440)
        (mm-size 602 338)
        (source . "NS"))
-      . 1.2)
+      . 1.3)
      (((geometry 0 0 1728 1117)
        (workarea 0 32 1728 1085)
        (mm-size 344 222)
@@ -195,7 +195,7 @@
        (workarea 0 -1440 2560 1440)
        (mm-size 602 338)
        (source . "NS"))
-      . 1.2)
+      . 1.3)
      (nil . 1.2))))
 
 (use-package foldout
