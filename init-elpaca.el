@@ -193,7 +193,7 @@
   (minibuffer-depth-indicate-mode)
   (global-auto-revert-mode)
   (setq-default indent-tabs-mode nil)
-; (warning-suppress-log-types '((comp))) ; don't care about this anymore?
+  ;; (warning-suppress-log-types '((comp))) ; don't care about this anymore?
   (save-place-mode)
   (tool-bar-mode 0)
   (scroll-bar-mode 0)
@@ -637,8 +637,8 @@
   :custom
   (ai-org-chat-user-name "Paul")
   (ai-org-chat-dir "~/gpt")
-  (ai-org-chat-system-message nil)
-  ;; (ai-org-chat-prompt-preamble
+  (ai-org-chat-system-message nil))
+;; (ai-org-chat-prompt-preamble
 ;;    "You are a brilliant and helpful assistant.
 
 ;; You know everything about programming: languages, syntax, debugging techniques, software design, code optimization, documentation.
@@ -677,7 +677,6 @@
 ;; #+end_src
 
 ;; Never describe the results of running code.  Instead, wait for me to run the code and then ask you to continue.")
-  )
 
 
 ;;; ------------------------------ REPEAT ------------------------------
