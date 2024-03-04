@@ -120,7 +120,7 @@
   (LaTeX-mode . czm-tex-buffer-face)
   (LaTeX-mode . outline-minor-mode)
   (LaTeX-mode . abbrev-mode)
-  (LaTeX-mode . toggle-word-wrap)
+  ;; (LaTeX-mode . toggle-word-wrap)
   (LaTeX-mode . visual-line-mode)
   (LaTeX-mode . (lambda ()
                   (setq fill-column 999999)))
