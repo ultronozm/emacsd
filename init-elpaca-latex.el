@@ -639,7 +639,9 @@ return t precisely when the current mmm-mode is latex-mode.
 
 Otherwise, return nil."
   (cond
-   (mmm-mode
+   ;; check whether mmm-mode is bound as a symbol first
+   (
+    (and (boundp 'mmm-mode) mmm-mode)
     (or (eq mmm-primary-mode 'latex-mode)
         (eq (current-mmm-mode) 'latex-mode)))
    ((eq major-mode 'latex-mode) t)
