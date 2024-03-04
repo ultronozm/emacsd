@@ -600,6 +600,10 @@
               ("M-§" . copilot-accept-completion-by-word)
               ("C-§" . copilot-accept-completion-by-line)
               ("C-M-§" . copilot-accept-completion-by-paragraph)
+              ("`" . copilot-accept-completion)
+              ("M-`" . copilot-accept-completion-by-word)
+              ("C-`" . copilot-accept-completion-by-line)
+              ("C-M-`" . copilot-accept-completion-by-paragraph)
               ("C-M-<down>" . copilot-next-completion)
               ("C-M-<up>" . copilot-previous-completion)))
 
@@ -1348,6 +1352,10 @@ The value of `calc-language` is restored after BODY has been processed."
               ("M-§" . copilot-accept-completion-by-word)
               ("C-§" . copilot-accept-completion-by-line)
               ("C-M-§" . copilot-accept-completion-by-paragraph)
+              ("`" . copilot-accept-completion)
+              ("M-`" . copilot-accept-completion-by-word)
+              ("C-`" . copilot-accept-completion-by-line)
+              ("C-M-`" . copilot-accept-completion-by-paragraph)
               ("M-[" . czm-lean4-cycle-delimiter-backward))
   :custom
   (czm-lean4-info-window-height-fraction 0.4)
@@ -1713,9 +1721,10 @@ Interactively, prompt for WIDTH."
 ;;       :config        (eglot-booster-mode))
 
 (use-package symbol-overlay
-    :bind (("M-s ," . symbol-overlay-put)
-           ("M-s n" . symbol-overlay-switch-forward)
-           ("M-s p" . symbol-overlay-switch-backward)
-           ("M-s m" . symbol-overlay-mode)
-           ("M-s n" . symbol-overlay-remove-all)))
+  :bind (("M-s ," . symbol-overlay-put)
+         ("M-s n" . symbol-overlay-switch-forward)
+         ("M-s p" . symbol-overlay-switch-backward)
+         ("M-s m" . symbol-overlay-mode)
+         ("M-s n" . symbol-overlay-remove-all)))
+
 
