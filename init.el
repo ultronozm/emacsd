@@ -1,7 +1,7 @@
 (setq use-package-verbose t)
 (load (concat user-emacs-directory "init-bare.el"))
 
-;; (load (concat user-emacs-directory "init-test2.el"))
+;; (load (concat user-emacs-directory "init-test.el"))
 (load (concat user-emacs-directory "init-elpaca.el"))
 
 ;; (load (concat user-emacs-directory "init-test4.el"))
