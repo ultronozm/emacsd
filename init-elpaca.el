@@ -1755,3 +1755,15 @@ Interactively, prompt for WIDTH."
          ("M-s n" . symbol-overlay-remove-all)))
 
 
+
+(use-package go-translate
+  :custom
+  gts-translate-list '(("fr" "en"))
+  :config
+  (setq gts-default-translator
+        (gts-translator
+         :picker (gts-prompt-picker)
+         :engines (list (gts-google-engine) ;; (gts-bing-engine)
+                        )
+         :render (gts-buffer-render))))
+
