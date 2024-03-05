@@ -713,8 +713,11 @@ of the preamble part of REGION-TEXT."
 (defun czm-copy-standard-tex-files ()
   "Copy standard TeX files to the current directory."
   (interactive)
-  (let ((files '("~/doit/common.tex" "~/doit/refs.bib")))
-    (dolist (file files)
-      (let ((source (expand-file-name file))
-            (dest (expand-file-name file default-directory)))
-        (copy-file source dest t)))))
+  ;; ask the user if he really wants to copy files into the current directory
+  (if (y-or-n-p (format "Copy standard TeX files to %s? " default-directory))
+      (let ((files '("~/doit/common.tex" "~/doit/refs.bib")))
+        (dolist (file files)
+          (let ((source (expand-file-name file))
+                (dest (expand-file-name (file-name-nondirectory file) default-directory)))
+            (copy-file source dest t))))
+    (message "Aborted.")))
