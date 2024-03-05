@@ -92,8 +92,25 @@
   ;;       (calc-set-language old-lang))))
   ;; (calc-grab-region beg end '(4))
   (symtex-with-calc-language 'latex
-                             (calc-grab-region beg end '(4)))
-  )
+                             (calc-grab-region beg end '(4))))
+
+(defun czm-TeX-next-error-wrapper (&optional arg)
+  (interactive "P")
+  (if
+      (or (null (TeX-active-buffer))
+          (eq 'compilation-mode (with-current-buffer TeX-command-buffer
+                                  major-mode)))
+      (TeX-next-error arg reparse)
+    (next-error arg)))
+
+(defun czm-TeX-previous-error-wrapper (&optional arg)
+  (interactive "P")
+  (if
+      (or (null (TeX-active-buffer))
+          (eq 'compilation-mode (with-current-buffer TeX-command-buffer
+                                  major-mode)))
+      (TeX-previous-error arg reparse)
+    (previous-error arg)))
 
 (use-package latex
   :elpaca (auctex
@@ -135,7 +152,10 @@
         ("C-c C-g" . czm-latex-calc-grab)
         ("C-c C-n" . nil)
                                         ; TeX-normal-mode
-        ("C-c #" . nil))
+        ("C-c #" . nil)
+        ("M-n" . czm-TeX-next-error-wrapper)
+        ("M-p" . czm-TeX-previous-error-wrapper)
+        )
 
   :config
   (put 'LaTeX-narrow-to-environment 'disabled nil)
