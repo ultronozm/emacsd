@@ -535,7 +535,10 @@ negative ARG -N means kill forward to Nth end of environment."
   :bind
   (:map LaTeX-mode-map
         ("SPC" . dynexp-space)
-        ("TAB" . dynexp-next)))
+        ("TAB" . dynexp-next))
+  :config
+  (with-eval-after-load 'latex
+    (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el")))
 
 (use-package czm-tex-edit
   :elpaca (:host github :repo "ultronozm/czm-tex-edit.el"
