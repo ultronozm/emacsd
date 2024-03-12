@@ -9,7 +9,7 @@
                   ;; "Monaco"
                   "Andale Mono"
                   ;; "Lucida Grande"
-                   ;; "Papyrus"
+                  ;; "Papyrus"
                   ;; "Hoefler Text"
                   )
         ;; '(:height 260
@@ -17,23 +17,23 @@
         ;;           :family
         ;;           "Lucida Grande"
         ;;           )
-  ;; '(:height 260 :width normal
-  ;;                                 :family
-  ;;                                 ;; "Didot"
-  ;;                                 "Andale Mono"
-  ;;                                 ;; "Lucida Grande"
-  ;;                                 ;; "Papyrus"
-  ;;                                 ;; "PT Mono"
-  ;;                                 ;; "Baskerville"
-  ;;                                 ;; "Hoefler Text"
-  ;;                                 ;; "Monaco"
-  ;;                                 ;; "Verdana"
-  ;;                                 ;; "Menlo"
-  ;;                                 ;; "DejaVu Mono-12"
-  ;;                                 ;; "Lucida Typewriter"
-  ;;                                 ;; "Courier New"
-  ;;                                 )
-  )
+        ;; '(:height 260 :width normal
+        ;;                                 :family
+        ;;                                 ;; "Didot"
+        ;;                                 "Andale Mono"
+        ;;                                 ;; "Lucida Grande"
+        ;;                                 ;; "Papyrus"
+        ;;                                 ;; "PT Mono"
+        ;;                                 ;; "Baskerville"
+        ;;                                 ;; "Hoefler Text"
+        ;;                                 ;; "Monaco"
+        ;;                                 ;; "Verdana"
+        ;;                                 ;; "Menlo"
+        ;;                                 ;; "DejaVu Mono-12"
+        ;;                                 ;; "Lucida Typewriter"
+        ;;                                 ;; "Courier New"
+        ;;                                 )
+        )
   ;; (unless buffer-face-mode
   ;;   (buffer-face-mode 0))
   (buffer-face-mode))
@@ -112,6 +112,11 @@
       (TeX-previous-error arg reparse)
     (previous-error arg)))
 
+                                        ; https://stackoverflow.com/questions/11959870/using-next-error-and-previous-error-keybindings-for-grep-under-auctexs-latex-mo
+(defun czm-delete-LaTeX-error-remaps ()
+  (local-set-key [remap next-error] nil)
+  (local-set-key [remap previous-error] nil))
+
 (use-package latex
   :elpaca (auctex
            :files
@@ -139,6 +144,7 @@
   (LaTeX-mode . abbrev-mode)
   ;; (LaTeX-mode . toggle-word-wrap)
   (LaTeX-mode . visual-line-mode)
+  (LaTeX-mode . czm-delete-LaTeX-error-remaps)
   (LaTeX-mode . (lambda ()
                   (setq fill-column 999999)))
 
@@ -153,15 +159,15 @@
         ("C-c C-n" . nil)
                                         ; TeX-normal-mode
         ("C-c #" . nil)
-        ("M-n" . czm-TeX-next-error-wrapper)
-        ("M-p" . czm-TeX-previous-error-wrapper)
-        )
+        ;; ("M-n" . czm-TeX-next-error-wrapper)
+        ;; ("M-p" . czm-TeX-previous-error-wrapper)
+        ("M-n" . next-error)
+        ("M-p" . previous-error))
 
   :config
   (put 'LaTeX-narrow-to-environment 'disabled nil)
   (TeX-source-correlate-mode)
-  (advice-add 'TeX-view :around #'czm-widen-first)
-                                        ; fixes bug in TeX-view
+  (advice-add 'TeX-view :around #'czm-widen-first) ; fixes bug in TeX-view
 
   :custom
   (TeX-auto-save t)
@@ -585,7 +591,8 @@ negative ARG -N means kill forward to Nth end of environment."
         ("C-c i" . czm-tex-edit-make-equation-inline)
         ("C-c w" . czm-tex-edit-make-equation-align)
         ("C-c q" . czm-tex-edit-make-equation-multline)
-        ("s-<return>" . czm-tex-edit-return))
+        ("s-<return>" . czm-tex-edit-return)
+        ("$" . czm-tex-edit-insert-dollar-or-wrap-region))
   :config
   (czm-tex-edit-define-color-functions-and-bindings
    "C-c t c"
@@ -681,7 +688,8 @@ Otherwise, return nil."
   (library-download-directory "~/Downloads/")
   (library-org-capture-template-key "j")
   :bind
-  ("C-c n" . library-clipboard-to-refs))
+  ;; ("C-c n" . library-clipboard-to-refs)
+  )
 
 
 ;; ;; testing this out for a bit, to make sure it works as you hoped
@@ -721,3 +729,4 @@ of the preamble part of REGION-TEXT."
                 (dest (expand-file-name (file-name-nondirectory file) default-directory)))
             (copy-file source dest t))))
     (message "Aborted.")))
+
