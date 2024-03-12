@@ -149,7 +149,8 @@
   :custom
   (safe-local-variable-values
    '((czm-preview-TeX-master . "~/doit/preview-master-principal_cg.tex")
-     (cmake-build-options . "-j 6")))
+     (cmake-build-options . "-j 6")
+     (eval add-to-list 'LaTeX-indent-begin-exceptions-list "ifs")))
   (use-dialog-box nil)
   (show-paren-delay 0)
   (show-paren-style 'parenthesis)
@@ -598,7 +599,7 @@
                  :files ("*.el" "dist")
                  :depth nil)
   :hook
-  ((prog-mode LaTeX-mode) . copilot-mode)
+  ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
   (lean4-mode . (lambda () (setq tab-width 2)))
 
@@ -628,10 +629,17 @@
     :key (exec-path-from-shell-getenv "CLAUDE_API_KEY")))
 
 
-(defun czm-gptel-claude ()
+(defun czm-gptel-claude-sonnet ()
   (interactive)
   (setq-default
-   gptel-model "claude-3-sonnet-20240229" ;  "claude-3-opus-20240229" also available
+   gptel-model "claude-3-sonnet-20240229"
+   gptel-backend (gptel-make-anthropic "Claude"
+                   :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
+
+(defun czm-gptel-claude-opus ()
+  (interactive)
+  (setq-default
+   gptel-model "claude-3-opus-20240229"
    gptel-backend (gptel-make-anthropic "Claude"
                    :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
 
@@ -776,9 +784,9 @@ DIR must include a .project file to be considered a project."
 (defun modify-abbrev-table (table abbrevs)
   "Define abbreviations in TABLE given by ABBREVS."
   (unless table
-    ; This probably means that you called this function before the
-    ; appropriate major mode was loaded.  Hence the ":after" entries
-    ; in the use-package declaration below
+                                        ; This probably means that you called this function before the
+                                        ; appropriate major mode was loaded.  Hence the ":after" entries
+                                        ; in the use-package declaration below
     (error "Abbrev table does not exist" table))
   (dolist (abbrev abbrevs)
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
@@ -787,7 +795,7 @@ DIR must include a .project file to be considered a project."
   (use-package emacs
     :elpaca nil
 
-    :after latex cc-mode
+    :after cc-mode
 
     :custom
     (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
@@ -801,6 +809,25 @@ DIR must include a .project file to be considered a project."
       (when (file-exists-p abbrev-file)
         (quietly-read-abbrev-file abbrev-file)))
     (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
+
+;; (unless (eq window-system 'w32)
+;;   (use-package emacs
+;;     :elpaca nil
+
+;;     :after latex cc-mode
+
+;;     :custom
+;;     (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
+;;     (save-abbrevs 'silently)
+
+;;     :hook
+;;     (text-mode . abbrev-mode)
+
+;;     :config
+;;     (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
+;;       (when (file-exists-p abbrev-file)
+;;         (quietly-read-abbrev-file abbrev-file)))
+;;     (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
 
 
 (use-package czm-spell
@@ -1755,6 +1782,22 @@ Interactively, prompt for WIDTH."
          ("M-s n" . symbol-overlay-remove-all)))
 
 
+(define-minor-mode error-navigation-mode
+  "A mode for navigating between errors with M-n and M-p."
+  :lighter " ErrNav"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "M-n") 'next-error)
+            (define-key map (kbd "M-p") 'previous-error)
+            map))
+
+(define-minor-mode error-navigation-mode
+  "A mode for navigating between errors with M-n and M-p."
+  :lighter " ErrNav"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map [remap next-error] 'next-error)
+            (define-key map [remap previous-error] 'previous-error)
+            map))
+
 
 (use-package go-translate
   :custom
@@ -1766,4 +1809,3 @@ Interactively, prompt for WIDTH."
          :engines (list (gts-google-engine) ;; (gts-bing-engine)
                         )
          :render (gts-buffer-render))))
-
