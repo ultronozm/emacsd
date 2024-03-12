@@ -69,7 +69,8 @@
 	       ("s-s" save-buffer)
 	       ("s-v" view-mode)
         ;; s-f and s-t are unoccupied!
-	       ("s-." repeat)
+	       ("s-y" pop-to-mark-command)
+        ("s-." repeat)
 	       ("s-w" switch-to-buffer)
 	       ("s-i" czm/find-lisp-file)
         ("<" burp-left)
@@ -257,21 +258,20 @@ Otherwise, call `self-insert-command'."
 
 
 (dolist (key '(
-	       "s-C"
-					; "s-D" ; dired
-	       "s-E"
-	       "s-H"
-	       "s-L"
-					; "s-M" ; manual-entry
-	       "s-S"
-	       "s-c"
-	       "s-g"
-	       "s-h"
-	       "s-m"
-	       "s-u"
-	       "s-q"
-	       "s-x"
-	       "s-y"
-	       "s-z"
-	       ))
+	              "s-C"
+                                        ; "s-D" ; dired
+	              "s-E"
+	              "s-H"
+	              "s-L"
+                                        ; "s-M" ; manual-entry
+	              "s-S"
+	              "s-c"
+	              "s-g"
+	              "s-h"
+	              "s-m"
+	              "s-u"
+	              "s-q"
+	              "s-x"
+	              "s-z"
+	              ))
   (global-unset-key (kbd key)))
