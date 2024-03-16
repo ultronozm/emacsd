@@ -1,6 +1,8 @@
-;; loaded from ~/gnu-emacs/lisp/site-start.el
+;;; -*- lexical-binding: t; -*-
+
 (setq ns-command-modifier 'meta)
 (setq ns-alternate-modifier 'super)
+(setq ns-function-modifier 'hyper)
 (setq w32-lwindow-modifier 'super)
 (if (string-equal system-type "windows-nt" )
     (progn
