@@ -46,4 +46,3 @@
     (setq left-margin-width 0)
     (setq right-margin-width 0)
     (set-window-margins (selected-window) 0 0)))
-

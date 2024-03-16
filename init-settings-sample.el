@@ -14,3 +14,11 @@
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "nelson.paul.david@gmail.com")
+
+(setenv "LIBRARY_PATH"
+        (mapconcat
+         #'identity
+         '("/opt/homebrew/opt/gcc/lib/gcc/13"
+           "/opt/homebrew/opt/libgccjit/lib/gcc/13"
+           "/opt/homebrew/opt/gcc/lib/gcc/13/gcc/aarch64-apple-darwin22/13")
+         ":"))
