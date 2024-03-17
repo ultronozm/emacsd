@@ -127,16 +127,26 @@
         (activate-mark)))))
 
 (use-package latex
-  :ensure (auctex
-           :files
-           ("*.el" "*.info" "dir" "doc" "etc" "images" "latex" "style")
-           :pre-build
-           (("./autogen.sh")
-            ("./configure"
-             "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))"
-             "--with-lispdir=.")
-            ("make")
-            ("make" "install")))
+  :ensure
+  (auctex :build (:not elpaca--compile-info)
+          :pre-build (("./autogen.sh")
+                      ("./configure"
+                       "--without-texmf-dir"
+                       "--with-packagelispdir=./"
+                       "--with-packagedatadir=./")
+                      ("make"))
+          :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
+          :version (lambda (_) (require 'tex-site) AUCTeX-version))
+  ;; (auctex
+  ;;  :files
+  ;;  ("*.el" "*.info" "dir" "doc" "etc" "images" "latex" "style")
+  ;;  :pre-build
+  ;;  (("./autogen.sh")
+  ;;   ("./configure"
+  ;;    "--with-texmf-dir=$(dirname $(kpsexpand '$TEXMFHOME'))"
+  ;;    "--with-lispdir=.")
+  ;;   ("make")
+  ;;   ("make" "install")))
 
   :demand                               ; otherwise, madness ensues.
 
