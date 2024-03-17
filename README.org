@@ -12,7 +12,7 @@ cd emacsd
 
 Rename =init-settings-sample.el= to =init-settings.el= and personalize suitably.
 
-* My packages (at least some of which I'd recommend)
+* My packages (recommended, at least some of them)
 Most of the functionality of my config has been extracted into the following packages.
 
 ** LaTeX editing
