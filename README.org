@@ -33,6 +33,7 @@ I've extracted most of the core functionality from my config into the following 
 - [[https://github.com/ultronozm/library.el][library.el]] :: helper functions for managing downloaded papers
 - [[https://github.com/ultronozm/preview-tailor.el][preview-tailor.el]] :: tailor AUCTeX preview scale to monitor/text scale
 - [[https://github.com/ultronozm/publish.el][publish.el]] :: convenience functions for pushing files to a git repo
+- [[https://github.com/ultronozm/repo-scan.el][repo-scan.el]] :: display status of some collection of GIT repositories
 - [[https://github.com/ultronozm/spout.el][spout.el]] :: speed keys for outline/foldout modes
 - [[https://github.com/ultronozm/symtex.el][symtex.el]] :: evaluate SAGE code on parts of a TeX buffer
 
