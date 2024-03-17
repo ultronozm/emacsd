@@ -270,6 +270,7 @@ Otherwise, call `self-insert-command'."
 	              "s-c"
 	              "s-g"
 	              "s-h"
+               ; "s-l" ; goto-line
 	              "s-m"
 	              "s-u"
 	              "s-q"
