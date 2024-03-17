@@ -127,7 +127,7 @@
         (activate-mark)))))
 
 (use-package latex
-  :elpaca (auctex
+  :ensure (auctex
            :files
            ("*.el" "*.info" "dir" "doc" "etc" "images" "latex" "style")
            :pre-build
@@ -210,7 +210,7 @@
   (if (string-suffix-p ".lean" (buffer-file-name)) 0.6 1.0))
 
 (use-package preview-tailor
-  :elpaca (:host github :repo "ultronozm/preview-tailor.el"
+  :ensure (:host github :repo "ultronozm/preview-tailor.el"
                  :depth nil)
   :after latex
   :config
@@ -219,7 +219,7 @@
   (preview-tailor-additional-factor-function #'my-preview-tailor-factor-function))
 
 (use-package foldout
-  :elpaca nil
+  :ensure nil
   :config
   (advice-add 'LaTeX-outline-level :around #'czm-LaTeX-outline-level-advice))
 
@@ -382,7 +382,7 @@ ID, ACTION, CONTEXT."
     (sp-local-tag "be" "\\begin{enumerate}" "\\end{enumerate}")))
 
 (use-package spout
-  :elpaca (:host github :repo "ultronozm/spout.el"
+  :ensure (:host github :repo "ultronozm/spout.el"
                  :depth nil)
   :after latex
   :hook
@@ -515,12 +515,12 @@ negative ARG -N means kill forward to Nth end of environment."
   (LaTeX-mode . latex-extra-mode))
 
 (use-package czm-tex-util
-  :elpaca (:host github :repo "ultronozm/czm-tex-util.el"
+  :ensure (:host github :repo "ultronozm/czm-tex-util.el"
                  :depth nil)
   :after latex)
 
 (use-package czm-tex-fold
-  :elpaca (:host github :repo "ultronozm/czm-tex-fold.el"
+  :ensure (:host github :repo "ultronozm/czm-tex-fold.el"
                  :depth nil)
   :demand ; otherwise, this doesn't work until the second time you
                                         ; open a .tex file.  but it needs to be loaded after auctex.
@@ -561,7 +561,7 @@ negative ARG -N means kill forward to Nth end of environment."
 ;;
 
 (use-package czm-tex-jump
-  :elpaca (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git"
+  :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git"
                  :depth nil)
   ;; :after avy
   :bind
@@ -569,7 +569,7 @@ negative ARG -N means kill forward to Nth end of environment."
         ("s-r" . czm-tex-jump)))
 
 (use-package czm-tex-ref
-  :elpaca (:host github :repo "ultronozm/czm-tex-ref.el"
+  :ensure (:host github :repo "ultronozm/czm-tex-ref.el"
                  :depth nil)
   :custom
   (czm-tex-ref-master-bib-file my-master-bib-file)
@@ -685,13 +685,13 @@ negative ARG -N means kill forward to Nth end of environment."
       ))))
 
 (use-package emacs
-  :elpaca nil
+  :ensure nil
   :after flycheck attrap
   :config
   (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer)))
 
 (use-package latex-flymake
-  :elpaca nil
+  :ensure nil
   :after latex)
 
 (with-eval-after-load 'attrap
@@ -712,7 +712,7 @@ negative ARG -N means kill forward to Nth end of environment."
       )))
 
 (use-package dynexp
-  :elpaca (:host github :repo "ultronozm/dynexp.el"
+  :ensure (:host github :repo "ultronozm/dynexp.el"
                  :depth nil)
   :demand ; but after auctex
   :bind
@@ -724,7 +724,7 @@ negative ARG -N means kill forward to Nth end of environment."
     (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el")))
 
 (use-package czm-tex-edit
-  :elpaca (:host github :repo "ultronozm/czm-tex-edit.el"
+  :ensure (:host github :repo "ultronozm/czm-tex-edit.el"
                  :depth nil)
   :after latex dynexp
   :demand ; should come after latex and dynexp
@@ -756,13 +756,13 @@ negative ARG -N means kill forward to Nth end of environment."
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
 (use-package czm-tex-compile
-  :elpaca (:host github :repo "ultronozm/czm-tex-compile.el"
+  :ensure (:host github :repo "ultronozm/czm-tex-compile.el"
                  :depth nil)
   :bind
   ("C-c k" . czm-tex-compile-toggle))
 
 (use-package czm-preview
-  :elpaca (:host github :repo "ultronozm/czm-preview.el"
+  :ensure (:host github :repo "ultronozm/czm-preview.el"
                  :depth nil)
   :after latex
   :mode ("\\.tex\\'" . latex-mode)
@@ -837,7 +837,7 @@ Otherwise, return nil."
 
 (use-package library
   :after latex czm-tex-util
-  :elpaca (:host github :repo "ultronozm/library.el"
+  :ensure (:host github :repo "ultronozm/library.el"
                  :depth nil)
   :custom
   (library-pdf-directory "~/Dropbox/math documents/unsorted/")

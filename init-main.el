@@ -48,8 +48,9 @@
 (elpaca elpaca-use-package
   ;; Enable :elpaca use-package keyword.
   (elpaca-use-package-mode)
-  ;; Assume :elpaca t unless otherwise specified.
-  (setq elpaca-use-package-by-default t))
+  ;; Assume :ensure t unless otherwise specified.
+  (setq use-package-always-ensure t)
+)
 
 (elpaca-wait)
 
@@ -62,7 +63,7 @@
 (elpaca-wait)
 
 ;; (use-package org
-;;   :elpaca `(org
+;;   :ensure `(org
 ;;           :fork (:host nil
 ;;                  :repo "https://git.tecosaur.net/tec/org-mode.git"
 ;;                  :branch "dev"
@@ -121,7 +122,7 @@
         ("M-j" . avy-isearch)))
 
 (use-package czm-misc
-  :elpaca (:host github :repo "ultronozm/czm-misc.el"
+  :ensure (:host github :repo "ultronozm/czm-misc.el"
                  :depth nil)
   :bind (("s-@" . czm-misc-split-window-below-variant)
          ("s-#" . czm-misc-split-window-right-variant)
@@ -143,7 +144,7 @@
         ("C-c d" . czm-misc-insert-date)))
 
 (use-package emacs
-  :elpaca nil
+  :ensure nil
 
   :custom
   (use-dialog-box nil)
@@ -179,7 +180,7 @@
   (ediff-window-setup-function 'ediff-setup-windows-plain))
 
 (use-package emacs
-  :elpaca nil
+  :ensure nil
 
   :config
   (electric-pair-mode)
@@ -199,7 +200,7 @@
   (winner-mode))
 
 (use-package emacs
-  :elpaca nil
+  :ensure nil
 
   :custom
   (display-time-default-load-average nil)
@@ -208,7 +209,7 @@
   (display-time-mode))
 
 (use-package recentf
-  :elpaca nil
+  :ensure nil
 
   :custom
   (recentf-max-saved-items 100)
@@ -216,7 +217,7 @@
   (recentf-mode))
 
 (use-package prog-mode
-  :elpaca nil
+  :ensure nil
   :hook
   (prog-mode . outline-minor-mode))
 
@@ -226,7 +227,7 @@
   (LaTeX-mode . aggressive-indent-mode))
 
 (use-package emacs
-  :elpaca nil
+  :ensure nil
   :after outline
   :bind (:map outline-minor-mode-map
               ("C-M-<down-mouse-1>" . nil)
@@ -240,7 +241,7 @@
 ;;; ------------------------------ LISP ------------------------------
 
 (use-package emacs
-  :elpaca nil
+  :ensure nil
 
   :custom
   (delete-pair-blink-delay 0)
@@ -325,7 +326,7 @@
 ;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
 
 ;; (use-package eldoc
-;;   :elpaca nil
+;;   :ensure nil
 ;;   :custom
 ;;   ;  (eldoc-echo-area-use-multiline-p truncate-sym-name-if-fiteldoc-echo-area-use-multiline-p)
 ;;   (eldoc-echo-area-use-multiline-p t)
@@ -569,7 +570,7 @@
 ;;; ------------------------------ AI ------------------------------
 
 (use-package copilot
-  :elpaca (:host github
+  :ensure (:host github
                  :repo "zerolfx/copilot.el"
                  ;; :repo "ultronozm/copilot.el"
                  :files ("*.el" "dist")
@@ -625,7 +626,7 @@
    gptel-backend gptel--openai))
 
 (use-package ai-org-chat
-  :elpaca (:host github :repo "ultronozm/ai-org-chat.el"
+  :ensure (:host github :repo "ultronozm/ai-org-chat.el"
                  :depth nil)
   :bind
   (:map global-map
@@ -682,7 +683,7 @@
 ;;; ------------------------------ REPEAT ------------------------------
 
 (use-package repeat
-  :elpaca nil
+  :ensure nil
   :config
   (setcdr other-window-repeat-map nil)
   (repeat-mode))
@@ -716,7 +717,7 @@
   (setq saved-match-data nil))
 
 (use-package emacs
-  :elpaca nil
+  :ensure nil
   :after flycheck attrap repeat
   :config
   (define-key flycheck-command-map "f" 'attrap-flycheck)
@@ -736,7 +737,7 @@ DIR must include a .project file to be considered a project."
     (and root (cons 'local root))))
 
 (use-package project
-  :elpaca nil
+  :ensure nil
 
   :config
   (add-to-list 'project-find-functions 'czm/project-try-local))
@@ -790,7 +791,7 @@ DIR must include a .project file to be considered a project."
 
 (unless (eq window-system 'w32)
   (use-package emacs
-    :elpaca nil
+    :ensure nil
 
     :after cc-mode
 
@@ -809,7 +810,7 @@ DIR must include a .project file to be considered a project."
 
 ;; (unless (eq window-system 'w32)
 ;;   (use-package emacs
-;;     :elpaca nil
+;;     :ensure nil
 
 ;;     :after latex cc-mode
 
@@ -828,14 +829,14 @@ DIR must include a .project file to be considered a project."
 
 
 (use-package czm-spell
-  :elpaca (:host github :repo "ultronozm/czm-spell.el"
+  :ensure (:host github :repo "ultronozm/czm-spell.el"
                  :depth nil)
   :bind
   ("s-;" . czm-spell-then-abbrev))
 
 ;; Forcing this to load so that c++-mode-abbrev-table is defined.
 (use-package cc-mode
-  :elpaca nil
+  :ensure nil
   :demand)
 
 ;;; --------------------------------- PDF ---------------------------------
@@ -857,7 +858,7 @@ DIR must include a .project file to be considered a project."
 ;;; ------------------------------ ORG ------------------------------
 
 (use-package emacs
-  :elpaca nil
+  :ensure nil
   :hook
   (org-mode . visual-line-mode)
   :custom
@@ -923,7 +924,7 @@ The list is ordered from bottom to top."
         (org-archive-subtree)))))
 
 (use-package org
-  :elpaca nil
+  :ensure nil
   :hook
   (org-mode . (lambda () (setq fill-column 999999)))
   :bind
@@ -965,7 +966,7 @@ The list is ordered from bottom to top."
       (string-suffix-p ".bib" file)))
 
 (use-package publish
-  :elpaca (:host github :repo "ultronozm/publish.el"
+  :ensure (:host github :repo "ultronozm/publish.el"
                  :depth nil)
   :defer t
   :custom
@@ -975,7 +976,7 @@ The list is ordered from bottom to top."
 ;;; ------------------------------ ERC ------------------------------
 
 (use-package erc
-  :elpaca nil
+  :ensure nil
   :defer t
   ;; :hook
   ;; (erc-insert-post-hook . erc-save-buffer-in-logs)
@@ -1023,7 +1024,7 @@ The list is ordered from bottom to top."
 ;; logging doesn't seem to be working; not sure what the story is there.
 
 (use-package erc-log
-  :elpaca nil
+  :ensure nil
   :after erc
   :config
   (erc-log-mode)
@@ -1045,7 +1046,7 @@ The list is ordered from bottom to top."
 ;;   (erc-netsplit-mode))
 
 (use-package erc-desktop-notifications
-  :elpaca nil
+  :ensure nil
   :after erc
   ;; https://emacs.stackexchange.com/questions/28896/how-to-get-notifications-from-erc-in-macos
   )
@@ -1165,7 +1166,7 @@ The list is ordered from bottom to top."
     map))
 
 (use-package flymake
-  :elpaca nil
+  :ensure nil
   :custom
   (flymake-show-diagnostics-at-end-of-line t)
   :config
@@ -1176,7 +1177,7 @@ The list is ordered from bottom to top."
         ("M-p" . flymake-goto-prev-error)))
 
 (use-package emacs
-  :elpaca nil
+  :ensure nil
   :after cc-mode
   :bind
   ("C-c M-o" . ff-find-other-file)
@@ -1235,7 +1236,7 @@ The list is ordered from bottom to top."
         (czm-cmake-build--invoke-eshell-run this-run-config)))))
 
 (use-package cmake-build
-  :elpaca (:host github :repo "ultronozm/cmake-build.el"
+  :ensure (:host github :repo "ultronozm/cmake-build.el"
                  :depth nil)
   :bind (("s-m m" . cmake-build-menu)
          ("s-m 1" . cmake-build-set-cmake-profile)
@@ -1256,7 +1257,7 @@ The list is ordered from bottom to top."
   (cmake-build-options "-j 8 --verbose"))
 
 (use-package czm-cpp
-  :elpaca (:host github :repo "ultronozm/czm-cpp.el"
+  :ensure (:host github :repo "ultronozm/czm-cpp.el"
                  :depth nil)
   :after cmake-build)
 
@@ -1294,7 +1295,7 @@ The list is ordered from bottom to top."
 ;; (advice-remove 'math-read-expr #'my-math-read-expr-filter)
 
 (use-package calc
-  :elpaca nil
+  :ensure nil
   :custom
   (calc-kill-line-numbering t))
 
@@ -1333,7 +1334,7 @@ The value of `calc-language` is restored after BODY has been processed."
 ;;   (add-hook 'lean4-mode-hook #'company-mode))
 
 (use-package lean4-mode
-  :elpaca (:host github :repo "ultronozm/lean4-mode"
+  :ensure (:host github :repo "ultronozm/lean4-mode"
                  :files ("*.el" "data"))
   :hook (lean4-mode . spout-mode)
   :hook (lean4-mode . company-mode)
@@ -1351,7 +1352,7 @@ The value of `calc-language` is restored after BODY has been processed."
   :defer t)
 
 (use-package czm-lean4
-  :elpaca (:host github :repo "ultronozm/czm-lean4.el"
+  :ensure (:host github :repo "ultronozm/czm-lean4.el"
                  :depth nil)
   :after lean4-mode
   :hook (lean4-mode . czm-lean4-mode-hook)
@@ -1423,7 +1424,7 @@ The value of `calc-language` is restored after BODY has been processed."
     (eldoc-mode)))
 
 (use-package eldoc-icebox
-  :elpaca (:host github :repo "ultronozm/eldoc-icebox.el"
+  :ensure (:host github :repo "ultronozm/eldoc-icebox.el"
                  :depth nil)
   :bind (("C-c C-h" . eldoc-icebox-store)
          ("C-c C-n" . eldoc-icebox-toggle-display))
@@ -1435,7 +1436,7 @@ The value of `calc-language` is restored after BODY has been processed."
 ;;; ------------------------------ MISC ------------------------------
 
 (use-package repo-scan
-  :elpaca (:host github :repo "ultronozm/repo-scan.el"
+  :ensure (:host github :repo "ultronozm/repo-scan.el"
                  :depth nil)
   :defer t)
 
@@ -1505,7 +1506,7 @@ The value of `calc-language` is restored after BODY has been processed."
       (elpaca-rebuild repo-symbol))))
 
 (use-package info-colors
-  :elpaca (:host github :repo "ubolonton/info-colors")
+  :ensure (:host github :repo "ubolonton/info-colors")
   :hook (Info-selection . info-colors-fontify-node))
 
 (use-package expand-region
@@ -1565,7 +1566,7 @@ Interactively, prompt for WIDTH."
 (use-package consult-company)
 
 (use-package outline
-  :elpaca nil
+  :ensure nil
   :bind (:map outline-navigation-repeat-map
               ("C-x" . foldout-exit-fold)
               ("x" . foldout-exit-fold)
@@ -1639,7 +1640,7 @@ Interactively, prompt for WIDTH."
 ;; shouldn't?  you're not exactly sure what's going on there.
 
 ;; (use-package eglot-booster
-;;       :elpaca (:host github :repo "jdtsmith/eglot-booster"
+;;       :ensure (:host github :repo "jdtsmith/eglot-booster"
 ;;                  :depth nil)
 ;;   :after eglot
 ;;       :config        (eglot-booster-mode))

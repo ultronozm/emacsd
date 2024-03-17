@@ -71,7 +71,7 @@ entry."
                  'face-defface-spec))
 
 (use-package czm-tex-mint
-  :elpaca (:host github :repo "ultronozm/czm-tex-mint.el"
+  :ensure (:host github :repo "ultronozm/czm-tex-mint.el"
                  :depth nil)
   :after latex mmm-mode
   :demand t
@@ -88,7 +88,7 @@ entry."
   (mmm-sage-shell:sage-mode-exit . czm-tex-mint--disable))
 
 (use-package symtex
-  :elpaca (:host github
+  :ensure (:host github
                  :repo "ultronozm/symtex.el"
                  :files ("*.el" "*.py")
                  :depth nil
