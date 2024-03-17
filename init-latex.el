@@ -157,7 +157,10 @@
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
   (setq TeX-lisp-directory TeX-data-directory)
 
+  :mode ("\\.tex\\'" . LaTeX-mode)
+  
   :hook
+  (latex-mode . LaTeX-mode) ;; absurd that this needs to be added
   (LaTeX-mode . TeX-fold-mode)
   (LaTeX-mode . turn-on-reftex)
   (LaTeX-mode . czm-tex-setup-environments-and-outline-regexp)
@@ -780,7 +783,6 @@ negative ARG -N means kill forward to Nth end of environment."
   :ensure (:host github :repo "ultronozm/czm-preview.el"
                  :depth nil)
   :after latex
-  :mode ("\\.tex\\'" . LaTeX-mode)
   :bind
   (:map LaTeX-mode-map
 	       ("s-u" . czm-preview-mode)
