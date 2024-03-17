@@ -1258,6 +1258,8 @@ The list is ordered from bottom to top."
                  :depth nil)
   :after cmake-build)
 
+(add-to-list 'auto-mode-alist '("\\.ixx\\'" . c++-mode))
+
 ;;; ------------------------------ CALC ------------------------------
 
 (defun calcFunc-sage-factor ()
@@ -1447,22 +1449,28 @@ The value of `calc-language` is restored after BODY has been processed."
     (add-to-list 'pulsar-pulse-functions fn))
   (pulsar-global-mode))
 
-(defvar czm-repos '("ai-org-chat"
+(defvar czm-repos '(
+                    "ai-org-chat"
                     "czm-cpp"
+                    "czm-lean4"
+                    "czm-misc"
                     "czm-preview"
                     "czm-spell"
                     "czm-tex-compile"
                     "czm-tex-edit"
                     "czm-tex-fold"
+                    "czm-tex-jump"
+                    "czm-tex-mint"
+                    "czm-tex-ref"
                     "czm-tex-util"
                     "dynexp"
+                    "eldoc-icebox"
                     "library"
+                    "preview-tailor"
                     "publish"
-                    "czm-tex-mint"
                     "spout"
-                    "czm-tex-ref"
                     "symtex"
-                    "czm-tex-jump"))
+                    ))
 
 (defun czm-repos-uncompiled ()
   (interactive)
