@@ -126,15 +126,18 @@
         (push-mark end)
         (activate-mark)))))
 
+
+
 (use-package latex
   :ensure
-  (auctex :build (:not elpaca--compile-info)
-          :pre-build (("./autogen.sh")
+  (auctex :pre-build (("./autogen.sh")
                       ("./configure"
                        "--without-texmf-dir"
                        "--with-packagelispdir=./"
-                       "--with-packagedatadir=./")
+                       "--with-packagedatadir=./"
+                       "--with-lispdir=.")
                       ("make"))
+          :build (:not elpaca--compile-info) ;; Make will take care of this step
           :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
           :version (lambda (_) (require 'tex-site) AUCTeX-version))
   ;; (auctex
@@ -282,7 +285,7 @@ ID, ACTION, CONTEXT."
         (looking-back (concat "\\\\" (regexp-quote (if trigger trigger id))) nil))))
 
   (add-to-list 'sp-navigate-skip-match
-               '((tex-mode plain-tex-mode latex-mode) . sp--backslash-skip-match))
+               '((tex-mode plain-tex-mode latex-mode LaTeX-mode) . sp--backslash-skip-match))
 
   (sp-with-modes '(
                    tex-mode
@@ -425,7 +428,8 @@ ID, ACTION, CONTEXT."
   :config
   (require 'texmathp)
   (defun LaTeX-skip-verbatim (orig-fun &rest args)
-    (if (eq major-mode 'latex-mode)
+    (if (or (eq major-mode 'latex-mode)
+            (eq major-mode 'LaTeX-mode))
         (let ((n 100))
           (apply orig-fun args)
           (while (and (LaTeX-verbatim-p) (> n 0))
@@ -560,7 +564,8 @@ negative ARG -N means kill forward to Nth end of environment."
 
 (defun my-yank-after-advice (&rest _)
   "Fold any yanked ref or eqref."
-  (when (and (eq major-mode 'latex-mode)
+  (when (and (or (eq major-mode 'latex-mode)
+                 (eq major-mode 'LaTeX-mode))
              TeX-fold-mode
              (string-match "\\\\\\(ref\\|eqref\\){\\([^}]+\\)}"
                            (current-kill 0)))
@@ -775,7 +780,7 @@ negative ARG -N means kill forward to Nth end of environment."
   :ensure (:host github :repo "ultronozm/czm-preview.el"
                  :depth nil)
   :after latex
-  :mode ("\\.tex\\'" . latex-mode)
+  :mode ("\\.tex\\'" . LaTeX-mode)
   :bind
   (:map LaTeX-mode-map
 	       ("s-u" . czm-preview-mode)
@@ -829,7 +834,7 @@ negative ARG -N means kill forward to Nth end of environment."
 (defun my-czm-preview-predicate ()
   "Predicate for determining whether to preview.
 
-If major-mode is latex-mode, then return t.
+If major-mode is latex-mode (or LaTeX-mode), then return t.
 
 If major-mode is lean4-mode, and if mmm-mode is activated, then
 return t precisely when the current mmm-mode is latex-mode.
@@ -840,8 +845,11 @@ Otherwise, return nil."
    (
     (and (boundp 'mmm-mode) mmm-mode)
     (or (eq mmm-primary-mode 'latex-mode)
-        (eq (current-mmm-mode) 'latex-mode)))
-   ((eq major-mode 'latex-mode) t)
+        (eq mmm-primary-mode 'LaTeX-mode)
+        (eq (current-mmm-mode) 'latex-mode)
+        (eq (current-mmm-mode) 'LaTeX-mode)))
+   ((or (eq major-mode 'latex-mode)
+        (eq major-mode 'LaTeX-mode)) t)
    ;;((eq-major-mode 'org-mode))
    ))
 
