@@ -1358,6 +1358,8 @@ The value of `calc-language` is restored after BODY has been processed."
               ("C-`" . copilot-accept-completion-by-line)
               ("C-M-`" . copilot-accept-completion-by-paragraph)
               ("M-[" . czm-lean4-cycle-delimiter-backward))
+  :bind (:map czm-lean4-tex-mode
+              ("s-f" . czm-lean4-preview-fold-block))
   :custom
   (czm-lean4-info-window-height-fraction 0.4)
   (czm-lean4-info-window-width-fraction 0.47)
