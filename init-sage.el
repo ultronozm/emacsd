@@ -90,8 +90,7 @@ entry."
 (use-package symtex
   :ensure (:host github
                  :repo "ultronozm/symtex.el"
-                 :depth nil
-                 :branch "calc")
+                 :depth nil)
   :after latex
   :bind
   (:map global-map
