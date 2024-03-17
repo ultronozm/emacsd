@@ -1453,6 +1453,7 @@ The value of `calc-language` is restored after BODY has been processed."
                     "library"
                     "preview-tailor"
                     "publish"
+                    "repo-scan"
                     "spout"
                     "symtex"
                     ))
