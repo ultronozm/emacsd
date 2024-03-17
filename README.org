@@ -1,8 +1,8 @@
 #+title: My cool Emacs config
 #+author: Paul Nelson
 
-* Installation
-Put the elisp files (*.el) in your Emacs user directory ("~./emacs.d").  Alternatively, put them in some other directory (e.g., "~/.emacs.d/emacsd") and symlink them into your Emacs user directory; the included shell script "add-symlinks.sh" takes care of this if the other directory is a subdirectory of your user directory.  For example:
+* Installing my config (not recommended)
+Put the elisp files (*.el) in your Emacs user directory (=~./emacs.d=).  Alternatively, put them in some other directory (e.g., =~/.emacs.d/emacsd=) and symlink them into your Emacs user directory; the included shell script =add-symlinks.sh= takes care of this if the other directory is a subdirectory of your user directory.  For example:
 #+begin_src bash
 cd ~/.emacs.d # create this directory first if it doesn't exist
 git clone https://github.com/ultronozm/emacsd
@@ -10,17 +10,13 @@ cd emacsd
 ./add-symlinks.sh
 #+end_src
 
-Rename "init-settings-sample.el" to "init-settings.el" and personalize suitably.
+Rename =init-settings-sample.el= to =init-settings.el= and personalize suitably.
 
-* My packages
-I've extracted most of the core functionality from my config into the following packages.
+* My packages (at least some of which I'd recommend)
+Most of the functionality of my config has been extracted into the following packages.
 
-- [[https://github.com/ultronozm/ai-org-chat.el][ai-org-chat.el]] :: threaded chat with AI agent in org buffers
-- [[https://github.com/ultronozm/czm-cpp.el][czm-cpp.el]] :: cpp convenience functions, e.g., for project management
-- [[https://github.com/ultronozm/czm-lean4.el][czm-lean4.el]] :: embellishments for lean4-mode
-- [[https://github.com/ultronozm/czm-misc.el][czm-misc.el]] :: miscellaneous elisp functions
+** LaTeX editing
 - [[https://github.com/ultronozm/czm-preview.el][czm-preview.el]] :: extensions for preview.el
-- [[https://github.com/ultronozm/czm-spell.el][czm-spell.el]] :: spell-check that saves corrections in abbrevs
 - [[https://github.com/ultronozm/czm-tex-compile.el][czm-tex-compile.el]] :: run latexmk continuously, report errors via flymake
 - [[https://github.com/ultronozm/czm-tex-edit.el][czm-tex-edit.el]] :: helper functions for editing LaTeX
 - [[https://github.com/ultronozm/czm-tex-fold.el][czm-tex-fold.el]] :: extensions for tex-fold.el
@@ -29,13 +25,47 @@ I've extracted most of the core functionality from my config into the following 
 - [[https://github.com/ultronozm/czm-tex-ref.el][czm-tex-ref.el]] :: interface for LaTeX labels/citations
 - [[https://github.com/ultronozm/czm-tex-util.el][czm-tex-util.el]] :: utility functions for tex buffers
 - [[https://github.com/ultronozm/dynexp.el][dynexp.el]] :: snippets via abbrev-mode
-- [[https://github.com/ultronozm/eldoc-icebox.el][eldoc-icebox.el]] :: pop-up buffer with frozen copy of eldoc
-- [[https://github.com/ultronozm/library.el][library.el]] :: helper functions for managing downloaded papers
 - [[https://github.com/ultronozm/preview-tailor.el][preview-tailor.el]] :: tailor AUCTeX preview scale to monitor/text scale
-- [[https://github.com/ultronozm/publish.el][publish.el]] :: convenience functions for pushing files to a git repo
-- [[https://github.com/ultronozm/repo-scan.el][repo-scan.el]] :: display status of some collection of GIT repositories
 - [[https://github.com/ultronozm/spout.el][spout.el]] :: speed keys for outline/foldout modes
 - [[https://github.com/ultronozm/symtex.el][symtex.el]] :: evaluate SAGE code on parts of a TeX buffer
 
-* Remarks
-I'm using this config with Emacs "30.5", built from source, on MacOS.
+** Paper/bibliography management
+- [[https://github.com/ultronozm/library.el][library.el]] :: helper functions for managing downloaded papers
+
+** AI
+- [[https://github.com/ultronozm/ai-org-chat.el][ai-org-chat.el]] :: threaded chat with AI agent in org buffers
+
+** Programming
+- [[https://github.com/ultronozm/czm-cpp.el][czm-cpp.el]] :: cpp convenience functions, e.g., for project management
+- [[https://github.com/ultronozm/czm-lean4.el][czm-lean4.el]] :: embellishments for lean4-mode
+
+** Spell-check
+- [[https://github.com/ultronozm/czm-spell.el][czm-spell.el]] :: spell-check that saves corrections in abbrevs
+
+** Miscellaneous
+- [[https://github.com/ultronozm/czm-misc.el][czm-misc.el]] :: miscellaneous elisp functions
+- [[https://github.com/ultronozm/eldoc-icebox.el][eldoc-icebox.el]] :: pop-up buffer with frozen copy of eldoc
+- [[https://github.com/ultronozm/publish.el][publish.el]] :: convenience functions for pushing files to a git repo
+- [[https://github.com/ultronozm/repo-scan.el][repo-scan.el]] :: display status of some collection of GIT repositories
+
+* Building Emacs on MacOS
+I'm using this config with Emacs "30.5", built from source, on MacOS.  To set this up on a fresh machine, I've done something like the following steps:
+- Install Xcode and homebrew.
+- Run the following in a terminal:
+#+begin_src bash
+brew install autoconf automake gnutls imagemagick texinfo libgccjit gcc ace-link ccls gnutls texinfo tree-sitter jansson librsvg jpeg giflib libpng libtiff pkg-configclang-format djvulibre
+brew services start dbus
+cd ~/
+git clone -b master git://git.sv.gnu.org/emacs.git gnu-emacs
+cd gnu-emacs
+make configure
+./autogen.sh
+./configure --with-ns --with-native-compilation --with-tree-sitter --with-gif --with-png --with-jpeg --with-rsvg --with-tiff --with-imagemagick --with-x-toolkit=gtk3 --with-xwidgets
+make -j$(nproc)
+make install
+#+end_src
+- Copy the resulting application =~/gnu-emacs/nextstep/Emacs.app= to the Dock.
+- Add =~/gnu-emacs/nextstep/Emacs.app/Contents/MacOS/= to the PATH environment variable.
+- Clone this repository and set up my config, as indicated above.
+
+
