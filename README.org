@@ -1,0 +1,16 @@
+#+title: preview-tailor: My cool Emacs config
+#+author: Paul Nelson
+
+* Installation
+1. Put the elisp files (*.el) in your Emacs user directory ("~./emacs.d").  Alternatively, put them in some other directory (e.g., "~/.emacs.d/emacsd") and symlink them into your Emacs user directory; the included shell script "add-symlinks.sh" takes care of this if the other directory is a subdirectory of your user directory.  For example:
+#+begin_src bash
+cd ~/.emacs.d # create this directory first if it doesn't exist
+git clone https://github.com/ultronozm/emacsd
+cd emacsd
+./add-symlinks.sh
+#+end_src
+
+2. Rename "init-settings-sample.el" to "init-settings.el" and personalize suitably.
+
+* Remarks
+I've factored most of the core functionality of my config out into some packages: TODO
