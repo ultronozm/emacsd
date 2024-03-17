@@ -7,10 +7,10 @@
       my-log-file "~/doit/log.org"
       my-old-log-file "~/doit/log-old.org"
       my-preview-master "~/doit/preview-master.tex"
-      my-tmp-sage-dir "~/doit/sage"
+      my-tmp-sage-dir "~/scratch/sage"
       my-sage-root "~/sage/sage-9.8"
-      my-tmp-tex-dir "~/doit"
-      my-tmp-org-dir "~/doit")
+      my-tmp-tex-dir "~/scratch/tex"
+      my-tmp-org-dir "~/scratch/org")
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "nelson.paul.david@gmail.com")
