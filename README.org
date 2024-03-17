@@ -15,8 +15,9 @@ Rename =init-settings-sample.el= to =init-settings.el= and personalize suitably.
 * My packages (recommended, at least some of them)
 Most of the functionality of my config has been extracted into the following packages.
 
-** LaTeX editing
+** LaTeX editing, math, academic stuff
 - [[https://github.com/ultronozm/czm-preview.el][czm-preview.el]] :: extensions for preview.el
+- [[https://github.com/ultronozm/czm-spell.el][czm-spell.el]] :: spell-check that saves corrections in abbrevs
 - [[https://github.com/ultronozm/czm-tex-compile.el][czm-tex-compile.el]] :: run latexmk continuously, report errors via flymake
 - [[https://github.com/ultronozm/czm-tex-edit.el][czm-tex-edit.el]] :: helper functions for editing LaTeX
 - [[https://github.com/ultronozm/czm-tex-fold.el][czm-tex-fold.el]] :: extensions for tex-fold.el
@@ -25,24 +26,17 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/czm-tex-ref.el][czm-tex-ref.el]] :: interface for LaTeX labels/citations
 - [[https://github.com/ultronozm/czm-tex-util.el][czm-tex-util.el]] :: utility functions for tex buffers
 - [[https://github.com/ultronozm/dynexp.el][dynexp.el]] :: snippets via abbrev-mode
+- [[https://github.com/ultronozm/library.el][library.el]] :: helper functions for managing downloaded papers
 - [[https://github.com/ultronozm/preview-tailor.el][preview-tailor.el]] :: tailor AUCTeX preview scale to monitor/text scale
 - [[https://github.com/ultronozm/spout.el][spout.el]] :: speed keys for outline/foldout modes
 - [[https://github.com/ultronozm/symtex.el][symtex.el]] :: evaluate SAGE code on parts of a TeX buffer
-
-** Paper/bibliography management
-- [[https://github.com/ultronozm/library.el][library.el]] :: helper functions for managing downloaded papers
-
-** AI
-- [[https://github.com/ultronozm/ai-org-chat.el][ai-org-chat.el]] :: threaded chat with AI agent in org buffers
 
 ** Programming
 - [[https://github.com/ultronozm/czm-cpp.el][czm-cpp.el]] :: cpp convenience functions, e.g., for project management
 - [[https://github.com/ultronozm/czm-lean4.el][czm-lean4.el]] :: embellishments for lean4-mode
 
-** Spell-check
-- [[https://github.com/ultronozm/czm-spell.el][czm-spell.el]] :: spell-check that saves corrections in abbrevs
-
 ** Miscellaneous
+- [[https://github.com/ultronozm/ai-org-chat.el][ai-org-chat.el]] :: threaded chat with AI agent in org buffers
 - [[https://github.com/ultronozm/czm-misc.el][czm-misc.el]] :: miscellaneous elisp functions
 - [[https://github.com/ultronozm/eldoc-icebox.el][eldoc-icebox.el]] :: pop-up buffer with frozen copy of eldoc
 - [[https://github.com/ultronozm/publish.el][publish.el]] :: convenience functions for pushing files to a git repo
