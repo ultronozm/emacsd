@@ -91,7 +91,8 @@ entry."
   :elpaca (:host github
                  :repo "ultronozm/symtex.el"
                  :files ("*.el" "*.py")
-                 :depth nil)
+                 :depth nil
+                 :branch "calc")
   :after latex
   :bind
   (:map global-map
