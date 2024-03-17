@@ -10,7 +10,9 @@
       my-tmp-sage-dir "~/scratch/sage"
       my-sage-root "~/sage/sage-9.8"
       my-tmp-tex-dir "~/scratch/tex"
-      my-tmp-org-dir "~/scratch/org")
+      my-tmp-org-dir "~/scratch/org"
+      my-tmp-cpp-dir "~/scratch/cpp"
+      my-tmp-gpt-dir "~/scratch/gpt")
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "nelson.paul.david@gmail.com")

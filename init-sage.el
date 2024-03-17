@@ -90,7 +90,6 @@ entry."
 (use-package symtex
   :ensure (:host github
                  :repo "ultronozm/symtex.el"
-                 :files ("*.el" "*.py")
                  :depth nil
                  :branch "calc")
   :after latex

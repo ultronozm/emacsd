@@ -102,6 +102,8 @@
 
 (elpaca-wait)
 
+(global-set-key (kbd "s-r") 'elpaca-rebuild)
+
 ;;; ------------------------------ GENERAL ------------------------------
 
 (setq custom-file (concat user-emacs-directory "init-custom.el"))
@@ -637,7 +639,7 @@
   :commands (ai-org-chat-minor-mode) ; for manual activation
   :custom
   (ai-org-chat-user-name my-first-name)
-  (ai-org-chat-dir "~/gpt")
+  (ai-org-chat-dir my-tmp-gpt-dir)
   (ai-org-chat-system-message nil))
 ;; (ai-org-chat-prompt-preamble
 ;;    "You are a brilliant and helpful assistant.
@@ -697,7 +699,7 @@
        (put cmd 'repeat-map keymap)))
    (symbol-value keymap)))
 
-;;; ------------------------------ FLYCHECK ------------------------------
+;;; ------------------------------ FLYCHECK / FLYMAKE ------------------------------
 
 (use-package flycheck
   :defer t
@@ -708,6 +710,26 @@
   :defer t
   :hook
   (emacs-lisp-mode . flycheck-package-setup))
+
+(defvar flymake-repeat-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "n") 'flymake-goto-next-error)
+    (define-key map (kbd "p") 'flymake-goto-prev-error)
+    (define-key map (kbd "f") 'attrap-flymake)
+    (define-key map (kbd "M-n") 'flymake-goto-next-error)
+    (define-key map (kbd "M-p") 'flymake-goto-prev-error)
+    map))
+
+(use-package flymake
+  :ensure nil
+  :custom
+  (flymake-show-diagnostics-at-end-of-line t)
+  :config
+  (repeatize 'flymake-repeat-map)
+  :bind
+  (:map flymake-mode-map
+        ("M-n" . flymake-goto-next-error)
+        ("M-p" . flymake-goto-prev-error)))
 
 ;;; ------------------------------ ATTRAP ------------------------------
 
@@ -1156,26 +1178,6 @@ The list is ordered from bottom to top."
 ;; defvar-keymap
 ;; define-keymap
 
-(defvar flymake-repeat-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "n") 'flymake-goto-next-error)
-    (define-key map (kbd "p") 'flymake-goto-prev-error)
-    (define-key map (kbd "f") 'attrap-flymake)
-    (define-key map (kbd "M-n") 'flymake-goto-next-error)
-    (define-key map (kbd "M-p") 'flymake-goto-prev-error)
-    map))
-
-(use-package flymake
-  :ensure nil
-  :custom
-  (flymake-show-diagnostics-at-end-of-line t)
-  :config
-  (repeatize 'flymake-repeat-map)
-  :bind
-  (:map flymake-mode-map
-        ("M-n" . flymake-goto-next-error)
-        ("M-p" . flymake-goto-prev-error)))
-
 (use-package emacs
   :ensure nil
   :after cc-mode
@@ -1258,8 +1260,10 @@ The list is ordered from bottom to top."
 
 (use-package czm-cpp
   :ensure (:host github :repo "ultronozm/czm-cpp.el"
+                 :files ("*.el" "template")
                  :depth nil)
-  :after cmake-build)
+  :custom
+  (czm-cpp-scratch-directory my-tmp-cpp-dir))
 
 (add-to-list 'auto-mode-alist '("\\.ixx\\'" . c++-mode))
 

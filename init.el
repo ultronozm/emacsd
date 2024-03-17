@@ -3,4 +3,4 @@
 (load (concat user-emacs-directory "init-settings.el"))
 ;; (load (concat user-emacs-directory "init-without-latex.el"))
 (load (concat user-emacs-directory "init-main.el"))
-;; (load (concat user-emacs-directory "init-test.el"))
+;; (load (concat user-emacs-directory "init-test3.el"))
