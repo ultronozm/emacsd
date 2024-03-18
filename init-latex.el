@@ -92,7 +92,8 @@
   ;;       (calc-set-language old-lang))))
   ;; (calc-grab-region beg end '(4))
   (symtex-with-calc-language 'latex
-                             (calc-grab-region beg end '(4))))
+                             (let ((symtex--calc-allow-functions nil))
+                               (calc-grab-region beg end '(4)))))
 
 (defun czm-TeX-next-error-wrapper (&optional arg)
   (interactive "P")
