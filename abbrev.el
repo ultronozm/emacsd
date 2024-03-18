@@ -1,6 +1,5 @@
 ;;-*-coding: utf-8;-*-
 
-;; adapted from FasTeX (http://www.cds.caltech.edu/~fastex/fastex.html)
 (modify-abbrev-table
  c++-mode-abbrev-table
  '(
