@@ -1705,3 +1705,9 @@ Interactively, prompt for WIDTH."
   (interactive)
   (unwrap-sexp)
   (setq deactivate-mark nil))
+
+(defun czm-find-file-in-math-documents ()
+  (interactive)
+  (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
+
+(global-set-key (kbd "s-d") 'czm-find-file-in-math-documents)
