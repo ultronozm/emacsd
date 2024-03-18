@@ -801,6 +801,7 @@ DIR must include a .project file to be considered a project."
 
     :hook
     (text-mode . abbrev-mode)
+    (vc-git-log-edit-mode . abbrev-mode)
 
     :config
     (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
