@@ -1,7 +1,7 @@
 #+title: My cool Emacs config
 #+author: Paul Nelson
 
-* Installing my config (not recommended)
+* Installing the whole config
 Put the elisp files (*.el) in your Emacs user directory (=~./emacs.d=).  Alternatively, put them in some other directory (e.g., =~/.emacs.d/emacsd=) and symlink them into your Emacs user directory; the included shell script =add-symlinks.sh= takes care of this if the other directory is a subdirectory of your user directory.  For example:
 #+begin_src bash
 cd ~/.emacs.d # create this directory first if it doesn't exist
@@ -12,7 +12,7 @@ cd emacsd
 
 Rename =init-settings-sample.el= to =init-settings.el= and personalize suitably.
 
-* My packages (recommended, at least some of them)
+* Some individual packages
 Most of the functionality of my config has been extracted into the following packages.
 
 ** LaTeX editing, math, academic stuff
