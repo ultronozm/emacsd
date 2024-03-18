@@ -860,9 +860,9 @@ Otherwise, return nil."
   :ensure (:host github :repo "ultronozm/library.el"
                  :depth nil)
   :custom
-  (library-pdf-directory "~/Dropbox/math documents/unsorted/")
+  (library-pdf-directory my-pdf-folder)
   (library-bibtex-file my-master-bib-file)
-  (library-download-directory "~/Downloads/")
+  (library-download-directory my-downloads-folder)
   (library-org-capture-template-key "j")
   :bind
   ;; ("C-c n" . library-clipboard-to-refs)
