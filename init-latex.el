@@ -657,5 +657,28 @@ of the preamble part of REGION-TEXT."
   (modify-syntax-entry ?\\ "/" LaTeX-mode-syntax-table)
   (defun fix-LaTeX-sexp ()
     (setq-local forward-sexp-function #'latex-forward-sexp))
-  (add-hook 'LaTeX-mode-hook #'fix-LaTeX-sexp)
-  )
+  (add-hook 'LaTeX-mode-hook #'fix-LaTeX-sexp))
+
+(use-package tex-parens
+  :ensure (:host github :repo "ultronozm/tex-parens.el"
+                 :depth nil)
+  :bind
+  (:map LaTeX-mode-map
+        ("C-M-f" . tex-parens-forward-sexp)
+        ("C-M-b" . tex-parens-backward-sexp)
+        ("C-M-n" . tex-parens-forward)
+        ("C-M-p" . tex-parens-backward)
+        ("C-M-u" . tex-parens-backward-up)
+        ("M-u" . tex-parens-up)
+        ("C-M-g" . tex-parens-down)
+        ("M-_" . tex-parens-delete-pair)
+        ("C-M-SPC" . tex-parens-mark-sexp)
+        ("C-M-k" . tex-parens-kill-sexp)
+        ("C-M-t" . tex-parens-transpose-sexps)
+        ("C-M-<backspace>" . tex-parens-backward-kill-sexp)
+        ("M-+" . tex-parens-raise-sexp))
+  :hook
+  (LaTeX-mode . tex-parens-setup)
+  :config
+  (spw/remap-mark-command 'tex-parens-mark-sexp LaTeX-mode-map))
+
