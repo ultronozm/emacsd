@@ -345,6 +345,8 @@ ID, ACTION, CONTEXT."
                    :trigger "\\l|"
                    :when '(sp-in-math-p)
                    :post-handlers '(sp-latex-insert-spaces-inside-pair))
+    (sp-local-pair "(" ")"
+                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
     (sp-local-pair "\\bigl(" "\\bigr)"
                    :post-handlers '(sp-latex-insert-spaces-inside-pair))
     (sp-local-pair "\\biggl(" "\\biggr)"
