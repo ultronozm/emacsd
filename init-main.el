@@ -1724,3 +1724,6 @@ Interactively, prompt for WIDTH."
   (unwrap-sexp)
   (setq deactivate-mark nil))
 
+(use-package rustic
+  :custom
+  (rustic-lsp-client 'eglot))
