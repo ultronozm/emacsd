@@ -1753,3 +1753,10 @@ Interactively, prompt for WIDTH."
 (use-package rustic
   :custom
   (rustic-lsp-client 'eglot))
+
+(defun czm-dired-git-files ()
+  "Open dired buffer with files in current git repo."
+  (interactive)
+  (let ((git-files (shell-command-to-string "git ls-files")))
+    (setq git-files (split-string git-files "\n" t))
+    (dired (cons "." git-files))))
