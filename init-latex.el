@@ -645,20 +645,6 @@ of the preamble part of REGION-TEXT."
             (copy-file source dest t))))
     (message "Aborted.")))
 
-
-(when nil
-  (defun modify-syntax-table-4-latex ()
-    (modify-syntax-entry ?\{ "(}")
-    (modify-syntax-entry ?\} "){"))
-
-
-
-  (autoload #'latex-forward-sexp "tex-mode" nil t)
-  (modify-syntax-entry ?\\ "/" LaTeX-mode-syntax-table)
-  (defun fix-LaTeX-sexp ()
-    (setq-local forward-sexp-function #'latex-forward-sexp))
-  (add-hook 'LaTeX-mode-hook #'fix-LaTeX-sexp))
-
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el"
                  :depth nil)
