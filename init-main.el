@@ -1337,7 +1337,6 @@ The value of `calc-language` is restored after BODY has been processed."
   :ensure (:host github :repo "ultronozm/lean4-mode"
                  :files ("*.el" "data"))
   :hook (lean4-mode . spout-mode)
-  :hook (lean4-mode . company-mode)
   :hook (lean4-mode . czm-lean4-set-imenu-generic-expression)
   :commands (lean4-mode)
   :custom
@@ -1347,7 +1346,7 @@ The value of `calc-language` is restored after BODY has been processed."
               ("RET" . newline)
               ("C-j" . default-indent-new-line)
               ("C-c C-q" . eglot-code-action-quickfix)
-              ("C-M-i" . consult-company))
+              ("C-M-i" . completion-at-point))
   :config
   :defer t)
 
