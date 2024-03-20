@@ -325,7 +325,7 @@ ID, ACTION, CONTEXT."
 
     ;; do not add more space when slurping
     (sp-local-pair "{" "}")
-    (sp-local-pair "(" ")" :actions nil)
+    (sp-local-pair "(" ")")
     (sp-local-pair "[" "]")
 
     ;; pairs for big brackets.  Needs more research on what pairs are
