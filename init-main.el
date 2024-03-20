@@ -1326,6 +1326,13 @@ The value of `calc-language` is restored after BODY has been processed."
 ;;   (define-key lean4-mode-map [?\t] #'company-indent-or-complete-common)
 ;;   (add-hook 'lean4-mode-hook #'company-mode))
 
+(use-package eglot
+  :ensure nil
+  :custom
+  (eglot-connect-timeout 120))
+
+;; eglot-sync-connect?
+
 (use-package lean4-mode
   :ensure (:host github :repo "ultronozm/lean4-mode"
                  :files ("*.el" "data"))
