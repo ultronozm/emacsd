@@ -378,6 +378,7 @@
          ("M-g k" . consult-global-mark)
          ("M-g i" . consult-imenu)
          ("M-g I" . consult-imenu-multi)
+         ("s-I" . czm-consult-imenu-emacsd)
          ;; M-s bindings (search-map)
          ("M-s d" . consult-find)
          ("M-s D" . consult-locate)
@@ -462,7 +463,7 @@
   ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
   ;;;; 5. No project support
   ;; (setq consult-project-function nil)
-)
+  )
 
 ;; Use `consult-completion-in-region' if Vertico is enabled.
 ;; Otherwise use the default `completion--in-region' function.
@@ -473,6 +474,16 @@
                    #'consult-completion-in-region
                  #'completion--in-region)
                args)))
+
+(defun czm-consult-imenu-emacsd ()
+  "Call =consult-imenu-multi= for project =~/.emacs.d/emacsd=."
+  (interactive)
+  (let ((consult-project-function
+         (lambda (may-prompt) "~/.emacs.d/emacsd/")
+         ;; return directory, but the above doesn't work, so we instead use:
+         ;; (lambda () (cons 'local "~/.emacs.d/emacsd/"))
+         ))
+    (consult-imenu-multi)))
 
 (use-package embark
   :bind
