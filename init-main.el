@@ -1442,6 +1442,8 @@ The value of `calc-language` is restored after BODY has been processed."
   :defer t)
 
 (use-package pulsar
+  :bind (("s-l" . pulsar-pulse-line))
+
   :config
   (dolist (fn '(avy-goto-line
                 diff-hunk-prev
