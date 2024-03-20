@@ -515,28 +515,57 @@
 ;;   :init
 ;;   (savehist-mode))
 
-(use-package company
-  ;; :config (global-company-mode 1) ;; doesn't work in magit, for instance
-  :custom
-  (company-begin-commands '(self-insert-command))
-  (company-idle-delay 0.5) ;; how long to wait until popup.  Consider changing to 0.0?
-  (company-minimum-prefix-length 2)
-  (company-show-numbers t)
-  (company-tooltip-align-annotations t)
-  ;; (company-begin-commands nil) ;; uncomment to disable popup
+;; (use-package company
+;;   ;; :config (global-company-mode 1) ;; doesn't work in magit, for instance
+;;   :custom
+;;   (company-begin-commands '(self-insert-command))
+;;   (company-idle-delay 0.5) ;; how long to wait until popup.  Consider changing to 0.0?
+;;   (company-minimum-prefix-length 2)
+;;   (company-show-numbers t)
+;;   (company-tooltip-align-annotations t)
+;;   ;; (company-begin-commands nil) ;; uncomment to disable popup
 
-  ;; not using it at the moment because it doesn't seem to work well
-  ;; :config (global-company-mode)
-  :bind
-  (:map company-active-map
-        ("C-n". company-select-next)
-        ("C-p". company-select-previous)
-        ("M-<". company-select-first)
-        ("M->". company-select-last))
-  ;; (:map company-mode-map
-  ;;       ("<tab>". tab-indent-or-complete)
-  ;;       ("TAB". tab-indent-or-complete))
-  )
+;;   ;; not using it at the moment because it doesn't seem to work well
+;;   ;; :config (global-company-mode)
+;;   :bind
+;;   (:map company-active-map
+;;         ("C-n". company-select-next)
+;;         ("C-p". company-select-previous)
+;;         ("M-<". company-select-first)
+;;         ("M->". company-select-last))
+;;   ;; (:map company-mode-map
+;;   ;;       ("<tab>". tab-indent-or-complete)
+;;   ;;       ("TAB". tab-indent-or-complete))
+;;   )
+
+
+(use-package corfu
+  :ensure nil
+  ;; Optional customizations
+  :custom
+  ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+  (corfu-auto t)                 ;; Enable auto completion
+  ;; (corfu-separator ?\s)          ;; Orderless field separator
+  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
+  ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
+  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+  ;; (corfu-scroll-margin 5)        ;; Use scroll margin
+
+  :bind (:map corfu-map
+              ("SPC" . corfu-insert-separator))
+
+  ;; Enable Corfu only for certain modes.
+  ;; :hook ((prog-mode . corfu-mode)
+  ;;        (shell-mode . corfu-mode)
+  ;;        (eshell-mode . corfu-mode))
+
+  ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
+  ;; be used globally (M-/).  See also the customization variable
+  ;; `global-corfu-modes' to exclude certain modes.
+  :config
+  (global-corfu-mode))
 
 (use-package ace-window
   :bind
