@@ -479,11 +479,9 @@
   "Call =consult-imenu-multi= for project =~/.emacs.d/emacsd=."
   (interactive)
   (let ((consult-project-function
-         (lambda (may-prompt) "~/.emacs.d/emacsd/")
-         ;; return directory, but the above doesn't work, so we instead use:
-         ;; (lambda () (cons 'local "~/.emacs.d/emacsd/"))
-         ))
-    (consult-imenu-multi)))
+         (lambda (may-prompt) "~/.emacs.d/emacsd/")))
+    (with-current-buffer "init-main.el"
+      (consult-imenu-multi))))
 
 (use-package embark
   :bind
