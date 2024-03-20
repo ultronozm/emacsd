@@ -109,10 +109,11 @@ Possible values: completing-read, ivy-read.")
     (when selected-elisp-file (find-file selected-elisp-file))))
 
 
-(defun czm/open-downloads-dired ()
-  "Open the '~/Downloads' directory in Dired mode."
+(defun czm-dired-downloads ()
+  "Open the downloads directory in Dired mode."
   (interactive)
-  (dired "~/Downloads"))
+  (dired my-downloads-folder))
+
 
 (defun burp--matching-delim (char)
   "Return the matching delimiter for CHAR, or nil if none."
