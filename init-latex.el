@@ -128,6 +128,19 @@
         (activate-mark)))))
 
 
+(defun czm-electric-pair-inhibit-function (char)
+  (or (electric-pair-default-inhibit char)
+      smartparens-mode))
+
+(setq electric-pair-inhibit-predicate #'czm-electric-pair-inhibit-function)
+
+;; advise electric-pair-post-self-insert-function not to run if smartparens is active
+
+(defun czm-electric-pair-post-self-insert-function-advice (orig-fun)
+  (unless (bound-and-true-p smartparens-mode)
+    (funcall orig-fun)))
+
+(advice-add 'electric-pair-post-self-insert-function :around #'czm-electric-pair-post-self-insert-function-advice)
 
 (use-package latex
   :ensure
