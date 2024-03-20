@@ -113,35 +113,6 @@
       (TeX-previous-error arg reparse)
     (previous-error arg)))
 
-(defun czm-unwrap-mark-sexp ()
-  (interactive)
-  (let ((results (sp-unwrap-sexp)))
-    ;; this returns something like (:beg 12501 :end 12618 :op "\\left[" :cl "\\right]" :prefix "" :suffix ".").  let's bind those fields to variables using plist-get:
-    (let ((end (plist-get results :end))
-          (op (plist-get results :op))
-          (cl (plist-get results :cl)))
-      (let ((new-end
-             (- end
-                (+ (length op) (length cl)))))
-        ;; highlight region between beg and end
-        (push-mark end)
-        (activate-mark)))))
-
-
-(defun czm-electric-pair-inhibit-function (char)
-  (or (electric-pair-default-inhibit char)
-      smartparens-mode))
-
-(setq electric-pair-inhibit-predicate #'czm-electric-pair-inhibit-function)
-
-;; advise electric-pair-post-self-insert-function not to run if smartparens is active
-
-(defun czm-electric-pair-post-self-insert-function-advice (orig-fun)
-  (unless (bound-and-true-p smartparens-mode)
-    (funcall orig-fun)))
-
-(advice-add 'electric-pair-post-self-insert-function :around #'czm-electric-pair-post-self-insert-function-advice)
-
 (use-package latex
   :ensure
   (auctex :pre-build (("./autogen.sh")
@@ -185,7 +156,6 @@
   (LaTeX-mode . visual-line-mode)
   (LaTeX-mode . (lambda ()
                   (setq fill-column 999999)))
-  (LaTeX-mode . smartparens-mode)
 
   :bind
   (:map LaTeX-mode-map
@@ -203,13 +173,7 @@
         ([remap next-error])
         ([remap previous-error])
         ("M-n" . next-error)
-        ("M-p" . previous-error)
-
-        ("M-u" . sp-up-sexp)
-        ("M-U" . sp-unwrap-sexp)
-        ("M-_" . sp-unwrap-sexp)
-        ("M-S" . czm-unwrap-mark-sexp)
-        )
+        ("M-p" . previous-error))
 
   :config
   (put 'LaTeX-narrow-to-environment 'disabled nil)
@@ -254,165 +218,7 @@
   :config
   (advice-add 'LaTeX-outline-level :around #'czm-LaTeX-outline-level-advice))
 
-(use-package smartparens
-  :bind
-  (:map LaTeX-mode-map
-        ("C-M-f" . sp-forward-sexp)
-        ("C-M-b" . sp-backward-sexp))
-
-
-  :config
-  (spw/remap-mark-command 'sp-mark-sexp LaTeX-mode-map)
-
-  (defun sp-latex-insert-spaces-inside-pair (_id action _context)
-    "ID, ACTION, CONTEXT."
-    (when (eq action 'insert)
-      (insert "  ")
-      (backward-char 1))
-    (when (and (eq action 'wrap)
-               (save-excursion
-                 (goto-char (sp-get sp-last-wrapped-region :beg-in))
-                 (not (sp--looking-back-p "[[{(]"))))
-      (save-excursion
-        (goto-char (sp-get sp-last-wrapped-region :end-in))
-        (insert " ")
-        (goto-char (sp-get sp-last-wrapped-region :beg-in))
-        (insert " "))))
-
-  (defun sp-latex-skip-match-apostrophe (ms _mb me)
-    "MS, MB, ME."
-    (when (equal ms "'")
-      (save-excursion
-        (goto-char me)
-        (looking-at-p "\\sw"))))
-
-  (defun sp-latex-skip-double-quote (_id action _context)
-    "ID, ACTION, CONTEXT."
-    (when (eq action 'insert)
-      (when (looking-at-p "''''")
-        (delete-char -2)
-        (delete-char 2)
-        (forward-char 2))))
-
-  (defun sp-latex-point-after-backslash (id action _context)
-    "Return t if point follows a backslash, nil otherwise.
-This predicate is only tested on \"insert\" action.
-ID, ACTION, CONTEXT."
-    (when (eq action 'insert)
-      (let ((trigger (sp-get-pair id :trigger)))
-        (looking-back (concat "\\\\" (regexp-quote (if trigger trigger id))) nil))))
-
-  (add-to-list 'sp-navigate-skip-match
-               '((tex-mode plain-tex-mode latex-mode LaTeX-mode) . sp--backslash-skip-match))
-
-  (sp-with-modes '(
-                   tex-mode
-                   plain-tex-mode
-                   latex-mode
-                   LaTeX-mode
-                   )
-    (sp-local-pair "`" "'"
-                   :actions '(:rem autoskip)
-                   :skip-match 'sp-latex-skip-match-apostrophe
-                   :unless '(sp-latex-point-after-backslash sp-in-math-p))
-    ;; math modes, yay.  The :actions are provided automatically if
-    ;; these pairs do not have global definitions.
-    (sp-local-pair "$" "$")
-    (sp-local-pair "\\[" "\\]"
-                   :unless '(sp-latex-point-after-backslash))
-
-    ;; disable useless pairs.
-    (sp-local-pair "\\\\(" nil :actions nil)
-    (sp-local-pair "'" nil :actions nil)
-    (sp-local-pair "\\\"" nil :actions nil)
-
-    ;; quote should insert ``'' instead of double quotes.  If we ever
-    ;; need to insert ", C-q is our friend.
-    (sp-local-pair "``" "''"
-                   :trigger "\""
-                   :unless '(sp-latex-point-after-backslash sp-in-math-p)
-                   :post-handlers '(sp-latex-skip-double-quote))
-
-    ;; add the prefix function sticking to {} pair
-    (sp-local-pair "{" nil :prefix "\\\\\\(\\sw\\|\\s_\\)*")
-
-    ;; do not add more space when slurping
-    (sp-local-pair "{" "}")
-    (sp-local-pair "(" ")")
-    (sp-local-pair "[" "]")
-
-    ;; pairs for big brackets.  Needs more research on what pairs are
-    ;; useful to add here.  Post suggestions if you know some.
-    (sp-local-pair "\\left(" "\\right)"
-                   :trigger "\\l("
-                   :when '(sp-in-math-p)
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\left[" "\\right]"
-                   :trigger "\\l["
-                   :when '(sp-in-math-p)
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\left\\{" "\\right\\}"
-                   :trigger "\\l{"
-                   :when '(sp-in-math-p)
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\left|" "\\right|"
-                   :trigger "\\l|"
-                   :when '(sp-in-math-p)
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "(" ")"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\bigl(" "\\bigr)"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\biggl(" "\\biggr)"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\Bigl(" "\\Bigr)"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\Biggl(" "\\Biggr)"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\bigl[" "\\bigr]"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\biggl[" "\\biggr]"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\Bigl[" "\\Bigr]"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\Biggl[" "\\Biggr]"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\bigl\\{" "\\bigr\\}"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\biggl\\{" "\\biggr\\}"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\Bigl\\{" "\\Bigr\\}"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\Biggl\\{" "\\Biggr\\}"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\lfloor" "\\rfloor"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\lceil" "\\rceil"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair "\\langle" "\\rangle"
-                   :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair  "\\lVert" "\\rVert"
-                    :when '(sp-in-math-p)
-                    :trigger "\\lVert"
-                    :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    (sp-local-pair  "\\lvert" "\\rvert"
-                    :when '(sp-in-math-p)
-                    :trigger "\\lvert"
-                    :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    ;; (sp-local-pair  "\\left\\lvert" "\\right\\rvert"
-    ;;                 :when '(sp-in-math-p)
-    ;;                 :trigger "\\left\\lvert"
-    ;;                 :post-handlers '(sp-latex-insert-spaces-inside-pair))
-    ;; (sp-local-pair  "\\left\\lVert" "\\right\\rVert"
-    ;;                 :when '(sp-in-math-p)
-    ;;                 :trigger "\\left\\lVert"
-    ;;                 :post-handlers '(sp-latex-insert-spaces-inside-pair))
-
-    ;; some common wrappings
-    (sp-local-tag "\"" "``" "''" :actions '(wrap))
-    (sp-local-tag "\\b" "\\begin{_}" "\\end{_}")
-    (sp-local-tag "bi" "\\begin{itemize}" "\\end{itemize}")
-    (sp-local-tag "be" "\\begin{enumerate}" "\\end{enumerate}")))
+;; (spw/remap-mark-command 'sp-mark-sexp LaTeX-mode-map)
 
 (use-package spout
   :ensure (:host github :repo "ultronozm/spout.el"
@@ -462,91 +268,6 @@ ID, ACTION, CONTEXT."
                outline-forward-same-level
                outline-backward-same-level))
     (advice-add f :around #'LaTeX-skip-verbatim)))
-
-(defun latex/kill-environment (arg)
-  "Kill forward to end of environment.
-With ARG N, kill forward to Nth end of environment;
-negative ARG -N means kill backward to Nth start of environment."
-  (interactive "p")
-  (kill-region (point) (progn (latex/forward-environment arg) (point))))
-
-(defun latex/backward-kill-environment (arg)
-  "Kill back to start of environment.
-With ARG N, kill back to Nth start of environment;
-negative ARG -N means kill forward to Nth end of environment."
-  (interactive "p")
-  (kill-region (point) (progn (latex/backward-environment arg) (point))))
-
-(defun latex/kill-sexp-or-environment (arg)
-  (interactive "p")
-  (if (looking-at "\\\\begin")
-      (latex/kill-environment arg)
-    (sp-kill-sexp arg)))
-
-(defun latex/backward-kill-sexp-or-environment (arg)
-  (interactive "p")
-  (sp-backward-kill-sexp arg))
-
-
-
-(defun latex/backward-up-list-or-beginning-of-environment (arg)
-  (interactive "p")
-  (condition-case nil
-      (sp-backward-up-sexp arg)
-    (scan-error (latex/beginning-of-environment arg))))
-
-(defun latex/down-list-or-enter-environment (arg)
-  (interactive "p")
-  (if (looking-at "\\\\begin")
-      (progn
-        (forward-line)
-        (back-to-indentation)
-        )
-    (sp-down-sexp arg)))
-
-(global-set-key (kbd "M-u") 'up-list)
-
-
-
-(defun latex/mark-sexp-or-environment (arg)
-  (interactive "p")
-  (if (looking-at "\\\\begin")
-      (progn (push-mark
-              (save-excursion
-                (latex/forward-environment arg)
-                (point)))
-             (activate-mark))
-    (spw/sp-mark-sexp)))
-
-;; use smartparens w/ latex
-
-(use-package latex-extra
-  :after latex
-  :bind
-  (:map latex-extra-mode-map
-        ("TAB" . nil)
-        ("C-M-SPC" . latex/mark-sexp-or-environment)
-        ("C-M-u" . latex/backward-up-list-or-beginning-of-environment)
-        ("C-M-g" . latex/down-list-or-enter-environment)
-        ("C-M-e" . latex/forward-environment)
-        ("C-M-a" . latex/backward-environment)
-        ("C-M-f" . sp-forward-sexp)
-        ("C-M-b" . sp-backward-sexp)
-        ("C-M-k" . latex/kill-sexp-or-environment)
-        ("C-M-<backspace>" . latex/backward-kill-sexp-or-environment)
-        ("C-s-n" . latex/forward-environment)
-        ("C-s-p" . latex/backward-environment)
-        ("C-s-e" . latex/forward-environment)
-        ("C-s-a" . latex/backward-environment)
-        ("C-s-k" . latex/kill-environment)
-        ("C-s-<backspace>" . latex/backward-kill-environment)
-        )
-  :custom
-  (latex/override-preview-map nil)
-  (latex/override-font-map nil)
-  (latex/override-fill-map nil)
-  :hook
-  (LaTeX-mode . latex-extra-mode))
 
 (use-package czm-tex-util
   :ensure (:host github :repo "ultronozm/czm-tex-util.el"
