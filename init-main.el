@@ -250,7 +250,8 @@
   :bind
   (:map emacs-lisp-mode-map
         ("M-_" . delete-pair)
-        ("M-+" . kill-backward-up-list)))
+        ("M-+" . kill-backward-up-list)
+        ("M-u" . up-list)))
 
 (use-package lispy
   :config
