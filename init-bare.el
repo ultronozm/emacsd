@@ -87,6 +87,9 @@
         ("s-6" (lambda () (interactive) (delete-indentation nil)))
         ("s-7" (lambda () (interactive) (delete-indentation t)))
         ("C-x C-M-t" transpose-regions)
+        ("H-0" tab-close)
+        ("H-1" tab-close-other)
+        ("H-2" tab-bar-new-tab)
 	       )
       )
 
