@@ -540,7 +540,6 @@
 
 
 (use-package corfu
-  :ensure nil
   ;; Optional customizations
   :custom
   ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
@@ -554,7 +553,7 @@
   ;; (corfu-scroll-margin 5)        ;; Use scroll margin
 
   :bind (:map corfu-map
-              ("SPC" . corfu-insert-separator))
+              ("C-M-i" . corfu-insert-separator))
 
   ;; Enable Corfu only for certain modes.
   ;; :hook ((prog-mode . corfu-mode)
@@ -564,7 +563,7 @@
   ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
   ;; be used globally (M-/).  See also the customization variable
   ;; `global-corfu-modes' to exclude certain modes.
-  :config
+  :init
   (global-corfu-mode))
 
 (use-package ace-window
