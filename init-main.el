@@ -502,8 +502,7 @@
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
-                 (window-parameters (mode-line-format . none)))
-               ))
+                 (window-parameters (mode-line-format . none)))))
 
 (use-package embark-consult
   ;; only need to install it, embark loads it after consult if found
