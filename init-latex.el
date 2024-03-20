@@ -194,6 +194,7 @@
 
         ("M-u" . sp-up-sexp)
         ("M-U" . sp-unwrap-sexp)
+        ("M-_" . sp-unwrap-sexp)
         ("M-S" . czm-unwrap-mark-sexp)
         )
 
