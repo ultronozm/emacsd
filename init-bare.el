@@ -30,7 +30,8 @@
 	       ("M-n" next-error)
 	       ("M-p" previous-error)
 	       ("M-/" hippie-expand)
-        ("C-c d" czm/open-downloads-dired)
+        ("C-c d" czm-dired-downloads)
+        ("s-d" czm-find-math-document)
 	       ("C-c m" compile)
 	       ("C-c r" org-capture)
 	       ("C-c o" org-open-at-point-global)
@@ -77,7 +78,7 @@
 	       ("s-i" czm/find-lisp-file)
         ("<" burp-left)
         (">" burp-right)
-        ("/" burp-unwrap)
+        ;; ("/" burp-unwrap)
 	       ("<up>" windmove-up)
 	       ("<down>" windmove-down)
 	       ("<right>" windmove-right)
@@ -114,6 +115,10 @@ Possible values: completing-read, ivy-read.")
   (interactive)
   (dired my-downloads-folder))
 
+(defun czm-find-math-document ()
+  "Find a file in the math documents folder."
+  (interactive)
+  (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
 
 (defun burp--matching-delim (char)
   "Return the matching delimiter for CHAR, or nil if none."
