@@ -28,6 +28,7 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/preview-tailor.el][preview-tailor.el]] :: tailor AUCTeX preview scale to monitor/text scale
 - [[https://github.com/ultronozm/spout.el][spout.el]] :: speed keys for outline/foldout modes
 - [[https://github.com/ultronozm/symtex.el][symtex.el]] :: evaluate SAGE code on parts of a TeX buffer
+- [[https://github.com/ultronozm/tex-parens.el][tex-parens.el]] :: like lisp.el but for tex
 
 ** Other
 - [[https://github.com/ultronozm/ai-org-chat.el][ai-org-chat.el]] :: threaded chat with AI agent in org buffers
