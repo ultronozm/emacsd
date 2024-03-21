@@ -79,6 +79,7 @@
         ("<" burp-left)
         (">" burp-right)
         ;; ("/" burp-unwrap)
+        ("M-_" delete-pair)
 	       ("<up>" windmove-up)
 	       ("<down>" windmove-down)
 	       ("<right>" windmove-right)
