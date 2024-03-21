@@ -1711,46 +1711,6 @@ Interactively, prompt for WIDTH."
                         )
          :render (gts-buffer-render))))
 
-;; next four taken from oantolin's cfg; not used yet, might experiment
-
-(defun mark-inside-sexp ()
-  "Mark inside a sexp."
-  (interactive)
-  (let (beg end)
-    (backward-up-list 1 t t)
-    (setq beg (1+ (point)))
-    (forward-sexp)
-    (setq end (1- (point)))
-    (goto-char beg)
-    (push-mark)
-    (goto-char end))
-  (activate-mark))
-
-(defun kill-inside-sexp ()
-  "Kill inside a sexp."
-  (interactive)
-  (mark-inside-sexp)
-  (kill-region (mark) (point)))
-
-;; M-U?
-(defun unwrap-sexp ()
-  "Unwrap a sexp."
-  (interactive)
-  (let (end)
-    (mark-inside-sexp)
-    (delete-char 1)
-    (setq end (1- (point)))
-    (goto-char (mark))
-    (delete-char -1)
-    (set-mark end)))
-
-;; M-S?
-(defun unwrap-mark-sexp ()
-  "Unwrap a sexp and mark the contents."
-  (interactive)
-  (unwrap-sexp)
-  (setq deactivate-mark nil))
-
 (use-package rustic
   :custom
   (rustic-lsp-client 'eglot))
@@ -1761,3 +1721,50 @@ Interactively, prompt for WIDTH."
   (let ((git-files (shell-command-to-string "git ls-files")))
     (setq git-files (split-string git-files "\n" t))
     (dired (cons "." git-files))))
+
+(defun czm-delete-pair (&optional arg)
+  "Delete a pair of characters enclosing ARG sexps that follow point.
+A negative ARG deletes a pair around the preceding ARG sexps instead.
+The option `delete-pair-blink-delay' can disable blinking.
+
+Only difference with the usual `delete-pair' is that this version
+pushes the mark somewhere useful."
+  (interactive "P")
+  (if arg
+      (setq arg (prefix-numeric-value arg))
+    (setq arg 1))
+  (if (< arg 0)
+      (save-excursion
+	       (skip-chars-backward " \t")
+	       (save-excursion
+	         (let ((close-char (char-before)))
+	           (forward-sexp arg)
+	           (unless (member (list (char-after) close-char)
+			                         (mapcar (lambda (p)
+				                                  (if (= (length p) 3) (cdr p) p))
+				                                insert-pair-alist))
+	             (error "Not after matching pair"))
+	           (when (and (numberp delete-pair-blink-delay)
+		                     (> delete-pair-blink-delay 0))
+	             (sit-for delete-pair-blink-delay))
+	           (delete-char 1)))
+	       (delete-char -1))
+    (save-excursion
+      (skip-chars-forward " \t")
+      (save-excursion
+	       (let ((open-char (char-after)))
+	         (forward-sexp arg)
+	         (unless (member (list open-char (char-before))
+			                       (mapcar (lambda (p)
+				                                (if (= (length p) 3) (cdr p) p))
+				                              insert-pair-alist))
+	           (error "Not before matching pair"))
+	         (when (and (numberp delete-pair-blink-delay)
+		                   (> delete-pair-blink-delay 0))
+	           (sit-for delete-pair-blink-delay))
+	         (delete-char -1)
+          (push-mark) ; added!
+          ))
+      (delete-char 1))))
+
+(advice-add 'delete-pair :override #'czm-delete-pair)
