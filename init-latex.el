@@ -638,7 +638,7 @@ of the preamble part of REGION-TEXT."
   (interactive)
   ;; ask the user if he really wants to copy files into the current directory
   (if (y-or-n-p (format "Copy standard TeX files to %s? " default-directory))
-      (let ((files '(my-common-tex-file my-master-bib-file)))
+      (let ((files (list my-common-tex-file my-master-bib-file)))
         (dolist (file files)
           (let ((source (expand-file-name file))
                 (dest (expand-file-name (file-name-nondirectory file) default-directory)))
