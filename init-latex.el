@@ -645,17 +645,21 @@ of the preamble part of REGION-TEXT."
             (copy-file source dest t))))
     (message "Aborted.")))
 
+(defvar czm-tex-avy-jump-regexp
+  "\\(. \\$\\|..\n[[:space:]]*\\\\begin{\\(eq\\|ali\\)\\)")
+
 (defun czm-tex-avy-jump ()
   (interactive)
-  (avy-jump ". \\$"
+  (avy-jump czm-tex-avy-jump-regexp
             :action (lambda (pos)
                       (goto-char pos)
+                      (forward-char 2)
                       (let ((this-command #'tp-down-list))
                         (tp-down-list)))))
 
 (defun czm-tex-avy-copy ()
   (interactive)
-  (avy-jump ". \\$"
+  (avy-jump czm-tex-avy-jump-regexp
             :action (lambda (pos)
                       (save-excursion
                         (copy-region-as-kill

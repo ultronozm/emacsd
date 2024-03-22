@@ -130,12 +130,10 @@
          ("s-8" . czm-misc-show-overlays-at-pt)
          ("C-w" . czm-misc-kill-or-delete-region)
          ("C-x c" . czm-misc-clone-indirect-buffer-same-window)
-         ;; ("s-t" . czm-misc-transpose-abc-to-cba) ;; already exists: C-x C-M-t
          ("M-o" . czm-misc-split-line-below)
          ("C-S-SPC" . czm-misc-delete-horizontal-space-on-line)
          ("s-j" . czm-misc-avy-jump)
          ("s-c" . czm-misc-avy-copy)
-         ;; ("M-l" . avy-copy-line)
          ("C-x j" . czm-misc-dired-popup)
          ("C-;" . czm-misc-avy-goto-or-copy-line))
   (:map minibuffer-local-map
