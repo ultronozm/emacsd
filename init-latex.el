@@ -235,8 +235,8 @@
      ("b" outline-backward-same-level)
      ("M-<left>" outline-promote left-word)
      ("M-<right>" outline-demote right-word)
-     ("<" beginning-of-buffer)
-     (">" end-of-buffer)
+     ;; ("<" beginning-of-buffer)
+     ;; (">" end-of-buffer)
      ("<up>" outline-move-subtree-up windmove-up)
      ("<down>" outline-move-subtree-down windmove-down)
      ("s" outline-show-subtree)
@@ -645,6 +645,27 @@ of the preamble part of REGION-TEXT."
             (copy-file source dest t))))
     (message "Aborted.")))
 
+(defun czm-tex-avy-jump ()
+  (interactive)
+  (avy-jump ". \\$"
+            :action (lambda (pos)
+                      (goto-char pos)
+                      (let ((this-command #'tp-down-list))
+                        (tp-down-list)))))
+
+(defun czm-tex-avy-copy ()
+  (interactive)
+  (avy-jump ". \\$"
+            :action (lambda (pos)
+                      (save-excursion
+                        (copy-region-as-kill
+                         (+ pos 2)
+                         (save-excursion
+                           (goto-char (+ pos 2))
+                           (tp-forward-list)
+                           (point))))
+                      (yank))))
+
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el"
                  :depth nil)
@@ -655,15 +676,20 @@ of the preamble part of REGION-TEXT."
         ("C-M-n" . tp-forward-list)
         ("C-M-p" . tp-backward-list)
         ("C-M-u" . tp-backward-up-list)
-        ("M-u" . tp-up-list)
+        ;; ("M-u" . tp-up-list)
         ("C-M-g" . tp-down-list)
         ("M-_" . tp-delete-pair)
         ("C-M-SPC" . tp-mark-sexp)
         ("C-M-k" . tp-kill-sexp)
         ("C-M-t" . transpose-sexps)
         ("C-M-<backspace>" . tp-backward-kill-sexp)
-        ("M-+" . tp-raise-sexp))
+        ("M-+" . tp-raise-sexp)
+        ("<" . tp-burp-left)
+        (">" . tp-burp-right)
+        ("s-j" . czm-tex-avy-jump)
+        ("s-c" . czm-tex-avy-copy))
   :hook
   (LaTeX-mode . tp-setup)
   :config
   (spw/remap-mark-command 'tp-mark-sexp LaTeX-mode-map))
+
