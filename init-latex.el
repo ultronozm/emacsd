@@ -159,7 +159,7 @@
 
   :bind
   (:map LaTeX-mode-map
-        ("s-a" . abbrev-mode)
+        ("H-b" . abbrev-mode)
         ("s-c" . preview-clearout-at-point)
         ("s-q" . LaTeX-fill-buffer)
 
@@ -523,7 +523,7 @@
   :after latex
   :bind
   (:map LaTeX-mode-map
-	       ("s-u" . czm-preview-mode)
+	       ("H-u" . czm-preview-mode)
 	       ("C-c p m" . czm-preview-toggle-master))
   :custom
   (czm-preview-TeX-master my-preview-master)
