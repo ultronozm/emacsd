@@ -113,8 +113,6 @@
 
 (use-package avy
   :bind
-  (:map global-map
-        ("C-;" . avy-goto-line))
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
