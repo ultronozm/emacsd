@@ -45,7 +45,6 @@
 	       ("C-h C-l" find-library)
 	       ("C-M-z" zap-up-to-char)
 	       ("C-M-g" down-list)
-	       ("C-M-t" transpose-sexps)
         ("M-+" raise-sexp)
 	       ("s-<left>" previous-buffer)
 	       ("s-<right>" next-buffer)
@@ -71,10 +70,7 @@
 	       ("s-k" kill-current-buffer)
 	       ("s-s" save-buffer)
 	       ("s-v" view-mode)
-        ;; s-f and s-t are unoccupied!
-	       ("s-y" pop-to-mark-command)
         ("s-." repeat)
-	       ("s-w" switch-to-buffer)
 	       ("s-i" czm/find-lisp-file)
         ("<" burp-left)
         (">" burp-right)
@@ -270,21 +266,29 @@ Otherwise, call `self-insert-command'."
 
 
 (dolist (key '(
+               ;; s-a
 	              "s-C"
-                                        ; "s-D" ; dired
+               ;; "s-D" ; dired
+	              ;; ("s-w" switch-to-buffer)
+               ;; s-f
 	              "s-E"
 	              "s-H"
 	              "s-L"
-                                        ; "s-M" ; manual-entry
+               ;; "s-M" ; manual-entry
 	              "s-S"
 	              "s-c"
 	              "s-g"
 	              "s-h"
-                                        ; "s-l" ; goto-line
+               ;; "s-l" ; goto-line
 	              "s-m"
 	              "s-u"
 	              "s-q"
+               ;; s-t
 	              "s-x"
+               ;; s-w
+	              ;; "s-y"
 	              "s-z"
 	              ))
   (global-unset-key (kbd key)))
+
+;; H-ACFNHMD -- macOS annoyance

@@ -102,7 +102,6 @@
 
 (elpaca-wait)
 
-(global-set-key (kbd "s-r") 'elpaca-rebuild)
 
 ;;; ------------------------------ GENERAL ------------------------------
 
@@ -135,12 +134,12 @@
          ("s-8" . czm-misc-show-overlays-at-pt)
          ("C-w" . czm-misc-kill-or-delete-region)
          ("C-x c" . czm-misc-clone-indirect-buffer-same-window)
-         ("s-t" . czm-misc-transpose-abc-to-cba)
+         ;; ("s-t" . czm-misc-transpose-abc-to-cba) ;; already exists: C-x C-M-t
          ("M-o" . czm-misc-split-line-below)
          ("C-S-SPC" . czm-misc-delete-horizontal-space-on-line)
-         ("M-c" . czm-misc-avy-copy-sexp)
-         ("s-c" . czm-misc-avy-copy-sexp-t)
-         ("M-l" . avy-copy-line)
+         ("s-j" . czm-misc-avy-jump)
+         ("s-c" . czm-misc-avy-copy)
+         ;; ("M-l" . avy-copy-line)
          ("C-x j" . czm-misc-dired-popup))
   (:map minibuffer-local-map
         ("C-c d" . czm-misc-insert-date)))
@@ -251,7 +250,9 @@
   (:map emacs-lisp-mode-map
         ("M-_" . delete-pair)
         ("M-+" . kill-backward-up-list)
-        ("M-u" . up-list)))
+        ("s-r" . elpaca-rebuild)
+        ;; ("M-u" . up-list)
+        ))
 
 (use-package lispy
   :config
@@ -287,9 +288,9 @@
   (defun czm-conditionally-enable-lispy ()
     (when (eq this-command 'eval-expression)
       (lispy-mode 1)))
-  :bind
-  ;; (("C-M-K" . lispy-kill))
-  (("C-M-k" . kill-sexp))
+  ;; :bind
+  ;; ;; (("C-M-K" . lispy-kill))
+  ;; (("C-M-k" . kill-sexp))
   :hook
   (emacs-lisp-mode  . lispy-mode)
   (minibuffer-setup . czm-conditionally-enable-lispy))
@@ -599,17 +600,20 @@
 
   :custom
   (copilot-indent-offset-warning-disable t)
-  :bind (:map copilot-completion-map
-              ("§" . copilot-accept-completion)
-              ("M-§" . copilot-accept-completion-by-word)
-              ("C-§" . copilot-accept-completion-by-line)
-              ("C-M-§" . copilot-accept-completion-by-paragraph)
-              ("`" . copilot-accept-completion)
-              ("M-`" . copilot-accept-completion-by-word)
-              ("C-`" . copilot-accept-completion-by-line)
-              ("C-M-`" . copilot-accept-completion-by-paragraph)
-              ("C-M-<down>" . copilot-next-completion)
-              ("C-M-<up>" . copilot-previous-completion)))
+  :bind
+  (:map global-map
+        ("H-x" . copilot-mode))
+  (:map copilot-completion-map
+        ("§" . copilot-accept-completion)
+        ("M-§" . copilot-accept-completion-by-word)
+        ("C-§" . copilot-accept-completion-by-line)
+        ("C-M-§" . copilot-accept-completion-by-paragraph)
+        ("`" . copilot-accept-completion)
+        ("M-`" . copilot-accept-completion-by-word)
+        ("C-`" . copilot-accept-completion-by-line)
+        ("C-M-`" . copilot-accept-completion-by-paragraph)
+        ("C-M-<down>" . copilot-next-completion)
+        ("C-M-<up>" . copilot-previous-completion)))
 
 (use-package gptel
   :after exec-path-from-shell
