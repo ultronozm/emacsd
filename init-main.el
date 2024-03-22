@@ -114,11 +114,7 @@
 (use-package avy
   :bind
   (:map global-map
-        ("C-;" . avy-goto-line)
-        ("C-M-; y" . avy-copy-region)
-        ("C-M-; n" . avy-kill-ring-save-region)
-        ("C-M-; t" . avy-move-region)
-        ("C-M-; x" . avy-kill-region))
+        ("C-;" . avy-goto-line))
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
@@ -140,7 +136,8 @@
          ("s-j" . czm-misc-avy-jump)
          ("s-c" . czm-misc-avy-copy)
          ;; ("M-l" . avy-copy-line)
-         ("C-x j" . czm-misc-dired-popup))
+         ("C-x j" . czm-misc-dired-popup)
+         ("C-;" . czm-misc-avy-goto-or-copy-line))
   (:map minibuffer-local-map
         ("C-c d" . czm-misc-insert-date)))
 
