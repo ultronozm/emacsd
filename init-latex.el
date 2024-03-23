@@ -670,6 +670,20 @@ of the preamble part of REGION-TEXT."
                            (point))))
                       (yank))))
 
+(defun czm-tex-soft-kill ()
+  (interactive)
+  (let* ((eol (save-excursion (end-of-visual-line) (point)))
+         (last-point (point))
+         (soft-eol
+          (save-excursion
+            (tp-forward-sexp)
+            (while (and (< (point) eol)
+                        (> (point) last-point))
+              (setq last-point (point))
+              (tp-forward-sexp))
+            (min (point) eol))))
+    (kill-region (point) soft-eol)))
+
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el"
                  :depth nil)
@@ -691,7 +705,8 @@ of the preamble part of REGION-TEXT."
         ("<" . tp-burp-left)
         (">" . tp-burp-right)
         ("s-j" . czm-tex-avy-jump)
-        ("s-c" . czm-tex-avy-copy))
+        ("s-c" . czm-tex-avy-copy)
+        ("C-k" . czm-tex-soft-kill))
   :hook
   (LaTeX-mode . tp-setup)
   :config
