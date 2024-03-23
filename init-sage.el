@@ -61,7 +61,6 @@ entry."
       (calc-push (car modified-value)))))
 
 (use-package mmm-mode
-  :defer t
   :custom
   (mmm-global-mode 'maybe)
   :config
@@ -78,14 +77,14 @@ entry."
   :custom
   (LaTeX-command "latex -shell-escape")
   :config
-  (czm-tex-mint--initialize)
+  (czm-tex-mint-initialize)
   :bind
-  (:map czm-tex-mint--mode-map
+  (:map czm-tex-mint-mode-map
         ("C-c C-c" . czm-tex-mint-evaluate)
         ("C-c C-l" . czm-tex-mint-evaluate-latex))
   :hook
-  (mmm-sage-shell:sage-mode-enter . czm-tex-mint--enable)
-  (mmm-sage-shell:sage-mode-exit . czm-tex-mint--disable))
+  (mmm-sage-shell:sage-mode-enter . czm-tex-mint-enable)
+  (mmm-sage-shell:sage-mode-exit . czm-tex-mint-disable))
 
 (use-package symtex
   :ensure (:host github
