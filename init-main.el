@@ -889,6 +889,7 @@ DIR must include a .project file to be considered a project."
   (pdf-tools-install :no-query)
   (require 'pdf-occur)
   :bind (:map pdf-view-mode-map
+              ("j" . pdf-view-jump-to-register)
               ("<down>" . nil)
               ("<up>" . nil)))
 
