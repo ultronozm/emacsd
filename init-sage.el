@@ -36,12 +36,12 @@ entry."
        (expand-file-name "*.sage" (file-name-as-directory my-tmp-sage-dir))
        "-alt"))))
 
-    (use-package ob-sagemath
-      :defer t
-      :config
-      (setq org-babel-default-header-args:sage '((:session . t)
-                                                 (:results . "output")))
-      (add-hook 'org-babel-after-execute-hook 'org-display-inline-images))
+(use-package ob-sagemath
+  :defer t
+  :config
+  (setq org-babel-default-header-args:sage '((:session . t)
+                                             (:results . "output")))
+  (add-hook 'org-babel-after-execute-hook 'org-display-inline-images))
 
 
 (defun calcFunc-sage-factor ()
