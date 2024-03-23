@@ -62,7 +62,7 @@ entry."
 
 (use-package mmm-mode
   :custom
-  (mmm-global-mode 'maybe)
+  (mmm-global-mode nil)
   :config
   (face-spec-set 'mmm-default-submode-face
                  '((((background light)) (:background "#ddffff"))
