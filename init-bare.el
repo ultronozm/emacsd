@@ -67,6 +67,7 @@
         ("s-N" make-frame)
         ("s-n" outline-next-heading)
         ("s-p" outline-previous-heading)
+        ("s-q" bury-buffer)
 	       ("s-k" kill-current-buffer)
 	       ("s-s" save-buffer)
 	       ("s-v" view-mode)
