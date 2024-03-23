@@ -290,13 +290,16 @@
 
 (defun czm-edebug-eval-hook ()
   (lispy-mode 0)
-  (copilot-mode 0))
+  (copilot-mode 0)
+  (aggressive-indent-mode 0))
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
 ;;; ------------------------------ GIT ------------------------------
 
 (use-package magit
-  :defer t)
+  :defer t
+  :hook
+  (magit-status-mode . visual-line-mode))
 
 ;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
 
