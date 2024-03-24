@@ -220,6 +220,20 @@
   (emacs-lisp-mode . aggressive-indent-mode)
   (LaTeX-mode . aggressive-indent-mode))
 
+(use-package pulsar
+  :bind (("s-l" . pulsar-pulse-line))
+
+  :config
+  (dolist (fn '(avy-goto-line
+                diff-hunk-prev
+                diff-hunk-next
+                diff-file-next
+                diff-file-prev
+                flycheck-previous-error
+                flycheck-next-error))
+    (add-to-list 'pulsar-pulse-functions fn))
+  (pulsar-global-mode))
+
 (use-package emacs
   :ensure nil
   :after outline
@@ -235,58 +249,123 @@
 ;;; ------------------------------ LISP ------------------------------
 
 (use-package emacs
-  :ensure nil
+    :ensure nil
 
-  :custom
-  (delete-pair-blink-delay 0)
-  :bind
-  (:map emacs-lisp-mode-map
-        ("M-_" . delete-pair)
-        ("M-+" . kill-backward-up-list)
-        ("s-r" . elpaca-rebuild)
-        ;; ("M-u" . up-list)
-        ))
+    :custom
+    (delete-pair-blink-delay 0)
+    :bind
+    (:map emacs-lisp-mode-map
+          ("M-_" . delete-pair)
+          ("M-+" . kill-backward-up-list)
+          ("s-r" . elpaca-rebuild)
+          ("M-u" . up-list)))
+
+;; (use-package lispy
+;;   :config
+;;   (setcdr lispy-mode-map nil)
+;;   (let ((map lispy-mode-map))
+;;     (lispy-define-key map ">" 'lispy-slurp-or-barf-right)
+;;     (lispy-define-key map "<" 'lispy-slurp-or-barf-left)
+;;     (lispy-define-key map "/" 'lispy-splice)
+;;     (lispy-define-key map "+" 'lispy-join)
+;;     (lispy-define-key map "c" 'lispy-clone)
+;;     (lispy-define-key map ";" 'lispy-comment)
+;;     (lispy-define-key map "o" 'lispy-oneline)
+;;     (lispy-define-key map "m" 'lispy-multiline)
+;;     (lispy-define-key map "SPC" 'lispy-space)
+;;     (lispy-define-key map "i" 'lispy-tab)
+;;     (define-key map (kbd "C-M-j") 'lispy-split)
+;;     ;; (define-key map (kbd "M-+") 'lispy-raise)
+;;     (define-key map (kbd "M-+") nil)
+;;     (define-key map (kbd "\"") 'lispy-quotes)
+;;     (define-key map (kbd "M-1") 'lispy-describe-inline)
+;;     (define-key map (kbd "M-2") 'lispy-arglist-inline)
+
+;;     ;; (lispy-define-key map "w" 'lispy-move-up)
+;;     ;; (lispy-define-key map "s" 'lispy-move-down)
+;;     ;; (lispy-define-key map "r" 'lispy-raise)
+;;     ;; (lispy-define-key map "A" 'lispy-beginning-of-defun)
+;;     ;; (lispy-define-key map "C" 'lispy-convolute)
+;;     ;; (lispy-define-key map "X" 'lispy-convolute-left)
+;;     ;; (lispy-define-key map "q" 'lispy-ace-paren)
+;;     ;; (lispy-define-key map "-" 'lispy-ace-subword)
+;;     ;; (lispy-define-key map "e" 'lispy-eval)
+;;     map)
+;;   (defun czm-conditionally-enable-lispy ()
+;;     (when (eq this-command 'eval-expression)
+;;       (lispy-mode 1)))
+;;   ;; :bind
+;;   ;; ;; (("C-M-K" . lispy-kill))
+;;   ;; (("C-M-k" . kill-sexp))
+;;   :hook
+;;   (emacs-lisp-mode  . lispy-mode)
+;;   (minibuffer-setup . czm-conditionally-enable-lispy))
+
+
+(defun czm-deactivate-mark-interactively ()
+  "Deactivate the mark interactively."
+  (interactive)
+  (deactivate-mark))
+
+(use-package define-repeat-map
+  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el"))
+
+(defun backward-down-list ()
+  "Move backward down a list."
+  (interactive)
+  (down-list -1))
+
+(defun czm-lispy-comment-maybe ()
+  "Comment the list at point, or self-insert."
+  (interactive)
+  (if (looking-at "(")
+      (lispy-comment)
+    (call-interactively #'self-insert-command)))
 
 (use-package lispy
   :config
-  (setcdr lispy-mode-map nil)
-  (let ((map lispy-mode-map))
-    (lispy-define-key map ">" 'lispy-slurp-or-barf-right)
-    (lispy-define-key map "<" 'lispy-slurp-or-barf-left)
-    (lispy-define-key map "/" 'lispy-splice)
-    (lispy-define-key map "+" 'lispy-join)
-    (lispy-define-key map "c" 'lispy-clone)
-    (lispy-define-key map ";" 'lispy-comment)
-    (lispy-define-key map "o" 'lispy-oneline)
-    (lispy-define-key map "m" 'lispy-multiline)
-    (lispy-define-key map "SPC" 'lispy-space)
-    (lispy-define-key map "i" 'lispy-tab)
-    (define-key map (kbd "C-M-j") 'lispy-split)
-    ;; (define-key map (kbd "M-+") 'lispy-raise)
-    (define-key map (kbd "M-+") nil)
-    (define-key map (kbd "\"") 'lispy-quotes)
-    (define-key map (kbd "M-1") 'lispy-describe-inline)
-    (define-key map (kbd "M-2") 'lispy-arglist-inline)
-
-    ;; (lispy-define-key map "w" 'lispy-move-up)
-    ;; (lispy-define-key map "s" 'lispy-move-down)
-    ;; (lispy-define-key map "r" 'lispy-raise)
-    ;; (lispy-define-key map "A" 'lispy-beginning-of-defun)
-    ;; (lispy-define-key map "C" 'lispy-convolute)
-    ;; (lispy-define-key map "X" 'lispy-convolute-left)
-    ;; (lispy-define-key map "q" 'lispy-ace-paren)
-    ;; (lispy-define-key map "-" 'lispy-ace-subword)
-    ;; (lispy-define-key map "e" 'lispy-eval)
-    map)
-  (defun czm-conditionally-enable-lispy ()
-    (when (eq this-command 'eval-expression)
-      (lispy-mode 1)))
-  ;; :bind
-  ;; ;; (("C-M-K" . lispy-kill))
-  ;; (("C-M-k" . kill-sexp))
-  :hook
-  (emacs-lisp-mode  . lispy-mode)
-  (minibuffer-setup . czm-conditionally-enable-lispy))
+  (define-repeat-map structural-edit
+    ("n" forward-list
+     "p" backward-list
+     "u" backward-up-list
+     "M-u" up-list
+     "g" down-list)
+    (:continue
+     "M-g" backward-down-list
+     "f" forward-sexp
+     "b" backward-sexp
+     "a" beginning-of-defun
+     "e" end-of-defun
+     "d" czm-deactivate-mark-interactively
+     "k" kill-sexp
+     "x" eval-last-sexp
+     "o" lispy-oneline
+     "m" lispy-multiline
+     "j" lispy-split
+     "+" lispy-join
+     ">" lispy-slurp-or-barf-right
+     "<" lispy-slurp-or-barf-left
+     "]" lispy-slurp-or-barf-right
+     "[" lispy-slurp-or-barf-left
+     "C-/" undo
+     "/" lispy-splice
+     ";" lispy-comment
+     "r" lispy-raise
+     ;;  "r" raise-sexp
+     ;; "/" delete-pair
+     "t" transpose-sexps
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "c" lispy-clone
+     "C-M-SPC" spw/mark-sexp
+     "RET" newline-and-indent
+     "i" lispy-tab))
+  (repeat-mode 1)
+  
+  :bind
+  (:map emacs-lisp-mode-map
+        (";" . czm-lispy-comment-maybe)))
 
 (defun czm-edebug-eval-hook ()
   (lispy-mode 0)
@@ -294,12 +373,156 @@
   (aggressive-indent-mode 0))
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
-;;; ------------------------------ GIT ------------------------------
+(use-package info-colors
+  :ensure (:host github :repo "ubolonton/info-colors")
+  :hook (Info-selection . info-colors-fontify-node))
 
-(use-package magit
-  :defer t
-  :hook
-  (magit-status-mode . visual-line-mode))
+(use-package expand-region
+  :bind
+  (("C-=" . er/expand-region)))
+
+(let ((parameters
+       '(window-parameters . ((no-other-window . t)
+                              (no-delete-other-windows . t)))))
+  (setq
+   display-buffer-alist
+   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+      nil
+      (window-parameters (mode-line-format . none)))
+     ("\\*\\(?:help\\|grep\\|Completions\\|Occur\\)\\*"
+      display-buffer-in-side-window
+      (side . bottom) (slot . -1) (preserve-size . (nil . t))
+      ,parameters))))
+
+(let ((parameters
+       '(window-parameters . ((no-other-window . t)
+                              (no-delete-other-windows . t)))))
+  (setq
+   display-buffer-alist
+   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+      nil
+      (window-parameters (mode-line-format . none))))))
+
+(with-eval-after-load 'org
+  (spw/remap-mark-command 'org-mark-element org-mode-map)
+  (spw/remap-mark-command 'org-mark-subtree org-mode-map))
+
+;; sometimes a key to just activate the mark is wanted
+(global-set-key "\M-i" (lambda () (interactive) (activate-mark)))
+;; resettle the previous occupant
+(global-set-key "\M-I" #'tab-to-tab-stop)
+
+(defun czm-set-margins (width)
+  "Set the margins of the current window to WIDTH.
+Interactively, prompt for WIDTH."
+  (interactive "nWidth: ")
+  (setq left-margin-width width right-margin-width width)
+  (set-window-margins (selected-window) width width))
+
+;; this should be a per-monitor setting, like with preview-tailor.
+;; you should generalize that package to support other settings, I
+;; guess?  there should be a "tailor" package with the basic get/set
+;; functions.  that way, you can easily set margin widths for each
+;; monitor.
+
+(use-package pos-tip)
+
+;; (setq lsp-log-io t)
+(with-eval-after-load 'lsp-mode
+  (setq lsp-log-io t))
+
+(use-package consult-company)
+
+(use-package outline
+  :ensure nil
+  :bind (:map outline-navigation-repeat-map
+              ("C-x" . foldout-exit-fold)
+              ("x" . foldout-exit-fold)
+              ("C-z" . foldout-zoom-subtree)
+              ("z" . foldout-zoom-subtree)
+              ("C-a" . outline-show-all)
+              ("a" . outline-show-all)
+              ("C-c" . outline-hide-entry)
+              ("c" . outline-hide-entry)
+              ("C-d" . outline-hide-subtree)
+              ("d" . outline-hide-subtree)
+              ("C-e" . outline-show-entry)
+              ("e" . outline-show-entry)
+              ("TAB" . outline-show-children)
+              ("C-k" . outline-show-branches)
+              ("k" . outline-show-branches)
+              ("C-l" . outline-hide-leaves)
+              ("l" . outline-hide-leaves)
+              ("RET" . outline-insert-heading)
+              ("C-o" . outline-hide-other)
+              ("o" . outline-hide-other)
+              ("C-q" . outline-hide-sublevels)
+              ("q" . outline-hide-sublevels)
+              ("C-s" . outline-show-subtree)
+              ("s" . outline-show-subtree)
+              ("C-t" . outline-hide-body)
+              ("t" . outline-hide-body)
+              ("@" . outline-mark-subtree))
+  :config
+  (repeatize 'outline-navigation-repeat-map))
+
+
+(set-face-attribute 'default nil :height 150)
+
+
+                                        ; (load (concat user-emacs-directory "uniteai.el"))
+
+;; (defun my-avy-action-copy-and-yank (pt)
+;;   "Copy and yank sexp starting on PT."
+;;   (avy-action-copy pt)
+;;   (yank))
+
+;; (setq avy-dispatch-alist '((?c . avy-action-copy)
+;;                            (?k . avy-action-kill-move)
+;;                            (?K . avy-action-kill-stay)
+;;                            (?m . avy-action-mark)
+;;                            (?p . my-avy-action-copy-and-yank)))
+
+
+;; lsp-mode calculates line numbers without first calling widen.
+;; let's fix that, so that line numbers work in narrowed buffers, too.
+(defun my-lsp--cur-line (&optional point)
+  (save-restriction
+    (widen)
+    (1- (line-number-at-pos point))))
+(advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
+
+;; doesn't work out of the box with lean4-mode because the "contact"
+;; argument to eglot ends up with a non-string argument, which it
+;; shouldn't?  you're not exactly sure what's going on there.
+
+;; (use-package eglot-booster
+;;       :ensure (:host github :repo "jdtsmith/eglot-booster"
+;;                  :depth nil)
+;;   :after eglot
+;;       :config        (eglot-booster-mode))
+
+(use-package symbol-overlay
+  :bind (("M-s ," . symbol-overlay-put)
+         ("M-s n" . symbol-overlay-switch-forward)
+         ("M-s p" . symbol-overlay-switch-backward)
+         ("M-s m" . symbol-overlay-mode)
+         ("M-s n" . symbol-overlay-remove-all)))
+
+(use-package go-translate
+  :custom
+  gts-translate-list '(("fr" "en"))
+  :config
+  (setq gts-default-translator
+        (gts-translator
+         :picker (gts-prompt-picker)
+         :engines (list (gts-google-engine) ;; (gts-bing-engine)
+                        )
+         :render (gts-buffer-render))))
+
+(use-package rustic
+  :custom
+  (rustic-lsp-client 'eglot))
 
 ;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
 
@@ -315,17 +538,18 @@
   :config
   ;; (load-theme 'modus-vivendi t)
   ;; (load-theme 'modus-operandi t)
-  ;; (load-theme 'ef-frost t)
+  (load-theme 'ef-frost t)
   ;; (load-theme 'ef-elea-dark t)
 
-  (let ((hour (string-to-number (substring (current-time-string) 11 13))))
-    (cond
-     ((<= hour 7)
-      (load-theme 'modus-vivendi t))
-     ((<= hour 19)
-      (load-theme 'ef-frost t))
-     (t
-      (load-theme 'ef-autumn t)))))
+  ;; (let ((hour (string-to-number (substring (current-time-string) 11 13))))
+  ;;   (cond
+  ;;    ((<= hour 7)
+  ;;     (load-theme 'modus-vivendi t))
+  ;;    ((<= hour 19)
+  ;;     (load-theme 'ef-frost t))
+  ;;    (t
+  ;;     (load-theme 'ef-autumn t))))
+  )
 
 (use-package vertico
   :demand
@@ -343,6 +567,14 @@
   :demand
   :custom
   (completion-styles '(orderless basic)))
+
+(defun czm-consult-imenu-emacsd ()
+  "Call =consult-imenu-multi= for project =~/.emacs.d/emacsd=."
+  (interactive)
+  (let ((consult-project-function
+         (lambda (may-prompt) "~/.emacs.d/emacsd/")))
+    (with-current-buffer "init-main.el"
+      (consult-imenu-multi))))
 
 (use-package consult
   ;; Replace bindings. Lazily loaded due by `use-package'.
@@ -473,13 +705,6 @@
                  #'completion--in-region)
                args)))
 
-(defun czm-consult-imenu-emacsd ()
-  "Call =consult-imenu-multi= for project =~/.emacs.d/emacsd=."
-  (interactive)
-  (let ((consult-project-function
-         (lambda (may-prompt) "~/.emacs.d/emacsd/")))
-    (with-current-buffer "init-main.el"
-      (consult-imenu-multi))))
 
 (use-package embark
   :bind
@@ -593,6 +818,9 @@
   ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
   (lean4-mode . (lambda () (setq tab-width 2)))
+
+  :config
+  (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
 
   :custom
   (copilot-indent-offset-warning-disable t)
@@ -714,6 +942,17 @@
        (put cmd 'repeat-map keymap)))
    (symbol-value keymap)))
 
+;; https://www.reddit.com/r/emacs/comments/1adwnse/comment/kk9vpif/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+(defun repeatify (repeat-map)
+  "Set the `repeat-map' property on all commands bound in REPEAT-MAP."
+  (named-let process ((keymap (symbol-value repeat-map)))
+    (map-keymap
+     (lambda (_key cmd)
+       (cond
+        ((symbolp cmd) (put cmd 'repeat-map repeat-map))
+        ((keymapp cmd) (process cmd))))
+     keymap)))
+
 ;;; ------------------------------ FLYCHECK / FLYMAKE ------------------------------
 
 (use-package flycheck
@@ -807,11 +1046,6 @@ DIR must include a .project file to be considered a project."
                    rectangle-mark-mode))
   (spw/remap-mark-command command))
 
-;;; ------------------------------ LATEX ------------------------------
-
-(unless (eq window-system 'w32)
-  (load (concat user-emacs-directory "init-latex.el")))
-
 ;;; ------------------------------ ABBREV and SPELLING ------------------------------
 
 ;; this could be its own package, accomodating git-friendly abbrev storage?
@@ -846,29 +1080,10 @@ DIR must include a .project file to be considered a project."
         (quietly-read-abbrev-file abbrev-file)))
     (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
 
-;; (unless (eq window-system 'w32)
-;;   (use-package emacs
-;;     :ensure nil
-
-;;     :after latex cc-mode
-
-;;     :custom
-;;     (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
-;;     (save-abbrevs 'silently)
-
-;;     :hook
-;;     (text-mode . abbrev-mode)
-
-;;     :config
-;;     (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
-;;       (when (file-exists-p abbrev-file)
-;;         (quietly-read-abbrev-file abbrev-file)))
-;;     (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
-
-
 (use-package czm-spell
   :ensure (:host github :repo "ultronozm/czm-spell.el"
                  :depth nil)
+  :after latex
   :bind
   ("s-;" . czm-spell-then-abbrev))
 
@@ -935,7 +1150,7 @@ DIR must include a .project file to be considered a project."
      ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
       "* %?\n%U\n" :clock-in t :clock-resume t))))
 
-(defun czm-org-edit-latex-with-preview ()
+(defun czm-org-edit-src ()
   (interactive)
   (let
       ((src-buffer
@@ -978,7 +1193,7 @@ The list is ordered from bottom to top."
            (progn
              (insert "#+end_src")
              (newline))))
-        ("C-c p" . czm-org-edit-latex-with-preview)))
+        ("C-c p" . czm-org-edit-src)))
 
 (defun czm-new-tmp-org ()
   "Create new temporary org buffer."
@@ -996,21 +1211,6 @@ The list is ordered from bottom to top."
   (interactive)
   (let ((log-files '(my-log-file my-old-log-file my-todo-file)))
     (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
-
-;;; ------------------------------ PUBLISH ------------------------------
-
-(defun czm-file-is-tex-or-bib (file)
-  "Return t if FILE is a .tex or .bib file."
-  (or (string-suffix-p ".tex" file)
-      (string-suffix-p ".bib" file)))
-
-(use-package publish
-  :ensure (:host github :repo "ultronozm/publish.el"
-                 :depth nil)
-  :defer t
-  :custom
-  (publish-repo-root "~/math")
-  (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
 
 ;;; ------------------------------ ERC ------------------------------
 
@@ -1097,10 +1297,6 @@ The list is ordered from bottom to top."
 
 ;; TODO: robust form of check-abbrev?
 
-;;; ------------------------------ SAGE ------------------------------
-
-(unless (eq window-system 'w32)
-  (load (concat user-emacs-directory "init-sage.el")))
 
 ;;; ------------------------------ CPP ------------------------------
 
@@ -1338,434 +1534,14 @@ The value of `calc-language` is restored after BODY has been processed."
            ,@body)
        (calc-set-language old-lang))))
 
-;;; ------------------------------ LEAN ------------------------------
-
-;; taken from
-;; https://github.com/leanprover/lean-mode/commit/b224da9d2b339514c2577e5ee4c675b03c978bcd
-(defun czm-lean4-set-imenu-generic-expression ()
-  (setq imenu-generic-expression '(("Inductive" "^ *\\(?:@\\[.*\\]\\)? *inductive +\\([^\n ]+\\)" 1)
-                                   ("Function" "^ *\\(?:@\\[.*\\]\\)? *def +\\([^\n ]+\\)" 1)
-                                   ("Lemma" "^ *\\(?:@\\[.*\\]\\)? *lemma +\\([^\n ]+\\)" 1)
-                                   ("Theorem" "^ *\\(?:@\\[.*\\]\\)? *theorem +\\([^\n ]+\\)" 1)
-                                   ("Theorem" "^ *\\(?:@\\[.*\\]\\)? *theorem +\\([^\n ]+\\)" 1)
-                                   ("Namespace" "^ *\\(?:@\\[.*\\]\\)? *namespace +\\([^\n ]+\\)" 1))))
-
-;; (with-eval-after-load 'lean4-mode
-;;   (define-key lean4-mode-map [?\t] #'company-indent-or-complete-common)
-;;   (add-hook 'lean4-mode-hook #'company-mode))
 
 (use-package eglot
   :ensure nil
   :custom
   (eglot-connect-timeout 120))
 
-;; eglot-sync-connect?
-
-(use-package lean4-mode
-  :ensure (:host github :repo "ultronozm/lean4-mode"
-                 :files ("*.el" "data"))
-  :hook (lean4-mode . spout-mode)
-  :hook (lean4-mode . czm-lean4-set-imenu-generic-expression)
-  :commands (lean4-mode)
-  :custom
-  (lean4-keybinding-lean4-toggle-info (kbd "C-c C-y"))
-  (lean4-info-plain nil)
-  :bind (:map lean4-mode-map
-              ("RET" . newline)
-              ("C-j" . default-indent-new-line)
-              ("C-c C-q" . eglot-code-action-quickfix)
-              ("C-M-i" . completion-at-point))
-  :config
-  :defer t)
-
-(use-package czm-lean4
-  :ensure (:host github :repo "ultronozm/czm-lean4.el"
-                 :depth nil)
-  :after lean4-mode
-  :hook (lean4-mode . czm-lean4-mode-hook)
-  :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
-  :bind (:map lean4-mode-map
-              ("C-c v" . czm-lean4-show-variables)
-              ("C-c C-p C-p" . czm-lean4-toggle-info-pause)
-              ("C-c C-m C-m" . czm-lean4-search-mathlib)
-              ("C-c C-m C-h" . czm-lean4-search-mathlib-headings)
-              ("C-c C-," . czm-lean4-insert-section-or-namespace)
-              ("C-c C-." . czm-lean4-insert-comment-block)
-              ("C-c C-i" . czm-lean4-toggle-info-split-below)
-              ("C-c C-o" . czm-lean4-toggle-info-split-right)
-              ("M-]" . czm-lean4-cycle-delimiter-forward)
-              ("§" . copilot-accept-completion)
-              ("M-§" . copilot-accept-completion-by-word)
-              ("C-§" . copilot-accept-completion-by-line)
-              ("C-M-§" . copilot-accept-completion-by-paragraph)
-              ("`" . copilot-accept-completion)
-              ("M-`" . copilot-accept-completion-by-word)
-              ("C-`" . copilot-accept-completion-by-line)
-              ("C-M-`" . copilot-accept-completion-by-paragraph)
-              ("M-[" . czm-lean4-cycle-delimiter-backward))
-  :bind (:map czm-lean4-tex-mode
-              ("s-f" . czm-lean4-preview-fold-block))
-  :custom
-  (czm-lean4-info-window-height-fraction 0.4)
-  (czm-lean4-info-window-width-fraction 0.47)
-  :config
-  (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
 
 (use-package eldoc-box
   :commands (eldoc-box-help-at-point)
   :bind
   (:map global-map ("C-c e" . eldoc-box-help-at-point)))
-
-(defun czm-colorize-lean4-signature ()
-  "Highlights the name of each required variable to a Lean4 theorem."
-  (when
-      (with-current-buffer eldoc-icebox-parent-buffer
-        (or
-         (eq major-mode 'lean4-mode)
-         (eq (buffer-name) "*Lean Goal*")))
-    (save-excursion
-      (goto-char (point-min))
-      (while (and (< (point) (point-max))
-                  (not (eq (char-after (1+ (point))) ?\:)))
-        (forward-list)
-        (when (eq (char-before) ?\))
-          (save-excursion
-            (backward-list)
-            (let ((inhibit-read-only t)
-                  (start (point))
-                  (end (save-excursion (forward-list) (point)))
-                  (end-first-symbol (save-excursion (forward-word) (point)))
-                  (end-symbols (save-excursion (when (search-forward " : " nil t) (- (point) 3)))))
-              (when end-symbols
-                (put-text-property start end 'face '(underline))
-                                        ; shr-mark doesn't work anymore?
-                (put-text-property (1+ start) end-symbols 'face '(highlight underline))))))))))
-
-(defun czm-add-lean4-eldoc ()
-  (when
-      (with-current-buffer eldoc-icebox-parent-buffer
-        (or
-         (eq major-mode 'lean4-mode)
-         (equal (buffer-name)
-                "*Lean Goal*")))
-    (add-hook 'eldoc-documentation-functions #'lean4-info-eldoc-function
-              nil t)
-    (eldoc-mode)))
-
-(use-package eldoc-icebox
-  :ensure (:host github :repo "ultronozm/eldoc-icebox.el"
-                 :depth nil)
-  :bind (("C-c C-h" . eldoc-icebox-store)
-         ("C-c C-n" . eldoc-icebox-toggle-display))
-  :hook
-  (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
-  (eldoc-icebox-post-display . czm-colorize-lean4-signature)
-  (eldoc-icebox-post-display . czm-add-lean4-eldoc))
-
-;;; ------------------------------ MISC ------------------------------
-
-(use-package repo-scan
-  :ensure (:host github :repo "ultronozm/repo-scan.el"
-                 :depth nil)
-  :defer t)
-
-(use-package pulsar
-  :bind (("s-l" . pulsar-pulse-line))
-
-  :config
-  (dolist (fn '(avy-goto-line
-                diff-hunk-prev
-                diff-hunk-next
-                diff-file-next
-                diff-file-prev
-                flycheck-previous-error
-                flycheck-next-error))
-    (add-to-list 'pulsar-pulse-functions fn))
-  (pulsar-global-mode))
-
-(defvar czm-repos '(
-                    "ai-org-chat"
-                    "czm-cpp"
-                    "czm-lean4"
-                    "czm-misc"
-                    "czm-preview"
-                    "czm-spell"
-                    "czm-tex-compile"
-                    "czm-tex-edit"
-                    "czm-tex-fold"
-                    "czm-tex-jump"
-                    "czm-tex-mint"
-                    "czm-tex-ref"
-                    "czm-tex-util"
-                    "dynexp"
-                    "eldoc-icebox"
-                    "library"
-                    "preview-tailor"
-                    "publish"
-                    "repo-scan"
-                    "spout"
-                    "symtex"
-                    ))
-
-(defun czm-repos-uncompiled ()
-  (interactive)
-  (dolist (name czm-repos)
-    (let ((elc-file
-           (concat user-emacs-directory
-                   (file-name-as-directory "elpaca")
-                   (file-name-as-directory "builds")
-                   (file-name-as-directory name)
-                   name ".elc")))
-      (unless (file-exists-p elc-file)
-        (message "%s.elc not found" name)))))
-
-(defun czm-pull-my-stuff ()
-  (interactive)
-  (let* ((repos (append
-                 (mapcar
-                  (lambda (name)
-                    (concat user-emacs-directory
-                            (file-name-as-directory "elpaca")
-                            (file-name-as-directory "repos")
-                            name))
-                  czm-repos))))
-    (repo-scan-pull repos)))
-
-(defun czm-rebuild-my-stuff ()
-  (interactive)
-  (dolist (repo czm-repos)
-    (let ((repo-symbol (intern repo)))
-      (elpaca-rebuild repo-symbol))))
-
-(use-package info-colors
-  :ensure (:host github :repo "ubolonton/info-colors")
-  :hook (Info-selection . info-colors-fontify-node))
-
-(use-package expand-region
-  :bind
-  (("C-=" . er/expand-region)))
-
-(let ((parameters
-       '(window-parameters . ((no-other-window . t)
-                              (no-delete-other-windows . t)))))
-  (setq
-   display-buffer-alist
-   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-      nil
-      (window-parameters (mode-line-format . none)))
-     ("\\*\\(?:help\\|grep\\|Completions\\|Occur\\)\\*"
-      display-buffer-in-side-window
-      (side . bottom) (slot . -1) (preserve-size . (nil . t))
-      ,parameters))))
-
-(let ((parameters
-       '(window-parameters . ((no-other-window . t)
-                              (no-delete-other-windows . t)))))
-  (setq
-   display-buffer-alist
-   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-      nil
-      (window-parameters (mode-line-format . none))))))
-
-(with-eval-after-load 'org
-  (spw/remap-mark-command 'org-mark-element org-mode-map)
-  (spw/remap-mark-command 'org-mark-subtree org-mode-map))
-
-;; sometimes a key to just activate the mark is wanted
-(global-set-key "\M-i" (lambda () (interactive) (activate-mark)))
-;; resettle the previous occupant
-(global-set-key "\M-I" #'tab-to-tab-stop)
-
-(defun czm-set-margins (width)
-  "Set the margins of the current window to WIDTH.
-Interactively, prompt for WIDTH."
-  (interactive "nWidth: ")
-  (setq left-margin-width width right-margin-width width)
-  (set-window-margins (selected-window) width width))
-
-;; this should be a per-monitor setting, like with preview-tailor.
-;; you should generalize that package to support other settings, I
-;; guess?  there should be a "tailor" package with the basic get/set
-;; functions.  that way, you can easily set margin widths for each
-;; monitor.
-
-(use-package pos-tip)
-
-;; (setq lsp-log-io t)
-(with-eval-after-load 'lsp-mode
-  (setq lsp-log-io t))
-
-(use-package consult-company)
-
-(use-package outline
-  :ensure nil
-  :bind (:map outline-navigation-repeat-map
-              ("C-x" . foldout-exit-fold)
-              ("x" . foldout-exit-fold)
-              ("C-z" . foldout-zoom-subtree)
-              ("z" . foldout-zoom-subtree)
-              ("C-a" . outline-show-all)
-              ("a" . outline-show-all)
-              ("C-c" . outline-hide-entry)
-              ("c" . outline-hide-entry)
-              ("C-d" . outline-hide-subtree)
-              ("d" . outline-hide-subtree)
-              ("C-e" . outline-show-entry)
-              ("e" . outline-show-entry)
-              ("TAB" . outline-show-children)
-              ("C-k" . outline-show-branches)
-              ("k" . outline-show-branches)
-              ("C-l" . outline-hide-leaves)
-              ("l" . outline-hide-leaves)
-              ("RET" . outline-insert-heading)
-              ("C-o" . outline-hide-other)
-              ("o" . outline-hide-other)
-              ("C-q" . outline-hide-sublevels)
-              ("q" . outline-hide-sublevels)
-              ("C-s" . outline-show-subtree)
-              ("s" . outline-show-subtree)
-              ("C-t" . outline-hide-body)
-              ("t" . outline-hide-body)
-              ("@" . outline-mark-subtree))
-  :config
-  (repeatize 'outline-navigation-repeat-map))
-
-
-(set-face-attribute 'default nil :height 150)
-
-
-; (load (concat user-emacs-directory "uniteai.el"))
-
-(defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
-(defun edebug-compute-previous-result (previous-value)
-  (if edebug-unwrap-results
-      (setq previous-value
-            (edebug-unwrap* previous-value)))
-  (setq edebug-previous-result-raw previous-value)
-  (setq edebug-previous-result
-        (concat "Result: "
-                (edebug-safe-prin1-to-string previous-value)
-                (eval-expression-print-format previous-value))))
-
-;; (defun my-avy-action-copy-and-yank (pt)
-;;   "Copy and yank sexp starting on PT."
-;;   (avy-action-copy pt)
-;;   (yank))
-
-;; (setq avy-dispatch-alist '((?c . avy-action-copy)
-;;                            (?k . avy-action-kill-move)
-;;                            (?K . avy-action-kill-stay)
-;;                            (?m . avy-action-mark)
-;;                            (?p . my-avy-action-copy-and-yank)))
-
-
-;; lsp-mode calculates line numbers without first calling widen.
-;; let's fix that, so that line numbers work in narrowed buffers, too.
-(defun my-lsp--cur-line (&optional point)
-  (save-restriction
-    (widen)
-    (1- (line-number-at-pos point))))
-(advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
-
-;; doesn't work out of the box with lean4-mode because the "contact"
-;; argument to eglot ends up with a non-string argument, which it
-;; shouldn't?  you're not exactly sure what's going on there.
-
-;; (use-package eglot-booster
-;;       :ensure (:host github :repo "jdtsmith/eglot-booster"
-;;                  :depth nil)
-;;   :after eglot
-;;       :config        (eglot-booster-mode))
-
-(use-package symbol-overlay
-  :bind (("M-s ," . symbol-overlay-put)
-         ("M-s n" . symbol-overlay-switch-forward)
-         ("M-s p" . symbol-overlay-switch-backward)
-         ("M-s m" . symbol-overlay-mode)
-         ("M-s n" . symbol-overlay-remove-all)))
-
-
-(define-minor-mode error-navigation-mode
-  "A mode for navigating between errors with M-n and M-p."
-  :lighter " ErrNav"
-  :keymap (let ((map (make-sparse-keymap)))
-            (define-key map (kbd "M-n") 'next-error)
-            (define-key map (kbd "M-p") 'previous-error)
-            map))
-
-(define-minor-mode error-navigation-mode
-  "A mode for navigating between errors with M-n and M-p."
-  :lighter " ErrNav"
-  :keymap (let ((map (make-sparse-keymap)))
-            (define-key map [remap next-error] 'next-error)
-            (define-key map [remap previous-error] 'previous-error)
-            map))
-
-(use-package go-translate
-  :custom
-  gts-translate-list '(("fr" "en"))
-  :config
-  (setq gts-default-translator
-        (gts-translator
-         :picker (gts-prompt-picker)
-         :engines (list (gts-google-engine) ;; (gts-bing-engine)
-                        )
-         :render (gts-buffer-render))))
-
-(use-package rustic
-  :custom
-  (rustic-lsp-client 'eglot))
-
-(defun czm-dired-git-files ()
-  "Open dired buffer with files in current git repo."
-  (interactive)
-  (let ((git-files (shell-command-to-string "git ls-files")))
-    (setq git-files (split-string git-files "\n" t))
-    (dired (cons "." git-files))))
-
-(defun czm-delete-pair (&optional arg)
-  "Delete a pair of characters enclosing ARG sexps that follow point.
-A negative ARG deletes a pair around the preceding ARG sexps instead.
-The option `delete-pair-blink-delay' can disable blinking.
-
-Only difference with the usual `delete-pair' is that this version
-pushes the mark somewhere useful."
-  (interactive "P")
-  (if arg
-      (setq arg (prefix-numeric-value arg))
-    (setq arg 1))
-  (if (< arg 0)
-      (save-excursion
-	       (skip-chars-backward " \t")
-	       (save-excursion
-	         (let ((close-char (char-before)))
-	           (forward-sexp arg)
-	           (unless (member (list (char-after) close-char)
-			                         (mapcar (lambda (p)
-				                                  (if (= (length p) 3) (cdr p) p))
-				                                insert-pair-alist))
-	             (error "Not after matching pair"))
-	           (when (and (numberp delete-pair-blink-delay)
-		                     (> delete-pair-blink-delay 0))
-	             (sit-for delete-pair-blink-delay))
-	           (delete-char 1)))
-	       (delete-char -1))
-    (save-excursion
-      (skip-chars-forward " \t")
-      (save-excursion
-	       (let ((open-char (char-after)))
-	         (forward-sexp arg)
-	         (unless (member (list open-char (char-before))
-			                       (mapcar (lambda (p)
-				                                (if (= (length p) 3) (cdr p) p))
-				                              insert-pair-alist))
-	           (error "Not before matching pair"))
-	         (when (and (numberp delete-pair-blink-delay)
-		                   (> delete-pair-blink-delay 0))
-	           (sit-for delete-pair-blink-delay))
-	         (delete-char -1)
-          (push-mark) ; added!
-          ))
-      (delete-char 1))))
-
-(advice-add 'delete-pair :override #'czm-delete-pair)

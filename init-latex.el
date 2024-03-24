@@ -670,6 +670,7 @@ of the preamble part of REGION-TEXT."
                            (point))))
                       (yank))))
 
+;; needs a bit of work -- should kill the line when it's empty, take a numeric arg, etc
 (defun czm-tex-soft-kill ()
   (interactive)
   (let* ((eol (save-excursion (end-of-visual-line) (point)))
@@ -694,7 +695,7 @@ of the preamble part of REGION-TEXT."
         ("C-M-n" . tp-forward-list)
         ("C-M-p" . tp-backward-list)
         ("C-M-u" . tp-backward-up-list)
-        ;; ("M-u" . tp-up-list)
+        ("M-u" . tp-up-list)
         ("C-M-g" . tp-down-list)
         ("M-_" . tp-delete-pair)
         ("C-M-SPC" . tp-mark-sexp)
@@ -705,10 +706,87 @@ of the preamble part of REGION-TEXT."
         ("<" . tp-burp-left)
         (">" . tp-burp-right)
         ("s-j" . czm-tex-avy-jump)
-        ("s-c" . czm-tex-avy-copy)
-        ("C-k" . czm-tex-soft-kill))
+        ("s-c" . czm-tex-avy-copy))
   :hook
   (LaTeX-mode . tp-setup)
   :config
-  (spw/remap-mark-command 'tp-mark-sexp LaTeX-mode-map))
+  (spw/remap-mark-command 'tp-mark-sexp LaTeX-mode-map)
+
+  (define-repeat-map tp-structural-edit
+    ("n" tp-forward-list
+     "p" tp-backward-list
+     "u" tp-backward-up-list
+     "M-u" tp-up-list
+     "g" tp-down-list
+     "M-g" tp-backward-down-list)
+    (:continue
+     "f" tp-forward-sexp
+     "b" tp-backward-sexp
+     "a" beginning-of-defun
+     "e" end-of-defun
+     "d" czm-deactivate-mark-interactively
+     "k" kill-sexp
+     ">" tp-burp-right
+     "<" tp-burp-left
+     "]" tp-burp-right
+     "[" tp-burp-left
+     "C-/" undo
+     "r" tp-raise-sexp
+     "/" tp-delete-pair
+     "t" transpose-sexps
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "c" lispy-clone
+     "C-M-SPC" spw/tp-mark-sexp
+     "RET" TeX-newline))
+  (repeat-mode 1)
+
+  ;; (dolist (sym '(kill-region
+  ;;                kill-ring-save
+  ;;                spw/tp-mark-sexp
+  ;;                yank
+  ;;                czm-deactivate-mark-interactively
+  ;;                TeX-newline
+  ;;                tp-burp-left
+  ;;                tp-burp-right
+  ;;                tp-delete-pair
+  ;;                tp-raise-sexp
+  ;;                tp-kill-sexp
+  ;;                tp-forward-sexp
+  ;;                tp-backward-sexp
+  ;;                transpose-sexps
+  ;;                beginning-of-defun
+  ;;                end-of-defun))
+  ;;   (defalias (intern (format "tp-structural-%s" sym))
+  ;;     sym))
+
+  ;; (defvar-keymap tp-structural-edit-map
+  ;;   :doc "Structural editing keymap"
+  ;;   :repeat t
+  ;;   "n" 'tp-forward-list
+  ;;   "p" 'tp-backward-list
+  ;;   "u" 'tp-backward-up-list
+  ;;   "M-u" 'tp-up-list
+  ;;   "g" 'tp-down-list
+  ;;   "f" 'tp-structural-tp-forward-sexp
+  ;;   "b" 'tp-structural-tp-backward-sexp
+  ;;   "a" 'tp-structural-beginning-of-defun
+  ;;   "e" 'tp-structural-end-of-defun
+  ;;   "k" 'tp-structural-tp-kill-sexp
+  ;;   ">" 'tp-structural-tp-burp-right
+  ;;   "<" 'tp-structural-tp-burp-left
+  ;;   "]" 'tp-structural-tp-burp-right
+  ;;   "[" 'tp-structural-tp-burp-left
+  ;;   "C-/" 'tp-structural-undo
+  ;;   "/" 'tp-structural-tp-delete-pair
+  ;;   "r" 'tp-structural-tp-raise-sexp
+  ;;   "t" 'tp-transpose-sexps
+  ;;   "w" 'tp-structural-kill-region
+  ;;   "M-w" 'tp-structural-kill-ring-save
+  ;;   "y" 'tp-structural-yank
+  ;;   "SPC" 'tp-structural-spw/tp-mark-sexp
+  ;;   "d" 'tp-structural-czm-deactivate-mark-interactively
+  ;;   "RET" 'tp-structural-TeX-newline)
+  )
 

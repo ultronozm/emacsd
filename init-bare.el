@@ -265,6 +265,71 @@ Otherwise, call `self-insert-command'."
     (error
      (call-interactively #'self-insert-command))))
 
+(defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
+(defun edebug-compute-previous-result (previous-value)
+  (if edebug-unwrap-results
+      (setq previous-value
+            (edebug-unwrap* previous-value)))
+  (setq edebug-previous-result-raw previous-value)
+  (setq edebug-previous-result
+        (concat "Result: "
+                (edebug-safe-prin1-to-string previous-value)
+                (eval-expression-print-format previous-value))))
+
+(defun czm-dired-git-files ()
+  "Open dired buffer with files in current git repo."
+  (interactive)
+  (let ((git-files (shell-command-to-string "git ls-files")))
+    (setq git-files (split-string git-files "\n" t))
+    (dired (cons "." git-files))))
+
+(defun czm-delete-pair (&optional arg)
+  "Delete a pair of characters enclosing ARG sexps that follow point.
+A negative ARG deletes a pair around the preceding ARG sexps instead.
+The option `delete-pair-blink-delay' can disable blinking.
+
+Only difference with the usual `delete-pair' is that this version
+pushes the mark somewhere useful."
+  (interactive "P")
+  (if arg
+      (setq arg (prefix-numeric-value arg))
+    (setq arg 1))
+  (if (< arg 0)
+      (save-excursion
+	       (skip-chars-backward " \t")
+	       (save-excursion
+	         (let ((close-char (char-before)))
+	           (forward-sexp arg)
+	           (unless (member (list (char-after) close-char)
+			                         (mapcar (lambda (p)
+				                                  (if (= (length p) 3) (cdr p) p))
+				                                insert-pair-alist))
+	             (error "Not after matching pair"))
+	           (when (and (numberp delete-pair-blink-delay)
+		                     (> delete-pair-blink-delay 0))
+	             (sit-for delete-pair-blink-delay))
+	           (delete-char 1)))
+	       (delete-char -1))
+    (save-excursion
+      (skip-chars-forward " \t")
+      (save-excursion
+	       (let ((open-char (char-after)))
+	         (forward-sexp arg)
+	         (unless (member (list open-char (char-before))
+			                       (mapcar (lambda (p)
+				                                (if (= (length p) 3) (cdr p) p))
+				                              insert-pair-alist))
+	           (error "Not before matching pair"))
+	         (when (and (numberp delete-pair-blink-delay)
+		                   (> delete-pair-blink-delay 0))
+	           (sit-for delete-pair-blink-delay))
+	         (delete-char -1)
+          (push-mark) ; added!
+          ))
+      (delete-char 1))))
+
+(advice-add 'delete-pair :override #'czm-delete-pair)
+
 
 (dolist (key '(
                ;; s-a
