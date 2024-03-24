@@ -246,19 +246,31 @@
               ("<left-margin> S-<mouse-1>" . nil)
               ("<left-margin> <mouse-1>" . nil)))
 
+
+;;; ------------------------------ REPEAT ------------------------------
+
+(use-package repeat
+  :ensure nil
+  :config
+  (setcdr other-window-repeat-map nil)
+  (repeat-mode))
+
+(use-package define-repeat-map
+  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el"))
+
 ;;; ------------------------------ LISP ------------------------------
 
 (use-package emacs
-    :ensure nil
+  :ensure nil
 
-    :custom
-    (delete-pair-blink-delay 0)
-    :bind
-    (:map emacs-lisp-mode-map
-          ("M-_" . delete-pair)
-          ("M-+" . kill-backward-up-list)
-          ("s-r" . elpaca-rebuild)
-          ("M-u" . up-list)))
+  :custom
+  (delete-pair-blink-delay 0)
+  :bind
+  (:map emacs-lisp-mode-map
+        ("M-_" . delete-pair)
+        ("M-+" . kill-backward-up-list)
+        ("s-r" . elpaca-rebuild)
+        ("M-u" . up-list)))
 
 ;; (use-package lispy
 ;;   :config
@@ -301,14 +313,10 @@
 ;;   (emacs-lisp-mode  . lispy-mode)
 ;;   (minibuffer-setup . czm-conditionally-enable-lispy))
 
-
 (defun czm-deactivate-mark-interactively ()
   "Deactivate the mark interactively."
   (interactive)
   (deactivate-mark))
-
-(use-package define-repeat-map
-  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el"))
 
 (defun backward-down-list ()
   "Move backward down a list."
@@ -362,6 +370,8 @@
      "RET" newline-and-indent
      "i" lispy-tab))
   (repeat-mode 1)
+
+  :commands (lispy-comment)
   
   :bind
   (:map emacs-lisp-mode-map
@@ -433,38 +443,40 @@ Interactively, prompt for WIDTH."
 
 (use-package consult-company)
 
-(use-package outline
-  :ensure nil
-  :bind (:map outline-navigation-repeat-map
-              ("C-x" . foldout-exit-fold)
-              ("x" . foldout-exit-fold)
-              ("C-z" . foldout-zoom-subtree)
-              ("z" . foldout-zoom-subtree)
-              ("C-a" . outline-show-all)
-              ("a" . outline-show-all)
-              ("C-c" . outline-hide-entry)
-              ("c" . outline-hide-entry)
-              ("C-d" . outline-hide-subtree)
-              ("d" . outline-hide-subtree)
-              ("C-e" . outline-show-entry)
-              ("e" . outline-show-entry)
-              ("TAB" . outline-show-children)
-              ("C-k" . outline-show-branches)
-              ("k" . outline-show-branches)
-              ("C-l" . outline-hide-leaves)
-              ("l" . outline-hide-leaves)
-              ("RET" . outline-insert-heading)
-              ("C-o" . outline-hide-other)
-              ("o" . outline-hide-other)
-              ("C-q" . outline-hide-sublevels)
-              ("q" . outline-hide-sublevels)
-              ("C-s" . outline-show-subtree)
-              ("s" . outline-show-subtree)
-              ("C-t" . outline-hide-body)
-              ("t" . outline-hide-body)
-              ("@" . outline-mark-subtree))
-  :config
-  (repeatize 'outline-navigation-repeat-map))
+;; (use-package outline
+;;   :ensure nil
+;;   ;; :bind (:map outline-navigation-repeat-map
+;;   ;;             ("C-x" . foldout-exit-fold)
+;;   ;;             ("x" . foldout-exit-fold)
+;;   ;;             ("C-z" . foldout-zoom-subtree)
+;;   ;;             ("z" . foldout-zoom-subtree)
+;;   ;;             ("C-a" . outline-show-all)
+;;   ;;             ("a" . outline-show-all)
+;;   ;;             ("C-c" . outline-hide-entry)
+;;   ;;             ("c" . outline-hide-entry)
+;;   ;;             ("C-d" . outline-hide-subtree)
+;;   ;;             ("d" . outline-hide-subtree)
+;;   ;;             ("C-e" . outline-show-entry)
+;;   ;;             ("e" . outline-show-entry)
+;;   ;;             ("TAB" . outline-show-children)
+;;   ;;             ("C-k" . outline-show-branches)
+;;   ;;             ("k" . outline-show-branches)
+;;   ;;             ("C-l" . outline-hide-leaves)
+;;   ;;             ("l" . outline-hide-leaves)
+;;   ;;             ("RET" . outline-insert-heading)
+;;   ;;             ("C-o" . outline-hide-other)
+;;   ;;             ("o" . outline-hide-other)
+;;   ;;             ("C-q" . outline-hide-sublevels)
+;;   ;;             ("q" . outline-hide-sublevels)
+;;   ;;             ("C-s" . outline-show-subtree)
+;;   ;;             ("s" . outline-show-subtree)
+;;   ;;             ("C-t" . outline-hide-body)
+;;   ;;             ("t" . outline-hide-body)
+;;   ;;             ("@" . outline-mark-subtree))
+;;   :config
+;;   ;; (repeatize 'outline-navigation-repeat-map)
+;;   (define-repeat-map 'outline-navigation-repeat-map)
+;;   )
 
 
 (set-face-attribute 'default nil :height 150)
@@ -806,6 +818,18 @@ Interactively, prompt for WIDTH."
   :custom
   (zzz-to-char-reach 200))
 
+(use-package xr)
+
+(use-package eglot
+  :ensure nil
+  :custom
+  (eglot-connect-timeout 120))
+
+(use-package eldoc-box
+  :commands (eldoc-box-help-at-point)
+  :bind
+  (:map global-map ("C-c e" . eldoc-box-help-at-point)))
+
 ;;; ------------------------------ AI ------------------------------
 
 (use-package copilot
@@ -925,34 +949,6 @@ Interactively, prompt for WIDTH."
 ;; Never describe the results of running code.  Instead, wait for me to run the code and then ask you to continue.")
 
 
-;;; ------------------------------ REPEAT ------------------------------
-
-(use-package repeat
-  :ensure nil
-  :config
-  (setcdr other-window-repeat-map nil)
-  (repeat-mode))
-
-;; https://karthinks.com/software/it-bears-repeating/
-(defun repeatize (keymap)
-  "Add `repeat-mode' support to a KEYMAP."
-  (map-keymap
-   (lambda (_key cmd)
-     (when (symbolp cmd)
-       (put cmd 'repeat-map keymap)))
-   (symbol-value keymap)))
-
-;; https://www.reddit.com/r/emacs/comments/1adwnse/comment/kk9vpif/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-(defun repeatify (repeat-map)
-  "Set the `repeat-map' property on all commands bound in REPEAT-MAP."
-  (named-let process ((keymap (symbol-value repeat-map)))
-    (map-keymap
-     (lambda (_key cmd)
-       (cond
-        ((symbolp cmd) (put cmd 'repeat-map repeat-map))
-        ((keymapp cmd) (process cmd))))
-     keymap)))
-
 ;;; ------------------------------ FLYCHECK / FLYMAKE ------------------------------
 
 (use-package flycheck
@@ -965,21 +961,17 @@ Interactively, prompt for WIDTH."
   :hook
   (emacs-lisp-mode . flycheck-package-setup))
 
-(defvar flymake-repeat-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "n") 'flymake-goto-next-error)
-    (define-key map (kbd "p") 'flymake-goto-prev-error)
-    (define-key map (kbd "f") 'attrap-flymake)
-    (define-key map (kbd "M-n") 'flymake-goto-next-error)
-    (define-key map (kbd "M-p") 'flymake-goto-prev-error)
-    map))
-
 (use-package flymake
   :ensure nil
   :custom
   (flymake-show-diagnostics-at-end-of-line t)
   :config
-  (repeatize 'flymake-repeat-map)
+  (define-repeat-map flymake-repeat-map
+    ("n" flymake-goto-next-error
+     "p" flymake-goto-prev-error
+     "f" attrap-flymake
+     "M-n" flymake-goto-next-error
+     "M-p" flymake-goto-prev-error))
   :bind
   (:map flymake-mode-map
         ("M-n" . flymake-goto-next-error)
@@ -997,7 +989,7 @@ Interactively, prompt for WIDTH."
   :after flycheck attrap repeat
   :config
   (define-key flycheck-command-map "f" 'attrap-flycheck)
-  (repeatize 'flycheck-command-map))
+  (put 'attrap-flycheck 'repeat-map 'flymake-repeat-map))
 
 ;;; ------------------------------ PROJECT ------------------------------
 
@@ -1107,7 +1099,6 @@ DIR must include a .project file to be considered a project."
               ("j" . pdf-view-jump-to-register)
               ("<down>" . nil)
               ("<up>" . nil)))
-
 
 ;;; ------------------------------ ORG ------------------------------
 
@@ -1519,10 +1510,8 @@ The list is ordered from bottom to top."
 (defun czm-calc-grab-TeX-region (beg end arg)
   (interactive "r\nP")
   (with-calc-language 'latex
-    (calc-grab-region beg end arg))
+                      (calc-grab-region beg end arg))
   (calc-refresh))
-
-(use-package xr)
 
 (defmacro with-calc-language (lang &rest body)
   "Execute the forms in BODY with `calc-language` set to LANG.
@@ -1533,15 +1522,3 @@ The value of `calc-language` is restored after BODY has been processed."
            (calc-set-language ,lang)
            ,@body)
        (calc-set-language old-lang))))
-
-
-(use-package eglot
-  :ensure nil
-  :custom
-  (eglot-connect-timeout 120))
-
-
-(use-package eldoc-box
-  :commands (eldoc-box-help-at-point)
-  :bind
-  (:map global-map ("C-c e" . eldoc-box-help-at-point)))
