@@ -115,16 +115,18 @@
 
 (use-package latex
   :ensure
-  (auctex :pre-build (("./autogen.sh")
-                      ("./configure"
-                       "--without-texmf-dir"
-                       "--with-packagelispdir=./"
-                       "--with-packagedatadir=./"
-                       "--with-lispdir=.")
-                      ("make"))
-          :build (:not elpaca--compile-info) ;; Make will take care of this step
-          :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
-          :version (lambda (_) (require 'tex-site) AUCTeX-version))
+  (auctex
+   :host nil :repo "https://git.savannah.gnu.org/git/auctex.git"
+   :pre-build (("./autogen.sh")
+               ("./configure"
+                "--without-texmf-dir"
+                "--with-packagelispdir=./"
+                "--with-packagedatadir=./"
+                "--with-lispdir=.")
+               ("make"))
+   :build (:not elpaca--compile-info) ;; Make will take care of this step
+   :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
+   :version (lambda (_) (require 'tex-site) AUCTeX-version))
   ;; (auctex
   ;;  :files
   ;;  ("*.el" "*.info" "dir" "doc" "etc" "images" "latex" "style")
