@@ -526,6 +526,7 @@
 	       ("H-u" . czm-preview-mode)
 	       ("C-c p m" . czm-preview-toggle-master))
   :custom
+  (czm-preview-timer-interval 0.1)
   (czm-preview-TeX-master my-preview-master)
   (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
   (czm-preview-allowed-files

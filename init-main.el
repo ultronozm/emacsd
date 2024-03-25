@@ -256,7 +256,8 @@
   (repeat-mode))
 
 (use-package define-repeat-map
-  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el"))
+  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
+  :demand t)
 
 ;;; ------------------------------ LISP ------------------------------
 
@@ -331,6 +332,7 @@
     (call-interactively #'self-insert-command)))
 
 (use-package lispy
+  :after define-repeat-map
   :config
   (define-repeat-map structural-edit
     ("n" forward-list
@@ -443,40 +445,55 @@ Interactively, prompt for WIDTH."
 
 (use-package consult-company)
 
-;; (use-package outline
-;;   :ensure nil
-;;   ;; :bind (:map outline-navigation-repeat-map
-;;   ;;             ("C-x" . foldout-exit-fold)
-;;   ;;             ("x" . foldout-exit-fold)
-;;   ;;             ("C-z" . foldout-zoom-subtree)
-;;   ;;             ("z" . foldout-zoom-subtree)
-;;   ;;             ("C-a" . outline-show-all)
-;;   ;;             ("a" . outline-show-all)
-;;   ;;             ("C-c" . outline-hide-entry)
-;;   ;;             ("c" . outline-hide-entry)
-;;   ;;             ("C-d" . outline-hide-subtree)
-;;   ;;             ("d" . outline-hide-subtree)
-;;   ;;             ("C-e" . outline-show-entry)
-;;   ;;             ("e" . outline-show-entry)
-;;   ;;             ("TAB" . outline-show-children)
-;;   ;;             ("C-k" . outline-show-branches)
-;;   ;;             ("k" . outline-show-branches)
-;;   ;;             ("C-l" . outline-hide-leaves)
-;;   ;;             ("l" . outline-hide-leaves)
-;;   ;;             ("RET" . outline-insert-heading)
-;;   ;;             ("C-o" . outline-hide-other)
-;;   ;;             ("o" . outline-hide-other)
-;;   ;;             ("C-q" . outline-hide-sublevels)
-;;   ;;             ("q" . outline-hide-sublevels)
-;;   ;;             ("C-s" . outline-show-subtree)
-;;   ;;             ("s" . outline-show-subtree)
-;;   ;;             ("C-t" . outline-hide-body)
-;;   ;;             ("t" . outline-hide-body)
-;;   ;;             ("@" . outline-mark-subtree))
-;;   :config
-;;   ;; (repeatize 'outline-navigation-repeat-map)
-;;   (define-repeat-map 'outline-navigation-repeat-map)
-;;   )
+(use-package outline
+  :ensure nil
+  :after define-repeat-map
+  ;; :bind (:map outline-navigation-repeat-map
+  ;;             ("C-x" . foldout-exit-fold)
+  ;;             ("x" . foldout-exit-fold)
+  ;;             ("C-z" . foldout-zoom-subtree)
+  ;;             ("z" . foldout-zoom-subtree)
+  ;;             ("C-a" . outline-show-all)
+  ;;             ("a" . outline-show-all)
+  ;;             ("C-c" . outline-hide-entry)
+  ;;             ("c" . outline-hide-entry)
+  ;;             ("C-d" . outline-hide-subtree)
+  ;;             ("d" . outline-hide-subtree)
+  ;;             ("C-e" . outline-show-entry)
+  ;;             ("e" . outline-show-entry)
+  ;;             ("TAB" . outline-show-children)
+  ;;             ("C-k" . outline-show-branches)
+  ;;             ("k" . outline-show-branches)
+  ;;             ("C-l" . outline-hide-leaves)
+  ;;             ("l" . outline-hide-leaves)
+  ;;             ("RET" . outline-insert-heading)
+  ;;             ("C-o" . outline-hide-other)
+  ;;             ("o" . outline-hide-other)
+  ;;             ("C-q" . outline-hide-sublevels)
+  ;;             ("q" . outline-hide-sublevels)
+  ;;             ("C-s" . outline-show-subtree)
+  ;;             ("s" . outline-show-subtree)
+  ;;             ("C-t" . outline-hide-body)
+  ;;             ("t" . outline-hide-body)
+  ;;             ("@" . outline-mark-subtree))
+  :config
+  ;; (repeatize 'outline-navigation-repeat-map)
+  (define-repeat-map outline-navigation-repeat-map
+    ("x" foldout-exit-fold
+     "z" foldout-zoom-subtree
+     "a" outline-show-all
+     "c" outline-hide-entry
+     "d" outline-hide-subtree
+     "e" outline-show-entry
+     "TAB" outline-show-children
+     "k" outline-show-branches
+     "l" outline-hide-leaves
+     "RET" outline-insert-heading
+     "o" outline-hide-other
+     "q" outline-hide-sublevels
+     "s" outline-show-subtree
+     "t" outline-hide-body
+     "@" outline-mark-subtree)))
 
 
 (set-face-attribute 'default nil :height 150)
@@ -965,6 +982,7 @@ Interactively, prompt for WIDTH."
   :ensure nil
   :custom
   (flymake-show-diagnostics-at-end-of-line t)
+  :after define-repeat-map
   :config
   (define-repeat-map flymake-repeat-map
     ("n" flymake-goto-next-error
@@ -1262,8 +1280,7 @@ The list is ordered from bottom to top."
   (erc-log-channels-directory "~/.erc/logs/")
   (erc-log-insert-log-on-open t)
   (erc-log-write-after-send t)
-  (erc-log-write-after-insert t)
-  )
+  (erc-log-write-after-insert t))
 
 ;; (use-package erc-ring
 ;;   :after erc
@@ -1522,3 +1539,13 @@ The value of `calc-language` is restored after BODY has been processed."
            (calc-set-language ,lang)
            ,@body)
        (calc-set-language old-lang))))
+
+(defun flymake--update-eol-overlays ()
+  "Update the `before-string' property of end-of-line overlays."
+  (save-restriction
+    (widen)
+    (dolist (o (overlays-in (point-min) (point-max)))
+      (when (overlay-get o 'flymake--eol-overlay)
+        (if-let ((src-ovs (overlay-get o 'flymake-eol-source-overlays)))
+            (overlay-put o 'before-string (flymake--eol-overlay-summary src-ovs))
+          (delete-overlay o))))))

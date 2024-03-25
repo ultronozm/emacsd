@@ -32,6 +32,7 @@
                     "repo-scan"
                     "spout"
                     "symtex"
+                    "tex-parens"
                     ))
 
 (defun czm-repos-uncompiled ()
