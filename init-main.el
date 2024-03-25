@@ -267,7 +267,7 @@
   :custom
   (delete-pair-blink-delay 0)
   :bind
-  (:map emacs-lisp-mode-map
+  (:map global-map
         ("M-_" . delete-pair)
         ("M-+" . kill-backward-up-list)
         ("s-r" . elpaca-rebuild)
@@ -333,6 +333,7 @@
 
 (use-package lispy
   :after define-repeat-map
+  :demand t
   :config
   (define-repeat-map structural-edit
     ("n" forward-list
