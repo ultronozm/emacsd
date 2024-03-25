@@ -688,6 +688,13 @@ of the preamble part of REGION-TEXT."
             (min (point) eol))))
     (kill-region (point) soft-eol)))
 
+(defun czm-tex-jump-back-with-breadcrumb ()
+  (interactive)
+  (save-excursion
+    (insert "<++>"))
+  (let ((this-command #'tp-down-list))
+    (tp-backward-down-list)))
+
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el"
                  :depth nil)
@@ -700,6 +707,7 @@ of the preamble part of REGION-TEXT."
         ("C-M-u" . tp-backward-up-list)
         ("M-u" . tp-up-list)
         ("C-M-g" . tp-down-list)
+        ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
         ("M-_" . tp-delete-pair)
         ("C-M-SPC" . tp-mark-sexp)
         ("C-M-k" . tp-kill-sexp)
