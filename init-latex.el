@@ -52,7 +52,8 @@
 	             (concat "\\\\"
 		                    (regexp-opt (append latex-metasection-list
 					                                     (mapcar #'car latex-section-alist)
-					                                     '("bibliography"))
+					                                     '("bibliography"
+                                            "begin{thebibliography"))
 				                              t))))
 
 (defun czm-widen-first (orig-fun &rest args)
@@ -219,7 +220,7 @@
 
 ;;  don't want foldout to include "bibliography"
 (defun czm-LaTeX-outline-level-advice (orig-fun &rest args)
-  (if (looking-at "\\\\bibliography") 1 (apply orig-fun args)))
+  (if (looking-at "\\\\bibliography\\|\\\\begin{thebibliography}") 1 (apply orig-fun args)))
 
 (defun my-preview-tailor-factor-function ()
   "ez"
