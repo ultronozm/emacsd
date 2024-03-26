@@ -255,24 +255,35 @@
   (setcdr other-window-repeat-map nil)
   (repeat-mode))
 
+(defun czm-fill-previous-paragraph ()
+  "Fill the previous paragraph."
+  (interactive)
+  (save-excursion
+    (previous-line)
+    (fill-paragraph)))
+
 (use-package define-repeat-map
   :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
-  :demand t)
+  :demand t
 
-(define-repeat-map paragraph-repeat-map
-  ("]" forward-paragraph
-   "}" forward-paragraph
-   "[" backward-paragraph
-   "{" backward-paragraph)
-  (:continue
-   "M-h" spw/mark-paragraph
-   "h" spw/mark-paragraph
-   "k" kill-paragraph
-   "w" kill-region
-   "M-w" kill-ring-save
-   "y" yank
-   "t" transpose-paragraphs))
-(repeat-mode 1)
+  :config
+  (define-repeat-map paragraph
+    ("]" forward-paragraph
+     "}" forward-paragraph
+     "[" backward-paragraph
+     "{" backward-paragraph)
+    (:continue
+     "M-h" spw/mark-paragraph
+     "h" spw/mark-paragraph
+     "k" kill-paragraph
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "C-/" undo
+     "t" transpose-paragraphs
+     "q" czm-fill-previous-paragraph))
+  (repeat-mode 1))
+
 
 ;;; ------------------------------ LISP ------------------------------
 
@@ -470,6 +481,7 @@ Interactively, prompt for WIDTH."
      "C-M-SPC" spw/outline-mark-subtree
      "w" kill-region
      "M-w" kill-ring-save
+     "C-/" undo
      "y" yank))
   (repeat-mode 1))
 
