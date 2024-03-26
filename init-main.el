@@ -450,7 +450,8 @@ Interactively, prompt for WIDTH."
      "q" outline-hide-sublevels
      "s" outline-show-subtree
      "t" outline-hide-body
-     "@" outline-mark-subtree
+     "@" outline-mark-subtree)
+    (:continue
      "C-M-SPC" spw/outline-mark-subtree
      "w" kill-region
      "M-w" kill-ring-save
