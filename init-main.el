@@ -760,36 +760,6 @@ Interactively, prompt for WIDTH."
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
-;; (use-package savehist
-;;   :ensure t
-;;   (completion-category-overrides '((file (styles basic partial-completion))))
-;;   :init
-;;   (savehist-mode))
-
-;; (use-package company
-;;   ;; :config (global-company-mode 1) ;; doesn't work in magit, for instance
-;;   :custom
-;;   (company-begin-commands '(self-insert-command))
-;;   (company-idle-delay 0.5) ;; how long to wait until popup.  Consider changing to 0.0?
-;;   (company-minimum-prefix-length 2)
-;;   (company-show-numbers t)
-;;   (company-tooltip-align-annotations t)
-;;   ;; (company-begin-commands nil) ;; uncomment to disable popup
-
-;;   ;; not using it at the moment because it doesn't seem to work well
-;;   ;; :config (global-company-mode)
-;;   :bind
-;;   (:map company-active-map
-;;         ("C-n". company-select-next)
-;;         ("C-p". company-select-previous)
-;;         ("M-<". company-select-first)
-;;         ("M->". company-select-last))
-;;   ;; (:map company-mode-map
-;;   ;;       ("<tab>". tab-indent-or-complete)
-;;   ;;       ("TAB". tab-indent-or-complete))
-;;   )
-
-
 (use-package corfu
   ;; Optional customizations
   :custom
