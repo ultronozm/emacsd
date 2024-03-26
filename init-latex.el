@@ -182,6 +182,25 @@
   (TeX-source-correlate-mode)
   (advice-add 'TeX-view :around #'czm-widen-first) ; fixes bug in TeX-view
 
+  :config
+  ;; (require 'texmathp)
+  (defun LaTeX-skip-verbatim (orig-fun &rest args)
+    (if (or (eq major-mode 'latex-mode)
+            (eq major-mode 'LaTeX-mode))
+        (let ((n 100))
+          (apply orig-fun args)
+          (while (and (LaTeX-verbatim-p) (> n 0))
+            (setq n (- n 1))
+            (apply orig-fun args)))
+      (apply orig-fun args)))
+
+  (dolist (f '(outline-next-heading
+               outline-previous-heading
+               outline-up-heading
+               outline-forward-same-level
+               outline-backward-same-level))
+    (advice-add f :around #'LaTeX-skip-verbatim))
+
   :custom
   (TeX-auto-save t)
   (TeX-parse-self t)
@@ -222,55 +241,6 @@
 
 ;; (spw/remap-mark-command 'sp-mark-sexp LaTeX-mode-map)
 
-(use-package spout
-  :ensure (:host github :repo "ultronozm/spout.el"
-                 :depth nil)
-  :after latex
-  :hook
-  (LaTeX-mode . spout-mode)
-  :custom
-  (spout-keys
-   '(("n" outline-next-visible-heading)
-     ("p" outline-previous-visible-heading)
-     ("u" outline-up-heading)
-     ("f" outline-forward-same-level)
-     ("b" outline-backward-same-level)
-     ("M-<left>" outline-promote left-word)
-     ("M-<right>" outline-demote right-word)
-     ;; ("<" beginning-of-buffer)
-     ;; (">" end-of-buffer)
-     ("<up>" outline-move-subtree-up windmove-up)
-     ("<down>" outline-move-subtree-down windmove-down)
-     ("s" outline-show-subtree)
-     ("d" outline-hide-subtree)
-     ("a" outline-show-all)
-     ("q" outline-hide-sublevels)
-     ("t" outline-hide-body)
-     ("k" outline-show-branches)
-     ("l" outline-hide-leaves)
-     ("i" outline-insert-heading)
-     ("o" outline-hide-other)
-     ("@" outline-mark-subtree)
-     ("z" foldout-zoom-subtree)
-     ("x" foldout-exit-fold)))
-  :config
-  (require 'texmathp)
-  (defun LaTeX-skip-verbatim (orig-fun &rest args)
-    (if (or (eq major-mode 'latex-mode)
-            (eq major-mode 'LaTeX-mode))
-        (let ((n 100))
-          (apply orig-fun args)
-          (while (and (LaTeX-verbatim-p) (> n 0))
-            (setq n (- n 1))
-            (apply orig-fun args)))
-      (apply orig-fun args)))
-  (dolist (f '(outline-next-heading
-               outline-previous-heading
-               outline-up-heading
-               outline-forward-same-level
-               outline-backward-same-level))
-    (advice-add f :around #'LaTeX-skip-verbatim)))
-
 (use-package czm-tex-util
   :ensure (:host github :repo "ultronozm/czm-tex-util.el"
                  :depth nil)
@@ -304,7 +274,6 @@
 
 (advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
 
-
 (defun my-yank-after-advice (&rest _)
   "Fold any yanked ref or eqref."
   (when (and (or (eq major-mode 'latex-mode)
@@ -315,8 +284,6 @@
     (czm-tex-fold-macro-previous-word)))
 
 (advice-add 'yank :after #'my-yank-after-advice)
-
-;;
 
 (use-package czm-tex-jump
   :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git"

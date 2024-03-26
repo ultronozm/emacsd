@@ -271,48 +271,10 @@
         ("M-_" . delete-pair)
         ("M-+" . kill-backward-up-list)
         ("s-r" . elpaca-rebuild)
-        ("M-u" . up-list)))
-
-;; (use-package lispy
-;;   :config
-;;   (setcdr lispy-mode-map nil)
-;;   (let ((map lispy-mode-map))
-;;     (lispy-define-key map ">" 'lispy-slurp-or-barf-right)
-;;     (lispy-define-key map "<" 'lispy-slurp-or-barf-left)
-;;     (lispy-define-key map "/" 'lispy-splice)
-;;     (lispy-define-key map "+" 'lispy-join)
-;;     (lispy-define-key map "c" 'lispy-clone)
-;;     (lispy-define-key map ";" 'lispy-comment)
-;;     (lispy-define-key map "o" 'lispy-oneline)
-;;     (lispy-define-key map "m" 'lispy-multiline)
-;;     (lispy-define-key map "SPC" 'lispy-space)
-;;     (lispy-define-key map "i" 'lispy-tab)
-;;     (define-key map (kbd "C-M-j") 'lispy-split)
-;;     ;; (define-key map (kbd "M-+") 'lispy-raise)
-;;     (define-key map (kbd "M-+") nil)
-;;     (define-key map (kbd "\"") 'lispy-quotes)
-;;     (define-key map (kbd "M-1") 'lispy-describe-inline)
-;;     (define-key map (kbd "M-2") 'lispy-arglist-inline)
-
-;;     ;; (lispy-define-key map "w" 'lispy-move-up)
-;;     ;; (lispy-define-key map "s" 'lispy-move-down)
-;;     ;; (lispy-define-key map "r" 'lispy-raise)
-;;     ;; (lispy-define-key map "A" 'lispy-beginning-of-defun)
-;;     ;; (lispy-define-key map "C" 'lispy-convolute)
-;;     ;; (lispy-define-key map "X" 'lispy-convolute-left)
-;;     ;; (lispy-define-key map "q" 'lispy-ace-paren)
-;;     ;; (lispy-define-key map "-" 'lispy-ace-subword)
-;;     ;; (lispy-define-key map "e" 'lispy-eval)
-;;     map)
-;;   (defun czm-conditionally-enable-lispy ()
-;;     (when (eq this-command 'eval-expression)
-;;       (lispy-mode 1)))
-;;   ;; :bind
-;;   ;; ;; (("C-M-K" . lispy-kill))
-;;   ;; (("C-M-k" . kill-sexp))
-;;   :hook
-;;   (emacs-lisp-mode  . lispy-mode)
-;;   (minibuffer-setup . czm-conditionally-enable-lispy))
+        ("M-u" . up-list))
+  (:map emacs-lisp-mode-map
+        ("M-1" . lispy-describe-inline)
+        ("M-2" . lispy-arglist-inline)))
 
 (defun czm-deactivate-mark-interactively ()
   "Deactivate the mark interactively."
@@ -371,7 +333,9 @@
      "c" lispy-clone
      "C-M-SPC" spw/mark-sexp
      "RET" newline-and-indent
-     "i" lispy-tab))
+     "i" lispy-tab
+     "<up>" outline-move-subtree-up
+     "<down>" outline-move-subtree-down))
   (repeat-mode 1)
 
   :commands (lispy-comment)
@@ -379,6 +343,17 @@
   :bind
   (:map emacs-lisp-mode-map
         (";" . czm-lispy-comment-maybe)))
+
+;;     ;; (lispy-define-key map "w" 'lispy-move-up)
+;;     ;; (lispy-define-key map "s" 'lispy-move-down)
+;;     ;; (lispy-define-key map "A" 'lispy-beginning-of-defun)
+;;     ;; (lispy-define-key map "C" 'lispy-convolute)
+;;     ;; (lispy-define-key map "X" 'lispy-convolute-left)
+;;     ;; (lispy-define-key map "q" 'lispy-ace-paren)
+;;     ;; (lispy-define-key map "-" 'lispy-ace-subword)
+;;     ;; (lispy-define-key map "e" 'lispy-eval)
+;;   ;; ;; (("C-M-K" . lispy-kill))
+;;   ;; (("C-M-k" . kill-sexp))
 
 (defun czm-edebug-eval-hook ()
   (lispy-mode 0)
@@ -449,38 +424,19 @@ Interactively, prompt for WIDTH."
 (use-package outline
   :ensure nil
   :after define-repeat-map
-  ;; :bind (:map outline-navigation-repeat-map
-  ;;             ("C-x" . foldout-exit-fold)
-  ;;             ("x" . foldout-exit-fold)
-  ;;             ("C-z" . foldout-zoom-subtree)
-  ;;             ("z" . foldout-zoom-subtree)
-  ;;             ("C-a" . outline-show-all)
-  ;;             ("a" . outline-show-all)
-  ;;             ("C-c" . outline-hide-entry)
-  ;;             ("c" . outline-hide-entry)
-  ;;             ("C-d" . outline-hide-subtree)
-  ;;             ("d" . outline-hide-subtree)
-  ;;             ("C-e" . outline-show-entry)
-  ;;             ("e" . outline-show-entry)
-  ;;             ("TAB" . outline-show-children)
-  ;;             ("C-k" . outline-show-branches)
-  ;;             ("k" . outline-show-branches)
-  ;;             ("C-l" . outline-hide-leaves)
-  ;;             ("l" . outline-hide-leaves)
-  ;;             ("RET" . outline-insert-heading)
-  ;;             ("C-o" . outline-hide-other)
-  ;;             ("o" . outline-hide-other)
-  ;;             ("C-q" . outline-hide-sublevels)
-  ;;             ("q" . outline-hide-sublevels)
-  ;;             ("C-s" . outline-show-subtree)
-  ;;             ("s" . outline-show-subtree)
-  ;;             ("C-t" . outline-hide-body)
-  ;;             ("t" . outline-hide-body)
-  ;;             ("@" . outline-mark-subtree))
   :config
-  ;; (repeatize 'outline-navigation-repeat-map)
-  (define-repeat-map outline-navigation-repeat-map
-    ("x" foldout-exit-fold
+  (spw/remap-mark-command #'outline-mark-subtree)
+  (define-repeat-map outline-repeat-map
+    ("n" outline-next-heading
+     "p" outline-previous-heading
+     "u" outline-up-heading
+     "f" outline-forward-same-level
+     "b" outline-backward-same-level
+     "<left>" outline-promote
+     "<right>" outline-demote
+     "<up>" outline-move-subtree-up
+     "<down>" outline-move-subtree-down
+     "x" foldout-exit-fold
      "z" foldout-zoom-subtree
      "a" outline-show-all
      "c" outline-hide-entry
@@ -494,8 +450,12 @@ Interactively, prompt for WIDTH."
      "q" outline-hide-sublevels
      "s" outline-show-subtree
      "t" outline-hide-body
-     "@" outline-mark-subtree)))
-
+     "@" outline-mark-subtree
+     "C-M-SPC" spw/outline-mark-subtree
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank))
+  (repeat-mode 1))
 
 (set-face-attribute 'default nil :height 150)
 
