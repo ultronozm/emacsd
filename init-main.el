@@ -259,6 +259,21 @@
   :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
   :demand t)
 
+(define-repeat-map paragraph-repeat-map
+  ("]" forward-paragraph
+   "}" forward-paragraph
+   "[" backward-paragraph
+   "{" backward-paragraph)
+  (:continue
+   "M-h" spw/mark-paragraph
+   "h" spw/mark-paragraph
+   "k" kill-paragraph
+   "w" kill-region
+   "M-w" kill-ring-save
+   "y" yank
+   "t" transpose-paragraphs))
+(repeat-mode 1)
+
 ;;; ------------------------------ LISP ------------------------------
 
 (use-package emacs
