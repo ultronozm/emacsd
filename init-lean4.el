@@ -20,7 +20,6 @@
 (use-package lean4-mode
   :ensure (:host github :repo "ultronozm/lean4-mode"
                  :files ("*.el" "data"))
-  :hook (lean4-mode . spout-mode)
   :hook (lean4-mode . czm-lean4-set-imenu-generic-expression)
   :commands (lean4-mode)
   :custom
