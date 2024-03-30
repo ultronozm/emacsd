@@ -1482,7 +1482,7 @@ The list is ordered from bottom to top."
 (use-package calc
   :ensure nil
   :custom
-  (calc-kill-line-numbering t))
+  (calc-kill-line-numbering nil))
 
 (defun czm-calc-grab-TeX-region (beg end arg)
   (interactive "r\nP")
