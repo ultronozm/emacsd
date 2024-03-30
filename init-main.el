@@ -1162,7 +1162,26 @@ The list is ordered from bottom to top."
            (progn
              (insert "#+end_src")
              (newline))))
-        ("C-c p" . czm-org-edit-src)))
+        ("C-c p" . czm-org-edit-src)
+        ("M-{" . org-backward-paragraph)
+        ("M-}" . org-forward-paragraph))
+  :config
+  (define-repeat-map org-paragraph
+    ("]" org-forward-paragraph
+     "}" org-forward-paragraph
+     "[" org-backward-paragraph
+     "{" org-backward-paragraph)
+    (:continue
+     "M-h" spw/mark-paragraph
+     "h" spw/mark-paragraph
+     "k" kill-paragraph
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "C-/" undo
+     "t" transpose-paragraphs
+     "q" czm-fill-previous-paragraph))
+  (repeat-mode 1))
 
 (defun czm-new-tmp-org ()
   "Create new temporary org buffer."
