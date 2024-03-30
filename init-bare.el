@@ -348,7 +348,7 @@ pushes the mark somewhere useful."
                ;; "s-l" ; goto-line
 	              "s-m"
 	              "s-u"
-	              "s-q"
+	              ;; "s-q"
                ;; s-t
 	              "s-x"
                ;; s-w
