@@ -407,8 +407,7 @@
 	       (forward-char)
         (delete-char 2)
 	       (backward-char)
-	       (insert "''"))
-      ))))
+	       (insert "''"))))))
 
 (use-package emacs
   :ensure nil
