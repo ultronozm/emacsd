@@ -1509,3 +1509,13 @@ The value of `calc-language` is restored after BODY has been processed."
         (if-let ((src-ovs (overlay-get o 'flymake-eol-source-overlays)))
             (overlay-put o 'before-string (flymake--eol-overlay-summary src-ovs))
           (delete-overlay o))))))
+
+(use-package diminish
+  :config
+  (diminish 'copilot-mode "Co")
+  (diminish 'abbrev-mode "Ab")
+  (diminish 'visual-line-mode)
+  (diminish 'outline-minor-mode)
+  (diminish 'which-key-mode)
+  (diminish 'buffer-face-mode)
+  (diminish 'eldoc-mode))
