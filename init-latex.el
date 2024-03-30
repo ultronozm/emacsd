@@ -166,7 +166,7 @@
         ("s-c" . preview-clearout-at-point)
         ("s-q" . LaTeX-fill-buffer)
 
-        ("C-c C-l" . latex-math-from-calc)
+        ("C-c m" . latex-math-from-calc)
         ("C-c C-g" . czm-latex-calc-grab)
         ("C-c C-n" . nil)
                                         ; TeX-normal-mode
