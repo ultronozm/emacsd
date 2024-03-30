@@ -147,6 +147,7 @@
   (ring-bell-function #'ignore)
   (initial-scratch-message nil)
   (inhibit-startup-message t)
+  (echo-keystrokes 0.01)
   (mark-even-if-inactive nil)
   (tramp-default-method "ssh")
   (tramp-ssh-extra-args (list "-i" "~/.ssh/"))
