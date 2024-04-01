@@ -247,6 +247,11 @@
                  :depth nil)
   :after latex)
 
+(defun czm-tex-quote-advice (&rest _)
+  (when (and TeX-fold-mode
+             (looking-back "``\\(.*?\\)''"))
+    (czm-tex-fold-quotes (match-beginning 0) (match-end 0))))
+
 (use-package czm-tex-fold
   :ensure (:host github :repo "ultronozm/czm-tex-fold.el"
                  :depth nil)
@@ -259,6 +264,9 @@
   :config
   (czm-tex-fold-set-defaults)
   (czm-tex-fold-install)
+
+  (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
+
   :custom
   (czm-tex-fold-bib-file my-master-bib-file)
   :hook
