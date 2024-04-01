@@ -79,3 +79,17 @@
   :custom
   (publish-repo-root "~/math")
   (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
+
+(defun czm-search-my-repos ()
+  (interactive)
+  ;; files: all elisp files in my repos
+  (let ((files (mapcan
+                (lambda (name)
+                  (directory-files-recursively
+                   (concat user-emacs-directory
+                           (file-name-as-directory "elpaca")
+                           (file-name-as-directory "repos")
+                           name)
+                   "\\.el\\'"))
+                czm-repos)))
+    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder files nil)))
