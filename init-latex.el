@@ -436,6 +436,10 @@
       ;; (czm-preview-timer-toggle)
       )))
 
+(defun czm-tex-not-in-comment ()
+  "Return t if point is not in a comment."
+  (not (tp--comment)))
+
 (use-package dynexp
   :ensure (:host github :repo "ultronozm/dynexp.el"
                  :depth nil)
@@ -446,7 +450,10 @@
         ("TAB" . dynexp-next))
   :config
   (with-eval-after-load 'latex
-    (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el")))
+    (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el"))
+
+  :custom
+  (dynexp-expand-here-p #'czm-tex-not-in-comment))
 
 (use-package czm-tex-edit
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el"
