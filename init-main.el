@@ -282,7 +282,8 @@
      "y" yank
      "C-/" undo
      "t" transpose-paragraphs
-     "q" czm-fill-previous-paragraph))
+     "q" czm-fill-previous-paragraph
+     "C-l" recenter-top-bottom))
   (repeat-mode 1))
 
 
@@ -1544,9 +1545,12 @@ The value of `calc-language` is restored after BODY has been processed."
           (delete-overlay o))))))
 
 (use-package diminish
+  :demand t
   :config
   (diminish 'copilot-mode "Co")
   (diminish 'abbrev-mode "Ab")
+  (diminish 'flymake-mode "FlyM")
+  (diminish 'lean4-mode)
   (diminish 'visual-line-mode)
   (diminish 'outline-minor-mode)
   (diminish 'which-key-mode)
