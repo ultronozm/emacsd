@@ -436,10 +436,6 @@
       ;; (czm-preview-timer-toggle)
       )))
 
-(defun czm-tex-not-in-comment ()
-  "Return t if point is not in a comment."
-  (not (tp--comment)))
-
 (use-package dynexp
   :ensure (:host github :repo "ultronozm/dynexp.el"
                  :depth nil)
@@ -450,10 +446,7 @@
         ("TAB" . dynexp-next))
   :config
   (with-eval-after-load 'latex
-    (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el"))
-
-  :custom
-  (dynexp-expand-here-p #'czm-tex-not-in-comment))
+    (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el")))
 
 (use-package czm-tex-edit
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el"
@@ -697,6 +690,12 @@ of the preamble part of REGION-TEXT."
   :config
   (spw/remap-mark-command 'tp-mark-sexp LaTeX-mode-map)
 
+  (defun czm-tp-expand-abbrev-advice (orig-fun &rest args)
+    (unless (tp--comment)
+      (apply orig-fun args)))
+
+  (advice-add 'expand-abbrev :around #'czm-tp-expand-abbrev-advice)
+
   (define-repeat-map tp-structural-edit
     ("n" tp-forward-list
      "p" tp-backward-list
@@ -725,53 +724,5 @@ of the preamble part of REGION-TEXT."
      "c" lispy-clone
      "C-M-SPC" spw/tp-mark-sexp
      "RET" TeX-newline))
-  (repeat-mode 1)
-
-  ;; (dolist (sym '(kill-region
-  ;;                kill-ring-save
-  ;;                spw/tp-mark-sexp
-  ;;                yank
-  ;;                czm-deactivate-mark-interactively
-  ;;                TeX-newline
-  ;;                tp-burp-left
-  ;;                tp-burp-right
-  ;;                tp-delete-pair
-  ;;                tp-raise-sexp
-  ;;                tp-kill-sexp
-  ;;                tp-forward-sexp
-  ;;                tp-backward-sexp
-  ;;                transpose-sexps
-  ;;                beginning-of-defun
-  ;;                end-of-defun))
-  ;;   (defalias (intern (format "tp-structural-%s" sym))
-  ;;     sym))
-
-  ;; (defvar-keymap tp-structural-edit-map
-  ;;   :doc "Structural editing keymap"
-  ;;   :repeat t
-  ;;   "n" 'tp-forward-list
-  ;;   "p" 'tp-backward-list
-  ;;   "u" 'tp-backward-up-list
-  ;;   "M-u" 'tp-up-list
-  ;;   "g" 'tp-down-list
-  ;;   "f" 'tp-structural-tp-forward-sexp
-  ;;   "b" 'tp-structural-tp-backward-sexp
-  ;;   "a" 'tp-structural-beginning-of-defun
-  ;;   "e" 'tp-structural-end-of-defun
-  ;;   "k" 'tp-structural-tp-kill-sexp
-  ;;   ">" 'tp-structural-tp-burp-right
-  ;;   "<" 'tp-structural-tp-burp-left
-  ;;   "]" 'tp-structural-tp-burp-right
-  ;;   "[" 'tp-structural-tp-burp-left
-  ;;   "C-/" 'tp-structural-undo
-  ;;   "/" 'tp-structural-tp-delete-pair
-  ;;   "r" 'tp-structural-tp-raise-sexp
-  ;;   "t" 'tp-transpose-sexps
-  ;;   "w" 'tp-structural-kill-region
-  ;;   "M-w" 'tp-structural-kill-ring-save
-  ;;   "y" 'tp-structural-yank
-  ;;   "SPC" 'tp-structural-spw/tp-mark-sexp
-  ;;   "d" 'tp-structural-czm-deactivate-mark-interactively
-  ;;   "RET" 'tp-structural-TeX-newline)
-  )
+  (repeat-mode 1))
 
