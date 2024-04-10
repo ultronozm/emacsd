@@ -224,7 +224,7 @@
 
 (defun my-preview-tailor-factor-function ()
   "ez"
-  (if (string-suffix-p ".lean" (buffer-file-name)) 0.6 1.0))
+  (if (string-suffix-p ".lean" (buffer-file-name)) 0.6 0.833))
 
 (use-package preview-tailor
   :ensure (:host github :repo "ultronozm/preview-tailor.el"
