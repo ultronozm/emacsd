@@ -3,7 +3,7 @@
 (defun czm-tex-buffer-face ()
   (interactive)
   (setq buffer-face-mode-face
-        '(:height 260
+        '(:height 216
                   :width normal
                   :family
                   ;; "Monaco"
