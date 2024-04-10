@@ -308,6 +308,7 @@
   :custom
   (czm-tex-ref-master-bib-file my-master-bib-file)
   (czm-tex-ref-rearrange-bib-entries t)
+  (czm-tex-ref-labelable-environments '("align" "gather" "flalign" "multline" "lemma" "exercise" "example" "proposition" "corollary" "remark" "definition" "theorem" "eqnarray" "equation" "conjecture" "question" "figure" "table" "problem" "fact" "rem" "prop"))
   :bind
   (:map global-map
 	       ("C-c 0" . czm-tex-ref-bib))
