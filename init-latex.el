@@ -118,6 +118,7 @@
   :ensure
   (auctex
    :host nil :repo "https://git.savannah.gnu.org/git/auctex.git"
+   :depth nil
    :pre-build (("./autogen.sh")
                ("./configure"
                 "--without-texmf-dir"
