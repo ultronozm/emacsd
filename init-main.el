@@ -1,66 +1,18 @@
 ;;; -*- lexical-binding: t; -*-
 
-;;; ------------------------------ ELPACA ------------------------------
-
-(defvar elpaca-installer-version 0.7)
-(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
-(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
-(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1
-                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-       (build (expand-file-name "elpaca/" elpaca-builds-directory))
-       (order (cdr elpaca-order))
-       (default-directory repo))
-  (add-to-list 'load-path (if (file-exists-p build) build repo))
-  (unless (file-exists-p repo)
-    (make-directory repo t)
-    (when (< emacs-major-version 28) (require 'subr-x))
-    (condition-case-unless-debug err
-        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                 ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                 ,@(when-let ((depth (plist-get order :depth)))
-                                                     (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                 ,(plist-get order :repo) ,repo))))
-                 ((zerop (call-process "git" nil buffer t "checkout"
-                                       (or (plist-get order :ref) "--"))))
-                 (emacs (concat invocation-directory invocation-name))
-                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                 ((require 'elpaca))
-                 ((elpaca-generate-autoloads "elpaca" repo)))
-            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
-          (error "%s" (with-current-buffer buffer (buffer-string))))
-      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
-  (unless (require 'elpaca-autoloads nil t)
-    (require 'elpaca)
-    (elpaca-generate-autoloads "elpaca" repo)
-    (load "./elpaca-autoloads")))
-(add-hook 'after-init-hook #'elpaca-process-queues)
-(elpaca `(,@elpaca-order))
-
-(when (eq window-system 'w32)
-  (elpaca-no-symlink-mode))
-
-;; Install use-package support
-(elpaca elpaca-use-package
-  ;; Enable :elpaca use-package keyword.
-  (elpaca-use-package-mode)
-  ;; Assume :ensure t unless otherwise specified.
-  (setq use-package-always-ensure t)
-)
-
-(elpaca-wait)
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;; Comment/uncomment this line to enable MELPA Stable if desired.  See `package-archive-priorities`
+;; and `package-pinned-packages`. Most users will not need or want to do this.
+;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(package-initialize)
 
 (use-package exec-path-from-shell
+  :ensure
   :demand
   :if (memq window-system '(mac ns))
   :config
   (exec-path-from-shell-initialize))
-
-(elpaca-wait)
 
 ;; (use-package org
 ;;   :ensure `(org
@@ -88,37 +40,22 @@
 ;;                "(provide 'org-version)\n")))
 ;;           :pin nil))
 
-(elpaca-wait)
-
-;; This was needed for a bit, but suddenly seems to break things.  Hmm.
-
-;; (defun +elpaca-unload-seq (e) "Unload seq before continuing the elpaca build, then continue to build the recipe E."
-;;        (and (featurep 'seq) (unload-feature 'seq t))
-;;        (elpaca--continue-build e))
-;; (elpaca `(seq :build ,(append (butlast (if (file-exists-p (expand-file-name "seq" elpaca-builds-directory))
-;;                                            elpaca--pre-built-steps
-;;                                          elpaca-build-steps))
-;;                               (list '+elpaca-unload-seq 'elpaca--activate-package))))
-
-(elpaca-wait)
-
 
 ;;; ------------------------------ GENERAL ------------------------------
 
 (setq custom-file (concat user-emacs-directory "init-custom.el"))
 ;; (load custom-file)
 
-(when (file-exists-p (concat user-emacs-directory "init-personal.el"))
-  (load (concat user-emacs-directory "init-personal.el")))
-
 (use-package avy
+  :ensure t
+  :demand
   :bind
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
 (use-package czm-misc
-  :ensure (:host github :repo "ultronozm/czm-misc.el"
-                 :depth nil)
+  :after avy
+  :vc (:url "https://github.com/ultronozm/czm-misc.el")
   :bind (("s-@" . czm-misc-split-window-below-variant)
          ("s-#" . czm-misc-split-window-right-variant)
          ("s-4" . czm-misc-double-split-window-below-and-delete)
@@ -217,6 +154,7 @@
   (prog-mode . outline-minor-mode))
 
 (use-package aggressive-indent
+  :ensure t
   :hook
   (emacs-lisp-mode . aggressive-indent-mode)
   (LaTeX-mode . aggressive-indent-mode))
@@ -264,7 +202,8 @@
     (fill-paragraph)))
 
 (use-package define-repeat-map
-  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
+  :ensure
+  :vc (:url "https://tildegit.org/acdw/define-repeat-map.el")
   :demand t
 
   :config
@@ -298,7 +237,6 @@
   (:map global-map
         ("M-_" . delete-pair)
         ("M-+" . kill-backward-up-list)
-        ("s-r" . elpaca-rebuild)
         ("M-u" . up-list))
   (:map emacs-lisp-mode-map
         ("M-1" . lispy-describe-inline)
@@ -388,7 +326,7 @@
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
 (use-package info-colors
-  :ensure (:host github :repo "ubolonton/info-colors")
+  :vc (:url "ubolonton/info-colors")
   :hook (Info-selection . info-colors-fontify-node))
 
 (use-package expand-region
@@ -823,35 +761,31 @@ Interactively, prompt for WIDTH."
 ;;; ------------------------------ AI ------------------------------
 
 (use-package copilot
-  :ensure (:host github
-                 :repo "zerolfx/copilot.el"
-                 ;; :repo "ultronozm/copilot.el"
-                 :files ("*.el" "dist")
-                 :depth nil)
-  :hook
-  ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
-  (emacs-lisp-mode . (lambda () (setq tab-width 1)))
-  (lean4-mode . (lambda () (setq tab-width 2)))
+  :vc (:url "https://github.com/zerolfx/copilot.el"))
+:hook
+((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
+(emacs-lisp-mode . (lambda () (setq tab-width 1)))
+(lean4-mode . (lambda () (setq tab-width 2)))
 
-  :config
-  (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
+:config
+(add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
 
-  :custom
-  (copilot-indent-offset-warning-disable t)
-  :bind
-  (:map global-map
-        ("H-x" . copilot-mode))
-  (:map copilot-completion-map
-        ("§" . copilot-accept-completion)
-        ("M-§" . copilot-accept-completion-by-word)
-        ("C-§" . copilot-accept-completion-by-line)
-        ("C-M-§" . copilot-accept-completion-by-paragraph)
-        ("`" . copilot-accept-completion)
-        ("M-`" . copilot-accept-completion-by-word)
-        ("C-`" . copilot-accept-completion-by-line)
-        ("C-M-`" . copilot-accept-completion-by-paragraph)
-        ("C-M-<down>" . copilot-next-completion)
-        ("C-M-<up>" . copilot-previous-completion)))
+:custom
+(copilot-indent-offset-warning-disable t)
+:bind
+(:map global-map
+      ("H-x" . copilot-mode))
+(:map copilot-completion-map
+      ("§" . copilot-accept-completion)
+      ("M-§" . copilot-accept-completion-by-word)
+      ("C-§" . copilot-accept-completion-by-line)
+      ("C-M-§" . copilot-accept-completion-by-paragraph)
+      ("`" . copilot-accept-completion)
+      ("M-`" . copilot-accept-completion-by-word)
+      ("C-`" . copilot-accept-completion-by-line)
+      ("C-M-`" . copilot-accept-completion-by-paragraph)
+      ("C-M-<down>" . copilot-next-completion)
+      ("C-M-<up>" . copilot-previous-completion)))
 
 (use-package gptel
   :after exec-path-from-shell
@@ -885,19 +819,18 @@ Interactively, prompt for WIDTH."
    gptel-backend gptel--openai))
 
 (use-package ai-org-chat
-  :ensure (:host github :repo "ultronozm/ai-org-chat.el"
-                 :depth nil)
-  :bind
-  (:map global-map
-        ("s-/" . ai-org-chat-new))
-  (:map ai-org-chat-minor-mode
-        ("s-<return>" . ai-org-chat-respond)
-        ("C-c n" . ai-org-chat-branch))
-  :commands (ai-org-chat-minor-mode) ; for manual activation
-  :custom
-  (ai-org-chat-user-name my-first-name)
-  (ai-org-chat-dir my-tmp-gpt-dir)
-  (ai-org-chat-system-message nil))
+:vc (:url "https://github.com/ultronozm/ai-org-chat.el")
+:bind
+(:map global-map
+      ("s-/" . ai-org-chat-new))
+(:map ai-org-chat-minor-mode
+      ("s-<return>" . ai-org-chat-respond)
+      ("C-c n" . ai-org-chat-branch))
+:commands (ai-org-chat-minor-mode) ; for manual activation
+:custom
+(ai-org-chat-user-name my-first-name)
+(ai-org-chat-dir my-tmp-gpt-dir)
+(ai-org-chat-system-message nil))
 ;; (ai-org-chat-prompt-preamble
 ;;    "You are a brilliant and helpful assistant.
 
@@ -1106,8 +1039,7 @@ DIR must include a .project file to be considered a project."
     (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
 
 (use-package czm-spell
-  :ensure (:host github :repo "ultronozm/czm-spell.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-spell.el")
   :after latex
   :bind
   ("s-;" . czm-spell-then-abbrev))
@@ -1493,8 +1425,7 @@ The list is ordered from bottom to top."
         (czm-cmake-build--invoke-eshell-run this-run-config)))))
 
 (use-package cmake-build
-  :ensure (:host github :repo "ultronozm/cmake-build.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/cmake-build.el")
   :bind (("s-m m" . cmake-build-menu)
          ("s-m 1" . cmake-build-set-cmake-profile)
          ("s-m 2" . cmake-build-clear-cache-and-configure)
@@ -1514,9 +1445,7 @@ The list is ordered from bottom to top."
   (cmake-build-options "-j 8 --verbose"))
 
 (use-package czm-cpp
-  :ensure (:host github :repo "ultronozm/czm-cpp.el"
-                 :files ("*.el" "template")
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-cpp.el")
   :custom
   (czm-cpp-scratch-directory my-tmp-cpp-dir))
 

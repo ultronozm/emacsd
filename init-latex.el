@@ -115,20 +115,7 @@
     (previous-error arg)))
 
 (use-package latex
-  :ensure
-  (auctex
-   :host nil :repo "https://git.savannah.gnu.org/git/auctex.git"
-   :depth nil
-   :pre-build (("./autogen.sh")
-               ("./configure"
-                "--without-texmf-dir"
-                "--with-packagelispdir=./"
-                "--with-packagedatadir=./"
-                "--with-lispdir=.")
-               ("make"))
-   :build (:not elpaca--compile-info) ;; Make will take care of this step
-   :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
-   :version (lambda (_) (require 'tex-site) AUCTeX-version))
+
   ;; (auctex
   ;;  :files
   ;;  ("*.el" "*.info" "dir" "doc" "etc" "images" "latex" "style")
@@ -141,10 +128,6 @@
   ;;   ("make" "install")))
 
   :demand                               ; otherwise, madness ensues.
-
-  :config
-  (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
-  (setq TeX-lisp-directory TeX-data-directory)
 
   (add-to-list 'TeX-file-extensions "tex\\.~[0-9a-f]+~")
 
@@ -229,8 +212,7 @@
   (if (string-suffix-p ".lean" (buffer-file-name)) 0.6 0.833))
 
 (use-package preview-tailor
-  :ensure (:host github :repo "ultronozm/preview-tailor.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/preview-tailor.el")
   :after latex
   :config
   (preview-tailor-init)
@@ -245,8 +227,7 @@
 ;; (spw/remap-mark-command 'sp-mark-sexp LaTeX-mode-map)
 
 (use-package czm-tex-util
-  :ensure (:host github :repo "ultronozm/czm-tex-util.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-tex-util.el")
   :after latex)
 
 (defun czm-tex-quote-advice (&rest _)
@@ -255,8 +236,7 @@
     (czm-tex-fold-quotes (match-beginning 0) (match-end 0))))
 
 (use-package czm-tex-fold
-  :ensure (:host github :repo "ultronozm/czm-tex-fold.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-tex-fold.el")
   :demand ; otherwise, this doesn't work until the second time you
                                         ; open a .tex file.  but it needs to be loaded after auctex.
   :bind
@@ -297,16 +277,14 @@
 (advice-add 'yank :after #'my-yank-after-advice)
 
 (use-package czm-tex-jump
-  :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git"
-                 :depth nil)
+  :vc (:url "https://github.com/https://github.com/ultronozm/czm-tex-jump.el.git")
   ;; :after avy
   :bind
   (:map LaTeX-mode-map
         ("s-r" . czm-tex-jump)))
 
 (use-package czm-tex-ref
-  :ensure (:host github :repo "ultronozm/czm-tex-ref.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-tex-ref.el")
   :custom
   (czm-tex-ref-master-bib-file my-master-bib-file)
   (czm-tex-ref-rearrange-bib-entries t)
@@ -421,7 +399,7 @@
 	       (insert "''"))))))
 
 (use-package emacs
-  :ensure nil
+  :vc nil
   :after flycheck attrap
   :config
   (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer)))
@@ -448,8 +426,7 @@
       )))
 
 (use-package dynexp
-  :ensure (:host github :repo "ultronozm/dynexp.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/dynexp.el")
   :demand ; but after auctex
   :bind
   (:map LaTeX-mode-map
@@ -460,8 +437,7 @@
     (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el")))
 
 (use-package czm-tex-edit
-  :ensure (:host github :repo "ultronozm/czm-tex-edit.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-tex-edit.el")
   :after latex dynexp
   :demand ; should come after latex and dynexp
   :bind
@@ -492,14 +468,12 @@
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
 (use-package czm-tex-compile
-  :ensure (:host github :repo "ultronozm/czm-tex-compile.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-tex-compile.el")
   :bind
   ("C-c k" . czm-tex-compile-toggle))
 
 (use-package czm-preview
-  :ensure (:host github :repo "ultronozm/czm-preview.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-preview.el")
   :after latex
   :bind
   (:map LaTeX-mode-map
@@ -577,8 +551,7 @@ Otherwise, return nil."
 
 (use-package library
   :after latex czm-tex-util
-  :ensure (:host github :repo "ultronozm/library.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/library.el")
   :custom
   (library-pdf-directory my-pdf-folder)
   (library-bibtex-file my-master-bib-file)
@@ -675,8 +648,7 @@ of the preamble part of REGION-TEXT."
     (tp-backward-down-list)))
 
 (use-package tex-parens
-  :ensure (:host github :repo "ultronozm/tex-parens.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/tex-parens.el")
   :bind
   (:map LaTeX-mode-map
         ("C-M-f" . tp-forward-sexp)
