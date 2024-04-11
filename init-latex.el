@@ -146,6 +146,8 @@
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
   (setq TeX-lisp-directory TeX-data-directory)
 
+  (add-to-list 'TeX-file-extensions "tex\\.~[0-9a-f]+~")
+
   :mode ("\\.tex\\'" . LaTeX-mode)
   
   :hook
@@ -512,6 +514,7 @@
      "\\[ latex \\]\\*\\(<\\([^>]+\\)>\\)*$"
      "\\.lean$"
      "\\.org$"
+     "\\.tex.[a-f0-9]+"
      ))
   (czm-preview-predicate #'my-czm-preview-predicate)
   :hook
@@ -721,8 +724,6 @@ of the preamble part of REGION-TEXT."
      "k" kill-sexp
      ">" tp-burp-right
      "<" tp-burp-left
-     "]" tp-burp-right
-     "[" tp-burp-left
      "C-/" undo
      "r" tp-raise-sexp
      "/" tp-delete-pair

@@ -346,8 +346,6 @@
      "+" lispy-join
      ">" lispy-slurp-or-barf-right
      "<" lispy-slurp-or-barf-left
-     "]" lispy-slurp-or-barf-right
-     "[" lispy-slurp-or-barf-left
      "C-/" undo
      "/" lispy-splice
      ";" lispy-comment
@@ -943,10 +941,49 @@ Interactively, prompt for WIDTH."
 
 ;;; ------------------------------ FLYCHECK / FLYMAKE ------------------------------
 
+
+
+;; C-c ! C-c	flycheck-compile
+;; C-c ! C-w	flycheck-copy-errors-as-kill
+;; C-c ! ?		flycheck-describe-checker
+;; C-c ! C		flycheck-clear
+;; C-c ! H		display-local-help
+;; C-c ! V		flycheck-version
+;; C-c ! c		flycheck-buffer
+;; C-c ! e		flycheck-explain-error-at-point
+;; C-c ! f		attrap-flycheck
+;; C-c ! h		flycheck-display-error-at-point
+;; C-c ! i		flycheck-manual
+;; C-c ! l		flycheck-list-errors
+;; C-c ! n		flycheck-next-error
+;; C-c ! p		flycheck-previous-error
+;; C-c ! s		flycheck-select-checker
+;; C-c ! v		flycheck-verify-setup
+;; C-c ! x		flycheck-disable-checker
+
 (use-package flycheck
   :defer t
   :config
-  (setq flycheck-emacs-lisp-load-path 'inherit))
+  (setq flycheck-emacs-lisp-load-path 'inherit)
+  (define-repeat-map flycheck-repeat-map
+    ("C-c" flycheck-compile
+     "C-w" flycheck-copy-errors-as-kill
+     "?" flycheck-describe-checker
+     "C" flycheck-clear
+     "H" display-local-help
+     "V" flycheck-version
+     "c" flycheck-buffer
+     "e" flycheck-explain-error-at-point
+     "f" attrap-flycheck
+     "h" flycheck-display-error-at-point
+     "i" flycheck-manual
+     "l" flycheck-list-errors
+     "n" flycheck-next-error
+     "p" flycheck-previous-error
+     "s" flycheck-select-checker
+     "v" flycheck-verify-setup
+     "x" flycheck-disable-checker))
+  (repeat-mode 1))
 
 (use-package flycheck-package
   :defer t
@@ -964,7 +1001,10 @@ Interactively, prompt for WIDTH."
      "p" flymake-goto-prev-error
      "f" attrap-flymake
      "M-n" flymake-goto-next-error
-     "M-p" flymake-goto-prev-error))
+     "M-p" flymake-goto-prev-error
+     "l" flymake-show-diagnostics-buffer
+     ))
+  (repeat-mode 1)
   :bind
   (:map flymake-mode-map
         ("M-n" . flymake-goto-next-error)
@@ -1546,6 +1586,7 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package diminish
   :demand t
+  :after copilot
   :config
   (diminish 'copilot-mode "Co")
   (diminish 'abbrev-mode "Ab")
