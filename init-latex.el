@@ -218,7 +218,9 @@
   (reftex-derive-label-parameters
    '(15 50 t 1 "-"
         ("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
-        t)))
+        t))
+
+  :custom-face (preview-face ((t (:background nil)))))
 
 ;;  don't want foldout to include "bibliography"
 (defun czm-LaTeX-outline-level-advice (orig-fun &rest args)
