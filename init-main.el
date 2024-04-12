@@ -1584,6 +1584,8 @@ The value of `calc-language` is restored after BODY has been processed."
             (overlay-put o 'before-string (flymake--eol-overlay-summary src-ovs))
           (delete-overlay o))))))
 
+(use-package perfect-margin)
+
 (use-package diminish
   :demand t
   :after copilot
@@ -1596,4 +1598,5 @@ The value of `calc-language` is restored after BODY has been processed."
   (diminish 'outline-minor-mode)
   (diminish 'which-key-mode)
   (diminish 'buffer-face-mode)
-  (diminish 'eldoc-mode))
+  (diminish 'eldoc-mode)
+  (diminish 'perfect-margin-mode))
