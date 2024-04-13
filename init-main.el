@@ -539,6 +539,7 @@ Interactively, prompt for WIDTH."
          :render (gts-buffer-render))))
 
 (use-package rustic
+  :defer t
   :custom
   (rustic-lsp-client 'eglot))
 
