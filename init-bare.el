@@ -49,6 +49,7 @@
         ("H-k" flycheck-mode)
         ("H-m" mmm-mode)
         ("H-v" visual-line-mode)
+        ("H-w" which-function-mode)
 	       ("C-h C-v" find-variable)
 	       ("C-h C-l" find-library)
 	       ("C-M-z" zap-up-to-char)
