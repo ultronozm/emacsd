@@ -261,10 +261,10 @@
                  :depth nil)
   :demand ; otherwise, this doesn't work until the second time you
                                         ; open a .tex file.  but it needs to be loaded after auctex.
-  :bind
-  (:map TeX-fold-mode-map
-        ("C-c C-o C-s" . czm-tex-fold-fold-section)
-        ("C-c C-o s" . czm-tex-fold-clearout-section))
+  ;; :bind
+  ;; (:map TeX-fold-mode-map
+  ;;       ("C-c C-o C-s" . czm-tex-fold-fold-section)
+  ;;       ("C-c C-o s" . czm-tex-fold-clearout-section))
   :config
   (czm-tex-fold-set-defaults)
   (czm-tex-fold-install)
