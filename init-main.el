@@ -748,11 +748,15 @@ Interactively, prompt for WIDTH."
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
+(setq-default completion-in-region-function 'consult-completion-in-region)
+
 (use-package corfu
+  :disabled
+
   ;; Optional customizations
   :custom
   ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-  (corfu-auto t)
+  (corfu-auto nil)
   ;; (corfu-separator ?\s)          ;; Orderless field separator
   ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
   ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
@@ -762,7 +766,7 @@ Interactively, prompt for WIDTH."
   ;; (corfu-scroll-margin 5)        ;; Use scroll margin
 
   :bind (:map corfu-map
-              ("C-M-i" . corfu-insert-separator)
+              ("C-M-i" . nil)
               ("C-a" . nil)
               ("C-g" . nil)
               ("<down>" . nil)
