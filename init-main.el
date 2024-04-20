@@ -1604,7 +1604,6 @@ The value of `calc-language` is restored after BODY has been processed."
   :config
   (diminish 'copilot-mode "Co")
   (diminish 'abbrev-mode "Ab")
-  (diminish 'flymake-mode "FlyM")
   (diminish 'lean4-mode)
   (diminish 'visual-line-mode)
   (diminish 'outline-minor-mode)
