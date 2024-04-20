@@ -493,13 +493,45 @@
    "C-c t c"
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
-(use-package czm-tex-compile
-  :ensure (:host github :repo "ultronozm/czm-tex-compile.el"
+(use-package tex-continuous
+  :ensure (:host github :repo "ultronozm/tex-continuous.el"
                  :depth nil)
   :bind
-  ("C-c k" . czm-tex-compile-toggle))
+  ("C-c k" . tex-continuous-toggle))
+
+(setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
+;; (setq TeX-suppress-ignored-warnings t)
+
+(use-package preview-auto
+  :ensure (:host github :repo "ultronozm/preview-auto.el"
+                 :depth nil)
+  :after latex
+  ;; :hook
+  ;; (LaTeX-mode . preview-auto-conditionally-enable)
+  :bind
+  ;; (:map LaTeX-mode-map
+	 ;;       ("H-u" . preview-auto-mode))
+  :config
+  (setq preview-protect-point t)
+  (setq preview-locating-previews-message nil)
+  (setq preview-leave-open-previews-visible t)
+  :custom
+  (preview-auto-timer-interval 0.1)
+  (preview-auto-predicate #'my-czm-preview-predicate)
+  (preview-LaTeX-command-replacements '(preview-LaTeX-disable-pdfoutput)))
+
+(use-package tex-numbers
+  :ensure (:host github :repo "ultronozm/tex-numbers.el"
+                 :depth nil)
+  :after latex czm-tex-fold
+  :config
+  (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
+  (czm-tex-fold-set-defaults)
+  (czm-tex-fold-install)
+  (tex-numbers-mode 1))
 
 (use-package czm-preview
+  :disabled
   :ensure (:host github :repo "ultronozm/czm-preview.el"
                  :depth nil)
   :after latex
@@ -509,15 +541,7 @@
 	       ("C-c p m" . czm-preview-toggle-master))
   :custom
   (czm-preview-timer-interval 0.1)
-  (czm-preview-TeX-master my-preview-master)
   (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
-  (czm-preview-allowed-files
-   '("\\.tex\\(<\\([^>]+\\)>\\)*$"
-     "\\[ latex \\]\\*\\(<\\([^>]+\\)>\\)*$"
-     "\\.lean$"
-     "\\.org$"
-     "\\.tex.[a-f0-9]+"
-     ))
   (czm-preview-predicate #'my-czm-preview-predicate)
   :hook
   (LaTeX-mode . czm-preview-mode-conditionally-enable)
@@ -615,7 +639,6 @@ of the preamble part of REGION-TEXT."
             (with-temp-buffer
               (insert (substring region-text 0 (match-end 0)))
               (+ region-offset (TeX-current-offset))))))
-
 
 (defun czm-copy-standard-tex-files ()
   "Copy standard TeX files to the current directory."
@@ -737,4 +760,3 @@ of the preamble part of REGION-TEXT."
      "C-M-SPC" spw/tp-mark-sexp
      "RET" TeX-newline))
   (repeat-mode 1))
-
