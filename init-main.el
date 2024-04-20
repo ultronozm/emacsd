@@ -851,12 +851,19 @@ Interactively, prompt for WIDTH."
         ("M-§" . copilot-accept-completion-by-word)
         ("C-§" . copilot-accept-completion-by-line)
         ("C-M-§" . copilot-accept-completion-by-paragraph)
-        ("`" . copilot-accept-completion)
+        ("`" . nil)
         ("M-`" . copilot-accept-completion-by-word)
         ("C-`" . copilot-accept-completion-by-line)
         ("C-M-`" . copilot-accept-completion-by-paragraph)
         ("C-M-<down>" . copilot-next-completion)
-        ("C-M-<up>" . copilot-previous-completion)))
+        ("C-M-<up>" . copilot-previous-completion)
+        ;; ("`" . copilot-accept-completion)
+        ;; ("M-`" . copilot-accept-completion-by-word)
+        ;; ("C-`" . copilot-accept-completion-by-line)
+        ;; ("C-M-`" . copilot-accept-completion-by-paragraph)
+        ;; ("C-M-<down>" . copilot-next-completion)
+        ;; ("C-M-<up>" . copilot-previous-completion)
+        ))
 
 (use-package gptel
   :after exec-path-from-shell
