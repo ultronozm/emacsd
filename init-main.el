@@ -1611,3 +1611,23 @@ The value of `calc-language` is restored after BODY has been processed."
   (diminish 'buffer-face-mode)
   (diminish 'eldoc-mode)
   (diminish 'perfect-margin-mode))
+
+(defvar git-fill-column-alist '(("emacs" . 64) ("auctex" . 64)))
+
+(defun set-git-commit-fill-column ()
+  (when-let ((project (project-current))
+             (root (project-root project))
+             (name (file-name-nondirectory (directory-file-name root)))
+             (assn (assoc name git-fill-column-alist)))
+    (setq fill-column (cdr assn))))
+
+(add-hook 'git-commit-mode-hook 'set-git-commit-fill-column)
+
+;; maybe this is all that's needed to get indirect buffers to work?
+
+(defun set-TeX-master-from-cloned ()
+  (when (eq major-mode 'LaTeX-mode)
+    (setq TeX-master (with-current-buffer (buffer-base-buffer)
+                       (TeX-master-file)))))
+
+(add-hook 'clone-indirect-buffer-hook 'set-TeX-master-from-cloned)
