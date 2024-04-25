@@ -17,7 +17,7 @@ Most of the functionality of my config has been extracted into the following pac
 
 ** LaTeX editing
 - [[https://github.com/ultronozm/czm-preview.el][czm-preview.el]] :: extensions for preview.el
-- [[https://github.com/ultronozm/czm-tex-compile.el][czm-tex-compile.el]] :: run latexmk continuously, report errors via flymake
+- [[https://github.com/ultronozm/tex-continuous.el][tex-continuous.el]] :: run latexmk continuously, report errors via flymake
 - [[https://github.com/ultronozm/czm-tex-edit.el][czm-tex-edit.el]] :: helper functions for editing LaTeX
 - [[https://github.com/ultronozm/czm-tex-fold.el][czm-tex-fold.el]] :: extensions for tex-fold.el
 - [[https://github.com/ultronozm/czm-tex-jump.el][czm-tex-jump.el]] :: jump to references in a TeX buffer using avy
@@ -46,7 +46,7 @@ I'm using this config with Emacs "30.5", built from source, on MacOS.  To set th
 - Install Xcode and homebrew.
 - Run the following in a terminal:
 #+begin_src bash
-brew install autoconf automake gnutls imagemagick texinfo libgccjit gcc ace-link ccls gnutls texinfo tree-sitter jansson librsvg jpeg giflib libpng libtiff pkg-configclang-format djvulibre
+brew install autoconf automake gnutls imagemagick texinfo libgccjit gcc ace-link ccls gnutls texinfo tree-sitter jansson librsvg jpeg giflib libpng libtiff pkg-config clang-format djvulibre
 brew services start dbus
 cd ~/
 git clone -b master git://git.sv.gnu.org/emacs.git gnu-emacs
