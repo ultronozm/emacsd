@@ -36,7 +36,7 @@
 (use-package czm-lean4
   :ensure (:host github :repo "ultronozm/czm-lean4.el"
                  :depth nil)
-  :after lean4-mode czm-preview
+  :after lean4-mode preview-auto
   :hook (lean4-mode . czm-lean4-mode-hook)
   :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
   :bind (:map lean4-mode-map

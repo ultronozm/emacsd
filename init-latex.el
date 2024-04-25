@@ -208,8 +208,8 @@
   (TeX-auto-save t)
   (TeX-parse-self t)
   (preview-auto-cache-preamble t)
-  (preview-default-option-list
-   '("displaymath" "floats" "graphics" "textmath" "sections" "footnotes" "showlabels"))
+  ;; (preview-default-option-list
+  ;;  '("displaymath" "floats" "graphics" "textmath" "sections" "footnotes" "showlabels"))
                                         ;  (preview-gs-command "/usr/local/bin/gs")  ; compare with rungs?
                                         ;  (preview-image-type 'pnm) ; compare with png?
 
@@ -498,8 +498,45 @@
                  :depth nil)
   :bind
   ("C-c k" . tex-continuous-toggle))
+  (:map LaTeX-mode-map
+        ("C-c k" . tex-continuous-toggle)))
+
+(setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
+;; (setq TeX-suppress-ignored-warnings t)
+
+(use-package preview-auto
+  :ensure (:host github :repo "ultronozm/preview-auto.el"
+                 :depth nil)
+  :after latex
+  ;; :hook
+  ;; (LaTeX-mode . preview-auto-conditionally-enable)
+  :bind
+  ;; (:map LaTeX-mode-map
+	 ;;       ("H-u" . preview-auto-mode))
+  :config
+  (setq preview-protect-point t)
+  (setq preview-locating-previews-message nil)
+  (setq preview-leave-open-previews-visible t)
+  :custom
+  (preview-auto-interval 0.1)
+  (preview-auto-predicate #'my-czm-preview-predicate)
+  (preview-LaTeX-command-replacements
+   '(preview-LaTeX-disable-pdfoutput
+     ;; (cons "\\mathtoolsset{showonlyrefs}" "")
+     )))
+
+(use-package tex-numbers
+  :ensure (:host github :repo "ultronozm/tex-numbers.el"
+                 :depth nil)
+  :after latex czm-tex-fold
+  :config
+  (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
+  (czm-tex-fold-set-defaults)
+  (czm-tex-fold-install)
+  (tex-numbers-mode 1))
 
 (use-package czm-preview
+  :disabled
   :ensure (:host github :repo "ultronozm/czm-preview.el"
                  :depth nil)
   :after latex
@@ -509,15 +546,7 @@
 	       ("C-c p m" . czm-preview-toggle-master))
   :custom
   (czm-preview-timer-interval 0.1)
-  (czm-preview-TeX-master my-preview-master)
   (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
-  (czm-preview-allowed-files
-   '("\\.tex\\(<\\([^>]+\\)>\\)*$"
-     "\\[ latex \\]\\*\\(<\\([^>]+\\)>\\)*$"
-     "\\.lean$"
-     "\\.org$"
-     "\\.tex.[a-f0-9]+"
-     ))
   (czm-preview-predicate #'my-czm-preview-predicate)
   :hook
   (LaTeX-mode . czm-preview-mode-conditionally-enable)
@@ -616,7 +645,6 @@ of the preamble part of REGION-TEXT."
               (insert (substring region-text 0 (match-end 0)))
               (+ region-offset (TeX-current-offset))))))
 
-
 (defun czm-copy-standard-tex-files ()
   "Copy standard TeX files to the current directory."
   (interactive)
@@ -638,8 +666,8 @@ of the preamble part of REGION-TEXT."
             :action (lambda (pos)
                       (goto-char pos)
                       (forward-char 2)
-                      (let ((this-command #'tp-down-list))
-                        (tp-down-list)))))
+                      (let ((this-command #'tex-parens-down-list))
+                        (tex-parens-down-list)))))
 
 (defun czm-tex-avy-copy ()
   (interactive)
@@ -650,7 +678,7 @@ of the preamble part of REGION-TEXT."
                          (+ pos 2)
                          (save-excursion
                            (goto-char (+ pos 2))
-                           (tp-forward-list)
+                           (tex-parens-forward-list)
                            (point))))
                       (yank))))
 
@@ -661,11 +689,11 @@ of the preamble part of REGION-TEXT."
          (last-point (point))
          (soft-eol
           (save-excursion
-            (tp-forward-sexp)
+            (tex-parens-forward-sexp)
             (while (and (< (point) eol)
                         (> (point) last-point))
               (setq last-point (point))
-              (tp-forward-sexp))
+              (tex-parens-forward-sexp))
             (min (point) eol))))
     (kill-region (point) soft-eol)))
 
@@ -673,68 +701,78 @@ of the preamble part of REGION-TEXT."
   (interactive)
   (save-excursion
     (insert "<++>"))
-  (let ((this-command #'tp-down-list))
-    (tp-backward-down-list)))
+  (let ((this-command #'tex-parens-down-list))
+    (tex-parens-backward-down-list)))
+
+(defun czm-tex-mark-inner ()
+  (interactive)
+  (tex-parens-backward-up-list)
+  (tex-parens-down-list)
+  (set-mark (point))
+  (tex-parens-up-list)
+  (tex-parens-backward-down-list))
 
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el"
                  :depth nil)
   :bind
   (:map LaTeX-mode-map
-        ("C-M-f" . tp-forward-sexp)
-        ("C-M-b" . tp-backward-sexp)
-        ("C-M-n" . tp-forward-list)
-        ("C-M-p" . tp-backward-list)
-        ("C-M-u" . tp-backward-up-list)
-        ("M-u" . tp-up-list)
-        ("C-M-g" . tp-down-list)
+        ("C-M-f" . tex-parens-forward-sexp)
+        ("C-M-b" . tex-parens-backward-sexp)
+        ("C-M-n" . tex-parens-forward-list)
+        ("C-M-p" . tex-parens-backward-list)
+        ("C-M-u" . tex-parens-backward-up-list)
+        ("M-u" . tex-parens-up-list)
+        ("C-M-g" . tex-parens-down-list)
         ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
-        ("M-_" . tp-delete-pair)
-        ("C-M-SPC" . tp-mark-sexp)
-        ("C-M-k" . tp-kill-sexp)
+        ("M-_" . tex-parens-delete-pair)
+        ("C-M-SPC" . tex-parens-mark-sexp)
+        ("C-M-k" . tex-parens-kill-sexp)
         ("C-M-t" . transpose-sexps)
-        ("C-M-<backspace>" . tp-backward-kill-sexp)
-        ("M-+" . tp-raise-sexp)
-        ("<" . tp-burp-left)
-        (">" . tp-burp-right)
+        ("C-M-<backspace>" . tex-parens-backward-kill-sexp)
+        ("M-+" . tex-parens-raise-sexp)
+        ("<" . tex-parens-burp-left)
+        (">" . tex-parens-burp-right)
+        ("M-i" . czm-tex-mark-inner)
         ("s-j" . czm-tex-avy-jump)
         ("s-c" . czm-tex-avy-copy))
   :hook
-  (LaTeX-mode . tp-setup)
+  (LaTeX-mode . tex-parens-setup)
+  
   :config
-  (spw/remap-mark-command 'tp-mark-sexp LaTeX-mode-map)
-
-  (defun czm-tp-expand-abbrev-advice (orig-fun &rest args)
-    (unless (tp--comment)
+  ;; (spw/remap-mark-command 'tex-parens-mark-sexp LaTeX-mode-map)
+  (defun czm-tex-parens-expand-abbrev-advice (orig-fun &rest args)
+    (unless (tex-parens--comment)
       (apply orig-fun args)))
 
-  (advice-add 'expand-abbrev :around #'czm-tp-expand-abbrev-advice)
+  (advice-add 'expand-abbrev :around #'czm-tex-parens-expand-abbrev-advice)
 
-  (define-repeat-map tp-structural-edit
-    ("n" tp-forward-list
-     "p" tp-backward-list
-     "u" tp-backward-up-list
-     "M-u" tp-up-list
-     "g" tp-down-list
-     "M-g" tp-backward-down-list)
+  (define-repeat-map tex-parens-structural-edit
+    ("n" tex-parens-forward-list
+     "p" tex-parens-backward-list
+     "u" tex-parens-backward-up-list
+     "M-u" tex-parens-up-list
+     "g" tex-parens-down-list
+     "M-g" tex-parens-backward-down-list)
     (:continue
-     "f" tp-forward-sexp
-     "b" tp-backward-sexp
+     "f" tex-parens-forward-sexp
+     "b" tex-parens-backward-sexp
      "a" beginning-of-defun
      "e" end-of-defun
      "d" czm-deactivate-mark-interactively
      "k" kill-sexp
-     ">" tp-burp-right
-     "<" tp-burp-left
+     ">" tex-parens-burp-right
+     "<" tex-parens-burp-left
      "C-/" undo
-     "r" tp-raise-sexp
-     "/" tp-delete-pair
+     "r" tex-parens-raise-sexp
+     "/" tex-parens-delete-pair
      "t" transpose-sexps
      "w" kill-region
      "M-w" kill-ring-save
      "y" yank
      "c" lispy-clone
-     "C-M-SPC" spw/tp-mark-sexp
+     ;; "C-M-SPC" spw/tex-parens-mark-sexp
      "RET" TeX-newline))
   (repeat-mode 1))
+
 
