@@ -7,10 +7,11 @@ Put the elisp files (*.el) in your Emacs user directory (=~./emacs.d=).  Alterna
 cd ~/.emacs.d # create this directory first if it doesn't exist
 git clone https://github.com/ultronozm/emacsd
 cd emacsd
+#+end_src
+Rename =init-settings-sample.el= to =init-settings.el= and personalize suitably.  Then, run
+#+begin_src bash
 ./add-symlinks.sh
 #+end_src
-
-Rename =init-settings-sample.el= to =init-settings.el= and personalize suitably.
 
 * Some individual packages
 Most of the functionality of my config has been extracted into the following packages.
