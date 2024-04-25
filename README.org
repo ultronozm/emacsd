@@ -46,7 +46,7 @@ I'm using this config with Emacs "30.5", built from source, on MacOS.  To set th
 - Install Xcode and homebrew.
 - Run the following in a terminal:
 #+begin_src bash
-brew install autoconf automake gnutls imagemagick texinfo libgccjit gcc ace-link ccls gnutls texinfo tree-sitter jansson librsvg jpeg giflib libpng libtiff pkg-configclang-format djvulibre
+brew install autoconf automake gnutls imagemagick texinfo libgccjit gcc ace-link ccls gnutls texinfo tree-sitter jansson librsvg jpeg giflib libpng libtiff pkg-config clang-format djvulibre
 brew services start dbus
 cd ~/
 git clone -b master git://git.sv.gnu.org/emacs.git gnu-emacs
