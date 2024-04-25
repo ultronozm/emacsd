@@ -493,11 +493,11 @@
    "C-c t c"
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
-(use-package czm-tex-compile
-  :ensure (:host github :repo "ultronozm/czm-tex-compile.el"
+(use-package tex-continuous
+  :ensure (:host github :repo "ultronozm/tex-continuous.el"
                  :depth nil)
   :bind
-  ("C-c k" . czm-tex-compile-toggle))
+  ("C-c k" . tex-continuous-toggle))
 
 (use-package czm-preview
   :ensure (:host github :repo "ultronozm/czm-preview.el"
