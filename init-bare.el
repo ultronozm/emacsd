@@ -12,35 +12,35 @@
 
 
 (mapc (lambda (keybind)
-	       (let ((key (car keybind))
-	             (cmd (cadr keybind)))
-	         (global-set-key (kbd key)
+        (let ((key (car keybind))
+              (cmd (cadr keybind)))
+          (global-set-key (kbd key)
                           cmd)))
       '(
-	       ("C-c g" goto-line)
-	       ;; ("C-x C-b" electric-buffer-list)
+        ("C-c g" goto-line)
+        ;; ("C-x C-b" electric-buffer-list)
         ("C-x C-b" ibuffer)
-	       ("s-b" switch-to-buffer)
-	       ("s-d" find-file)
-	       ("s-0" delete-window)
-	       ("s-1" delete-other-windows)
-	       ("s-2" split-window-below)
-	       ("s-3" split-window-right)
-	       ("C-m" newline-and-indent)
-	       ("M-n" next-error)
-	       ("M-p" previous-error)
-	       ("M-/" hippie-expand)
+        ("s-b" switch-to-buffer)
+        ("s-d" find-file)
+        ("s-0" delete-window)
+        ("s-1" delete-other-windows)
+        ("s-2" split-window-below)
+        ("s-3" split-window-right)
+        ("C-m" newline-and-indent)
+        ("M-n" next-error)
+        ("M-p" previous-error)
+        ("M-/" hippie-expand)
         ("C-c d" czm-dired-downloads)
         ("s-d" czm-find-math-document)
-	       ("C-c m" compile)
-	       ("C-c r" org-capture)
-	       ("C-c o" org-open-at-point-global)
-	       ("C-c l" org-store-link)
-	       ("C-c L" org-insert-link-global)
-	       ("C-c a" org-agenda)
-	       ("C-c s" shell)
-	       ("C-c f" toggle-frame-fullscreen)
-	       ("C-h C-f" find-function)
+        ("C-c m" compile)
+        ("C-c r" org-capture)
+        ("C-c o" org-open-at-point-global)
+        ("C-c l" org-store-link)
+        ("C-c L" org-insert-link-global)
+        ("C-c a" org-agenda)
+        ("C-c s" shell)
+        ("C-c f" toggle-frame-fullscreen)
+        ("C-h C-f" find-function)
         ("H-b" abbrev-mode)
         ("H-e" toggle-debug-on-error)
         ("H-f" follow-mode)
@@ -48,27 +48,28 @@
         ("H-l" flymake-mode)
         ("H-k" flycheck-mode)
         ("H-m" mmm-mode)
+        ("H-s" whitespace-mode)
         ("H-v" visual-line-mode)
         ("H-w" which-function-mode)
-	       ("C-h C-v" find-variable)
-	       ("C-h C-l" find-library)
-	       ("C-M-z" zap-up-to-char)
-	       ("C-M-g" down-list)
+        ("C-h C-v" find-variable)
+        ("C-h C-l" find-library)
+        ("C-M-z" zap-up-to-char)
+        ("C-M-g" down-list)
         ("M-+" raise-sexp)
-	       ("s-<left>" previous-buffer)
-	       ("s-<right>" next-buffer)
-	       ("s-<up>" (lambda ()
+        ("s-<left>" previous-buffer)
+        ("s-<right>" next-buffer)
+        ("s-<up>" (lambda ()
                     (interactive)
                     (enlarge-window 5)))
-	       ("s-<down>" (lambda ()
+        ("s-<down>" (lambda ()
                       (interactive)
                       (shrink-window 5)))
-	       ("s-o" other-window)
-	       ("s-O" (lambda ()
+        ("s-o" other-window)
+        ("s-O" (lambda ()
                  (interactive)
                  (other-window -1)))
-	       ("C-s-o" other-frame)
-	       ("C-s-O" (lambda ()
+        ("C-s-o" other-frame)
+        ("C-s-O" (lambda ()
                    (interactive)
                    (other-frame -1)))
         ("s-'" nil)
@@ -77,19 +78,19 @@
         ("s-n" outline-next-heading)
         ("s-p" outline-previous-heading)
         ("s-q" bury-buffer)
-	       ("s-k" kill-current-buffer)
-	       ("s-s" save-buffer)
-	       ("s-v" view-mode)
+        ("s-k" kill-current-buffer)
+        ("s-s" save-buffer)
+        ("s-v" view-mode)
         ("s-." repeat)
-	       ("s-i" czm/find-lisp-file)
+        ("s-i" czm/find-lisp-file)
         ;; ("<" burp-left)
         ;; (">" burp-right)
         ;; ("/" burp-unwrap)
         ("M-_" delete-pair)
-	       ("<up>" windmove-up)
-	       ("<down>" windmove-down)
-	       ("<right>" windmove-right)
-	       ("<left>" windmove-left)
+        ("<up>" windmove-up)
+        ("<down>" windmove-down)
+        ("<right>" windmove-right)
+        ("<left>" windmove-left)
         ("s-SPC" cycle-spacing)
         ("s-6" (lambda () (interactive) (delete-indentation nil)))
         ("s-7" (lambda () (interactive) (delete-indentation t)))
@@ -97,7 +98,7 @@
         ("H-0" tab-close)
         ("H-1" tab-close-other)
         ("H-2" tab-bar-new-tab)
-	       )
+        )
       )
 
 (defvar czm/find-lisp-file-completion-fn 'completing-read
@@ -305,34 +306,34 @@ pushes the mark somewhere useful."
     (setq arg 1))
   (if (< arg 0)
       (save-excursion
-	       (skip-chars-backward " \t")
-	       (save-excursion
-	         (let ((close-char (char-before)))
-	           (forward-sexp arg)
-	           (unless (member (list (char-after) close-char)
-			                         (mapcar (lambda (p)
-				                                  (if (= (length p) 3) (cdr p) p))
-				                                insert-pair-alist))
-	             (error "Not after matching pair"))
-	           (when (and (numberp delete-pair-blink-delay)
-		                     (> delete-pair-blink-delay 0))
-	             (sit-for delete-pair-blink-delay))
-	           (delete-char 1)))
-	       (delete-char -1))
+        (skip-chars-backward " \t")
+        (save-excursion
+          (let ((close-char (char-before)))
+            (forward-sexp arg)
+            (unless (member (list (char-after) close-char)
+                            (mapcar (lambda (p)
+                                      (if (= (length p) 3) (cdr p) p))
+                                    insert-pair-alist))
+              (error "Not after matching pair"))
+            (when (and (numberp delete-pair-blink-delay)
+                       (> delete-pair-blink-delay 0))
+              (sit-for delete-pair-blink-delay))
+            (delete-char 1)))
+        (delete-char -1))
     (save-excursion
       (skip-chars-forward " \t")
       (save-excursion
-	       (let ((open-char (char-after)))
-	         (forward-sexp arg)
-	         (unless (member (list open-char (char-before))
-			                       (mapcar (lambda (p)
-				                                (if (= (length p) 3) (cdr p) p))
-				                              insert-pair-alist))
-	           (error "Not before matching pair"))
-	         (when (and (numberp delete-pair-blink-delay)
-		                   (> delete-pair-blink-delay 0))
-	           (sit-for delete-pair-blink-delay))
-	         (delete-char -1)
+        (let ((open-char (char-after)))
+          (forward-sexp arg)
+          (unless (member (list open-char (char-before))
+                          (mapcar (lambda (p)
+                                    (if (= (length p) 3) (cdr p) p))
+                                  insert-pair-alist))
+            (error "Not before matching pair"))
+          (when (and (numberp delete-pair-blink-delay)
+                     (> delete-pair-blink-delay 0))
+            (sit-for delete-pair-blink-delay))
+          (delete-char -1)
           (push-mark) ; added!
           ))
       (delete-char 1))))
@@ -342,28 +343,28 @@ pushes the mark somewhere useful."
 
 (dolist (key '(
                ;; s-a
-	              "s-C"
+                      "s-C"
                ;; "s-D" ; dired
-	              ;; ("s-w" switch-to-buffer)
+                      ;; ("s-w" switch-to-buffer)
                ;; s-f
-	              "s-E"
-	              "s-H"
-	              "s-L"
+                      "s-E"
+                      "s-H"
+                      "s-L"
                ;; "s-M" ; manual-entry
-	              "s-S"
-	              "s-c"
-	              "s-g"
-	              "s-h"
+                      "s-S"
+                      "s-c"
+                      "s-g"
+                      "s-h"
                ;; "s-l" ; goto-line
-	              "s-m"
-	              "s-u"
-	              ;; "s-q"
+                      "s-m"
+                      "s-u"
+                      ;; "s-q"
                ;; s-t
-	              "s-x"
+                      "s-x"
                ;; s-w
-	              ;; "s-y"
-	              "s-z"
-	              ))
+                      ;; "s-y"
+                      "s-z"
+                      ))
   (global-unset-key (kbd key)))
 
 ;; H-ACFNHMD -- macOS annoyance

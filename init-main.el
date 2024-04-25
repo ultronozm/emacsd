@@ -165,6 +165,7 @@
   (delete-by-moving-to-trash t)
   (help-window-select t)
   (isearch-allow-scroll t)
+  (search-upper-case t)
   (doc-view-resolution 300)
   (backup-directory-alist
    `(("." . ,(expand-file-name
@@ -189,7 +190,7 @@
   (save-place-mode)
   (tool-bar-mode 0)
   (scroll-bar-mode 0)
-  (transient-mark-mode 0)
+  ;; (transient-mark-mode 0)
   (line-number-mode)
   (column-number-mode)
   (winner-mode))
@@ -274,8 +275,8 @@
      "[" backward-paragraph
      "{" backward-paragraph)
     (:continue
-     "M-h" spw/mark-paragraph
-     "h" spw/mark-paragraph
+     "M-h" mark-paragraph
+     "h" mark-paragraph
      "k" kill-paragraph
      "w" kill-region
      "M-w" kill-ring-save
@@ -289,6 +290,17 @@
 
 ;;; ------------------------------ LISP ------------------------------
 
+(defun czm-mark-inner ()
+  (interactive)
+  (condition-case nil
+      (progn
+        (backward-up-list)
+        (down-list)
+        (set-mark (point))
+        (up-list)
+        (backward-down-list))
+    (error (message "No inner list found."))))
+
 (use-package emacs
   :ensure nil
 
@@ -299,7 +311,9 @@
         ("M-_" . delete-pair)
         ("M-+" . kill-backward-up-list)
         ("s-r" . elpaca-rebuild)
-        ("M-u" . up-list))
+        ("M-u" . up-list)
+        ("M-i" . czm-mark-inner)
+        )
   (:map emacs-lisp-mode-map
         ("M-1" . lispy-describe-inline)
         ("M-2" . lispy-arglist-inline)))
@@ -357,7 +371,7 @@
      "M-w" kill-ring-save
      "y" yank
      "c" lispy-clone
-     "C-M-SPC" spw/mark-sexp
+     "C-M-SPC" mark-sexp
      "RET" newline-and-indent
      "i" lispy-tab
      "<up>" outline-move-subtree-up
@@ -417,14 +431,11 @@
       nil
       (window-parameters (mode-line-format . none))))))
 
-(with-eval-after-load 'org
-  (spw/remap-mark-command 'org-mark-element org-mode-map)
-  (spw/remap-mark-command 'org-mark-subtree org-mode-map))
 
 ;; sometimes a key to just activate the mark is wanted
-(global-set-key "\M-i" (lambda () (interactive) (activate-mark)))
+;; (global-set-key "\M-i" (lambda () (interactive) (activate-mark)))
 ;; resettle the previous occupant
-(global-set-key "\M-I" #'tab-to-tab-stop)
+;; (global-set-key "\M-I" #'tab-to-tab-stop)
 
 (defun czm-set-margins (width)
   "Set the margins of the current window to WIDTH.
@@ -451,7 +462,6 @@ Interactively, prompt for WIDTH."
   :ensure nil
   :after define-repeat-map
   :config
-  (spw/remap-mark-command #'outline-mark-subtree)
   (define-repeat-map outline-repeat-map
     ("n" outline-next-heading
      "p" outline-previous-heading
@@ -478,7 +488,7 @@ Interactively, prompt for WIDTH."
      "t" outline-hide-body
      "@" outline-mark-subtree)
     (:continue
-     "C-M-SPC" spw/outline-mark-subtree
+     "C-M-SPC" outline-mark-subtree
      "w" kill-region
      "M-w" kill-ring-save
      "C-/" undo
@@ -486,6 +496,9 @@ Interactively, prompt for WIDTH."
   (repeat-mode 1))
 
 (set-face-attribute 'default nil :height 150)
+(set-face-attribute 'mode-line nil :height 120)
+(set-face-attribute 'mode-line-inactive nil :height 120)
+(set-face-attribute 'tab-bar nil :height 120)
 
 
                                         ; (load (concat user-emacs-directory "uniteai.el"))
@@ -1057,31 +1070,32 @@ DIR must include a .project file to be considered a project."
 
 ;;; ------------------------------ MARK ------------------------------
 
-;; copied from https://spwhitton.name/blog/entry/transient-mark-mode/
-(defun spw/remap-mark-command (command &optional map)
-  "Remap a mark-* command to temporarily activate Transient Mark mode."
-  (let* ((cmd (symbol-name command))
-         (fun (intern (concat "spw/" cmd)))
-         (doc (concat "Call `"
-                      cmd
-                      "' and temporarily activate Transient Mark mode.")))
-    (fset fun `(lambda ()
-                 ,doc
-                 (interactive)
-                 (call-interactively #',command)
-                 (activate-mark)))
-    (if map
-        (define-key map (vector 'remap command) fun)
-      (global-set-key (vector 'remap command) fun))))
+(when nil
+  ;; copied from https://spwhitton.name/blog/entry/transient-mark-mode/
+  (defun spw/remap-mark-command (command &optional map)
+    "Remap a mark-* command to temporarily activate Transient Mark mode."
+    (let* ((cmd (symbol-name command))
+           (fun (intern (concat "spw/" cmd)))
+           (doc (concat "Call `"
+                        cmd
+                        "' and temporarily activate Transient Mark mode.")))
+      (fset fun `(lambda ()
+                   ,doc
+                   (interactive)
+                   (call-interactively #',command)
+                   (activate-mark)))
+      (if map
+          (define-key map (vector 'remap command) fun)
+        (global-set-key (vector 'remap command) fun))))
 
-(dolist (command '(mark-word
-                   mark-sexp
-                   mark-paragraph
-                   mark-defun
-                   mark-page
-                   mark-whole-buffer
-                   rectangle-mark-mode))
-  (spw/remap-mark-command command))
+  (dolist (command '(mark-word
+                     mark-sexp
+                     mark-paragraph
+                     mark-defun
+                     mark-page
+                     mark-whole-buffer
+                     rectangle-mark-mode))
+    (spw/remap-mark-command command)))
 
 ;;; ------------------------------ ABBREV and SPELLING ------------------------------
 
@@ -1154,7 +1168,7 @@ DIR must include a .project file to be considered a project."
   :custom
   (org-default-notes-file my-todo-file)
   (org-directory "~/")
-  (org-agenda-files '(my-todo-file))
+  (org-agenda-files `(,my-todo-file))
   (org-goto-auto-isearch nil)
   (org-agenda-include-diary t)
   (org-babel-load-languages '((latex . t) (emacs-lisp . t) (python . t)))
@@ -1193,6 +1207,7 @@ DIR must include a .project file to be considered a project."
         (save-window-excursion
           (org-edit-src-code)
           (setq fill-column 999999) ; should this be in a latex mode hook?
+          (setq TeX-master my-preview-master)
           (current-buffer))))
     (switch-to-buffer src-buffer)))
 
@@ -1239,8 +1254,8 @@ The list is ordered from bottom to top."
      "[" org-backward-paragraph
      "{" org-backward-paragraph)
     (:continue
-     "M-h" spw/mark-paragraph
-     "h" spw/mark-paragraph
+     ;; "M-h" spw/mark-paragraph
+     ;; "h" spw/mark-paragraph
      "k" kill-paragraph
      "w" kill-region
      "M-w" kill-ring-save
@@ -1264,7 +1279,7 @@ The list is ordered from bottom to top."
 (defun czm-search-log ()
   "Search your log files with `rg'."
   (interactive)
-  (let ((log-files '(my-log-file my-old-log-file my-todo-file)))
+  (let ((log-files `(,my-log-file ,my-old-log-file ,my-todo-file)))
     (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
 
 ;;; ------------------------------ ERC ------------------------------
@@ -1610,7 +1625,11 @@ The value of `calc-language` is restored after BODY has been processed."
   (diminish 'which-key-mode)
   (diminish 'buffer-face-mode)
   (diminish 'eldoc-mode)
-  (diminish 'perfect-margin-mode))
+  (diminish 'reftex-mode)
+  (diminish 'copilot-mode)
+  (diminish 'aggressive-indent-mode)
+  (diminish 'perfect-margin-mode)
+  (diminish 'whitespace-mode))
 
 (defvar git-fill-column-alist '(("emacs" . 64) ("auctex" . 64)))
 
