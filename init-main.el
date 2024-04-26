@@ -629,49 +629,6 @@ Interactively, prompt for WIDTH."
 
 (setq-default completion-in-region-function 'consult-completion-in-region)
 
-(use-package corfu
-  :disabled
-
-  ;; Optional customizations
-  :custom
-  ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-  (corfu-auto nil)
-  ;; (corfu-separator ?\s)          ;; Orderless field separator
-  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
-  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
-  ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
-  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-  ;; (corfu-scroll-margin 5)        ;; Use scroll margin
-
-  :bind (:map corfu-map
-              ("C-M-i" . nil)
-              ("C-a" . nil)
-              ("C-g" . nil)
-              ("<down>" . nil)
-              ("<tab>" . nil)
-              ("<up>" . nil)
-              ([remap beginning-of-buffer] . nil)
-              ([remap completion-at-point] . nil)
-              ([remap end-of-buffer] . nil)
-              ([remap move-beginning-of-line] . nil)
-              ([remap move-end-of-line] . nil)
-              ([remap next-line] . nil)
-              ([remap previous-line] . nil)
-              ([remap scroll-down-command] . nil)
-              ([remap scroll-up-command] . nil))
-
-  ;; Enable Corfu only for certain modes.
-  ;; :hook ((prog-mode . corfu-mode)
-  ;;        (shell-mode . corfu-mode)
-  ;;        (eshell-mode . corfu-mode))
-
-  ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
-  ;; be used globally (M-/).  See also the customization variable
-  ;; `global-corfu-modes' to exclude certain modes.
-  :init
-  (global-corfu-mode))
-
 (use-package ace-window
   :bind
   ("C-x o" . ace-window))
