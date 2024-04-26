@@ -56,10 +56,9 @@
         ("M-j" . avy-isearch)))
 
 (use-package czm-misc
-  :ensure t
+  :vc (:url "https://github.com/ultronozm/czm-misc.el")
   :demand
   :after avy
-  :vc (:url "https://github.com/ultronozm/czm-misc.el")
   :bind (("s-@" . czm-misc-split-window-below-variant)
          ("s-#" . czm-misc-split-window-right-variant)
          ("s-4" . czm-misc-double-split-window-below-and-delete)
@@ -110,7 +109,6 @@
     (fill-paragraph)))
 
 (use-package define-repeat-map
-  :ensure
   :vc (:url "https://tildegit.org/acdw/define-repeat-map.el")
   :demand t
 
@@ -216,7 +214,6 @@
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
 (use-package info-colors
-  :ensure t
   :vc (:url "https://github.com/ubolonton/info-colors")
   :hook (Info-selection . info-colors-fontify-node))
 
@@ -616,7 +613,6 @@ Interactively, prompt for WIDTH."
 ;;; ------------------------------ AI ------------------------------
 
 (use-package copilot
-  :ensure t
   :vc (:url "https://github.com/zerolfx/copilot.el")
   :hook
   ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
@@ -683,7 +679,6 @@ Interactively, prompt for WIDTH."
    gptel-backend gptel--openai))
 
 (use-package ai-org-chat
-  :ensure t
   :vc (:url "https://github.com/ultronozm/ai-org-chat.el")
   :bind
   (:map global-map
@@ -869,7 +864,6 @@ Interactively, prompt for WIDTH."
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
 (use-package czm-spell
-  :ensure t
   :vc (:url "https://github.com/ultronozm/czm-spell.el")
   :after latex
   :bind
@@ -1258,7 +1252,6 @@ The list is ordered from bottom to top."
         (czm-cmake-build--invoke-eshell-run this-run-config)))))
 
 (use-package cmake-build
-  :ensure t
   :vc (:url "https://github.com/ultronozm/cmake-build.el")
   :bind (("s-m m" . cmake-build-menu)
          ("s-m 1" . cmake-build-set-cmake-profile)
@@ -1279,7 +1272,6 @@ The list is ordered from bottom to top."
   (cmake-build-options "-j 8 --verbose"))
 
 (use-package czm-cpp
-  :ensure t
   :vc (:url "https://github.com/ultronozm/czm-cpp.el")
   :custom
   (czm-cpp-scratch-directory my-tmp-cpp-dir))
