@@ -114,8 +114,11 @@
       (TeX-previous-error arg reparse)
     (previous-error arg)))
 
-(use-package auctex
-  :ensure t
+(package-install 'auctex)
+
+(use-package emacs
+  :after latex
+
   ;; :vc (:url "https://git.savannah.gnu.org/git/auctex.git")
 
   ;; :vc t
@@ -482,6 +485,37 @@
 
 (setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
 ;; (setq TeX-suppress-ignored-warnings t)
+
+(use-package czm-preview
+  :vc (:url "https://github.com/ultronozm/czm-preview.el")
+  :after latex
+  :bind
+  (:map LaTeX-mode-map
+	       ("H-u" . czm-preview-mode)
+	       ("C-c C-p C-a" . czm-preview-mode)
+	       ("C-c p m" . czm-preview-toggle-master))
+  :custom
+  (czm-preview-timer-interval 0.1)
+  (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
+  (czm-preview-predicate #'my-czm-preview-predicate)
+  ;; :hook
+  ;; (LaTeX-mode . czm-preview-mode-conditionally-enable)
+
+  :config
+  (setq-default TeX-PDF-mode nil)
+  ;; because texlive 2023 seems super slow
+  (with-eval-after-load 'preview
+    (let ((tex-dir (when (equal (system-name)
+                                "Pauls-MBP-3")
+                     "/usr/local/texlive/2020/bin/x86_64-darwin/")))
+      (setq preview-LaTeX-command
+	           `(
+	             ,(concat
+	               "%`"
+	               tex-dir
+	               "%l \"\\nonstopmode\\nofiles\\PassOptionsToPackage{")
+	             ("," . preview-required-option-list)
+	             "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\"")))))
 
 (use-package preview-auto
   :disabled

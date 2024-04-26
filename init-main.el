@@ -1,20 +1,5 @@
 ;;; -*- lexical-binding: t; -*-
 
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-;; Comment/uncomment this line to enable MELPA Stable if desired.  See `package-archive-priorities`
-;; and `package-pinned-packages`. Most users will not need or want to do this.
-;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
-(package-initialize)
-
-(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-
-(let ((package-check-signature nil))
-  (use-package gnu-elpa-keyring-update
-    :ensure t
-    :demand t))
-
-
 (setq use-package-vc-prefer-newest t)
 
 (use-package exec-path-from-shell
@@ -23,38 +8,6 @@
   :if (memq window-system '(mac ns))
   :config
   (exec-path-from-shell-initialize))
-
-;; (use-package org
-;;   :ensure `(org
-;;           :fork (:host nil
-;;                  :repo "https://git.tecosaur.net/tec/org-mode.git"
-;;                  :branch "dev"
-;;                  :remote "tecosaur")
-;;           :files (:defaults "etc")
-;;           :build t
-;;           :pre-build
-;;           (with-temp-file "org-version.el"
-;;             (require 'lisp-mnt)
-;;             (let ((version
-;;                   (with-temp-buffer
-;;                     (insert-file-contents "lisp/org.el")
-;;                     (lm-header "version")))
-;;                   (git-version
-;;                   (string-trim
-;;                    (with-temp-buffer
-;;                      (call-process "git" nil t nil "rev-parse" "--short" "HEAD")
-;;                      (buffer-string)))))
-;;               (insert
-;;                (format "(defun org-release () \"The release version of Org.\" %S)\n" version)
-;;                (format "(defun org-git-version () \"The truncate git commit hash of Org mode.\" %S)\n" git-version)
-;;                "(provide 'org-version)\n")))
-;;           :pin nil))
-
-
-;;; ------------------------------ GENERAL ------------------------------
-
-(setq custom-file (concat user-emacs-directory "init-custom.el"))
-;; (load custom-file)
 
 (use-package avy
   :ensure t
@@ -91,20 +44,20 @@
   (emacs-lisp-mode . aggressive-indent-mode)
   (LaTeX-mode . aggressive-indent-mode))
 
-(use-package pulsar
-  :ensure t
-  :bind (("s-l" . pulsar-pulse-line))
+;; (use-package pulsar
+;;   :ensure t
+;;   :bind (("s-l" . pulsar-pulse-line))
 
-  :config
-  (dolist (fn '(avy-goto-line
-                diff-hunk-prev
-                diff-hunk-next
-                diff-file-next
-                diff-file-prev
-                flycheck-previous-error
-                flycheck-next-error))
-    (add-to-list 'pulsar-pulse-functions fn))
-  (pulsar-global-mode))
+;;   :config
+;;   (dolist (fn '(avy-goto-line
+;;                 diff-hunk-prev
+;;                 diff-hunk-next
+;;                 diff-file-next
+;;                 diff-file-prev
+;;                 flycheck-previous-error
+;;                 flycheck-next-error))
+;;     (add-to-list 'pulsar-pulse-functions fn))
+;;   (pulsar-global-mode))
 
 ;;; ------------------------------ REPEAT ------------------------------
 
@@ -372,11 +325,6 @@ Interactively, prompt for WIDTH."
                         )
          :render (gts-buffer-render))))
 
-(use-package rustic
-  :ensure t
-  :defer t
-  :custom
-  (rustic-lsp-client 'eglot))
 
 ;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
 
@@ -387,26 +335,6 @@ Interactively, prompt for WIDTH."
 ;;   (eldoc-echo-area-use-multiline-p t)
 ;;   (eldoc-idle-delay 0.25))
 
-(use-package ef-themes
-  :ensure t
-  :demand
-  :hook
-  (ef-themes-post-load . czm-set-face-heights)
-  :config
-  (ef-themes-select 'ef-frost t)
-  ;; (load-theme 'modus-vivendi t)
-  ;; (load-theme 'modus-operandi t)
-  ;; (load-theme 'ef-elea-dark t)
-
-  ;; (let ((hour (string-to-number (substring (current-time-string) 11 13))))
-  ;;   (cond
-  ;;    ((<= hour 7)
-  ;;     (load-theme 'modus-vivendi t))
-  ;;    ((<= hour 19)
-  ;;     (load-theme 'ef-frost t))
-  ;;    (t
-  ;;     (load-theme 'ef-autumn t))))
-  )
 
 (use-package vertico
   :ensure t
@@ -427,14 +355,6 @@ Interactively, prompt for WIDTH."
   :demand
   :custom
   (completion-styles '(orderless basic)))
-
-(defun czm-consult-imenu-emacsd ()
-  "Call =consult-imenu-multi= for project =~/.emacs.d/emacsd=."
-  (interactive)
-  (let ((consult-project-function
-         (lambda (may-prompt) "~/.emacs.d/emacsd/")))
-    (with-current-buffer "init-main.el"
-      (consult-imenu-multi))))
 
 (use-package consult
   :ensure t
@@ -470,7 +390,6 @@ Interactively, prompt for WIDTH."
          ("M-g k" . consult-global-mark)
          ("M-g i" . consult-imenu)
          ("M-g I" . consult-imenu-multi)
-         ("s-I" . czm-consult-imenu-emacsd)
          ;; M-s bindings (search-map)
          ("M-s d" . consult-find)
          ("M-s D" . consult-locate)
@@ -610,9 +529,6 @@ Interactively, prompt for WIDTH."
   :ensure t
   :config
   (ace-link-setup-default))
-
-(use-package xr
-  :ensure t)
 
 (use-package eldoc-box
   :ensure t
@@ -829,35 +745,6 @@ Interactively, prompt for WIDTH."
   :config
   (define-key flycheck-command-map "f" 'attrap-flycheck)
   (put 'attrap-flycheck 'repeat-map 'flymake-repeat-map))
-
-;;; ------------------------------ MARK ------------------------------
-
-(when nil
-  ;; copied from https://spwhitton.name/blog/entry/transient-mark-mode/
-  (defun spw/remap-mark-command (command &optional map)
-    "Remap a mark-* command to temporarily activate Transient Mark mode."
-    (let* ((cmd (symbol-name command))
-           (fun (intern (concat "spw/" cmd)))
-           (doc (concat "Call `"
-                        cmd
-                        "' and temporarily activate Transient Mark mode.")))
-      (fset fun `(lambda ()
-                   ,doc
-                   (interactive)
-                   (call-interactively #',command)
-                   (activate-mark)))
-      (if map
-          (define-key map (vector 'remap command) fun)
-        (global-set-key (vector 'remap command) fun))))
-
-  (dolist (command '(mark-word
-                     mark-sexp
-                     mark-paragraph
-                     mark-defun
-                     mark-page
-                     mark-whole-buffer
-                     rectangle-mark-mode))
-    (spw/remap-mark-command command)))
 
 ;;; ------------------------------ ABBREV and SPELLING ------------------------------
 
@@ -1377,15 +1264,6 @@ The value of `calc-language` is restored after BODY has been processed."
     (setq fill-column (cdr assn))))
 
 (add-hook 'git-commit-mode-hook 'set-git-commit-fill-column)
-
-;; maybe this is all that's needed to get indirect buffers to work?
-
-(defun set-TeX-master-from-cloned ()
-  (when (eq major-mode 'LaTeX-mode)
-    (setq TeX-master (with-current-buffer (buffer-base-buffer)
-                       (TeX-master-file)))))
-
-(add-hook 'clone-indirect-buffer-hook 'set-TeX-master-from-cloned)
 
 (use-package easy-kill
   :ensure t)
