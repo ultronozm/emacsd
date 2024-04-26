@@ -496,6 +496,7 @@
 (use-package tex-continuous
   :ensure (:host github :repo "ultronozm/tex-continuous.el"
                  :depth nil)
+  :after latex
   :bind
   (:map LaTeX-mode-map
         ("C-c k" . tex-continuous-toggle)))
