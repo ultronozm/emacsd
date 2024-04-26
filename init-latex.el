@@ -114,7 +114,12 @@
       (TeX-previous-error arg reparse)
     (previous-error arg)))
 
-(use-package latex
+(use-package auctex
+  :ensure t
+  ;; :vc (:url "https://git.savannah.gnu.org/git/auctex.git")
+
+  ;; :vc t
+  ;; :load-path "~/.emacs.d/elpaca/repos/auctex"
 
   ;; (auctex
   ;;  :files
