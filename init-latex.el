@@ -279,7 +279,7 @@
 (advice-add 'yank :after #'my-yank-after-advice)
 
 (use-package czm-tex-jump
-  :vc (:url "https://github.com/https://github.com/ultronozm/czm-tex-jump.el.git")
+  :vc (:url "https://github.com/ultronozm/czm-tex-jump.el")
   ;; :after avy
   :bind
   (:map LaTeX-mode-map
