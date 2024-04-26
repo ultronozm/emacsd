@@ -1581,3 +1581,6 @@ The value of `calc-language` is restored after BODY has been processed."
                        (TeX-master-file)))))
 
 (add-hook 'clone-indirect-buffer-hook 'set-TeX-master-from-cloned)
+
+(use-package easy-kill)
+(global-set-key [remap kill-ring-save] #'easy-kill)
