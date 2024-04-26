@@ -610,9 +610,6 @@ Interactively, prompt for WIDTH."
   :config
   (ace-link-setup-default))
 
-(use-package xr)
-
-
 (use-package eldoc-box
   :commands (eldoc-box-help-at-point)
   :bind
