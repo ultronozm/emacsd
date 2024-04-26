@@ -479,6 +479,7 @@
 
 (use-package tex-continuous
   :vc (:url "https://github.com/ultronozm/tex-continuous.el")
+  :after latex
   :bind
   (:map LaTeX-mode-map
         ("C-c k" . tex-continuous-toggle)))
