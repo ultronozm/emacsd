@@ -7,6 +7,10 @@
 ;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (package-initialize)
 
+(let ((package-check-signature nil))
+  (use-package gnu-elpa-keyring-update
+    :ensure t))
+
 (setq use-package-vc-prefer-newest t)
 
 (use-package exec-path-from-shell
