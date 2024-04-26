@@ -416,10 +416,6 @@ Interactively, prompt for WIDTH."
                         )
          :render (gts-buffer-render))))
 
-(use-package rustic
-  :defer t
-  :custom
-  (rustic-lsp-client 'eglot))
 
 ;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
 
@@ -429,26 +425,6 @@ Interactively, prompt for WIDTH."
 ;;   ;  (eldoc-echo-area-use-multiline-p truncate-sym-name-if-fiteldoc-echo-area-use-multiline-p)
 ;;   (eldoc-echo-area-use-multiline-p t)
 ;;   (eldoc-idle-delay 0.25))
-
-(use-package ef-themes
-  :demand
-  :hook
-  (ef-themes-post-load . czm-set-face-heights)
-  :config
-  (ef-themes-select 'ef-frost)
-  ;; (load-theme 'modus-vivendi t)
-  ;; (load-theme 'modus-operandi t)
-  ;; (load-theme 'ef-elea-dark t)
-
-  ;; (let ((hour (string-to-number (substring (current-time-string) 11 13))))
-  ;;   (cond
-  ;;    ((<= hour 7)
-  ;;     (load-theme 'modus-vivendi t))
-  ;;    ((<= hour 19)
-  ;;     (load-theme 'ef-frost t))
-  ;;    (t
-  ;;     (load-theme 'ef-autumn t))))
-  )
 
 (use-package vertico
   :demand
@@ -466,14 +442,6 @@ Interactively, prompt for WIDTH."
   :demand
   :custom
   (completion-styles '(orderless basic)))
-
-(defun czm-consult-imenu-emacsd ()
-  "Call =consult-imenu-multi= for project =~/.emacs.d/emacsd=."
-  (interactive)
-  (let ((consult-project-function
-         (lambda (may-prompt) "~/.emacs.d/emacsd/")))
-    (with-current-buffer "init-main.el"
-      (consult-imenu-multi))))
 
 (use-package consult
   ;; Replace bindings. Lazily loaded due by `use-package'.
@@ -507,7 +475,6 @@ Interactively, prompt for WIDTH."
          ("M-g k" . consult-global-mark)
          ("M-g i" . consult-imenu)
          ("M-g I" . consult-imenu-multi)
-         ("s-I" . czm-consult-imenu-emacsd)
          ;; M-s bindings (search-map)
          ("M-s d" . consult-find)
          ("M-s D" . consult-locate)
