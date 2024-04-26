@@ -532,3 +532,25 @@ pushes the mark somewhere useful."
   :ensure nil
   :custom
   (calc-kill-line-numbering nil))
+
+(use-package eglot
+  :ensure nil
+  :custom
+  (eglot-connect-timeout 120))
+
+;; don't remember the point of this
+(cl-defmethod project-root ((project (head local)))
+  "TODO."
+  (cdr project))
+
+(defun czm/project-try-local (dir)
+  "Determine if DIR is a non-Git project.
+DIR must include a .project file to be considered a project."
+  (let ((root (locate-dominating-file dir ".project")))
+    (and root (cons 'local root))))
+
+(use-package project
+  :ensure nil
+
+  :config
+  (add-to-list 'project-find-functions 'czm/project-try-local))
