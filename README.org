@@ -12,10 +12,7 @@ Rename =init-settings-sample.el= to =init-settings.el= and personalize suitably.
 #+begin_src bash
 ./add-symlinks.sh
 #+end_src
-
-Rename =init-settings-sample.el= to =init-settings.el= and personalize suitably.
-
-Be sure to add your Emacs executable to the PATH environment variable.
+Also, make sure you've added the folder containing your Emacs executable to the PATH environment variable.
 
 * Some individual packages
 Most of the functionality of my config has been extracted into the following packages.
