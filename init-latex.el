@@ -149,7 +149,7 @@
   (add-to-list 'TeX-file-extensions "tex\\.~[0-9a-f]+~")
 
   :mode ("\\.tex\\'" . LaTeX-mode)
-  
+
   :hook
   (latex-mode . LaTeX-mode) ;; absurd that this needs to be added
   (LaTeX-mode . TeX-fold-mode)
@@ -737,7 +737,7 @@ of the preamble part of REGION-TEXT."
         ("s-c" . czm-tex-avy-copy))
   :hook
   (LaTeX-mode . tex-parens-setup)
-  
+
   :config
   ;; (spw/remap-mark-command 'tex-parens-mark-sexp LaTeX-mode-map)
   (defun czm-tex-parens-expand-abbrev-advice (orig-fun &rest args)
