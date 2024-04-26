@@ -390,10 +390,12 @@ Interactively, prompt for WIDTH."
 (use-package ef-themes
   :ensure t
   :demand
+  :hook
+  (ef-themes-post-load . czm-set-face-heights)
   :config
+  (ef-themes-select 'ef-frost t)
   ;; (load-theme 'modus-vivendi t)
   ;; (load-theme 'modus-operandi t)
-  (load-theme 'ef-frost t)
   ;; (load-theme 'ef-elea-dark t)
 
   ;; (let ((hour (string-to-number (substring (current-time-string) 11 13))))

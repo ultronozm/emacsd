@@ -503,10 +503,14 @@ pushes the mark somewhere useful."
         ("M-1" . lispy-describe-inline)
         ("M-2" . lispy-arglist-inline)))
 
-(set-face-attribute 'default nil :height 150)
-(set-face-attribute 'mode-line nil :height 120)
-(set-face-attribute 'mode-line-inactive nil :height 120)
-(set-face-attribute 'tab-bar nil :height 120)
+(defun czm-set-face-heights ()
+  "Set the heights of various faces."
+  (set-face-attribute 'default nil :height 150)
+  (set-face-attribute 'mode-line nil :height 120)
+  (set-face-attribute 'mode-line-inactive nil :height 120)
+  (set-face-attribute 'tab-bar nil :height 120))
+
+(czm-set-face-heights)
 
 (unless (eq window-system 'w32)
   (use-package emacs
