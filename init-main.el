@@ -7,9 +7,13 @@
 ;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (package-initialize)
 
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
 (let ((package-check-signature nil))
   (use-package gnu-elpa-keyring-update
-    :ensure t))
+    :ensure t
+    :demand t))
+
 
 (setq use-package-vc-prefer-newest t)
 
