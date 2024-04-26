@@ -1389,7 +1389,3 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package easy-kill
   :ensure t)
-
-(use-package easy-kill
-  :ensure t)
-
