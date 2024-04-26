@@ -18,8 +18,7 @@
 ;; eglot-sync-connect?
 
 (use-package lean4-mode
-  :ensure (:host github :repo "ultronozm/lean4-mode"
-                 :files ("*.el" "data"))
+  :vc (:url "https://github.com/ultronozm/lean4-mode")
   :hook (lean4-mode . czm-lean4-set-imenu-generic-expression)
   :commands (lean4-mode)
   :custom
@@ -34,8 +33,7 @@
   :defer t)
 
 (use-package czm-lean4
-  :ensure (:host github :repo "ultronozm/czm-lean4.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-lean4.el")
   :after lean4-mode preview-auto
   :hook (lean4-mode . czm-lean4-mode-hook)
   :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
@@ -104,8 +102,7 @@
     (eldoc-mode)))
 
 (use-package eldoc-icebox
-  :ensure (:host github :repo "ultronozm/eldoc-icebox.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/eldoc-icebox.el")
   :bind (("C-c C-h" . eldoc-icebox-store)
          ("C-c C-n" . eldoc-icebox-toggle-display))
   :hook

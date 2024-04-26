@@ -6,8 +6,7 @@
   (magit-status-mode . visual-line-mode))
 
 (use-package repo-scan
-  :ensure (:host github :repo "ultronozm/repo-scan.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/repo-scan.el")
   :defer t)
 
 (defvar czm-repos '(
@@ -73,8 +72,7 @@
       (string-suffix-p ".bib" file)))
 
 (use-package publish
-  :ensure (:host github :repo "ultronozm/publish.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/publish.el")
   :defer t
   :custom
   (publish-repo-root "~/math")

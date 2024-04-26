@@ -70,8 +70,7 @@ entry."
                  'face-defface-spec))
 
 (use-package czm-tex-mint
-  :ensure (:host github :repo "ultronozm/czm-tex-mint.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/czm-tex-mint.el")
   :after latex mmm-mode
   :demand t
   :custom
@@ -87,9 +86,7 @@ entry."
   (mmm-sage-shell:sage-mode-exit . czm-tex-mint-disable))
 
 (use-package symtex
-  :ensure (:host github
-                 :repo "ultronozm/symtex.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/symtex.el")
   :after latex
   :bind
   (:map global-map

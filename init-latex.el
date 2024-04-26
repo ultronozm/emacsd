@@ -480,14 +480,13 @@
 ;; (setq TeX-suppress-ignored-warnings t)
 
 (use-package preview-auto
-  :ensure (:host github :repo "ultronozm/preview-auto.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/preview-auto.el")
   :after latex
   ;; :hook
   ;; (LaTeX-mode . preview-auto-conditionally-enable)
   :bind
   ;; (:map LaTeX-mode-map
-	 ;;       ("H-u" . preview-auto-mode))
+  ;;       ("H-u" . preview-auto-mode))
   :config
   (setq preview-protect-point t)
   (setq preview-locating-previews-message nil)
@@ -501,8 +500,8 @@
      )))
 
 (use-package tex-numbers
-  :ensure (:host github :repo "ultronozm/tex-numbers.el"
-                 :depth nil)
+  :vc (:url "https://github.com/ultronozm/tex-numbers.el"
+            :depth nil)
   :after latex czm-tex-fold
   :config
   (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
