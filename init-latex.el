@@ -401,7 +401,7 @@
 	       (insert "''"))))))
 
 (use-package emacs
-  :vc nil
+  :ensure nil
   :after flycheck attrap
   :config
   (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer)))
@@ -499,8 +499,7 @@
      )))
 
 (use-package tex-numbers
-  :vc (:url "https://github.com/ultronozm/tex-numbers.el"
-            :depth nil)
+  :vc (:url "https://github.com/ultronozm/tex-numbers.el")
   :after latex czm-tex-fold
   :config
   (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
@@ -544,8 +543,8 @@ Otherwise, return nil."
    ))
 
 (use-package library
-  :after latex czm-tex-util
   :vc (:url "https://github.com/ultronozm/library.el")
+  :after latex czm-tex-util
   :custom
   (library-pdf-directory my-pdf-folder)
   (library-bibtex-file my-master-bib-file)
@@ -677,6 +676,7 @@ of the preamble part of REGION-TEXT."
   :config
   ;; (spw/remap-mark-command 'tex-parens-mark-sexp LaTeX-mode-map)
   (defun czm-tex-parens-expand-abbrev-advice (orig-fun &rest args)
+    (require 'tex-parens)
     (unless (tex-parens--comment)
       (apply orig-fun args)))
 
