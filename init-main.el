@@ -109,7 +109,8 @@
               (concat user-emacs-directory "backups")))))
   (auto-save-file-name-transforms
    `((".*" ,(expand-file-name
-             (concat user-emacs-directory "auto-save/")) t)))
+             (concat user-emacs-directory "auto-save/"))
+      t)))
   (ediff-window-setup-function 'ediff-setup-windows-plain))
 
 (use-package emacs
