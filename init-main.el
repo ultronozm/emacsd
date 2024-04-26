@@ -137,86 +137,6 @@
   (:map minibuffer-local-map
         ("C-c d" . czm-misc-insert-date)))
 
-(use-package emacs
-  :ensure nil
-
-  :custom
-  (use-dialog-box nil)
-  (show-paren-delay 0)
-  (show-paren-style 'parenthesis)
-  (ring-bell-function #'ignore)
-  (initial-scratch-message nil)
-  (inhibit-startup-message t)
-  (echo-keystrokes 0.01)
-  (mark-even-if-inactive nil)
-  (tramp-default-method "ssh")
-  (tramp-ssh-extra-args (list "-i" "~/.ssh/"))
-  (password-cache-expiry nil)
-  (enable-recursive-minibuffers t)
-  (max-lisp-eval-depth 12000)
-  (bookmark-save-flag 1)
-  (dired-create-destination-dirs 'ask)
-  (dired-isearch-filenames t)
-  (dired-vc-rename-file t)
-  (large-file-warning-threshold 20000000)
-  (vc-follow-symlinks t)
-  (view-read-only t)
-  (delete-by-moving-to-trash t)
-  (help-window-select t)
-  (isearch-allow-scroll t)
-  (search-upper-case t)
-  (doc-view-resolution 300)
-  (backup-directory-alist
-   `(("." . ,(expand-file-name
-              (concat user-emacs-directory "backups")))))
-  (auto-save-file-name-transforms
-   `((".*" ,(expand-file-name
-             (concat user-emacs-directory "auto-save/"))
-      t)))
-  (ediff-window-setup-function 'ediff-setup-windows-plain))
-
-(use-package emacs
-  :ensure nil
-
-  :config
-  (electric-pair-mode)
-  (put 'upcase-region 'disabled nil)
-  (put 'narrow-to-region 'disabled nil)
-  (fset 'yes-or-no-p 'y-or-n-p)
-  (minibuffer-depth-indicate-mode)
-  (global-auto-revert-mode)
-  (setq-default indent-tabs-mode nil)
-  ;; (warning-suppress-log-types '((comp))) ; don't care about this anymore?
-  (save-place-mode)
-  (tool-bar-mode 0)
-  (scroll-bar-mode 0)
-  ;; (transient-mark-mode 0)
-  (line-number-mode)
-  (column-number-mode)
-  (winner-mode))
-
-(use-package emacs
-  :ensure nil
-
-  :custom
-  (display-time-default-load-average nil)
-
-  :config
-  (display-time-mode))
-
-(use-package recentf
-  :ensure nil
-
-  :custom
-  (recentf-max-saved-items 100)
-  :config
-  (recentf-mode))
-
-(use-package prog-mode
-  :ensure nil
-  :hook
-  (prog-mode . outline-minor-mode))
-
 (use-package aggressive-indent
   :hook
   (emacs-lisp-mode . aggressive-indent-mode)
@@ -236,26 +156,8 @@
     (add-to-list 'pulsar-pulse-functions fn))
   (pulsar-global-mode))
 
-(use-package emacs
-  :ensure nil
-  :after outline
-  :bind (:map outline-minor-mode-map
-              ("C-M-<down-mouse-1>" . nil)
-              ("C-M-<down-mouse-2>" . nil)
-              ("C-M-<down-mouse-3>" . nil)
-              ("<right-margin> S-<mouse-1>" . nil)
-              ("<right-margin> <mouse-1>" . nil)
-              ("<left-margin> S-<mouse-1>" . nil)
-              ("<left-margin> <mouse-1>" . nil)))
-
-
 ;;; ------------------------------ REPEAT ------------------------------
 
-(use-package repeat
-  :ensure nil
-  :config
-  (setcdr other-window-repeat-map nil)
-  (repeat-mode))
 
 (defun czm-fill-previous-paragraph ()
   "Fill the previous paragraph."
@@ -290,43 +192,10 @@
 
 ;;; ------------------------------ LISP ------------------------------
 
-(defun czm-mark-inner ()
-  (interactive)
-  (condition-case nil
-      (progn
-        (backward-up-list)
-        (down-list)
-        (set-mark (point))
-        (up-list)
-        (backward-down-list))
-    (error (message "No inner list found."))))
-
-(use-package emacs
-  :ensure nil
-
-  :custom
-  (delete-pair-blink-delay 0)
-  :bind
-  (:map global-map
-        ("M-_" . delete-pair)
-        ("M-+" . kill-backward-up-list)
-        ("s-r" . elpaca-rebuild)
-        ("M-u" . up-list)
-        ("M-i" . czm-mark-inner)
-        )
-  (:map emacs-lisp-mode-map
-        ("M-1" . lispy-describe-inline)
-        ("M-2" . lispy-arglist-inline)))
-
 (defun czm-deactivate-mark-interactively ()
   "Deactivate the mark interactively."
   (interactive)
   (deactivate-mark))
-
-(defun backward-down-list ()
-  "Move backward down a list."
-  (interactive)
-  (down-list -1))
 
 (defun czm-lispy-comment-maybe ()
   "Comment the list at point, or self-insert."
@@ -346,7 +215,7 @@
      "M-u" up-list
      "g" down-list)
     (:continue
-     "M-g" backward-down-list
+     "M-g" czm-backward-down-list
      "f" forward-sexp
      "b" backward-sexp
      "a" beginning-of-defun
@@ -495,10 +364,6 @@ Interactively, prompt for WIDTH."
      "y" yank))
   (repeat-mode 1))
 
-(set-face-attribute 'default nil :height 150)
-(set-face-attribute 'mode-line nil :height 120)
-(set-face-attribute 'mode-line-inactive nil :height 120)
-(set-face-attribute 'tab-bar nil :height 120)
 
 
                                         ; (load (concat user-emacs-directory "uniteai.el"))
@@ -819,13 +684,6 @@ Interactively, prompt for WIDTH."
   :config
   (ace-link-setup-default))
 
-(use-package zzz-to-char
-  :bind
-  ("s-t" . zzz-to-char-up-to-char)
-  ("s-f" . zzz-to-char)
-  :custom
-  (zzz-to-char-reach 200))
-
 (use-package xr)
 
 (use-package eglot
@@ -1110,26 +968,6 @@ DIR must include a .project file to be considered a project."
     (error "Abbrev table does not exist" table))
   (dolist (abbrev abbrevs)
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
-
-(unless (eq window-system 'w32)
-  (use-package emacs
-    :ensure nil
-
-    :after cc-mode
-
-    :custom
-    (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
-    (save-abbrevs 'silently)
-
-    :hook
-    (text-mode . abbrev-mode)
-    (vc-git-log-edit-mode . abbrev-mode)
-
-    :config
-    (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
-      (when (file-exists-p abbrev-file)
-        (quietly-read-abbrev-file abbrev-file)))
-    (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
 
 (use-package czm-spell
   :ensure (:host github :repo "ultronozm/czm-spell.el"
@@ -1579,11 +1417,6 @@ The list is ordered from bottom to top."
 ;; (advice-add 'math-read-expr :filter-args #'my-math-read-expr-filter)
 ;; (czm-misc-show-advice #'math-read-expr)
 ;; (advice-remove 'math-read-expr #'my-math-read-expr-filter)
-
-(use-package calc
-  :ensure nil
-  :custom
-  (calc-kill-line-numbering nil))
 
 (defun czm-calc-grab-TeX-region (beg end arg)
   (interactive "r\nP")

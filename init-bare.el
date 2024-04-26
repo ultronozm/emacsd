@@ -368,3 +368,167 @@ pushes the mark somewhere useful."
   (global-unset-key (kbd key)))
 
 ;; H-ACFNHMD -- macOS annoyance
+
+
+(use-package emacs
+  :ensure nil
+
+  :custom
+  (use-dialog-box nil)
+  (show-paren-delay 0)
+  (show-paren-style 'parenthesis)
+  (ring-bell-function #'ignore)
+  (initial-scratch-message nil)
+  (inhibit-startup-message t)
+  (echo-keystrokes 0.01)
+  (mark-even-if-inactive nil)
+  (tramp-default-method "ssh")
+  (tramp-ssh-extra-args (list "-i" "~/.ssh/"))
+  (password-cache-expiry nil)
+  (enable-recursive-minibuffers t)
+  (max-lisp-eval-depth 12000)
+  (bookmark-save-flag 1)
+  (dired-create-destination-dirs 'ask)
+  (dired-isearch-filenames t)
+  (dired-vc-rename-file t)
+  (large-file-warning-threshold 20000000)
+  (vc-follow-symlinks t)
+  (view-read-only t)
+  (delete-by-moving-to-trash t)
+  (help-window-select t)
+  (isearch-allow-scroll t)
+  (search-upper-case t)
+  (doc-view-resolution 300)
+  (backup-directory-alist
+   `(("." . ,(expand-file-name
+              (concat user-emacs-directory "backups")))))
+  (auto-save-file-name-transforms
+   `((".*" ,(expand-file-name
+             (concat user-emacs-directory "auto-save/"))
+      t)))
+  (ediff-window-setup-function 'ediff-setup-windows-plain))
+
+(use-package emacs
+  :ensure nil
+
+  :config
+  (electric-pair-mode)
+  (put 'upcase-region 'disabled nil)
+  (put 'narrow-to-region 'disabled nil)
+  (fset 'yes-or-no-p 'y-or-n-p)
+  (minibuffer-depth-indicate-mode)
+  (global-auto-revert-mode)
+  (setq-default indent-tabs-mode nil)
+  (save-place-mode)
+  (tool-bar-mode 0)
+  (scroll-bar-mode 0)
+  ;; (transient-mark-mode 0)
+  (line-number-mode)
+  (column-number-mode)
+  (winner-mode))
+
+(use-package emacs
+  :ensure nil
+
+  :custom
+  (display-time-default-load-average nil)
+
+  :config
+  (display-time-mode))
+
+
+(use-package recentf
+  :ensure nil
+
+  :custom
+  (recentf-max-saved-items 100)
+  :config
+  (recentf-mode))
+
+
+(use-package prog-mode
+  :ensure nil
+  :hook
+  (prog-mode . outline-minor-mode))
+
+
+(use-package emacs
+  :ensure nil
+  :after outline
+  :bind (:map outline-minor-mode-map
+              ("C-M-<down-mouse-1>" . nil)
+              ("C-M-<down-mouse-2>" . nil)
+              ("C-M-<down-mouse-3>" . nil)
+              ("<right-margin> S-<mouse-1>" . nil)
+              ("<right-margin> <mouse-1>" . nil)
+              ("<left-margin> S-<mouse-1>" . nil)
+              ("<left-margin> <mouse-1>" . nil)))
+
+(use-package repeat
+  :ensure nil
+  :config
+  (setcdr other-window-repeat-map nil)
+  (repeat-mode))
+
+(defun czm-mark-inner ()
+  (interactive)
+  (condition-case nil
+      (progn
+        (backward-up-list)
+        (down-list)
+        (set-mark (point))
+        (up-list)
+        (czm-backward-down-list))
+    (error (message "No inner list found."))))
+
+(defun czm-backward-down-list ()
+  "Move backward down a list."
+  (interactive)
+  (down-list -1))
+
+(use-package emacs
+  :ensure nil
+
+  :custom
+  (delete-pair-blink-delay 0)
+  :bind
+  (:map global-map
+        ("M-_" . delete-pair)
+        ("M-+" . kill-backward-up-list)
+        ("s-r" . elpaca-rebuild)
+        ("M-u" . up-list)
+        ("M-i" . czm-mark-inner)
+        )
+  (:map emacs-lisp-mode-map
+        ("M-1" . lispy-describe-inline)
+        ("M-2" . lispy-arglist-inline)))
+
+(set-face-attribute 'default nil :height 150)
+(set-face-attribute 'mode-line nil :height 120)
+(set-face-attribute 'mode-line-inactive nil :height 120)
+(set-face-attribute 'tab-bar nil :height 120)
+
+(unless (eq window-system 'w32)
+  (use-package emacs
+    :ensure nil
+
+    :after cc-mode
+
+    :custom
+    (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
+    (save-abbrevs 'silently)
+
+    :hook
+    (text-mode . abbrev-mode)
+    (vc-git-log-edit-mode . abbrev-mode)
+
+    :config
+    (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
+      (when (file-exists-p abbrev-file)
+        (quietly-read-abbrev-file abbrev-file)))
+    (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
+
+(use-package calc
+  :ensure nil
+  :custom
+  (calc-kill-line-numbering nil))
