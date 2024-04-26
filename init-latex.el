@@ -542,6 +542,7 @@
   :bind
   (:map LaTeX-mode-map
 	       ("H-u" . czm-preview-mode)
+	       ("C-c C-p C-a" . czm-preview-mode)
 	       ("C-c p m" . czm-preview-toggle-master))
   :custom
   (czm-preview-timer-interval 0.1)
