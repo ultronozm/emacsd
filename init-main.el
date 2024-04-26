@@ -7,6 +7,8 @@
 ;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (package-initialize)
 
+(setq use-package-vc-prefer-newest t)
+
 (use-package exec-path-from-shell
   :ensure
   :demand
