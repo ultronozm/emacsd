@@ -1416,4 +1416,3 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package easy-kill)
 (global-set-key [remap kill-ring-save] #'easy-kill)
-n
