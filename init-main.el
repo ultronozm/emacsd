@@ -580,6 +580,7 @@ Interactively, prompt for WIDTH."
                  (window-parameters (mode-line-format . none)))))
 
 (use-package embark-consult
+  :ensure t
   ;; only need to install it, embark loads it after consult if found
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
@@ -587,21 +588,25 @@ Interactively, prompt for WIDTH."
 (setq-default completion-in-region-function 'consult-completion-in-region)
 
 (use-package ace-window
+  :ensure t
   :bind
   ("C-x o" . ace-window))
 
 (use-package which-key
+  :ensure t
   :config
   (which-key-mode))
 
 (use-package ace-link ; activate using 'o' in info/help/(...)
+  :ensure t
   :config
   (ace-link-setup-default))
 
-(use-package xr)
-
+(use-package xr
+  :ensure t)
 
 (use-package eldoc-box
+  :ensure t
   :commands (eldoc-box-help-at-point)
   :bind
   (:map global-map ("C-c e" . eldoc-box-help-at-point)))
