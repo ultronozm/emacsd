@@ -1,6 +1,7 @@
 ;;; -*- lexical-binding: t; -*-
 
 (use-package magit
+  :ensure t
   :defer t
   :hook
   (magit-status-mode . visual-line-mode))
