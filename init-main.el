@@ -54,6 +54,8 @@
         ("M-j" . avy-isearch)))
 
 (use-package czm-misc
+  :ensure t
+  :demand
   :after avy
   :vc (:url "https://github.com/ultronozm/czm-misc.el")
   :bind (("s-@" . czm-misc-split-window-below-variant)
@@ -81,6 +83,7 @@
   (LaTeX-mode . aggressive-indent-mode))
 
 (use-package pulsar
+  :ensure t
   :bind (("s-l" . pulsar-pulse-line))
 
   :config
@@ -145,6 +148,7 @@
 
 (use-package lispy
   :after define-repeat-map
+  :ensure t
   :demand t
   :config
   (define-repeat-map structural-edit
@@ -210,10 +214,12 @@
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
 (use-package info-colors
-  :vc (:url "ubolonton/info-colors")
+  :ensure t
+  :vc (:url "https://github.com/ubolonton/info-colors")
   :hook (Info-selection . info-colors-fontify-node))
 
 (use-package expand-region
+  :ensure t
   :bind
   (("C-=" . er/expand-region)))
 
@@ -258,13 +264,15 @@ Interactively, prompt for WIDTH."
 ;; functions.  that way, you can easily set margin widths for each
 ;; monitor.
 
-(use-package pos-tip)
+(use-package pos-tip
+  :ensure t)
 
 ;; (setq lsp-log-io t)
 (with-eval-after-load 'lsp-mode
   (setq lsp-log-io t))
 
-(use-package consult-company)
+(use-package consult-company
+  :ensure t)
 
 (use-package outline
   :ensure nil
@@ -338,6 +346,7 @@ Interactively, prompt for WIDTH."
 ;;       :config        (eglot-booster-mode))
 
 (use-package symbol-overlay
+  :ensure t
   :bind (("M-s ," . symbol-overlay-put)
          ("M-s n" . symbol-overlay-switch-forward)
          ("M-s p" . symbol-overlay-switch-backward)
@@ -345,6 +354,7 @@ Interactively, prompt for WIDTH."
          ("M-s n" . symbol-overlay-remove-all)))
 
 (use-package go-translate
+  :ensure t
   :custom
   gts-translate-list '(("fr" "en"))
   :config
@@ -356,6 +366,7 @@ Interactively, prompt for WIDTH."
          :render (gts-buffer-render))))
 
 (use-package rustic
+  :ensure t
   :defer t
   :custom
   (rustic-lsp-client 'eglot))
@@ -370,6 +381,7 @@ Interactively, prompt for WIDTH."
 ;;   (eldoc-idle-delay 0.25))
 
 (use-package ef-themes
+  :ensure t
   :demand
   :config
   ;; (load-theme 'modus-vivendi t)
@@ -388,11 +400,13 @@ Interactively, prompt for WIDTH."
   )
 
 (use-package vertico
+  :ensure t
   :demand
   :config
   (vertico-mode))
 
 (use-package marginalia
+  :ensure t
   :demand
   :config
   (marginalia-mode)
@@ -400,6 +414,7 @@ Interactively, prompt for WIDTH."
               ("M-A" . marginalia-cycle)))
 
 (use-package orderless
+  :ensure t
   :demand
   :custom
   (completion-styles '(orderless basic)))
@@ -413,6 +428,8 @@ Interactively, prompt for WIDTH."
       (consult-imenu-multi))))
 
 (use-package consult
+  :ensure t
+  
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c M-x" . consult-mode-command)
@@ -543,6 +560,7 @@ Interactively, prompt for WIDTH."
 
 
 (use-package embark
+  :ensure t
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
    ("M-." . embark-dwim)        ;; good alternative: M-.
@@ -638,6 +656,7 @@ Interactively, prompt for WIDTH."
 ;;; ------------------------------ AI ------------------------------
 
 (use-package copilot
+  :ensure t
   :vc (:url "https://github.com/zerolfx/copilot.el")
   :hook
   ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
@@ -672,6 +691,7 @@ Interactively, prompt for WIDTH."
         ))
 
 (use-package gptel
+  :ensure t
   :after exec-path-from-shell
   :defer t
   :custom
@@ -703,18 +723,19 @@ Interactively, prompt for WIDTH."
    gptel-backend gptel--openai))
 
 (use-package ai-org-chat
-:vc (:url "https://github.com/ultronozm/ai-org-chat.el")
-:bind
-(:map global-map
-      ("s-/" . ai-org-chat-new))
-(:map ai-org-chat-minor-mode
-      ("s-<return>" . ai-org-chat-respond)
-      ("C-c n" . ai-org-chat-branch))
-:commands (ai-org-chat-minor-mode) ; for manual activation
-:custom
-(ai-org-chat-user-name my-first-name)
-(ai-org-chat-dir my-tmp-gpt-dir)
-(ai-org-chat-system-message nil))
+  :ensure t
+  :vc (:url "https://github.com/ultronozm/ai-org-chat.el")
+  :bind
+  (:map global-map
+        ("s-/" . ai-org-chat-new))
+  (:map ai-org-chat-minor-mode
+        ("s-<return>" . ai-org-chat-respond)
+        ("C-c n" . ai-org-chat-branch))
+  :commands (ai-org-chat-minor-mode) ; for manual activation
+  :custom
+  (ai-org-chat-user-name my-first-name)
+  (ai-org-chat-dir my-tmp-gpt-dir)
+  (ai-org-chat-system-message nil))
 ;; (ai-org-chat-prompt-preamble
 ;;    "You are a brilliant and helpful assistant.
 
@@ -779,6 +800,7 @@ Interactively, prompt for WIDTH."
 ;; C-c ! x		flycheck-disable-checker
 
 (use-package flycheck
+  :ensure t
   :defer t
   :config
   (setq flycheck-emacs-lisp-load-path 'inherit)
@@ -803,6 +825,7 @@ Interactively, prompt for WIDTH."
   (repeat-mode 1))
 
 (use-package flycheck-package
+  :ensure t
   :defer t
   :hook
   (emacs-lisp-mode . flycheck-package-setup))
@@ -830,6 +853,7 @@ Interactively, prompt for WIDTH."
 ;;; ------------------------------ ATTRAP ------------------------------
 
 (use-package attrap
+  :ensure t
   :after flycheck
   :config
   (setq saved-match-data nil))
@@ -904,6 +928,7 @@ DIR must include a .project file to be considered a project."
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
 (use-package czm-spell
+  :ensure t
   :vc (:url "https://github.com/ultronozm/czm-spell.el")
   :after latex
   :bind
@@ -917,6 +942,7 @@ DIR must include a .project file to be considered a project."
 ;;; --------------------------------- PDF ---------------------------------
 
 (use-package pdf-tools
+  :ensure t
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :custom
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
@@ -1291,6 +1317,7 @@ The list is ordered from bottom to top."
         (czm-cmake-build--invoke-eshell-run this-run-config)))))
 
 (use-package cmake-build
+  :ensure t
   :vc (:url "https://github.com/ultronozm/cmake-build.el")
   :bind (("s-m m" . cmake-build-menu)
          ("s-m 1" . cmake-build-set-cmake-profile)
@@ -1311,6 +1338,7 @@ The list is ordered from bottom to top."
   (cmake-build-options "-j 8 --verbose"))
 
 (use-package czm-cpp
+  :ensure t
   :vc (:url "https://github.com/ultronozm/czm-cpp.el")
   :custom
   (czm-cpp-scratch-directory my-tmp-cpp-dir))
@@ -1374,9 +1402,11 @@ The value of `calc-language` is restored after BODY has been processed."
             (overlay-put o 'before-string (flymake--eol-overlay-summary src-ovs))
           (delete-overlay o))))))
 
-(use-package perfect-margin)
+(use-package perfect-margin
+  :ensure t)
 
 (use-package diminish
+  :ensure t
   :demand t
   :after copilot
   :config
@@ -1414,5 +1444,9 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (add-hook 'clone-indirect-buffer-hook 'set-TeX-master-from-cloned)
 
-(use-package easy-kill)
-(global-set-key [remap kill-ring-save] #'easy-kill)
+(use-package easy-kill
+  :ensure t)
+
+(use-package easy-kill
+  :ensure t)
+
