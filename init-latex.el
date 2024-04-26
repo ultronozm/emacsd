@@ -484,6 +484,7 @@
 ;; (setq TeX-suppress-ignored-warnings t)
 
 (use-package preview-auto
+  :disabled
   :vc (:url "https://github.com/ultronozm/preview-auto.el")
   :after latex
   ;; :hook
@@ -504,6 +505,7 @@
      )))
 
 (use-package tex-numbers
+  :disabled
   :vc (:url "https://github.com/ultronozm/tex-numbers.el")
   :after latex czm-tex-fold
   :config
