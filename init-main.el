@@ -138,6 +138,7 @@
         ("C-c d" . czm-misc-insert-date)))
 
 (use-package aggressive-indent
+  :defer t
   :hook
   (emacs-lisp-mode . aggressive-indent-mode)
   (LaTeX-mode . aggressive-indent-mode))
@@ -206,7 +207,7 @@
 
 (use-package lispy
   :after define-repeat-map
-  :demand t
+  ;; :demand t
   :config
   (define-repeat-map structural-edit
     ("n" forward-list
@@ -252,6 +253,17 @@
   :bind
   (:map emacs-lisp-mode-map
         (";" . czm-lispy-comment-maybe)))
+
+(use-package emacs
+  :ensure nil
+
+  :bind
+  (:map global-map
+        ("s-r" . elpaca-rebuild)
+        )
+  (:map emacs-lisp-mode-map
+        ("M-1" . lispy-describe-inline)
+        ("M-2" . lispy-arglist-inline)))
 
 ;;     ;; (lispy-define-key map "w" 'lispy-move-up)
 ;;     ;; (lispy-define-key map "s" 'lispy-move-down)
@@ -319,7 +331,8 @@ Interactively, prompt for WIDTH."
 ;; functions.  that way, you can easily set margin widths for each
 ;; monitor.
 
-(use-package pos-tip)
+(use-package pos-tip
+  :defer t)
 
 ;; (setq lsp-log-io t)
 (with-eval-after-load 'lsp-mode
@@ -329,6 +342,7 @@ Interactively, prompt for WIDTH."
 
 (use-package outline
   :ensure nil
+  :defer t
   :after define-repeat-map
   :config
   (define-repeat-map outline-repeat-map
@@ -406,6 +420,7 @@ Interactively, prompt for WIDTH."
          ("M-s n" . symbol-overlay-remove-all)))
 
 (use-package go-translate
+  :defer t
   :custom
   gts-translate-list '(("fr" "en"))
   :config
@@ -815,6 +830,7 @@ Interactively, prompt for WIDTH."
 ;;; ------------------------------ ATTRAP ------------------------------
 
 (use-package attrap
+  :defer t
   :after flycheck
   :config
   (setq saved-match-data nil))
@@ -876,10 +892,10 @@ Interactively, prompt for WIDTH."
   :bind
   ("s-;" . czm-spell-then-abbrev))
 
-;; Forcing this to load so that c++-mode-abbrev-table is defined.
-(use-package cc-mode
-  :ensure nil
-  :demand)
+;; ;; Forcing this to load so that c++-mode-abbrev-table is defined.
+;; (use-package cc-mode
+;;   :ensure nil
+;;   :demand)
 
 ;;; --------------------------------- PDF ---------------------------------
 
@@ -1072,6 +1088,7 @@ The list is ordered from bottom to top."
 
 (use-package erc-log
   :ensure nil
+  :defer t
   :after erc
   :config
   (erc-log-mode)
@@ -1093,6 +1110,7 @@ The list is ordered from bottom to top."
 
 (use-package erc-desktop-notifications
   :ensure nil
+  :defer t
   :after erc
   ;; https://emacs.stackexchange.com/questions/28896/how-to-get-notifications-from-erc-in-macos
   )
@@ -1282,6 +1300,7 @@ The list is ordered from bottom to top."
   :ensure (:host github :repo "ultronozm/czm-cpp.el"
                  :files ("*.el" "template")
                  :depth nil)
+  :defer t
   :custom
   (czm-cpp-scratch-directory my-tmp-cpp-dir))
 
@@ -1344,7 +1363,8 @@ The value of `calc-language` is restored after BODY has been processed."
             (overlay-put o 'before-string (flymake--eol-overlay-summary src-ovs))
           (delete-overlay o))))))
 
-(use-package perfect-margin)
+(use-package perfect-margin
+  :defer t)
 
 (use-package diminish
   :demand t

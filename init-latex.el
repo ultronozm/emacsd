@@ -140,7 +140,7 @@
   ;;   ("make")
   ;;   ("make" "install")))
 
-  :demand                               ; otherwise, madness ensues.
+  ;; :demand                               ; otherwise, madness ensues.
 
   :config
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
@@ -152,7 +152,7 @@
 
   :hook
   (latex-mode . LaTeX-mode) ;; absurd that this needs to be added
-  (LaTeX-mode . TeX-fold-mode)
+  ;; (LaTeX-mode . TeX-fold-mode)
   (LaTeX-mode . turn-on-reftex)
   (LaTeX-mode . czm-tex-setup-environments-and-outline-regexp)
   (LaTeX-mode . czm-tex-buffer-face)
@@ -256,36 +256,12 @@
              (looking-back "``\\(.*?\\)''"))
     (czm-tex-fold-quotes (match-beginning 0) (match-end 0))))
 
-(use-package czm-tex-fold
-  :ensure (:host github :repo "ultronozm/czm-tex-fold.el"
-                 :depth nil)
-  :demand ; otherwise, this doesn't work until the second time you
-                                        ; open a .tex file.  but it needs to be loaded after auctex.
-  ;; :bind
-  ;; (:map TeX-fold-mode-map
-  ;;       ("C-c C-o C-s" . czm-tex-fold-fold-section)
-  ;;       ("C-c C-o s" . czm-tex-fold-clearout-section))
-  :config
-  (czm-tex-fold-set-defaults)
-  (czm-tex-fold-install)
-
-  (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
-
-  :custom
-  (czm-tex-fold-bib-file my-master-bib-file)
-  :hook
-  (LaTeX-mode . tex-fold-mode))
-
-;; the following should perhaps be part of czm-tex-fold:
-
 (defun czm-tex-fold-macro-previous-word ()
   (interactive)
   (if TeX-fold-mode
       (save-excursion
 	       (backward-word)
 	       (TeX-fold-item 'macro))))
-
-(advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
 
 (defun my-yank-after-advice (&rest _)
   "Fold any yanked ref or eqref."
@@ -296,7 +272,36 @@
                            (current-kill 0)))
     (czm-tex-fold-macro-previous-word)))
 
-(advice-add 'yank :after #'my-yank-after-advice)
+(defun czm-setup-and-activate-tex-fold ()
+  (require 'czm-tex-fold)
+  (czm-tex-fold-set-defaults)
+  (czm-tex-fold-install)
+  (TeX-fold-mode 1)
+  (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
+  (advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
+  (advice-add 'yank :after #'my-yank-after-advice)
+  (remove-hook 'LaTeX-mode-hook #'czm-setup-and-activate-tex-fold)
+  (add-hook 'LaTeX-mode-hook #'TeX-fold-mode))
+
+(use-package czm-tex-fold
+  :ensure (:host github :repo "ultronozm/czm-tex-fold.el"
+                 :depth nil)
+  ;; :demand ; otherwise, this doesn't work until the second time you
+  ;;                                       ; open a .tex file.  but it needs to be loaded after auctex.
+  ;; :bind
+  ;; (:map TeX-fold-mode-map
+  ;;       ("C-c C-o C-s" . czm-tex-fold-fold-section)
+  ;;       ("C-c C-o s" . czm-tex-fold-clearout-section))
+  ;; :config
+  ;; (czm-tex-fold-set-defaults)
+  ;; (czm-tex-fold-install)
+
+  :custom
+  (czm-tex-fold-bib-file my-master-bib-file)
+  :hook
+  (LaTeX-mode . czm-setup-and-activate-tex-fold))
+
+;; the following should perhaps be part of czm-tex-fold:
 
 (use-package czm-tex-jump
   :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git"
@@ -452,20 +457,19 @@
 (use-package dynexp
   :ensure (:host github :repo "ultronozm/dynexp.el"
                  :depth nil)
-  :demand ; but after auctex
+  :after latex
   :bind
   (:map LaTeX-mode-map
         ("SPC" . dynexp-space)
         ("TAB" . dynexp-next))
   :config
-  (with-eval-after-load 'latex
-    (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el")))
+  (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el"))
 
 (use-package czm-tex-edit
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el"
                  :depth nil)
   :after latex dynexp
-  :demand ; should come after latex and dynexp
+  ;; :demand ; should come after latex and dynexp
   :bind
   (:map LaTeX-mode-map
         ("C-c t i" . czm-tex-edit-emphasize)
@@ -518,7 +522,7 @@
   (setq preview-locating-previews-message nil)
   (setq preview-leave-open-previews-visible t)
   :custom
-  (preview-auto-interval 0.1)
+  (preview-auto-interval 0.02)
   (preview-auto-predicate #'my-czm-preview-predicate)
   (preview-LaTeX-command-replacements
    '(preview-LaTeX-disable-pdfoutput
@@ -775,5 +779,6 @@ of the preamble part of REGION-TEXT."
      ;; "C-M-SPC" spw/tex-parens-mark-sexp
      "RET" TeX-newline))
   (repeat-mode 1))
+
 
 

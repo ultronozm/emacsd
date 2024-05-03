@@ -61,6 +61,7 @@ entry."
       (calc-push (car modified-value)))))
 
 (use-package mmm-mode
+  :defer t
   :custom
   (mmm-global-mode nil)
   :config

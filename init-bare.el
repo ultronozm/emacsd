@@ -98,6 +98,10 @@
         ("H-0" tab-close)
         ("H-1" tab-close-other)
         ("H-2" tab-bar-new-tab)
+        ("M-_" delete-pair)
+        ("M-+" kill-backward-up-list)
+        ("M-u" up-list)
+        ("M-i" czm-mark-inner)
         )
       )
 
@@ -120,7 +124,6 @@ Possible values: completing-read, ivy-read.")
                                        nil t nil nil default-elisp-file)))
     (when selected-elisp-file (find-file selected-elisp-file))))
 
-
 (defun czm-dired-downloads ()
   "Open the downloads directory in Dired mode."
   (interactive)
@@ -130,150 +133,6 @@ Possible values: completing-read, ivy-read.")
   "Find a file in the math documents folder."
   (interactive)
   (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
-
-(defun burp--matching-delim (char)
-  "Return the matching delimiter for CHAR, or nil if none."
-  (cadr (assoc char '((?\( ?\)) (?\[ ?\]) (?\{ ?\}) (?\< ?\>) (?\" ?\") (?\' ?\') (?\` ?\')
-                      (?\) ?\() (?\] ?\[) (?\} ?\{) (?\> ?\<) (?\" ?\") (?\' ?\') (?\' ?\`)))))
-
-(defun burp--slurp-left ()
-  "Slurp the next sexp into the current one, to the left."
-  (let ((pos (point))
-        (char (char-after)))
-    (delete-char 1)
-    (condition-case nil
-        (progn
-          (backward-sexp)
-          (insert char)
-          (backward-char))
-      (error
-       (goto-char pos)
-       (insert char)
-       (backward-char)))))
-
-(defun burp--barf-left ()
-  "Barf the next sexp out of the current one, to the right."
-  (let ((char (char-before))
-          (pos (point)))
-      (backward-char 1)
-      (condition-case nil
-          (progn
-            (backward-sexp)
-            (backward-sexp)
-            (forward-sexp))
-        (error
-         (search-backward (char-to-string (burp--matching-delim char)))
-         (forward-char)))
-      (insert char)
-      (save-excursion
-        (goto-char pos)
-        (delete-char 1))
-      ))
-
-
-(defun burp-left ()
-  "Slurp or barf to the right.
-If the point is before a list, slurp the next sexp into the list.
-If the point is after a list, barf the last sexp out of the list.
-If the point is before a quote, slurp the next sexp into the quote.
-If the point is after a quote, barf the last sexp out of the quote.
-Otherwise, call `self-insert-command'."
-  (interactive)
-  (cond
-   ((eq (char-after) ?\()
-    (burp--slurp-left))
-   ((eq (char-before) ?\))
-    (burp--barf-left))
-   ((and (eq (char-after) ?\")
-         (not (eq (char-before) ?\")))
-    (burp--slurp-left))
-   ((eq (char-before) ?\")
-    (unless (eq (char-before (1- (point))) ?\")
-      (unless (eq (char-after) ?\")
-        (burp--barf-left))))
-   (t
-    (call-interactively #'self-insert-command))))
-
-(defun burp--barf-right ()
-  "Barf the next sexp out of the current one, to the right."
-  (let ((char (char-after))
-          (pos (point)))
-      (forward-char 1)
-      (condition-case nil
-          (progn
-            (forward-sexp)
-            (forward-sexp)
-            (backward-sexp))
-        (error
-         (search-forward (char-to-string (burp--matching-delim char)))
-         (backward-char)))
-      (insert char)
-      (save-excursion
-        (goto-char pos)
-        (delete-char 1))
-      (backward-char)))
-
-(defun burp--slurp-right ()
-  "Slurp the next sexp into the current one, to the right."
-  (backward-char)
-  (let ((pos (point))
-        (char (char-after)))
-    (forward-char)
-    (condition-case nil
-        (progn
-          (forward-sexp)
-          (insert char)
-          (save-excursion
-            (goto-char pos)
-            (delete-char 1)))
-      (error nil))))
-
-
-(defun burp-right ()
-  "Slurp or barf to the right.
-If the point is before a list, slurp the next sexp into the list.
-If the point is after a list, barf the last sexp out of the list.
-If the point is before a quote, slurp the next sexp into the quote.
-If the point is after a quote, barf the last sexp out of the quote.
-Otherwise, call `self-insert-command'."
-  (interactive)
-  (cond
-                                        ; prev is )
-   ((eq (char-before) ?\))
-    (burp--slurp-right))
-                                        ; next is (
-   ((eq (char-after) ?\()
-    (burp--barf-right))
-   ((and (eq (char-before) ?\")
-         (not (eq (char-after) ?\")))
-    (burp--slurp-right))
-   ((eq (char-after) ?\")
-    (unless (eq (char-after (1+ (point))) ?\")
-      (unless (eq (char-after (1- (point))) ?\")
-        (burp--barf-right))))
-   (t
-    (call-interactively #'self-insert-command))))
-
-
-;; (defun burp-unwrap ()
-;;   "Remove the next sexp from its list."
-;;   (interactive)
-;;   (condition-case nil
-;;       (delete-pair)
-;;     (error
-;;      (condition-case nil
-;;          (save-excursion
-;;            (backward-sexp)
-;;            (delete-pair))
-;;        (error (call-interactively #'self-insert-command))))))
-
-(defun burp-unwrap ()
-  "Remove the next sexp from its list."
-  (interactive)
-  (condition-case nil
-      (delete-pair)
-    (error
-     (call-interactively #'self-insert-command))))
 
 (defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
 (defun edebug-compute-previous-result (previous-value)
@@ -394,6 +253,7 @@ pushes the mark somewhere useful."
   (large-file-warning-threshold 20000000)
   (vc-follow-symlinks t)
   (view-read-only t)
+  (delete-pair-blink-delay 0)
   (delete-by-moving-to-trash t)
   (help-window-select t)
   (isearch-allow-scroll t)
@@ -406,26 +266,21 @@ pushes the mark somewhere useful."
    `((".*" ,(expand-file-name
              (concat user-emacs-directory "auto-save/"))
       t)))
-  (ediff-window-setup-function 'ediff-setup-windows-plain))
-
-(use-package emacs
-  :ensure nil
+  (ediff-window-setup-function 'ediff-setup-windows-plain)
 
   :config
-  (electric-pair-mode)
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
   (fset 'yes-or-no-p 'y-or-n-p)
+  (setq-default indent-tabs-mode nil)
+  (electric-pair-mode)
   (minibuffer-depth-indicate-mode)
   (global-auto-revert-mode)
-  (setq-default indent-tabs-mode nil)
   (save-place-mode)
-  (tool-bar-mode 0)
-  (scroll-bar-mode 0)
-  ;; (transient-mark-mode 0)
   (line-number-mode)
   (column-number-mode)
   (winner-mode))
+
 
 (use-package emacs
   :ensure nil
@@ -436,7 +291,6 @@ pushes the mark somewhere useful."
   :config
   (display-time-mode))
 
-
 (use-package recentf
   :ensure nil
 
@@ -445,12 +299,10 @@ pushes the mark somewhere useful."
   :config
   (recentf-mode))
 
-
 (use-package prog-mode
   :ensure nil
   :hook
   (prog-mode . outline-minor-mode))
-
 
 (use-package emacs
   :ensure nil
@@ -486,23 +338,6 @@ pushes the mark somewhere useful."
   (interactive)
   (down-list -1))
 
-(use-package emacs
-  :ensure nil
-
-  :custom
-  (delete-pair-blink-delay 0)
-  :bind
-  (:map global-map
-        ("M-_" . delete-pair)
-        ("M-+" . kill-backward-up-list)
-        ("s-r" . elpaca-rebuild)
-        ("M-u" . up-list)
-        ("M-i" . czm-mark-inner)
-        )
-  (:map emacs-lisp-mode-map
-        ("M-1" . lispy-describe-inline)
-        ("M-2" . lispy-arglist-inline)))
-
 (defun czm-set-face-heights ()
   "Set the heights of various faces."
   (set-face-attribute 'default nil :height 150)
@@ -534,11 +369,13 @@ pushes the mark somewhere useful."
 
 (use-package calc
   :ensure nil
+  :defer t
   :custom
   (calc-kill-line-numbering nil))
 
 (use-package eglot
   :ensure nil
+  :defer t
   :custom
   (eglot-connect-timeout 120))
 
