@@ -934,10 +934,14 @@ Interactively, prompt for WIDTH."
   :config
   (pdf-tools-install :no-query)
   (require 'pdf-occur)
-  :bind (:map pdf-view-mode-map
-              ("j" . pdf-view-jump-to-register)
-              ("<down>" . nil)
-              ("<up>" . nil)))
+  :bind
+  (:map pdf-view-mode-map
+        ("j" . pdf-view-jump-to-register)
+        ("y" . image-previous-line)
+        ("<down>" . nil)
+        ("<up>" . nil)
+        ("<remap> <scroll-up-command>" . pdf-view-scroll-up-or-next-page)
+        ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)))
 
 ;;; ------------------------------ ORG ------------------------------
 
