@@ -79,6 +79,7 @@
         ("s-p" outline-previous-heading)
         ("s-q" bury-buffer)
         ("s-k" kill-current-buffer)
+        ("s-K" kill-buffer-and-window)
         ("s-s" save-buffer)
         ("s-v" view-mode)
         ("s-." repeat)
