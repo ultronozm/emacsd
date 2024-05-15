@@ -488,6 +488,7 @@
 ;; (setq TeX-suppress-ignored-warnings t)
 
 (use-package czm-preview
+  :disabled
   :vc (:url "https://github.com/ultronozm/czm-preview.el")
   :after latex
   :bind
@@ -519,14 +520,8 @@
 	             "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\"")))))
 
 (use-package preview-auto
-  :disabled
   :vc (:url "https://github.com/ultronozm/preview-auto.el")
   :after latex
-  ;; :hook
-  ;; (LaTeX-mode . preview-auto-conditionally-enable)
-  :bind
-  ;; (:map LaTeX-mode-map
-  ;;       ("H-u" . preview-auto-mode))
   :config
   (setq preview-protect-point t)
   (setq preview-locating-previews-message nil)
@@ -535,12 +530,9 @@
   (preview-auto-interval 0.1)
   (preview-auto-predicate #'my-czm-preview-predicate)
   (preview-LaTeX-command-replacements
-   '(preview-LaTeX-disable-pdfoutput
-     ;; (cons "\\mathtoolsset{showonlyrefs}" "")
-     )))
+   '(preview-LaTeX-disable-pdfoutput)))
 
 (use-package tex-numbers
-  :disabled
   :vc (:url "https://github.com/ultronozm/tex-numbers.el")
   :after latex czm-tex-fold
   :config
