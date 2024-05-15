@@ -274,46 +274,46 @@
 
 (defun czm-setup-and-activate-tex-fold ()
   (require 'czm-tex-fold)
+  (require 'czm-tex-jump)
+  (require 'czm-tex-ref)
   (czm-tex-fold-set-defaults)
   (czm-tex-fold-install)
   (TeX-fold-mode 1)
+  (tex-numbers-mode 1)
   (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
   (advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
   (advice-add 'yank :after #'my-yank-after-advice)
   (remove-hook 'LaTeX-mode-hook #'czm-setup-and-activate-tex-fold)
   (add-hook 'LaTeX-mode-hook #'TeX-fold-mode))
 
+(defun czm-abbreviate-latex-mode-name ()
+  (setq TeX-base-mode-name "L"))
+
+(add-hook 'LaTeX-mode-hook #'czm-abbreviate-latex-mode-name)
+
 (use-package czm-tex-fold
   :ensure (:host github :repo "ultronozm/czm-tex-fold.el"
                  :depth nil)
-  ;; :demand ; otherwise, this doesn't work until the second time you
-  ;;                                       ; open a .tex file.  but it needs to be loaded after auctex.
-  ;; :bind
-  ;; (:map TeX-fold-mode-map
-  ;;       ("C-c C-o C-s" . czm-tex-fold-fold-section)
-  ;;       ("C-c C-o s" . czm-tex-fold-clearout-section))
-  ;; :config
-  ;; (czm-tex-fold-set-defaults)
-  ;; (czm-tex-fold-install)
-
+  :after latex
   :custom
   (czm-tex-fold-bib-file my-master-bib-file)
   :hook
   (LaTeX-mode . czm-setup-and-activate-tex-fold))
 
-;; the following should perhaps be part of czm-tex-fold:
-
 (use-package czm-tex-jump
   :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git"
                  :depth nil)
   ;; :after avy
+  :after latex
   :bind
   (:map LaTeX-mode-map
-        ("s-r" . czm-tex-jump)))
+        ("s-r" . czm-tex-jump-avy))
+  :hook (LaTeX-mode . czm-tex-jump-setup))
 
 (use-package czm-tex-ref
   :ensure (:host github :repo "ultronozm/czm-tex-ref.el"
                  :depth nil)
+  :after latex
   :custom
   (czm-tex-ref-master-bib-file my-master-bib-file)
   (czm-tex-ref-rearrange-bib-entries t)
@@ -533,12 +533,7 @@
 (use-package tex-numbers
   :ensure (:host github :repo "ultronozm/tex-numbers.el"
                  :depth nil)
-  :after latex czm-tex-fold
-  :config
-  (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
-  (czm-tex-fold-set-defaults)
-  (czm-tex-fold-install)
-  (tex-numbers-mode 1))
+  :after latex czm-tex-fold)
 
 (use-package czm-preview
   :disabled
