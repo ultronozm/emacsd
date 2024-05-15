@@ -717,6 +717,42 @@ of the preamble part of REGION-TEXT."
   (tex-parens-up-list)
   (tex-parens-backward-down-list))
 
+(defun czm-tex-end-of-list ()
+  (interactive)
+  (let ((last (point)))
+    (tex-parens-forward-sexp)
+    (while (> (point) last)
+      (setq last (point))
+      (tex-parens-forward-sexp))))
+
+(defun czm-tex-beginning-of-list ()
+  (interactive)
+  (let ((last (point)))
+    (tex-parens-backward-sexp)
+    (while (< (point) last)
+      (setq last (point))
+      (tex-parens-backward-sexp))))
+
+(defun czm-tex-forward-sentence-or-end-of-list ()
+  (interactive)
+  (if (texmathp)
+      (let ((last (point)))
+        (tex-parens-forward-sexp)
+        (while (> (point) last)
+          (setq last (point))
+          (tex-parens-forward-sexp)))
+    (forward-sentence)))
+
+(defun czm-tex-backward-sentence-or-beginning-of-list ()
+  (interactive)
+  (if (texmathp)
+      (let ((last (point)))
+        (tex-parens-backward-sexp)
+        (while (< (point) last)
+          (setq last (point))
+          (tex-parens-backward-sexp)))
+    (backward-sentence)))
+
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el"
                  :depth nil)
@@ -740,7 +776,13 @@ of the preamble part of REGION-TEXT."
         (">" . tex-parens-burp-right)
         ("M-i" . czm-tex-mark-inner)
         ("s-j" . czm-tex-avy-jump)
-        ("s-c" . czm-tex-avy-copy))
+        ("s-c" . czm-tex-avy-copy)
+        ("M-e" . czm-tex-forward-sentence-or-end-of-list)
+        ("M-a" . czm-tex-backward-sentence-or-beginning-of-list)
+        ("s-e" . czm-tex-end-of-list)
+        ("s-a" . czm-tex-beginning-of-list))
+
+
   :hook
   (LaTeX-mode . tex-parens-setup)
 
