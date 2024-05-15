@@ -637,9 +637,41 @@ Interactively, prompt for WIDTH."
 
 (setq-default completion-in-region-function 'consult-completion-in-region)
 
+;; https://karthinks.com/software/emacs-window-management-almanac/#aw-select-the-completing-read-for-emacs-windows
+(defun ace-window-one-command ()
+  (interactive)
+  (let ((win (aw-select " ACE")))
+    (when (windowp win)
+      (with-selected-window win
+        (let* ((command (key-binding
+                         (read-key-sequence
+                          (format "Run in %s..." (buffer-name)))))
+               (this-command command))
+          (call-interactively command))))))
+
+(defun ace-window-prefix ()
+  "Use `ace-window' to display the buffer of the next command.
+The next buffer is the buffer displayed by the next command invoked
+immediately after this command (ignoring reading from the minibuffer).
+Creates a new window before displaying the buffer.
+When `switch-to-buffer-obey-display-actions' is non-nil,
+`switch-to-buffer' commands are also supported."
+  (interactive)
+  (display-buffer-override-next-command
+   (lambda (buffer _)
+     (let (window type)
+       (setq
+        window (aw-select (propertize " ACE" 'face 'mode-line-highlight))
+        type 'reuse)
+       (cons window type)))
+   nil "[ace-window]")
+  (message "Use `ace-window' to display next command buffer..."))
+
 (use-package ace-window
   :bind
-  ("C-x o" . ace-window))
+  ("C-x o" . ace-window)
+  ("C-x O" . ace-window-one-command)
+  ("C-x 4 o" . ace-window-prefix))
 
 (use-package which-key
   :diminish
