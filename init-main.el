@@ -836,6 +836,7 @@ Interactively, prompt for WIDTH."
 (use-package flymake
   :ensure nil
   :custom
+  (flymake-mode-line-lighter "F")
   (flymake-show-diagnostics-at-end-of-line t)
   :after define-repeat-map
   :config
