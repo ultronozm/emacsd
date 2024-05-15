@@ -523,7 +523,7 @@
   (setq preview-locating-previews-message nil)
   (setq preview-leave-open-previews-visible t)
   :custom
-  (preview-auto-interval 0.02)
+  (preview-auto-interval 0.1)
   (preview-auto-predicate #'my-czm-preview-predicate)
   (preview-LaTeX-command-replacements
    '(preview-LaTeX-disable-pdfoutput
