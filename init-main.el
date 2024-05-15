@@ -977,6 +977,8 @@ Interactively, prompt for WIDTH."
       "* %?\n  %i")
      ("j" "Journal" entry (file+datetree my-log-file)
       "* %?\nEntered on %U\n")
+     ("a" "Inbox (annotated)" entry (file+headline my-todo-file "Inbox")
+      "* %?\n%a")
      ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
       "* %?\n%U\n" :clock-in t :clock-resume t))))
 
