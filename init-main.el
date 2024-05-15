@@ -217,7 +217,27 @@
 
 (use-package lispy
   :after define-repeat-map
-  ;; :demand t
+
+  :commands (lispy-comment
+             lispy-oneline
+             lispy-multiline
+             lispy-split
+             lispy-join
+             lispy-slurp-or-barf-right
+             lispy-slurp-or-barf-left
+             lispy-splice
+             lispy-raise
+             lispy-clone
+             lispy-tab)
+
+  :bind
+  (:map emacs-lisp-mode-map
+        (";" . czm-lispy-comment-maybe)))
+
+(use-package emacs
+  :ensure nil
+  :after define-repeat-map
+
   :config
   (define-repeat-map structural-edit
     ("n" forward-list
@@ -256,13 +276,7 @@
      "i" lispy-tab
      "<up>" outline-move-subtree-up
      "<down>" outline-move-subtree-down))
-  (repeat-mode 1)
-
-  :commands (lispy-comment)
-  
-  :bind
-  (:map emacs-lisp-mode-map
-        (";" . czm-lispy-comment-maybe)))
+  (repeat-mode 1))
 
 (use-package emacs
   :ensure nil
