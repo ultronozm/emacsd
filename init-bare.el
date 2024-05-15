@@ -279,7 +279,7 @@ pushes the mark somewhere useful."
   (save-place-mode)
   (line-number-mode)
   (column-number-mode)
-  (winner-mode))
+  (tab-bar-history-mode))
 
 
 (use-package emacs
