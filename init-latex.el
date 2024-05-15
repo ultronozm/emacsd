@@ -491,7 +491,8 @@
         ("C-c w" . czm-tex-edit-make-equation-align)
         ("C-c q" . czm-tex-edit-make-equation-multline)
         ("s-<return>" . czm-tex-edit-return)
-        ("$" . czm-tex-edit-insert-dollar-or-wrap-region))
+        ("$" . czm-tex-edit-insert-dollar-or-wrap-region)
+        ("\"" . czm-tex-edit-insert-quote-or-wrap-region))
   :config
   (czm-tex-edit-define-color-functions-and-bindings
    "C-c t c"
