@@ -642,6 +642,7 @@ Interactively, prompt for WIDTH."
   ("C-x o" . ace-window))
 
 (use-package which-key
+  :diminish
   :config
   (which-key-mode))
 
@@ -662,6 +663,7 @@ Interactively, prompt for WIDTH."
                  ;; :repo "ultronozm/copilot.el"
                  :files ("*.el" "dist")
                  :depth nil)
+  :diminish " Co"
   :hook
   ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
@@ -1388,24 +1390,19 @@ The value of `calc-language` is restored after BODY has been processed."
           (delete-overlay o))))))
 
 (use-package perfect-margin
-  :defer t)
+  :defer t
+  :diminish)
 
 (use-package diminish
   :demand t
   :after copilot
   :config
-  (diminish 'copilot-mode "Co")
   (diminish 'abbrev-mode "Ab")
-  (diminish 'lean4-mode)
   (diminish 'visual-line-mode)
   (diminish 'outline-minor-mode)
-  (diminish 'which-key-mode)
   (diminish 'buffer-face-mode)
   (diminish 'eldoc-mode)
   (diminish 'reftex-mode)
-  (diminish 'copilot-mode)
-  (diminish 'aggressive-indent-mode)
-  (diminish 'perfect-margin-mode)
   (diminish 'whitespace-mode))
 
 (defvar git-fill-column-alist '(("emacs" . 64) ("auctex" . 64)))
