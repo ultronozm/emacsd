@@ -1426,6 +1426,9 @@ The value of `calc-language` is restored after BODY has been processed."
 (add-hook 'clone-indirect-buffer-hook 'set-TeX-master-from-cloned)
 
 (use-package easy-kill)
+;; I know when I'm narrowing
+(setq mode-line-modes (delete "%n" mode-line-modes))
+
 (defun czm-abbreviate-elisp-mode-name ()
   (cond
    ((consp mode-name)
