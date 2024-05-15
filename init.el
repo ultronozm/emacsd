@@ -16,9 +16,22 @@
 
 (package-install 'auctex)
 
+(setq use-package-vc-prefer-newest t)
+
+(use-package exec-path-from-shell
+  :ensure
+  :demand
+  :if (memq window-system '(mac ns))
+  :config
+  (exec-path-from-shell-initialize))
+
 (when t
-  (load (concat user-emacs-directory "init-main.el"))
-  (load (concat user-emacs-directory "init-git.el"))
+  (load (concat user-emacs-directory "init-main.el")))
+
+(when t
+  (load (concat user-emacs-directory "init-git.el")))
+
+(when t
   (load (concat user-emacs-directory "init-latex.el")))
 
 (when nil

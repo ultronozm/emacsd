@@ -1,14 +1,5 @@
 ;;; -*- lexical-binding: t; -*-
 
-(setq use-package-vc-prefer-newest t)
-
-(use-package exec-path-from-shell
-  :ensure
-  :demand
-  :if (memq window-system '(mac ns))
-  :config
-  (exec-path-from-shell-initialize))
-
 (use-package avy
   :ensure t
   :demand
