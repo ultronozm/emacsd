@@ -103,8 +103,8 @@
         ("M-+" kill-backward-up-list)
         ("M-u" up-list)
         ("M-i" czm-mark-inner)
-        )
-      )
+        ("s-a" czm-beginning-of-list)
+        ("s-e" czm-end-of-list)))
 
 (defvar czm/find-lisp-file-completion-fn 'completing-read
   "The completion function to use for the `find-elisp-file-variable` function.
@@ -333,6 +333,23 @@ pushes the mark somewhere useful."
         (up-list)
         (czm-backward-down-list))
     (error (message "No inner list found."))))
+
+
+(defun czm-end-of-list ()
+  (interactive)
+  (let ((last (point)))
+    (forward-sexp)
+    (while (> (point) last)
+      (setq last (point))
+      (forward-sexp))))
+
+(defun czm-beginning-of-list ()
+  (interactive)
+  (let ((last (point)))
+    (backward-sexp)
+    (while (< (point) last)
+      (setq last (point))
+      (backward-sexp))))
 
 (defun czm-backward-down-list ()
   "Move backward down a list."
