@@ -1426,3 +1426,12 @@ The value of `calc-language` is restored after BODY has been processed."
 (add-hook 'clone-indirect-buffer-hook 'set-TeX-master-from-cloned)
 
 (use-package easy-kill)
+(defun czm-abbreviate-elisp-mode-name ()
+  (cond
+   ((consp mode-name)
+    (setcar mode-name "E"))
+   ((stringp mode-name)
+    (when (equal mode-name "Lisp Interaction")
+      (setq mode-name "LI")))))
+
+(add-hook 'emacs-lisp-mode-hook 'czm-abbreviate-elisp-mode-name)
