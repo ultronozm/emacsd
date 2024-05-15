@@ -112,9 +112,19 @@
   (load (concat user-emacs-directory "init-personal.el")))
 
 (use-package avy
+  :custom
+  (avy-single-candidate-jump nil)
   :bind
+  (:map global-map
+        ("C-'" . avy-goto-char-timer)
+        ("C-;" . avy-goto-line))
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
+
+(use-package org
+  :bind
+  (:map org-mode-map
+        ("C-'" . nil)))
 
 (use-package czm-misc
   :ensure (:host github :repo "ultronozm/czm-misc.el"
@@ -132,13 +142,13 @@
          ("C-S-SPC" . czm-misc-delete-horizontal-space-on-line)
          ("s-j" . czm-misc-avy-jump)
          ("s-c" . czm-misc-avy-copy)
-         ("C-x j" . czm-misc-dired-popup)
-         ("C-;" . czm-misc-avy-goto-or-copy-line))
+         ("C-x j" . czm-misc-dired-popup))
   (:map minibuffer-local-map
         ("C-c d" . czm-misc-insert-date)))
 
 (use-package aggressive-indent
   :defer t
+  :diminish
   :hook
   (emacs-lisp-mode . aggressive-indent-mode)
   (LaTeX-mode . aggressive-indent-mode))
