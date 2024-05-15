@@ -6,6 +6,7 @@
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("elpa-devel" . "https://elpa.gnu.org/devel/"))
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
 (let ((package-check-signature nil))
