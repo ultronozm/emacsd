@@ -114,6 +114,9 @@
 (use-package avy
   :custom
   (avy-single-candidate-jump nil)
+  :config
+  (setf (alist-get ?  avy-dispatch-alist) 'avy-action-embark)
+  (setf (alist-get ?w avy-dispatch-alist) 'avy-action-easy-kill)
   :bind
   (:map global-map
         ("C-'" . avy-goto-char-timer)
