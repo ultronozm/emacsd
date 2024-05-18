@@ -49,12 +49,12 @@
    '("definition" LaTeX-env-label)
    '("theorem" LaTeX-env-label))
   (setq-local outline-regexp
-	             (concat "\\\\"
-		                    (regexp-opt (append latex-metasection-list
-					                                     (mapcar #'car latex-section-alist)
-					                                     '("bibliography"
+              (concat "\\\\"
+                      (regexp-opt (append latex-metasection-list
+                                          (mapcar #'car latex-section-alist)
+                                          '("bibliography"
                                             "begin{thebibliography"))
-				                              t))))
+                                  t))))
 
 (defun czm-widen-first (orig-fun &rest args)
   (save-restriction
@@ -135,15 +135,16 @@
   ;;   ("make")
   ;;   ("make" "install")))
 
-  :demand                               ; otherwise, madness ensues.
+  ;; :demand                               ; otherwise, madness ensues.
 
+  :config
   (add-to-list 'TeX-file-extensions "tex\\.~[0-9a-f]+~")
 
   :mode ("\\.tex\\'" . LaTeX-mode)
 
   :hook
   (latex-mode . LaTeX-mode) ;; absurd that this needs to be added
-  (LaTeX-mode . TeX-fold-mode)
+  ;; (LaTeX-mode . TeX-fold-mode)
   (LaTeX-mode . turn-on-reftex)
   (LaTeX-mode . czm-tex-setup-environments-and-outline-regexp)
   (LaTeX-mode . czm-tex-buffer-face)
@@ -249,37 +250,12 @@
              (looking-back "``\\(.*?\\)''"))
     (czm-tex-fold-quotes (match-beginning 0) (match-end 0))))
 
-(unless (package-installed-p 'czm-tex-fold)
-  (package-vc-install "https://github.com/ultronozm/czm-tex-fold.el"))
-(use-package czm-tex-fold
-  ;; :vc (:url "https://github.com/ultronozm/czm-tex-fold.el")
-  :demand ; otherwise, this doesn't work until the second time you
-                                        ; open a .tex file.  but it needs to be loaded after auctex.
-  ;; :bind
-  ;; (:map TeX-fold-mode-map
-  ;;       ("C-c C-o C-s" . czm-tex-fold-fold-section)
-  ;;       ("C-c C-o s" . czm-tex-fold-clearout-section))
-  :config
-  (czm-tex-fold-set-defaults)
-  (czm-tex-fold-install)
-
-  (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
-
-  :custom
-  (czm-tex-fold-bib-file my-master-bib-file)
-  :hook
-  (LaTeX-mode . tex-fold-mode))
-
-;; the following should perhaps be part of czm-tex-fold:
-
 (defun czm-tex-fold-macro-previous-word ()
   (interactive)
   (if TeX-fold-mode
       (save-excursion
-	       (backward-word)
-	       (TeX-fold-item 'macro))))
-
-(advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
+	(backward-word)
+	(TeX-fold-item 'macro))))
 
 (defun my-yank-after-advice (&rest _)
   "Fold any yanked ref or eqref."
@@ -290,31 +266,61 @@
                            (current-kill 0)))
     (czm-tex-fold-macro-previous-word)))
 
-(advice-add 'yank :after #'my-yank-after-advice)
+(defun czm-setup-and-activate-tex-fold ()
+  (require 'czm-tex-fold)
+  (require 'czm-tex-jump)
+  (require 'czm-tex-ref)
+  (czm-tex-fold-set-defaults)
+  (czm-tex-fold-install)
+  (TeX-fold-mode 1)
+  (tex-numbers-mode 1)
+  (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
+  (advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
+  (advice-add 'yank :after #'my-yank-after-advice)
+  (remove-hook 'LaTeX-mode-hook #'czm-setup-and-activate-tex-fold)
+  (add-hook 'LaTeX-mode-hook #'TeX-fold-mode))
+
+(defun czm-abbreviate-latex-mode-name ()
+  (setq TeX-base-mode-name "L"))
+
+(add-hook 'LaTeX-mode-hook #'czm-abbreviate-latex-mode-name)
+
+(unless (package-installed-p 'czm-tex-fold)
+  (package-vc-install "https://github.com/ultronozm/czm-tex-fold.el"))
+(use-package czm-tex-fold
+  ;; :vc (:url "https://github.com/ultronozm/czm-tex-fold.el")
+  :after latex
+  :custom
+  (czm-tex-fold-bib-file my-master-bib-file)
+  :hook
+  (LaTeX-mode . czm-setup-and-activate-tex-fold))
 
 (unless (package-installed-p 'czm-tex-jump)
   (package-vc-install "https://github.com/ultronozm/czm-tex-jump.el"))
 (use-package czm-tex-jump
   ;; :vc (:url "https://github.com/ultronozm/czm-tex-jump.el")
   ;; :after avy
+  :after latex
   :bind
   (:map LaTeX-mode-map
-        ("s-r" . czm-tex-jump)))
+        ("s-r" . czm-tex-jump-avy))
+  :hook (LaTeX-mode . czm-tex-jump-setup))
 
 (unless (package-installed-p 'czm-tex-ref)
   (package-vc-install "https://github.com/ultronozm/czm-tex-ref.el"))
 (use-package czm-tex-ref
   ;; :vc (:url "https://github.com/ultronozm/czm-tex-ref.el")
+  :after latex
   :custom
   (czm-tex-ref-master-bib-file my-master-bib-file)
   (czm-tex-ref-rearrange-bib-entries t)
   (czm-tex-ref-labelable-environments '("align" "gather" "flalign" "multline" "lemma" "exercise" "example" "proposition" "corollary" "remark" "definition" "theorem" "eqnarray" "equation" "conjecture" "question" "figure" "table" "problem" "fact" "rem" "prop"))
   :bind
   (:map global-map
-	("C-c 0" . czm-tex-ref-bib))
+        ("C-c 0" . czm-tex-ref-bib))
   (:map LaTeX-mode-map
-	("C-c 9" . czm-tex-ref-label)
-	("C-c 0" . czm-tex-ref-bib)))
+        ("C-c 9" . czm-tex-ref-label)
+        ("C-c 0" . czm-tex-ref-bib)))
 
 ;; (defun czm-attrap-LaTeX-fixer (msg pos end)
 ;;   (cond
@@ -396,27 +402,27 @@
         (delete-region (point)
                        (save-excursion (skip-chars-forward " \t")
                                        (point)))
-	       )))
+        )))
    ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.")
                 msg)
     (attrap-one-option 'enclose-with-braces
       (forward-char)
       (insert "}")
       (save-excursion
-	       (backward-char)
-	       (backward-sexp)
-	       (re-search-backward "[^[:alnum:]\\_\\/]")
-	       (forward-char)
-	       (insert "{")
-	       )))
+        (backward-char)
+        (backward-sexp)
+        (re-search-backward "[^[:alnum:]\\_\\/]")
+        (forward-char)
+        (insert "{")
+        )))
    ((s-matches? (rx "You should not use punctuation in front of quotes.")
                 msg)
     (attrap-one-option 'swap-punctuation-with-quotes
       (progn
-	       (forward-char)
+        (forward-char)
         (delete-char 2)
-	       (backward-char)
-	       (insert "''"))))))
+        (backward-char)
+        (insert "''"))))))
 
 (use-package emacs
   :ensure nil
@@ -436,7 +442,7 @@
   "Create new temporary LaTeX buffer."
   (interactive)
   (let ((dir (file-name-as-directory my-tmp-tex-dir))
-	       (filename (format-time-string "tmp-%Y%m%dT%H%M%S.tex")))
+        (filename (format-time-string "tmp-%Y%m%dT%H%M%S.tex")))
     (unless (file-directory-p dir)
       (make-directory dir t))
     (let ((filepath (expand-file-name filename dir)))
@@ -449,7 +455,7 @@
   (package-vc-install "https://github.com/ultronozm/dynexp.el"))
 (use-package dynexp
   ;; :vc (:url "https://github.com/ultronozm/dynexp.el")
-  :demand ; but after auctex
+  :after latex
   :bind
   (:map LaTeX-mode-map
         ("SPC" . dynexp-space)
@@ -463,7 +469,7 @@
 (use-package czm-tex-edit
   ;; :vc (:url "https://github.com/ultronozm/czm-tex-edit.el")
   :after latex dynexp
-  :demand ; should come after latex and dynexp
+  ;; :demand ; should come after latex and dynexp
   :bind
   (:map LaTeX-mode-map
         ("C-c t i" . czm-tex-edit-emphasize)
@@ -485,7 +491,8 @@
         ("C-c w" . czm-tex-edit-make-equation-align)
         ("C-c q" . czm-tex-edit-make-equation-multline)
         ("s-<return>" . czm-tex-edit-return)
-        ("$" . czm-tex-edit-insert-dollar-or-wrap-region))
+        ("$" . czm-tex-edit-insert-dollar-or-wrap-region)
+        ("\"" . czm-tex-edit-insert-quote-or-wrap-region))
   :config
   (czm-tex-edit-define-color-functions-and-bindings
    "C-c t c"
@@ -502,40 +509,6 @@
 
 (setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
 ;; (setq TeX-suppress-ignored-warnings t)
-
-(unless (package-installed-p 'czm-preview)
-  (package-vc-install "https://github.com/ultronozm/czm-preview.el"))
-(use-package czm-preview
-  :disabled
-  ;; :vc (:url "https://github.com/ultronozm/czm-preview.el")
-  :after latex
-  :bind
-  (:map LaTeX-mode-map
-	("H-u" . czm-preview-mode)
-	("C-c C-p C-a" . czm-preview-mode)
-	("C-c p m" . czm-preview-toggle-master))
-  :custom
-  (czm-preview-timer-interval 0.1)
-  (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
-  (czm-preview-predicate #'my-czm-preview-predicate)
-  ;; :hook
-  ;; (LaTeX-mode . czm-preview-mode-conditionally-enable)
-
-  :config
-  (setq-default TeX-PDF-mode nil)
-  ;; because texlive 2023 seems super slow
-  (with-eval-after-load 'preview
-    (let ((tex-dir (when (equal (system-name)
-                                "Pauls-MBP-3")
-                     "/usr/local/texlive/2020/bin/x86_64-darwin/")))
-      (setq preview-LaTeX-command
-	    `(
-	      ,(concat
-	        "%`"
-	        tex-dir
-	        "%l \"\\nonstopmode\\nofiles\\PassOptionsToPackage{")
-	      ("," . preview-required-option-list)
-	      "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\"")))))
 
 (unless (package-installed-p 'preview-auto)
   (package-vc-install "https://github.com/ultronozm/preview-auto.el"))
@@ -556,12 +529,7 @@
   (package-vc-install "https://github.com/ultronozm/tex-numbers.el"))
 (use-package tex-numbers
   ;; :vc (:url "https://github.com/ultronozm/tex-numbers.el")
-  :after latex czm-tex-fold
-  :config
-  (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
-  (czm-tex-fold-set-defaults)
-  (czm-tex-fold-install)
-  (tex-numbers-mode 1))
+  :after latex czm-tex-fold)
 
 
 (defun current-mmm-mode ()
@@ -705,6 +673,42 @@ of the preamble part of REGION-TEXT."
   (tex-parens-up-list)
   (tex-parens-backward-down-list))
 
+(defun czm-tex-end-of-list ()
+  (interactive)
+  (let ((last (point)))
+    (tex-parens-forward-sexp)
+    (while (> (point) last)
+      (setq last (point))
+      (tex-parens-forward-sexp))))
+
+(defun czm-tex-beginning-of-list ()
+  (interactive)
+  (let ((last (point)))
+    (tex-parens-backward-sexp)
+    (while (< (point) last)
+      (setq last (point))
+      (tex-parens-backward-sexp))))
+
+(defun czm-tex-forward-sentence-or-end-of-list ()
+  (interactive)
+  (if (texmathp)
+      (let ((last (point)))
+        (tex-parens-forward-sexp)
+        (while (> (point) last)
+          (setq last (point))
+          (tex-parens-forward-sexp)))
+    (forward-sentence)))
+
+(defun czm-tex-backward-sentence-or-beginning-of-list ()
+  (interactive)
+  (if (texmathp)
+      (let ((last (point)))
+        (tex-parens-backward-sexp)
+        (while (< (point) last)
+          (setq last (point))
+          (tex-parens-backward-sexp)))
+    (backward-sentence)))
+
 (unless (package-installed-p 'tex-parens)
   (package-vc-install "https://github.com/ultronozm/tex-parens.el"))
 (use-package tex-parens
@@ -729,7 +733,13 @@ of the preamble part of REGION-TEXT."
         (">" . tex-parens-burp-right)
         ("M-i" . czm-tex-mark-inner)
         ("s-j" . czm-tex-avy-jump)
-        ("s-c" . czm-tex-avy-copy))
+        ("s-c" . czm-tex-avy-copy)
+        ("M-e" . czm-tex-forward-sentence-or-end-of-list)
+        ("M-a" . czm-tex-backward-sentence-or-beginning-of-list)
+        ("s-e" . czm-tex-end-of-list)
+        ("s-a" . czm-tex-beginning-of-list))
+
+
   :hook
   (LaTeX-mode . tex-parens-setup)
 
@@ -771,12 +781,15 @@ of the preamble part of REGION-TEXT."
   (repeat-mode 1))
 
 (use-package tex-item
-  :bind
-  (:map LaTeX-mode-map
-        ("M-g M-i n" . tex-item-forward)
-        ("M-g M-i p" . tex-item-backward))
   :config
   (defvar-keymap tex-item-map
     :repeat t
-    "n" 'tex-item-forward
-    "p" 'tex-item-backward))
+    "n" #'tex-item-forward
+    "p" #'tex-item-backward
+    "SPC" #'tex-item-mark
+    "k" #'tex-item-kill
+    "<backspace>" #'tex-item-backward-kill
+    "t" #'tex-item-transpose
+    "<down>" #'tex-item-move-down
+    "<up>" #'tex-item-move-up)
+  (define-key LaTeX-mode-map (kbd "M-g M-i") tex-item-map))

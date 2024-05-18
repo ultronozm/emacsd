@@ -3,13 +3,26 @@
 (use-package avy
   :ensure t
   :demand
+  :custom
+  (avy-single-candidate-jump nil)
+  :config
+  (setf (alist-get ?  avy-dispatch-alist) 'avy-action-embark)
+  (setf (alist-get ?w avy-dispatch-alist) 'avy-action-easy-kill)
   :bind
+  (:map global-map
+        ("C-'" . avy-goto-char-timer)
+        ("C-;" . avy-goto-line))
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
 (unless (package-installed-p 'czm-misc)
   (package-vc-install
    "https://github.com/ultronozm/czm-misc.el"))
+
+(use-package org
+  :bind
+  (:map org-mode-map
+        ("C-'" . nil)))
 
 (use-package czm-misc
   ;; :vc (:url "https://github.com/ultronozm/czm-misc.el")
@@ -28,13 +41,13 @@
          ("C-S-SPC" . czm-misc-delete-horizontal-space-on-line)
          ("s-j" . czm-misc-avy-jump)
          ("s-c" . czm-misc-avy-copy)
-         ("C-x j" . czm-misc-dired-popup)
-         ("C-;" . czm-misc-avy-goto-or-copy-line))
+         ("C-x j" . czm-misc-dired-popup))
   (:map minibuffer-local-map
         ("C-c d" . czm-misc-insert-date)))
 
 (use-package aggressive-indent
   :ensure t
+  :diminish
   :hook
   (emacs-lisp-mode . aggressive-indent-mode)
   (LaTeX-mode . aggressive-indent-mode))
@@ -72,21 +85,21 @@
 
   :config
   (define-repeat-map paragraph
-                     ("]" forward-paragraph
-                      "}" forward-paragraph
-                      "[" backward-paragraph
-                      "{" backward-paragraph)
-                     (:continue
-                      "M-h" mark-paragraph
-                      "h" mark-paragraph
-                      "k" kill-paragraph
-                      "w" kill-region
-                      "M-w" kill-ring-save
-                      "y" yank
-                      "C-/" undo
-                      "t" transpose-paragraphs
-                      "q" czm-fill-previous-paragraph
-                      "C-l" recenter-top-bottom))
+    ("]" forward-paragraph
+     "}" forward-paragraph
+     "[" backward-paragraph
+     "{" backward-paragraph)
+    (:continue
+     "M-h" mark-paragraph
+     "h" mark-paragraph
+     "k" kill-paragraph
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "C-/" undo
+     "t" transpose-paragraphs
+     "q" czm-fill-previous-paragraph
+     "C-l" recenter-top-bottom))
   (repeat-mode 1))
 
 
@@ -105,9 +118,29 @@
     (call-interactively #'self-insert-command)))
 
 (use-package lispy
-  :after define-repeat-map
   :ensure t
-  :demand t
+  :after define-repeat-map
+
+  :commands (lispy-comment
+             lispy-oneline
+             lispy-multiline
+             lispy-split
+             lispy-join
+             lispy-slurp-or-barf-right
+             lispy-slurp-or-barf-left
+             lispy-splice
+             lispy-raise
+             lispy-clone
+             lispy-tab)
+
+  :bind
+  (:map emacs-lisp-mode-map
+        (";" . czm-lispy-comment-maybe)))
+
+(use-package emacs
+  :ensure nil
+  :after define-repeat-map
+
   :config
   (define-repeat-map structural-edit
     ("n" forward-list
@@ -146,13 +179,15 @@
      "i" lispy-tab
      "<up>" outline-move-subtree-up
      "<down>" outline-move-subtree-down))
-  (repeat-mode 1)
+  (repeat-mode 1))
 
-  :commands (lispy-comment)
-  
+(use-package emacs
+  :ensure nil
+
   :bind
   (:map emacs-lisp-mode-map
-        (";" . czm-lispy-comment-maybe)))
+        ("M-1" . lispy-describe-inline)
+        ("M-2" . lispy-arglist-inline)))
 
 ;;     ;; (lispy-define-key map "w" 'lispy-move-up)
 ;;     ;; (lispy-define-key map "s" 'lispy-move-down)
@@ -225,7 +260,8 @@ Interactively, prompt for WIDTH."
 ;; monitor.
 
 (use-package pos-tip
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;; (setq lsp-log-io t)
 (with-eval-after-load 'lsp-mode
@@ -236,6 +272,7 @@ Interactively, prompt for WIDTH."
 
 (use-package outline
   :ensure nil
+  :defer t
   :after define-repeat-map
   :config
   (define-repeat-map outline-repeat-map
@@ -315,6 +352,7 @@ Interactively, prompt for WIDTH."
 
 (use-package go-translate
   :ensure t
+  :defer t
   :custom
   gts-translate-list '(("fr" "en"))
   :config
@@ -515,13 +553,46 @@ Interactively, prompt for WIDTH."
 
 (setq-default completion-in-region-function 'consult-completion-in-region)
 
+;; https://karthinks.com/software/emacs-window-management-almanac/#aw-select-the-completing-read-for-emacs-windows
+(defun ace-window-one-command ()
+  (interactive)
+  (let ((win (aw-select " ACE")))
+    (when (windowp win)
+      (with-selected-window win
+        (let* ((command (key-binding
+                         (read-key-sequence
+                          (format "Run in %s..." (buffer-name)))))
+               (this-command command))
+          (call-interactively command))))))
+
+(defun ace-window-prefix ()
+  "Use `ace-window' to display the buffer of the next command.
+The next buffer is the buffer displayed by the next command invoked
+immediately after this command (ignoring reading from the minibuffer).
+Creates a new window before displaying the buffer.
+When `switch-to-buffer-obey-display-actions' is non-nil,
+`switch-to-buffer' commands are also supported."
+  (interactive)
+  (display-buffer-override-next-command
+   (lambda (buffer _)
+     (let (window type)
+       (setq
+        window (aw-select (propertize " ACE" 'face 'mode-line-highlight))
+        type 'reuse)
+       (cons window type)))
+   nil "[ace-window]")
+  (message "Use `ace-window' to display next command buffer..."))
+
 (use-package ace-window
   :ensure t
   :bind
-  ("C-x o" . ace-window))
+  ("C-x o" . ace-window)
+  ("C-x O" . ace-window-one-command)
+  ("C-x 4 o" . ace-window-prefix))
 
 (use-package which-key
   :ensure t
+  :diminish
   :config
   (which-key-mode))
 
@@ -542,7 +613,7 @@ Interactively, prompt for WIDTH."
   (package-vc-install "https://github.com/zerolfx/copilot.el"))
 (use-package copilot
   ;; :vc (:url "https://github.com/zerolfx/copilot.el")
-  :disabled
+  :diminish " Co"
   :hook
   ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
@@ -719,6 +790,7 @@ Interactively, prompt for WIDTH."
 (use-package flymake
   :ensure nil
   :custom
+  (flymake-mode-line-lighter "F")
   (flymake-show-diagnostics-at-end-of-line t)
   :after define-repeat-map
   :config
@@ -740,6 +812,7 @@ Interactively, prompt for WIDTH."
 
 (use-package attrap
   :ensure t
+  :defer t
   :after flycheck
   :config
   (setq saved-match-data nil))
@@ -773,10 +846,10 @@ Interactively, prompt for WIDTH."
   :bind
   ("s-;" . czm-spell-then-abbrev))
 
-;; Forcing this to load so that c++-mode-abbrev-table is defined.
-(use-package cc-mode
-  :ensure nil
-  :demand)
+;; ;; Forcing this to load so that c++-mode-abbrev-table is defined.
+;; (use-package cc-mode
+;;   :ensure nil
+;;   :demand)
 
 ;;; --------------------------------- PDF ---------------------------------
 
@@ -790,10 +863,14 @@ Interactively, prompt for WIDTH."
   :config
   (pdf-tools-install :no-query)
   (require 'pdf-occur)
-  :bind (:map pdf-view-mode-map
-              ("j" . pdf-view-jump-to-register)
-              ("<down>" . nil)
-              ("<up>" . nil)))
+  :bind
+  (:map pdf-view-mode-map
+        ("j" . pdf-view-jump-to-register)
+        ("y" . image-previous-line)
+        ("<down>" . nil)
+        ("<up>" . nil)
+        ("<remap> <scroll-up-command>" . pdf-view-scroll-up-or-next-page)
+        ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)))
 
 ;;; ------------------------------ ORG ------------------------------
 
@@ -833,6 +910,8 @@ Interactively, prompt for WIDTH."
       "* %?\n  %i")
      ("j" "Journal" entry (file+datetree my-log-file)
       "* %?\nEntered on %U\n")
+     ("a" "Inbox (annotated)" entry (file+headline my-todo-file "Inbox")
+      "* %?\n%a")
      ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
       "* %?\n%U\n" :clock-in t :clock-resume t))))
 
@@ -970,6 +1049,7 @@ The list is ordered from bottom to top."
 
 (use-package erc-log
   :ensure nil
+  :defer t
   :after erc
   :config
   (erc-log-mode)
@@ -991,6 +1071,7 @@ The list is ordered from bottom to top."
 
 (use-package erc-desktop-notifications
   :ensure nil
+  :defer t
   :after erc
   ;; https://emacs.stackexchange.com/questions/28896/how-to-get-notifications-from-erc-in-macos
   )
@@ -1181,6 +1262,7 @@ The list is ordered from bottom to top."
   (package-vc-install "https://github.com/ultronozm/czm-cpp.el"))
 (use-package czm-cpp
   ;; :vc (:url "https://github.com/ultronozm/czm-cpp.el")
+  :defer t
   :custom
   (czm-cpp-scratch-directory my-tmp-cpp-dir))
 
@@ -1244,25 +1326,21 @@ The value of `calc-language` is restored after BODY has been processed."
           (delete-overlay o))))))
 
 (use-package perfect-margin
-  :ensure t)
+  :ensure t
+  :defer t
+  :diminish)
 
 (use-package diminish
   :ensure t
   :demand t
   :after copilot
   :config
-  (diminish 'copilot-mode "Co")
   (diminish 'abbrev-mode "Ab")
-  (diminish 'lean4-mode)
   (diminish 'visual-line-mode)
   (diminish 'outline-minor-mode)
-  (diminish 'which-key-mode)
   (diminish 'buffer-face-mode)
   (diminish 'eldoc-mode)
   (diminish 'reftex-mode)
-  (diminish 'copilot-mode)
-  (diminish 'aggressive-indent-mode)
-  (diminish 'perfect-margin-mode)
   (diminish 'whitespace-mode))
 
 (defvar git-fill-column-alist '(("emacs" . 64) ("auctex" . 64)))
@@ -1278,3 +1356,18 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package easy-kill
   :ensure t)
+
+(global-set-key [remap kill-ring-save] #'easy-kill)
+
+;; I know when I'm narrowing
+(setq mode-line-modes (delete "%n" mode-line-modes))
+
+(defun czm-abbreviate-elisp-mode-name ()
+  (cond
+   ((consp mode-name)
+    (setcar mode-name "E"))
+   ((stringp mode-name)
+    (when (equal mode-name "Lisp Interaction")
+      (setq mode-name "LI")))))
+
+(add-hook 'emacs-lisp-mode-hook 'czm-abbreviate-elisp-mode-name)
