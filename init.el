@@ -6,6 +6,7 @@
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("elpa-devel" . "https://elpa.gnu.org/devel/"))
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
 (let ((package-check-signature nil))
@@ -15,9 +16,22 @@
 
 (package-install 'auctex)
 
-(when nil
-  (load (concat user-emacs-directory "init-main.el"))
-  (load (concat user-emacs-directory "init-git.el"))
+(setq use-package-vc-prefer-newest t)
+
+(use-package exec-path-from-shell
+  :ensure
+  :demand
+  :if (memq window-system '(mac ns))
+  :config
+  (exec-path-from-shell-initialize))
+
+(when t
+  (load (concat user-emacs-directory "init-main.el")))
+
+(when t
+  (load (concat user-emacs-directory "init-git.el")))
+
+(when t
   (load (concat user-emacs-directory "init-latex.el")))
 
 (when nil
