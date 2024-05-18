@@ -770,4 +770,13 @@ of the preamble part of REGION-TEXT."
      "RET" TeX-newline))
   (repeat-mode 1))
 
-
+(use-package tex-item
+  :bind
+  (:map LaTeX-mode-map
+        ("M-g M-i n" . tex-item-forward)
+        ("M-g M-i p" . tex-item-backward))
+  :config
+  (defvar-keymap tex-item-map
+    :repeat t
+    "n" 'tex-item-forward
+    "p" 'tex-item-backward))
