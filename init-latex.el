@@ -818,5 +818,19 @@ of the preamble part of REGION-TEXT."
      "RET" TeX-newline))
   (repeat-mode 1))
 
-
-
+(use-package tex-item
+  :ensure (:host github :repo "ultronozm/tex-item.el"
+                 :depth nil)
+  :after latex
+  :config
+  (defvar-keymap tex-item-map
+    :repeat t
+    "n" #'tex-item-forward
+    "p" #'tex-item-backward
+    "SPC" #'tex-item-mark
+    "k" #'tex-item-kill
+    "<backspace>" #'tex-item-backward-kill
+    "t" #'tex-item-transpose
+    "<down>" #'tex-item-move-down
+    "<up>" #'tex-item-move-up)
+  (define-key LaTeX-mode-map (kbd "M-g M-i") tex-item-map))
