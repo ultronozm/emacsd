@@ -537,8 +537,10 @@
 	      ("," . preview-required-option-list)
 	      "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\"")))))
 
+(unless (package-installed-p 'preview-auto)
+  (package-vc-install "https://github.com/ultronozm/preview-auto.el"))
 (use-package preview-auto
-  :vc (:url "https://github.com/ultronozm/preview-auto.el")
+  ;; :vc (:url "https://github.com/ultronozm/preview-auto.el")
   :after latex
   :config
   (setq preview-protect-point t)
