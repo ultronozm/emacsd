@@ -16,8 +16,12 @@
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
+(unless (package-installed-p 'czm-misc)
+  (package-vc-install
+   "https://github.com/ultronozm/czm-misc.el"))
+
 (use-package czm-misc
-  :vc (:url "https://github.com/ultronozm/czm-misc.el")
+  ;; :vc (:url "https://github.com/ultronozm/czm-misc.el")
   :demand
   :after avy
   :bind (("s-@" . czm-misc-split-window-below-variant)
@@ -69,27 +73,29 @@
     (previous-line)
     (fill-paragraph)))
 
+(unless (package-installed-p 'define-repeat-map)
+  (package-vc-install "https://tildegit.org/acdw/define-repeat-map.el" nil 'Git))
 (use-package define-repeat-map
-  :vc (:url "https://tildegit.org/acdw/define-repeat-map.el")
+  ;; :vc (:url "https://tildegit.org/acdw/define-repeat-map.el")
   :demand t
 
   :config
   (define-repeat-map paragraph
-    ("]" forward-paragraph
-     "}" forward-paragraph
-     "[" backward-paragraph
-     "{" backward-paragraph)
-    (:continue
-     "M-h" mark-paragraph
-     "h" mark-paragraph
-     "k" kill-paragraph
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "C-/" undo
-     "t" transpose-paragraphs
-     "q" czm-fill-previous-paragraph
-     "C-l" recenter-top-bottom))
+                     ("]" forward-paragraph
+                      "}" forward-paragraph
+                      "[" backward-paragraph
+                      "{" backward-paragraph)
+                     (:continue
+                      "M-h" mark-paragraph
+                      "h" mark-paragraph
+                      "k" kill-paragraph
+                      "w" kill-region
+                      "M-w" kill-ring-save
+                      "y" yank
+                      "C-/" undo
+                      "t" transpose-paragraphs
+                      "q" czm-fill-previous-paragraph
+                      "C-l" recenter-top-bottom))
   (repeat-mode 1))
 
 
@@ -174,8 +180,11 @@
   (aggressive-indent-mode 0))
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
+(unless (package-installed-p 'info-colors)
+  (package-vc-install "https://github.com/ubolonton/info-colors"))
+
 (use-package info-colors
-  :vc (:url "https://github.com/ubolonton/info-colors")
+  ;; :vc (:url "https://github.com/ubolonton/info-colors")
   :hook (Info-selection . info-colors-fontify-node))
 
 (use-package expand-region
@@ -538,8 +547,11 @@ Interactively, prompt for WIDTH."
 
 ;;; ------------------------------ AI ------------------------------
 
+(unless (package-installed-p 'copilot)
+  (package-vc-install "https://github.com/zerolfx/copilot.el"))
 (use-package copilot
-  :vc (:url "https://github.com/zerolfx/copilot.el")
+  ;; :vc (:url "https://github.com/zerolfx/copilot.el")
+  :disabled
   :hook
   ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
@@ -604,8 +616,10 @@ Interactively, prompt for WIDTH."
    gptel-model "gpt-4"
    gptel-backend gptel--openai))
 
+(unless (package-installed-p 'ai-org-chat)
+  (package-vc-install "https://github.com/ultronozm/ai-org-chat.el"))
 (use-package ai-org-chat
-  :vc (:url "https://github.com/ultronozm/ai-org-chat.el")
+  ;; :vc (:url "https://github.com/ultronozm/ai-org-chat.el")
   :bind
   (:map global-map
         ("s-/" . ai-org-chat-new))
@@ -760,8 +774,10 @@ Interactively, prompt for WIDTH."
   (dolist (abbrev abbrevs)
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
+(unless (package-installed-p 'czm-spell)
+  (package-vc-install "https://github.com/ultronozm/czm-spell.el"))
 (use-package czm-spell
-  :vc (:url "https://github.com/ultronozm/czm-spell.el")
+  ;; :vc (:url "https://github.com/ultronozm/czm-spell.el")
   :after latex
   :bind
   ("s-;" . czm-spell-then-abbrev))
@@ -1148,8 +1164,10 @@ The list is ordered from bottom to top."
                  (czm-cmake-build--invoke-eshell-run this-run-config)))))
         (czm-cmake-build--invoke-eshell-run this-run-config)))))
 
+(unless (package-installed-p 'cmake-build)
+  (package-vc-install "https://github.com/ultronozm/cmake-build.el"))
 (use-package cmake-build
-  :vc (:url "https://github.com/ultronozm/cmake-build.el")
+  ;; :vc (:url "https://github.com/ultronozm/cmake-build.el")
   :bind (("s-m m" . cmake-build-menu)
          ("s-m 1" . cmake-build-set-cmake-profile)
          ("s-m 2" . cmake-build-clear-cache-and-configure)
@@ -1168,8 +1186,10 @@ The list is ordered from bottom to top."
   (cmake-build-options "-j 16")
   (cmake-build-options "-j 8 --verbose"))
 
+(unless (package-installed-p 'czm-cpp)
+  (package-vc-install "https://github.com/ultronozm/czm-cpp.el"))
 (use-package czm-cpp
-  :vc (:url "https://github.com/ultronozm/czm-cpp.el")
+  ;; :vc (:url "https://github.com/ultronozm/czm-cpp.el")
   :custom
   (czm-cpp-scratch-directory my-tmp-cpp-dir))
 

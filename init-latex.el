@@ -221,8 +221,10 @@
   "ez"
   (if (string-suffix-p ".lean" (buffer-file-name)) 0.6 0.833))
 
+(unless (package-installed-p 'preview-tailor)
+  (package-vc-install "https://github.com/ultronozm/preview-tailor.el"))
 (use-package preview-tailor
-  :vc (:url "https://github.com/ultronozm/preview-tailor.el")
+  ;; :vc (:url "https://github.com/ultronozm/preview-tailor.el")
   :after latex
   :config
   (preview-tailor-init)
@@ -236,8 +238,10 @@
 
 ;; (spw/remap-mark-command 'sp-mark-sexp LaTeX-mode-map)
 
+(unless (package-installed-p 'czm-tex-util)
+  (package-vc-install "https://github.com/ultronozm/czm-tex-util.el"))
 (use-package czm-tex-util
-  :vc (:url "https://github.com/ultronozm/czm-tex-util.el")
+  ;; :vc (:url "https://github.com/ultronozm/czm-tex-util.el")
   :after latex)
 
 (defun czm-tex-quote-advice (&rest _)
@@ -245,8 +249,10 @@
              (looking-back "``\\(.*?\\)''"))
     (czm-tex-fold-quotes (match-beginning 0) (match-end 0))))
 
+(unless (package-installed-p 'czm-tex-fold)
+  (package-vc-install "https://github.com/ultronozm/czm-tex-fold.el"))
 (use-package czm-tex-fold
-  :vc (:url "https://github.com/ultronozm/czm-tex-fold.el")
+  ;; :vc (:url "https://github.com/ultronozm/czm-tex-fold.el")
   :demand ; otherwise, this doesn't work until the second time you
                                         ; open a .tex file.  but it needs to be loaded after auctex.
   ;; :bind
@@ -286,25 +292,29 @@
 
 (advice-add 'yank :after #'my-yank-after-advice)
 
+(unless (package-installed-p 'czm-tex-jump)
+  (package-vc-install "https://github.com/ultronozm/czm-tex-jump.el"))
 (use-package czm-tex-jump
-  :vc (:url "https://github.com/ultronozm/czm-tex-jump.el")
+  ;; :vc (:url "https://github.com/ultronozm/czm-tex-jump.el")
   ;; :after avy
   :bind
   (:map LaTeX-mode-map
         ("s-r" . czm-tex-jump)))
 
+(unless (package-installed-p 'czm-tex-ref)
+  (package-vc-install "https://github.com/ultronozm/czm-tex-ref.el"))
 (use-package czm-tex-ref
-  :vc (:url "https://github.com/ultronozm/czm-tex-ref.el")
+  ;; :vc (:url "https://github.com/ultronozm/czm-tex-ref.el")
   :custom
   (czm-tex-ref-master-bib-file my-master-bib-file)
   (czm-tex-ref-rearrange-bib-entries t)
   (czm-tex-ref-labelable-environments '("align" "gather" "flalign" "multline" "lemma" "exercise" "example" "proposition" "corollary" "remark" "definition" "theorem" "eqnarray" "equation" "conjecture" "question" "figure" "table" "problem" "fact" "rem" "prop"))
   :bind
   (:map global-map
-	       ("C-c 0" . czm-tex-ref-bib))
+	("C-c 0" . czm-tex-ref-bib))
   (:map LaTeX-mode-map
-	       ("C-c 9" . czm-tex-ref-label)
-	       ("C-c 0" . czm-tex-ref-bib)))
+	("C-c 9" . czm-tex-ref-label)
+	("C-c 0" . czm-tex-ref-bib)))
 
 ;; (defun czm-attrap-LaTeX-fixer (msg pos end)
 ;;   (cond
@@ -435,8 +445,10 @@
       ;; (czm-preview-timer-toggle)
       )))
 
+(unless (package-installed-p 'dynexp)
+  (package-vc-install "https://github.com/ultronozm/dynexp.el"))
 (use-package dynexp
-  :vc (:url "https://github.com/ultronozm/dynexp.el")
+  ;; :vc (:url "https://github.com/ultronozm/dynexp.el")
   :demand ; but after auctex
   :bind
   (:map LaTeX-mode-map
@@ -444,10 +456,12 @@
         ("TAB" . dynexp-next))
   :config
   (with-eval-after-load 'latex
-    (quietly-read-abbrev-file "~/.emacs.d/elpaca/repos/dynexp/lisp/dynexp-abbrev.el")))
+    (quietly-read-abbrev-file "~/.emacs.d/elpa/dynexp/lisp/dynexp-abbrev.el")))
 
+(unless (package-installed-p 'czm-tex-edit)
+  (package-vc-install "https://github.com/ultronozm/czm-tex-edit.el"))
 (use-package czm-tex-edit
-  :vc (:url "https://github.com/ultronozm/czm-tex-edit.el")
+  ;; :vc (:url "https://github.com/ultronozm/czm-tex-edit.el")
   :after latex dynexp
   :demand ; should come after latex and dynexp
   :bind
@@ -477,8 +491,10 @@
    "C-c t c"
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
+(unless (package-installed-p 'tex-continuous)
+  (package-vc-install "https://github.com/ultronozm/tex-continuous.el"))
 (use-package tex-continuous
-  :vc (:url "https://github.com/ultronozm/tex-continuous.el")
+  ;; :vc (:url "https://github.com/ultronozm/tex-continuous.el")
   :after latex
   :bind
   (:map LaTeX-mode-map
@@ -487,14 +503,16 @@
 (setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
 ;; (setq TeX-suppress-ignored-warnings t)
 
+(unless (package-installed-p 'czm-preview)
+  (package-vc-install "https://github.com/ultronozm/czm-preview.el"))
 (use-package czm-preview
-  :vc (:url "https://github.com/ultronozm/czm-preview.el")
+  ;; :vc (:url "https://github.com/ultronozm/czm-preview.el")
   :after latex
   :bind
   (:map LaTeX-mode-map
-	       ("H-u" . czm-preview-mode)
-	       ("C-c C-p C-a" . czm-preview-mode)
-	       ("C-c p m" . czm-preview-toggle-master))
+	("H-u" . czm-preview-mode)
+	("C-c C-p C-a" . czm-preview-mode)
+	("C-c p m" . czm-preview-toggle-master))
   :custom
   (czm-preview-timer-interval 0.1)
   (czm-preview-regions-not-to-preview '("<++>" "<+++>"))
@@ -510,13 +528,13 @@
                                 "Pauls-MBP-3")
                      "/usr/local/texlive/2020/bin/x86_64-darwin/")))
       (setq preview-LaTeX-command
-	           `(
-	             ,(concat
-	               "%`"
-	               tex-dir
-	               "%l \"\\nonstopmode\\nofiles\\PassOptionsToPackage{")
-	             ("," . preview-required-option-list)
-	             "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\"")))))
+	    `(
+	      ,(concat
+	        "%`"
+	        tex-dir
+	        "%l \"\\nonstopmode\\nofiles\\PassOptionsToPackage{")
+	      ("," . preview-required-option-list)
+	      "}{preview}\\AtBeginDocument{\\ifx\\ifPreview\\undefined" preview-default-preamble "\\fi}\"%' \"\\detokenize{\" %(t-filename-only) \"}\"")))))
 
 (use-package preview-auto
   :disabled
@@ -539,9 +557,10 @@
      ;; (cons "\\mathtoolsset{showonlyrefs}" "")
      )))
 
+(unless (package-installed-p 'tex-numbers)
+  (package-vc-install "https://github.com/ultronozm/tex-numbers.el"))
 (use-package tex-numbers
-  :disabled
-  :vc (:url "https://github.com/ultronozm/tex-numbers.el")
+  ;; :vc (:url "https://github.com/ultronozm/tex-numbers.el")
   :after latex czm-tex-fold
   :config
   (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
@@ -584,8 +603,10 @@ Otherwise, return nil."
    ;;((eq-major-mode 'org-mode))
    ))
 
+(unless (package-installed-p 'library)
+  (package-vc-install "https://github.com/ultronozm/library.el"))
 (use-package library
-  :vc (:url "https://github.com/ultronozm/library.el")
+  ;; :vc (:url "https://github.com/ultronozm/library.el")
   :after latex czm-tex-util
   :custom
   (library-pdf-directory my-pdf-folder)
@@ -689,8 +710,10 @@ of the preamble part of REGION-TEXT."
   (tex-parens-up-list)
   (tex-parens-backward-down-list))
 
+(unless (package-installed-p 'tex-parens)
+  (package-vc-install "https://github.com/ultronozm/tex-parens.el"))
 (use-package tex-parens
-  :vc (:url "https://github.com/ultronozm/tex-parens.el")
+  ;; :vc (:url "https://github.com/ultronozm/tex-parens.el")
   :bind
   (:map LaTeX-mode-map
         ("C-M-f" . tex-parens-forward-sexp)
@@ -725,31 +748,31 @@ of the preamble part of REGION-TEXT."
   (advice-add 'expand-abbrev :around #'czm-tex-parens-expand-abbrev-advice)
 
   (define-repeat-map tex-parens-structural-edit
-    ("n" tex-parens-forward-list
-     "p" tex-parens-backward-list
-     "u" tex-parens-backward-up-list
-     "M-u" tex-parens-up-list
-     "g" tex-parens-down-list
-     "M-g" tex-parens-backward-down-list)
-    (:continue
-     "f" tex-parens-forward-sexp
-     "b" tex-parens-backward-sexp
-     "a" beginning-of-defun
-     "e" end-of-defun
-     "d" czm-deactivate-mark-interactively
-     "k" kill-sexp
-     ">" tex-parens-burp-right
-     "<" tex-parens-burp-left
-     "C-/" undo
-     "r" tex-parens-raise-sexp
-     "/" tex-parens-delete-pair
-     "t" transpose-sexps
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "c" lispy-clone
-     ;; "C-M-SPC" spw/tex-parens-mark-sexp
-     "RET" TeX-newline))
+                     ("n" tex-parens-forward-list
+                      "p" tex-parens-backward-list
+                      "u" tex-parens-backward-up-list
+                      "M-u" tex-parens-up-list
+                      "g" tex-parens-down-list
+                      "M-g" tex-parens-backward-down-list)
+                     (:continue
+                      "f" tex-parens-forward-sexp
+                      "b" tex-parens-backward-sexp
+                      "a" beginning-of-defun
+                      "e" end-of-defun
+                      "d" czm-deactivate-mark-interactively
+                      "k" kill-sexp
+                      ">" tex-parens-burp-right
+                      "<" tex-parens-burp-left
+                      "C-/" undo
+                      "r" tex-parens-raise-sexp
+                      "/" tex-parens-delete-pair
+                      "t" transpose-sexps
+                      "w" kill-region
+                      "M-w" kill-ring-save
+                      "y" yank
+                      "c" lispy-clone
+                      ;; "C-M-SPC" spw/tex-parens-mark-sexp
+                      "RET" TeX-newline))
   (repeat-mode 1))
 
 

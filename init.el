@@ -15,7 +15,7 @@
 
 (package-install 'auctex)
 
-(when t
+(when nil
   (load (concat user-emacs-directory "init-main.el"))
   (load (concat user-emacs-directory "init-git.el"))
   (load (concat user-emacs-directory "init-latex.el")))

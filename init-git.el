@@ -6,8 +6,10 @@
   :hook
   (magit-status-mode . visual-line-mode))
 
+(unless (package-installed-p 'repo-scan)
+  (package-vc-install "https://github.com/ultronozm/repo-scan.el"))
 (use-package repo-scan
-  :vc (:url "https://github.com/ultronozm/repo-scan.el")
+  ;; :vc (:url "https://github.com/ultronozm/repo-scan.el")
   :defer t)
 
 (defvar czm-repos '(
@@ -72,8 +74,10 @@
   (or (string-suffix-p ".tex" file)
       (string-suffix-p ".bib" file)))
 
+(unless (package-installed-p 'publish)
+  (package-vc-install "https://github.com/ultronozm/publish.el"))
 (use-package publish
-  :vc (:url "https://github.com/ultronozm/publish.el")
+  ;; :vc (:url "https://github.com/ultronozm/publish.el")
   :defer t
   :custom
   (publish-repo-root "~/math")
