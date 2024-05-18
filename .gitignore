@@ -1,11 +1,6 @@
-# Compiled
-*.elc
+*
 
-# Packaging
-.cask
-
-# Backup files
-*~
-
-# Undo-tree save-files
-*.~undo-tree
+!.gitignore
+!*.el
+/SessionDesktop.el
+/cmake-build-options.el
