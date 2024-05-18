@@ -743,31 +743,31 @@ of the preamble part of REGION-TEXT."
   (advice-add 'expand-abbrev :around #'czm-tex-parens-expand-abbrev-advice)
 
   (define-repeat-map tex-parens-structural-edit
-                     ("n" tex-parens-forward-list
-                      "p" tex-parens-backward-list
-                      "u" tex-parens-backward-up-list
-                      "M-u" tex-parens-up-list
-                      "g" tex-parens-down-list
-                      "M-g" tex-parens-backward-down-list)
-                     (:continue
-                      "f" tex-parens-forward-sexp
-                      "b" tex-parens-backward-sexp
-                      "a" beginning-of-defun
-                      "e" end-of-defun
-                      "d" czm-deactivate-mark-interactively
-                      "k" kill-sexp
-                      ">" tex-parens-burp-right
-                      "<" tex-parens-burp-left
-                      "C-/" undo
-                      "r" tex-parens-raise-sexp
-                      "/" tex-parens-delete-pair
-                      "t" transpose-sexps
-                      "w" kill-region
-                      "M-w" kill-ring-save
-                      "y" yank
-                      "c" lispy-clone
-                      ;; "C-M-SPC" spw/tex-parens-mark-sexp
-                      "RET" TeX-newline))
+    ("n" tex-parens-forward-list
+     "p" tex-parens-backward-list
+     "u" tex-parens-backward-up-list
+     "M-u" tex-parens-up-list
+     "g" tex-parens-down-list
+     "M-g" tex-parens-backward-down-list)
+    (:continue
+     "f" tex-parens-forward-sexp
+     "b" tex-parens-backward-sexp
+     "a" beginning-of-defun
+     "e" end-of-defun
+     "d" czm-deactivate-mark-interactively
+     "k" kill-sexp
+     ">" tex-parens-burp-right
+     "<" tex-parens-burp-left
+     "C-/" undo
+     "r" tex-parens-raise-sexp
+     "/" tex-parens-delete-pair
+     "t" transpose-sexps
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "c" lispy-clone
+     ;; "C-M-SPC" spw/tex-parens-mark-sexp
+     "RET" TeX-newline))
   (repeat-mode 1))
 
 
