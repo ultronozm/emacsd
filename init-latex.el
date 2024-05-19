@@ -780,6 +780,8 @@ of the preamble part of REGION-TEXT."
      "RET" TeX-newline))
   (repeat-mode 1))
 
+(unless (package-installed-p 'tex-item)
+  (package-vc-install "https://github.com/ultronozm/tex-item.el"))
 (use-package tex-item
   :config
   (defvar-keymap tex-item-map
