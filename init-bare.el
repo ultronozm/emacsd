@@ -121,7 +121,8 @@ Possible values: completing-read, ivy-read.")
                        (directory-files elisp-dir1 t "\\.el$")))
          (default-elisp-file (concat user-emacs-directory "init.el"))
          (completion-fn czm/find-lisp-file-completion-fn)
-         (selected-elisp-file (funcall completion-fn "Select elisp file: " elisp-files
+         (selected-elisp-file (funcall completion-fn
+                                       "Select elisp file: " elisp-files
                                        nil t nil nil default-elisp-file)))
     (when selected-elisp-file (find-file selected-elisp-file))))
 
