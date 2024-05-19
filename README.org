@@ -67,4 +67,4 @@ make install
 - Add =~/gnu-emacs/nextstep/Emacs.app/Contents/MacOS/= to the PATH environment variable.
 - Clone this repository and set up my config, as indicated above.
 
-
+Most recently, it seems necessary to first run Emacs from the command line like =./Emacs -nw=, so that native compilation starts in the right way.  This idea came from the discussion of [[https://github.com/d12frosted/homebrew-emacs-plus/issues/554]].

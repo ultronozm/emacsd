@@ -208,6 +208,7 @@
   (TeX-auto-save t)
   (TeX-parse-self t)
   (preview-auto-cache-preamble t)
+  (preview-image-type 'dvipng)
   ;; (preview-default-option-list
   ;;  '("displaymath" "floats" "graphics" "textmath" "sections" "footnotes" "showlabels"))
                                         ;  (preview-gs-command "/usr/local/bin/gs")  ; compare with rungs?
