@@ -235,7 +235,9 @@
 
   :bind
   (:map emacs-lisp-mode-map
-        (";" . czm-lispy-comment-maybe)))
+        (";" . czm-lispy-comment-maybe)
+        ("M-1" . lispy-describe-inline)
+        ("M-2" . lispy-arglist-inline)))
 
 (use-package emacs
   :ensure nil
@@ -284,13 +286,13 @@
 (use-package emacs
   :ensure nil
 
+  :config
+
   :bind
   (:map global-map
         ("s-r" . elpaca-rebuild)
         )
-  (:map emacs-lisp-mode-map
-        ("M-1" . lispy-describe-inline)
-        ("M-2" . lispy-arglist-inline)))
+  )
 
 ;;     ;; (lispy-define-key map "w" 'lispy-move-up)
 ;;     ;; (lispy-define-key map "s" 'lispy-move-down)
