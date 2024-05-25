@@ -396,6 +396,10 @@
       (delete-region (point)
                      (1+ (point)))
       (insert "\\ ")))
+   ((s-matches? (rx "Intersentence spacing (`\\@') should perhaps be used.")
+                msg)
+    (attrap-one-option 'use-intersentence-spacing
+      (insert "\\@")))
    ((s-matches? (rx "Delete this space to maintain correct pagereferences.")
                 msg)
     ;; not yet fixed
