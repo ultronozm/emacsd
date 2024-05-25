@@ -891,6 +891,18 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
         ("M-n" . flymake-goto-next-error)
         ("M-p" . flymake-goto-prev-error)))
 
+(use-package flymake
+  :after preview
+  :config
+  (add-to-list 'preview-auto-reveal-commands #'flymake-goto-next-error)
+  (add-to-list 'preview-auto-reveal-commands #'flymake-goto-prev-error))
+
+(use-package flymake
+  :after tex-fold
+  :config
+  (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-next-error)
+  (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-prev-error))
+
 ;;; ------------------------------ ATTRAP ------------------------------
 
 (use-package attrap
