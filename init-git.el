@@ -29,12 +29,16 @@
                     "dynexp"
                     "eldoc-icebox"
                     "library"
+                    "preview-auto"
                     "preview-tailor"
                     "publish"
                     "repo-scan"
                     "spout"
                     "symtex"
+                    "tex-numbers"
+                    "tex-continuous"
                     "tex-parens"
+                    "tex-item"
                     ))
 
 (defun czm-repos-uncompiled ()
