@@ -62,34 +62,6 @@
 
 (elpaca-wait)
 
-;; (use-package org
-;;   :ensure `(org
-;;           :fork (:host nil
-;;                  :repo "https://git.tecosaur.net/tec/org-mode.git"
-;;                  :branch "dev"
-;;                  :remote "tecosaur")
-;;           :files (:defaults "etc")
-;;           :build t
-;;           :pre-build
-;;           (with-temp-file "org-version.el"
-;;             (require 'lisp-mnt)
-;;             (let ((version
-;;                   (with-temp-buffer
-;;                     (insert-file-contents "lisp/org.el")
-;;                     (lm-header "version")))
-;;                   (git-version
-;;                   (string-trim
-;;                    (with-temp-buffer
-;;                      (call-process "git" nil t nil "rev-parse" "--short" "HEAD")
-;;                      (buffer-string)))))
-;;               (insert
-;;                (format "(defun org-release () \"The release version of Org.\" %S)\n" version)
-;;                (format "(defun org-git-version () \"The truncate git commit hash of Org mode.\" %S)\n" git-version)
-;;                "(provide 'org-version)\n")))
-;;           :pin nil))
-
-(elpaca-wait)
-
 ;; This was needed for a bit, but suddenly seems to break things.  Hmm.
 
 ;; (defun +elpaca-unload-seq (e) "Unload seq before continuing the elpaca build, then continue to build the recipe E."
@@ -102,6 +74,147 @@
 
 (elpaca-wait)
 
+;;; ------------------------------ ORG ------------------------------
+
+(use-package emacs
+  :ensure nil
+  :hook
+  (org-mode . visual-line-mode)
+  :custom
+  (org-default-notes-file my-todo-file)
+  (org-directory "~/")
+  (org-agenda-files `(,my-todo-file))
+  (org-goto-auto-isearch nil)
+  (org-agenda-include-diary t)
+  (org-babel-load-languages '((latex . t) (emacs-lisp . t) (python . t)))
+  (org-babel-python-command "python3")
+  (org-confirm-babel-evaluate nil)
+  (org-link-elisp-confirm-function nil)
+  (org-enforce-todo-dependencies t)
+  (org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)))
+  (org-hide-leading-stars t)
+  (org-list-allow-alphabetical t)
+  (org-odd-levels-only nil)
+  (org-refile-targets
+   '((org-agenda-files :regexp . "Notes")
+     (my-todo-file :regexp . "Inbox")
+     (my-todo-file :regexp . "Reference")
+     (my-todo-file :regexp . "Someday")
+     (my-todo-file :regexp . "Scheduler")
+     (my-todo-file :regexp . "Tasks")))
+  (org-refile-use-outline-path t)
+  ;; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
+  (org-src-preserve-indentation t)
+  (org-tags-column -70)
+  (org-use-speed-commands t)
+  (org-capture-templates
+   '(("i" "Inbox" entry (file+headline my-todo-file "Inbox")
+      "* %?\n  %i")
+     ("j" "Journal" entry (file+datetree my-log-file)
+      "* %?\nEntered on %U\n")
+     ("a" "Inbox (annotated)" entry (file+headline my-todo-file "Inbox")
+      "* %?\n%a")
+     ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
+      "* %?\n%U\n" :clock-in t :clock-resume t))))
+
+(defun czm-org-edit-src ()
+  (interactive)
+  (let
+      ((src-buffer
+        (save-window-excursion
+          (org-edit-src-code)
+          (setq fill-column 999999) ; should this be in a latex mode hook?
+          (setq TeX-master my-preview-master)
+          (current-buffer))))
+    (switch-to-buffer src-buffer)))
+
+(defun czm-org-collect-entry-positions (match scope &rest skip)
+  "Collect buffer point positions for org entries.
+The list is ordered from bottom to top."
+  (let ((positions ()))
+    (org-map-entries
+     (lambda () (setq positions (cons (point) positions))) match scope skip)
+    positions))
+
+(defun czm-org-archive-done-entries ()
+  (interactive)
+  (let ((positions (czm-org-collect-entry-positions "TODO={DONE\\|CANCELLED}" 'region-start-level)))
+    (dolist (pos positions)
+      (goto-char pos)
+      (save-mark-and-excursion
+        (deactivate-mark)
+        (org-archive-subtree)))))
+
+(use-package org
+  :ensure
+  `(org
+    :remotes ("tecosaur"
+              :repo "https://git.tecosaur.net/tec/org-mode.git"
+              :branch "dev")
+    :files (:defaults "etc")
+    :build t
+    :pre-build
+    (with-temp-file "org-version.el"
+      (require 'lisp-mnt)
+      (let ((version
+             (with-temp-buffer
+               (insert-file-contents "lisp/org.el")
+               (lm-header "version")))
+            (git-version
+             (string-trim
+              (with-temp-buffer
+                (call-process "git" nil t nil "rev-parse" "--short" "HEAD")
+                (buffer-string)))))
+        (insert
+         (format "(defun org-release () \"The release version of Org.\" %S)\n" version)
+         (format "(defun org-git-version () \"The truncate git commit hash of Org mode.\" %S)\n" git-version)
+         "(provide 'org-version)\n")))
+    :pin nil)
+  :hook
+  (org-mode . (lambda () (setq fill-column 999999)))
+  :bind
+  (:map org-mode-map
+        ("C-c 1" .
+         (lambda() (interactive)
+           (progn
+             (insert "#+begin_src latex")
+             (newline))))
+        ("C-c 2" .
+         (lambda() (interactive)
+           (progn
+             (insert "#+end_src")
+             (newline))))
+        ("C-c p" . czm-org-edit-src)
+        ("M-{" . org-backward-paragraph)
+        ("M-}" . org-forward-paragraph))
+  :config
+  (define-repeat-map org-paragraph
+    ("]" org-forward-paragraph
+     "}" org-forward-paragraph
+     "[" org-backward-paragraph
+     "{" org-backward-paragraph)
+    (:continue
+     ;; "M-h" spw/mark-paragraph
+     ;; "h" spw/mark-paragraph
+     "k" kill-paragraph
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "C-/" undo
+     "t" transpose-paragraphs
+     "q" czm-fill-previous-paragraph))
+  (repeat-mode 1))
+
+(defun czm-new-tmp-org ()
+  "Create new temporary org buffer."
+  (interactive)
+  (let ((dir (file-name-as-directory my-tmp-org-dir))
+        (filename (format-time-string "tmp-%Y%m%dT%H%M%S.org")))
+    (unless (file-directory-p dir)
+      (make-directory dir t))
+    (let ((filepath (expand-file-name filename dir)))
+      (find-file filepath)
+      (save-buffer))))
 
 ;;; ------------------------------ GENERAL ------------------------------
 
@@ -124,10 +237,12 @@
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
-(use-package org
-  :bind
-  (:map org-mode-map
-        ("C-'" . nil)))
+;; (use-package emacs
+;;   :ensure nil
+;;   :after org
+;;   :bind
+;;   (:map org-mode-map
+;;         ("C-'" . nil)))
 
 (use-package czm-misc
   :ensure (:host github :repo "ultronozm/czm-misc.el"
@@ -883,22 +998,23 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
      "f" attrap-flymake
      "M-n" flymake-goto-next-error
      "M-p" flymake-goto-prev-error
-     "l" flymake-show-diagnostics-buffer
-     ))
+     "l" flymake-show-diagnostics-buffer))
   (repeat-mode 1)
   :bind
   (:map flymake-mode-map
         ("M-n" . flymake-goto-next-error)
         ("M-p" . flymake-goto-prev-error)))
 
-(use-package flymake
-  :after preview
+(use-package emacs
+  :ensure nil
+  :after flymake preview
   :config
   (add-to-list 'preview-auto-reveal-commands #'flymake-goto-next-error)
   (add-to-list 'preview-auto-reveal-commands #'flymake-goto-prev-error))
 
-(use-package flymake
-  :after tex-fold
+(use-package emacs
+  :ensure nil
+  :after flymake tex-fold
   :config
   (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-next-error)
   (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-prev-error))
@@ -993,130 +1109,6 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
         ("<remap> <scroll-up-command>" . pdf-view-scroll-up-or-next-page)
         ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)))
 
-;;; ------------------------------ ORG ------------------------------
-
-(use-package emacs
-  :ensure nil
-  :hook
-  (org-mode . visual-line-mode)
-  :custom
-  (org-default-notes-file my-todo-file)
-  (org-directory "~/")
-  (org-agenda-files `(,my-todo-file))
-  (org-goto-auto-isearch nil)
-  (org-agenda-include-diary t)
-  (org-babel-load-languages '((latex . t) (emacs-lisp . t) (python . t)))
-  (org-babel-python-command "python3")
-  (org-confirm-babel-evaluate nil)
-  (org-link-elisp-confirm-function nil)
-  (org-enforce-todo-dependencies t)
-  (org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)))
-  (org-hide-leading-stars t)
-  (org-list-allow-alphabetical t)
-  (org-odd-levels-only nil)
-  (org-refile-targets
-   '((org-agenda-files :regexp . "Notes")
-     (my-todo-file :regexp . "Inbox")
-     (my-todo-file :regexp . "Reference")
-     (my-todo-file :regexp . "Someday")
-     (my-todo-file :regexp . "Scheduler")
-     (my-todo-file :regexp . "Tasks")))
-  (org-refile-use-outline-path t)
-  ;; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
-  (org-src-preserve-indentation t)
-  (org-tags-column -70)
-  (org-use-speed-commands t)
-  (org-capture-templates
-   '(("i" "Inbox" entry (file+headline my-todo-file "Inbox")
-      "* %?\n  %i")
-     ("j" "Journal" entry (file+datetree my-log-file)
-      "* %?\nEntered on %U\n")
-     ("a" "Inbox (annotated)" entry (file+headline my-todo-file "Inbox")
-      "* %?\n%a")
-     ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
-      "* %?\n%U\n" :clock-in t :clock-resume t))))
-
-(defun czm-org-edit-src ()
-  (interactive)
-  (let
-      ((src-buffer
-        (save-window-excursion
-          (org-edit-src-code)
-          (setq fill-column 999999) ; should this be in a latex mode hook?
-          (setq TeX-master my-preview-master)
-          (current-buffer))))
-    (switch-to-buffer src-buffer)))
-
-(defun czm-org-collect-entry-positions (match scope &rest skip)
-  "Collect buffer point positions for org entries.
-The list is ordered from bottom to top."
-  (let ((positions ()))
-    (org-map-entries
-     (lambda () (setq positions (cons (point) positions))) match scope skip)
-    positions))
-
-(defun czm-org-archive-done-entries ()
-  (interactive)
-  (let ((positions (czm-org-collect-entry-positions "TODO={DONE\\|CANCELLED}" 'region-start-level)))
-    (dolist (pos positions)
-      (goto-char pos)
-      (save-mark-and-excursion
-        (deactivate-mark)
-        (org-archive-subtree)))))
-
-(use-package org
-  :ensure nil
-  :hook
-  (org-mode . (lambda () (setq fill-column 999999)))
-  :bind
-  (:map org-mode-map
-        ("C-c 1" .
-         (lambda() (interactive)
-           (progn
-             (insert "#+begin_src latex")
-             (newline))))
-        ("C-c 2" .
-         (lambda() (interactive)
-           (progn
-             (insert "#+end_src")
-             (newline))))
-        ("C-c p" . czm-org-edit-src)
-        ("M-{" . org-backward-paragraph)
-        ("M-}" . org-forward-paragraph))
-  :config
-  (define-repeat-map org-paragraph
-    ("]" org-forward-paragraph
-     "}" org-forward-paragraph
-     "[" org-backward-paragraph
-     "{" org-backward-paragraph)
-    (:continue
-     ;; "M-h" spw/mark-paragraph
-     ;; "h" spw/mark-paragraph
-     "k" kill-paragraph
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "C-/" undo
-     "t" transpose-paragraphs
-     "q" czm-fill-previous-paragraph))
-  (repeat-mode 1))
-
-(defun czm-new-tmp-org ()
-  "Create new temporary org buffer."
-  (interactive)
-  (let ((dir (file-name-as-directory my-tmp-org-dir))
-        (filename (format-time-string "tmp-%Y%m%dT%H%M%S.org")))
-    (unless (file-directory-p dir)
-      (make-directory dir t))
-    (let ((filepath (expand-file-name filename dir)))
-      (find-file filepath)
-      (save-buffer))))
-
-(defun czm-search-log ()
-  "Search your log files with `rg'."
-  (interactive)
-  (let ((log-files `(,my-log-file ,my-old-log-file ,my-todo-file)))
-    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
 
 ;;; ------------------------------ ERC ------------------------------
 
