@@ -17,13 +17,20 @@
 
 ;; eglot-sync-connect?
 
+(defun czm-set-lean4-local-variables ()
+  (setq preview-tailor-local-multiplier 0.7)
+  (setq TeX-master "~/doit/preview-master.tex"))
+
 (use-package lean4-mode
   :ensure (:host github :repo "ultronozm/lean4-mode"
                  :files ("*.el" "data"))
   :diminish
-  :hook (lean4-mode . czm-lean4-set-imenu-generic-expression)
+  :hook
+  (lean4-mode . czm-lean4-set-imenu-generic-expression)
+  (lean4-mode . czm-set-lean4-local-variables)
   :commands (lean4-mode)
   :custom
+  (lean4-idle-delay 0.02)
   (lean4-keybinding-lean4-toggle-info (kbd "C-c C-y"))
   (lean4-info-plain nil)
   :bind (:map lean4-mode-map
@@ -59,13 +66,14 @@
               ("C-`" . copilot-accept-completion-by-line)
               ("C-M-`" . copilot-accept-completion-by-paragraph)
               ("M-[" . czm-lean4-cycle-delimiter-backward))
-  :bind (:map czm-lean4-tex-mode-map
+  :bind (:map lean4-mode-map
               ("s-f" . czm-lean4-preview-fold-block))
   :custom
   (czm-lean4-info-window-height-fraction 0.4)
   (czm-lean4-info-window-width-fraction 0.47)
   :config
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
+
 
 
 (defun czm-colorize-lean4-signature ()
