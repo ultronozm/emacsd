@@ -518,7 +518,6 @@
 (unless (package-installed-p 'preview-auto)
   (package-vc-install "https://github.com/ultronozm/preview-auto.el"))
 (use-package preview-auto
-  ;; :vc (:url "https://github.com/ultronozm/preview-auto.el")
   :after latex
   :config
   (setq preview-protect-point t)
