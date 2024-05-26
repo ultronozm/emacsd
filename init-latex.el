@@ -791,3 +791,6 @@ of the preamble part of REGION-TEXT."
     "<down>" #'tex-item-move-down
     "<up>" #'tex-item-move-up)
   (define-key LaTeX-mode-map (kbd "M-g M-i") tex-item-map))
+
+(defalias 'czm-setup-tex-file
+  (kmacro "l t x SPC s-s s-p z C-n C-n C-c C-p C-a C-c C-p C-f"))
