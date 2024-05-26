@@ -515,6 +515,15 @@
 (setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
 ;; (setq TeX-suppress-ignored-warnings t)
 
+
+(defun my/set-TeX-master ()
+  (setq TeX-master
+        ;; Replace with the name of some basic tex file containing
+        ;; your favorite packages and macros.
+        "~/doit/preview-master.tex"))
+
+(add-hook 'prog-mode-hook #' my/set-TeX-master)
+
 (unless (package-installed-p 'preview-auto)
   (package-vc-install "https://github.com/ultronozm/preview-auto.el"))
 (use-package preview-auto
