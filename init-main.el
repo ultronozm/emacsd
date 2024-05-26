@@ -172,6 +172,7 @@ The list is ordered from bottom to top."
     :pin nil)
   :hook
   (org-mode . (lambda () (setq fill-column 999999)))
+  (org-mode . abbrev-mode)
   :bind
   (:map org-mode-map
         ("C-c 1" .
