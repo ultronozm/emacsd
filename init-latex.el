@@ -526,7 +526,6 @@
   (setq preview-leave-open-previews-visible t)
   :custom
   (preview-auto-interval 0.1)
-  (preview-auto-predicate #'my-czm-preview-predicate)
   (preview-LaTeX-command-replacements
    '(preview-LaTeX-disable-pdfoutput)))
 
@@ -535,41 +534,6 @@
 (use-package tex-numbers
   ;; :vc (:url "https://github.com/ultronozm/tex-numbers.el")
   :after latex czm-tex-fold)
-
-
-(defun current-mmm-mode ()
-  "Return current mmm-mode at point."
-  (let ((overlays (overlays-at (point)))
-        result)
-    (while (and overlays (not result))
-      (let* ((overlay (car overlays))
-             (properties (overlay-properties overlay))
-             (mmm-mode (plist-get properties 'mmm-mode)))
-        (setq result mmm-mode)
-        (setq overlays (cdr overlays))))
-    result))
-
-(defun my-czm-preview-predicate ()
-  "Predicate for determining whether to preview.
-
-If major-mode is latex-mode (or LaTeX-mode), then return t.
-
-If major-mode is lean4-mode, and if mmm-mode is activated, then
-return t precisely when the current mmm-mode is latex-mode.
-
-Otherwise, return nil."
-  (cond
-   ;; check whether mmm-mode is bound as a symbol first
-   (
-    (and (boundp 'mmm-mode) mmm-mode)
-    (or (eq mmm-primary-mode 'latex-mode)
-        (eq mmm-primary-mode 'LaTeX-mode)
-        (eq (current-mmm-mode) 'latex-mode)
-        (eq (current-mmm-mode) 'LaTeX-mode)))
-   ((or (eq major-mode 'latex-mode)
-        (eq major-mode 'LaTeX-mode)) t)
-   ;;((eq-major-mode 'org-mode))
-   ))
 
 (unless (package-installed-p 'library)
   (package-vc-install "https://github.com/ultronozm/library.el"))
@@ -800,3 +764,6 @@ of the preamble part of REGION-TEXT."
     "<down>" #'tex-item-move-down
     "<up>" #'tex-item-move-up)
   (define-key LaTeX-mode-map (kbd "M-g M-i") tex-item-map))
+
+(defalias 'czm-setup-tex-file
+  (kmacro "l t x SPC s-s s-p z C-n C-n C-c C-p C-a C-c C-p C-f"))
