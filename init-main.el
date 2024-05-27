@@ -853,7 +853,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :after exec-path-from-shell
   :defer t
   :custom
-  (gptel-model "gpt-4")
+  (gptel-model "gpt-4o")
   :config
   (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_API_KEY"))
   (gptel-make-anthropic "Claude"
