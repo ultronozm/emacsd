@@ -280,7 +280,7 @@
   (czm-tex-fold-set-defaults)
   (czm-tex-fold-install)
   (TeX-fold-mode 1)
-  (tex-numbers-mode 1)
+  (auctex-label-numbers-mode 1)
   (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
   (advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
   (advice-add 'yank :after #'my-yank-after-advice)
@@ -503,13 +503,13 @@
    "C-c t c"
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
-(use-package tex-continuous
-  :ensure (:host github :repo "ultronozm/tex-continuous.el"
+(use-package auctex-cont-latexmk
+  :ensure (:host github :repo "ultronozm/auctex-cont-latexmk.el"
                  :depth nil)
   :after latex
   :bind
   (:map LaTeX-mode-map
-        ("C-c k" . tex-continuous-toggle)))
+        ("C-c k" . auctex-cont-latexmk-toggle)))
 
 (setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
 ;; (setq TeX-suppress-ignored-warnings t)
@@ -540,8 +540,8 @@
      ;; (cons "\\mathtoolsset{showonlyrefs}" "")
      )))
 
-(use-package tex-numbers
-  :ensure (:host github :repo "ultronozm/tex-numbers.el"
+(use-package auctex-label-numbers
+  :ensure (:host github :repo "ultronozm/auctex-label-numbers.el"
                  :depth nil)
   :after latex czm-tex-fold)
 
