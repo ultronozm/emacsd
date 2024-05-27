@@ -274,7 +274,7 @@
   (czm-tex-fold-set-defaults)
   (czm-tex-fold-install)
   (TeX-fold-mode 1)
-  (tex-numbers-mode 1)
+  (auctex-label-numbers-mode 1)
   (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
   (advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
   (advice-add 'yank :after #'my-yank-after-advice)
@@ -503,26 +503,23 @@
    "C-c t c"
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
-(unless (package-installed-p 'tex-continuous)
-  (package-vc-install "https://github.com/ultronozm/tex-continuous.el"))
-(use-package tex-continuous
-  ;; :vc (:url "https://github.com/ultronozm/tex-continuous.el")
+(unless (package-installed-p 'auctex-cont-latexmk)
+  (package-vc-install "https://github.com/ultronozm/auctex-cont-latexmk.el"))
+(use-package auctex-cont-latexmk
   :after latex
   :bind
   (:map LaTeX-mode-map
-        ("C-c k" . tex-continuous-toggle)))
+        ("C-c k" . auctex-cont-latexmk-toggle)))
 
 (setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
 ;; (setq TeX-suppress-ignored-warnings t)
 
 
 (defun my/set-TeX-master ()
-  (setq TeX-master
-        ;; Replace with the name of some basic tex file containing
-        ;; your favorite packages and macros.
-        "~/doit/preview-master.tex"))
+  (setq-local TeX-master
+              "~/doit/preview-master.tex"))
 
-(add-hook 'prog-mode-hook #' my/set-TeX-master)
+(add-hook 'prog-mode-hook #'my/set-TeX-master)
 
 (unless (package-installed-p 'preview-auto)
   (package-vc-install "https://github.com/ultronozm/preview-auto.el"))
@@ -537,10 +534,9 @@
   (preview-LaTeX-command-replacements
    '(preview-LaTeX-disable-pdfoutput)))
 
-(unless (package-installed-p 'tex-numbers)
-  (package-vc-install "https://github.com/ultronozm/tex-numbers.el"))
-(use-package tex-numbers
-  ;; :vc (:url "https://github.com/ultronozm/tex-numbers.el")
+(unless (package-installed-p 'auctex-label-numbers)
+  (package-vc-install "https://github.com/ultronozm/auctex-label-numbers.el"))
+(use-package auctex-label-numbers
   :after latex czm-tex-fold)
 
 (unless (package-installed-p 'library)
