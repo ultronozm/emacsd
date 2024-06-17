@@ -234,9 +234,12 @@
 (use-package preview-tailor
   :ensure (:host github :repo "ultronozm/preview-tailor.el"
                  :depth nil)
-  :after latex
+  :after preview
+  :demand
   :config
   (preview-tailor-init)
+  :hook
+  (kill-emacs . preview-tailor-save)
   :custom
   (preview-tailor-additional-factor-function #'my-preview-tailor-factor-function))
 
