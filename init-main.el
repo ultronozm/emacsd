@@ -147,29 +147,6 @@ The list is ordered from bottom to top."
 
 (use-package org
   :ensure
-  `(org
-    :remotes ("tecosaur"
-              :repo "https://git.tecosaur.net/tec/org-mode.git"
-              :branch "dev")
-    :files (:defaults "etc")
-    :build t
-    :pre-build
-    (with-temp-file "org-version.el"
-      (require 'lisp-mnt)
-      (let ((version
-             (with-temp-buffer
-               (insert-file-contents "lisp/org.el")
-               (lm-header "version")))
-            (git-version
-             (string-trim
-              (with-temp-buffer
-                (call-process "git" nil t nil "rev-parse" "--short" "HEAD")
-                (buffer-string)))))
-        (insert
-         (format "(defun org-release () \"The release version of Org.\" %S)\n" version)
-         (format "(defun org-git-version () \"The truncate git commit hash of Org mode.\" %S)\n" git-version)
-         "(provide 'org-version)\n")))
-    :pin nil)
   :hook
   (org-mode . (lambda () (setq fill-column 999999)))
   (org-mode . abbrev-mode)
@@ -238,12 +215,12 @@ The list is ordered from bottom to top."
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
-;; (use-package emacs
-;;   :ensure nil
-;;   :after org
-;;   :bind
-;;   (:map org-mode-map
-;;         ("C-'" . nil)))
+(use-package emacs
+  :ensure nil
+  :after org
+  :bind
+  (:map org-mode-map
+        ("C-'" . nil)))
 
 (use-package czm-misc
   :ensure (:host github :repo "ultronozm/czm-misc.el"
