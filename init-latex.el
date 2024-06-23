@@ -227,9 +227,12 @@
   (package-vc-install "https://github.com/ultronozm/preview-tailor.el"))
 (use-package preview-tailor
   ;; :vc (:url "https://github.com/ultronozm/preview-tailor.el")
-  :after latex
+  ;; :after preview
+  :demand
   :config
   (preview-tailor-init)
+  :hook
+  (kill-emacs . preview-tailor-save)
   :custom
   (preview-tailor-additional-factor-function #'my-preview-tailor-factor-function))
 
