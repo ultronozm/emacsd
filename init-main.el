@@ -1429,7 +1429,8 @@ The value of `calc-language` is restored after BODY has been processed."
   (diminish 'buffer-face-mode)
   (diminish 'eldoc-mode)
   (diminish 'reftex-mode)
-  (diminish 'whitespace-mode))
+  (diminish 'whitespace-mode)
+  (diminish 'buffer-face-mode))
 
 (defvar git-fill-column-alist '(("emacs" . 64) ("auctex" . 64)))
 
