@@ -840,7 +840,8 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
 (defun czm-gptel-claude-sonnet ()
   (interactive)
   (setq-default
-   gptel-model "claude-3-sonnet-20240229"
+   gptel-model "claude-3-5-sonnet-20240620"
+   ;; gptel-model "claude-3-sonnet-20240229"
    gptel-backend (gptel-make-anthropic "Claude"
                    :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
 
