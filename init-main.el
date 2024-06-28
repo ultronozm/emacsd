@@ -1488,23 +1488,25 @@ The value of `calc-language` is restored after BODY has been processed."
 ;; (advice-add 'embark-find-definition :override #'czm-embark-find-definition)
 
 ;; https://mail.gnu.org/archive/html/emacs-devel/2021-08/msg00411.html
-(defvar blc-dataroot-dir
-  (file-name-directory (directory-file-name data-directory))
-  "Machine-independent data root directory.")
 
-(defun blc-dataroot-to-src (file)
-  "Map FILE under `blc-dataroot-dir' to `source-directory'.
+(when nil
+  (defvar blc-dataroot-dir
+    (file-name-directory (directory-file-name data-directory))
+    "Machine-independent data root directory.")
+
+  (defun blc-dataroot-to-src (file)
+    "Map FILE under `blc-dataroot-dir' to `source-directory'.
 Return FILE unchanged if not under `blc-dataroot-dir'."
-  (if (and (stringp file)
-           (file-in-directory-p file blc-dataroot-dir))
-      (expand-file-name (file-relative-name file blc-dataroot-dir)
-                        source-directory)
-    file))
+    (if (and (stringp file)
+             (file-in-directory-p file blc-dataroot-dir))
+        (expand-file-name (file-relative-name file blc-dataroot-dir)
+                          source-directory)
+      file))
 
-(define-advice find-function-search-for-symbol
-    (:around (search sym type lib) blc-dataroot-to-src)
-  "Pass LIB through `blc-dataroot-to-src'."
-  (funcall search sym type (blc-dataroot-to-src lib)))
+  (define-advice find-function-search-for-symbol
+      (:around (search sym type lib) blc-dataroot-to-src)
+    "Pass LIB through `blc-dataroot-to-src'."
+    (funcall search sym type (blc-dataroot-to-src lib))))
 
 (defun czm-search-log ()
   "Search your log files with `rg'."
