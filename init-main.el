@@ -858,6 +858,12 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
    gptel-model "gpt-4"
    gptel-backend gptel--openai))
 
+(defun czm-gptel-gpt4o ()
+  (interactive)
+  (setq-default
+   gptel-model "gpt-4o"
+   gptel-backend gptel--openai))
+
 (use-package ai-org-chat
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
                  :depth nil)
