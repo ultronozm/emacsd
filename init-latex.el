@@ -512,7 +512,12 @@
   :after latex
   :bind
   (:map LaTeX-mode-map
-        ("C-c k" . auctex-cont-latexmk-toggle)))
+        ("C-c k" . auctex-cont-latexmk-toggle))
+  :custom
+  (auctex-cont-latexmk-command
+   .
+   '("latexmk -pvc -shell-escape -pdf -view=none -e "
+     ("$pdflatex=q/pdflatex %O -synctex=1 -interaction=nonstopmode %S/"))))
 
 (setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
 ;; (setq TeX-suppress-ignored-warnings t)
