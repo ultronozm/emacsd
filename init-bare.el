@@ -9,16 +9,12 @@
       (w32-register-hot-key [s-])
       (w32-register-hot-key [s])))
 
-
-
 (mapc (lambda (keybind)
         (let ((key (car keybind))
               (cmd (cadr keybind)))
           (global-set-key (kbd key)
                           cmd)))
-      '(
-        ("C-c g" goto-line)
-        ;; ("C-x C-b" electric-buffer-list)
+      '(("C-c g" goto-line)
         ("C-x C-b" ibuffer)
         ("s-b" switch-to-buffer)
         ("s-d" find-file)
@@ -106,10 +102,6 @@
         ("s-a" czm-beginning-of-list)
         ("s-e" czm-end-of-list)))
 
-(defvar czm/find-lisp-file-completion-fn 'completing-read
-  "The completion function to use for the `find-elisp-file-variable` function.
-Possible values: completing-read, ivy-read.")
-
 ;; TODO: add "burp.el" functionality here, since it's very handy when
 ;; working with startup configs
 
@@ -120,10 +112,9 @@ Possible values: completing-read, ivy-read.")
          (elisp-files (append
                        (directory-files elisp-dir1 t "\\.el$")))
          (default-elisp-file (concat user-emacs-directory "init.el"))
-         (completion-fn czm/find-lisp-file-completion-fn)
-         (selected-elisp-file (funcall completion-fn
-                                       "Select elisp file: " elisp-files
-                                       nil t nil nil default-elisp-file)))
+         (selected-elisp-file (completing-read
+                               "Select elisp file: " elisp-files
+                               nil t nil nil default-elisp-file)))
     (when selected-elisp-file (find-file selected-elisp-file))))
 
 (defun czm-dired-downloads ()
