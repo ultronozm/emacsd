@@ -872,7 +872,8 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
         ("s-/" . ai-org-chat-new))
   (:map ai-org-chat-minor-mode
         ("s-<return>" . ai-org-chat-respond)
-        ("C-c n" . ai-org-chat-branch))
+        ("C-c n" . ai-org-chat-branch)
+        ("C-c e" . ai-org-chat-compare-src-block))
   :commands (ai-org-chat-minor-mode) ; for manual activation
   :custom
   (ai-org-chat-user-name my-first-name)
