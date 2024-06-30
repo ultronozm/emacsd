@@ -2,10 +2,30 @@
 
 ;;; ------------------------------ ORG ------------------------------
 
-(use-package emacs
+(require 'org)
+
+(use-package org
   :ensure nil
   :hook
   (org-mode . visual-line-mode)
+  (org-mode . (lambda () (setq fill-column 999999)))
+  (org-mode . abbrev-mode)
+  :bind
+  (:map org-mode-map
+        ("C-'" . nil)
+        ("C-c 1" .
+         (lambda() (interactive)
+           (progn
+             (insert "#+begin_src latex")
+             (newline))))
+        ("C-c 2" .
+         (lambda() (interactive)
+           (progn
+             (insert "#+end_src")
+             (newline))))
+        ("C-c p" . czm-org-edit-src)
+        ("M-{" . org-backward-paragraph)
+        ("M-}" . org-forward-paragraph))
   :custom
   (org-default-notes-file my-todo-file)
   (org-directory "~/")
@@ -41,7 +61,24 @@
      ("a" "Inbox (annotated)" entry (file+headline my-todo-file "Inbox")
       "* %?\n%a")
      ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
-      "* %?\n%U\n" :clock-in t :clock-resume t))))
+      "* %?\n%U\n" :clock-in t :clock-resume t)))
+  :config
+  (define-repeat-map org-paragraph
+    ("]" org-forward-paragraph
+     "}" org-forward-paragraph
+     "[" org-backward-paragraph
+     "{" org-backward-paragraph)
+    (:continue
+     ;; "M-h" spw/mark-paragraph
+     ;; "h" spw/mark-paragraph
+     "k" kill-paragraph
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "C-/" undo
+     "t" transpose-paragraphs
+     "q" czm-fill-previous-paragraph))
+  (repeat-mode 1))
 
 (defun czm-org-edit-src ()
   (interactive)
@@ -70,45 +107,6 @@ The list is ordered from bottom to top."
       (save-mark-and-excursion
         (deactivate-mark)
         (org-archive-subtree)))))
-
-(use-package org
-  :ensure nil
-  :hook
-  (org-mode . (lambda () (setq fill-column 999999)))
-  (org-mode . abbrev-mode)
-  :bind
-  (:map org-mode-map
-        ("C-'" . nil)
-        ("C-c 1" .
-         (lambda() (interactive)
-           (progn
-             (insert "#+begin_src latex")
-             (newline))))
-        ("C-c 2" .
-         (lambda() (interactive)
-           (progn
-             (insert "#+end_src")
-             (newline))))
-        ("C-c p" . czm-org-edit-src)
-        ("M-{" . org-backward-paragraph)
-        ("M-}" . org-forward-paragraph))
-  :config
-  (define-repeat-map org-paragraph
-    ("]" org-forward-paragraph
-     "}" org-forward-paragraph
-     "[" org-backward-paragraph
-     "{" org-backward-paragraph)
-    (:continue
-     ;; "M-h" spw/mark-paragraph
-     ;; "h" spw/mark-paragraph
-     "k" kill-paragraph
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "C-/" undo
-     "t" transpose-paragraphs
-     "q" czm-fill-previous-paragraph))
-  (repeat-mode 1))
 
 (defun czm-new-tmp-org ()
   "Create new temporary org buffer."
@@ -780,7 +778,8 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
 (defun czm-gptel-claude-sonnet ()
   (interactive)
   (setq-default
-   gptel-model "claude-3-sonnet-20240229"
+   gptel-model "claude-3-5-sonnet-20240620"
+   ;; gptel-model "claude-3-sonnet-20240229"
    gptel-backend (gptel-make-anthropic "Claude"
                    :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
 
@@ -797,6 +796,12 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
    gptel-model "gpt-4"
    gptel-backend gptel--openai))
 
+(defun czm-gptel-gpt4o ()
+  (interactive)
+  (setq-default
+   gptel-model "gpt-4o"
+   gptel-backend gptel--openai))
+
 (unless (package-installed-p 'ai-org-chat)
   (package-vc-install "https://github.com/ultronozm/ai-org-chat.el"))
 (use-package ai-org-chat
@@ -806,7 +811,8 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
         ("s-/" . ai-org-chat-new))
   (:map ai-org-chat-minor-mode
         ("s-<return>" . ai-org-chat-respond)
-        ("C-c n" . ai-org-chat-branch))
+        ("C-c n" . ai-org-chat-branch)
+        ("C-c e" . ai-org-chat-compare-src-block))
   :commands (ai-org-chat-minor-mode) ; for manual activation
   :custom
   (ai-org-chat-user-name my-first-name)
@@ -957,18 +963,6 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   (put 'attrap-flycheck 'repeat-map 'flymake-repeat-map))
 
 ;;; ------------------------------ ABBREV and SPELLING ------------------------------
-
-;; this could be its own package, accomodating git-friendly abbrev storage?
-;; need a good way to update the source.
-(defun modify-abbrev-table (table abbrevs)
-  "Define abbreviations in TABLE given by ABBREVS."
-  (unless table
-                                        ; This probably means that you called this function before the
-                                        ; appropriate major mode was loaded.  Hence the ":after" entries
-                                        ; in the use-package declaration below
-    (error "Abbrev table does not exist" table))
-  (dolist (abbrev abbrevs)
-    (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
 (unless (package-installed-p 'czm-spell)
   (package-vc-install "https://github.com/ultronozm/czm-spell.el"))
@@ -1349,7 +1343,8 @@ The value of `calc-language` is restored after BODY has been processed."
   (diminish 'buffer-face-mode)
   (diminish 'eldoc-mode)
   (diminish 'reftex-mode)
-  (diminish 'whitespace-mode))
+  (diminish 'whitespace-mode)
+  (diminish 'buffer-face-mode))
 
 (defvar git-fill-column-alist '(("emacs" . 64) ("auctex" . 64)))
 
@@ -1416,3 +1411,4 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
   (interactive)
   (let ((log-files `(,my-log-file ,my-old-log-file ,my-todo-file)))
     (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
+

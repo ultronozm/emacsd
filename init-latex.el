@@ -140,6 +140,9 @@
   :config
   (add-to-list 'TeX-file-extensions "tex\\.~[0-9a-f]+~")
 
+  (with-eval-after-load 'org-src
+    (push '("latex" . LaTeX) org-src-lang-modes))
+
   :mode ("\\.tex\\'" . LaTeX-mode)
 
   :hook
@@ -227,7 +230,7 @@
   (package-vc-install "https://github.com/ultronozm/preview-tailor.el"))
 (use-package preview-tailor
   ;; :vc (:url "https://github.com/ultronozm/preview-tailor.el")
-  ;; :after preview
+  :after preview
   :demand
   :config
   (preview-tailor-init)
@@ -512,7 +515,10 @@
   :after latex
   :bind
   (:map LaTeX-mode-map
-        ("C-c k" . auctex-cont-latexmk-toggle)))
+        ("C-c k" . auctex-cont-latexmk-toggle))
+  :custom
+  (auctex-cont-latexmk-command
+   '("latexmk -pvc -shell-escape -pdf -view=none -e " ("$pdflatex=q/pdflatex %O -synctex=1 -interaction=nonstopmode %S/"))))
 
 (setq TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
 ;; (setq TeX-suppress-ignored-warnings t)
@@ -691,36 +697,17 @@ of the preamble part of REGION-TEXT."
   ;; :vc (:url "https://github.com/ultronozm/tex-parens.el")
   :bind
   (:map LaTeX-mode-map
-        ("C-M-f" . tex-parens-forward-sexp)
-        ("C-M-b" . tex-parens-backward-sexp)
-        ("C-M-n" . tex-parens-forward-list)
-        ("C-M-p" . tex-parens-backward-list)
-        ("C-M-u" . tex-parens-backward-up-list)
-        ("M-u" . tex-parens-up-list)
-        ("C-M-g" . tex-parens-down-list)
-        ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
-        ("M-_" . tex-parens-delete-pair)
-        ("C-M-SPC" . tex-parens-mark-sexp)
-        ("C-M-k" . tex-parens-kill-sexp)
-        ("C-M-t" . transpose-sexps)
-        ("C-M-<backspace>" . tex-parens-backward-kill-sexp)
-        ("M-+" . tex-parens-raise-sexp)
-        ("<" . tex-parens-burp-left)
-        (">" . tex-parens-burp-right)
-        ("M-i" . czm-tex-mark-inner)
+        ("M-i" . tex-parens-mark-inner)
         ("s-j" . czm-tex-avy-jump)
         ("s-c" . czm-tex-avy-copy)
-        ("M-e" . czm-tex-forward-sentence-or-end-of-list)
-        ("M-a" . czm-tex-backward-sentence-or-beginning-of-list)
-        ("s-e" . czm-tex-end-of-list)
-        ("s-a" . czm-tex-beginning-of-list))
-
+        ("s-e" . tex-parens-end-of-list)
+        ("s-a" . tex-parens-beginning-of-list))
 
   :hook
-  (LaTeX-mode . tex-parens-setup)
+  (tex-mode . tex-parens-mode)
+  (LaTeX-mode . tex-parens-mode)
 
   :config
-  ;; (spw/remap-mark-command 'tex-parens-mark-sexp LaTeX-mode-map)
   (defun czm-tex-parens-expand-abbrev-advice (orig-fun &rest args)
     (require 'tex-parens)
     (unless (tex-parens--comment)
