@@ -78,6 +78,7 @@ The list is ordered from bottom to top."
   (org-mode . abbrev-mode)
   :bind
   (:map org-mode-map
+        ("C-'" . nil)
         ("C-c 1" .
          (lambda() (interactive)
            (progn
@@ -137,10 +138,6 @@ The list is ordered from bottom to top."
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
-(use-package org
-  :bind
-  (:map org-mode-map
-        ("C-'" . nil)))
 
 ;; (use-package emacs
 ;;   :ensure nil
