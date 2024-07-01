@@ -140,7 +140,7 @@
   ;;   ("make")
   ;;   ("make" "install")))
 
-  ;; :demand                               ; otherwise, madness ensues.
+  :demand                               ; otherwise, madness ensues.
 
   :config
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
@@ -151,10 +151,7 @@
   (with-eval-after-load 'org-src
     (push '("latex" . LaTeX) org-src-lang-modes))
 
-  :mode ("\\.tex\\'" . LaTeX-mode)
-
   :hook
-  (latex-mode . LaTeX-mode)
   (LaTeX-mode . turn-on-reftex)
   (LaTeX-mode . czm-tex-setup-environments-and-outline-regexp)
   (LaTeX-mode . czm-tex-buffer-face)
@@ -654,6 +651,7 @@ of the preamble part of REGION-TEXT."
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el"
                  :depth nil)
+  :after latex
   :bind
   ;; (:map LaTeX-mode-map
   ;;       ("C-M-f" . tex-parens-forward-sexp)
@@ -699,7 +697,7 @@ of the preamble part of REGION-TEXT."
 
   :hook
   (latex-mode . tex-parens-mode)
-  ;; (LaTeX-mode . tex-parens-mode)
+  (LaTeX-mode . tex-parens-mode)
 
   :config
   ;; (spw/remap-mark-command 'tex-parens-mark-sexp LaTeX-mode-map)
