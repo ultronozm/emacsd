@@ -74,7 +74,43 @@
 
 (elpaca-wait)
 
+;;; ------------------------------ REPEAT ------------------------------
+
+
+(defun czm-fill-previous-paragraph ()
+  "Fill the previous paragraph."
+  (interactive)
+  (save-excursion
+    (previous-line)
+    (fill-paragraph)))
+
+(use-package define-repeat-map
+  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
+  :demand t
+
+  :config
+  (define-repeat-map paragraph
+    ("]" forward-paragraph
+     "}" forward-paragraph
+     "[" backward-paragraph
+     "{" backward-paragraph)
+    (:continue
+     "M-h" mark-paragraph
+     "h" mark-paragraph
+     "k" kill-paragraph
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "C-/" undo
+     "t" transpose-paragraphs
+     "q" czm-fill-previous-paragraph
+     "C-l" recenter-top-bottom))
+  (repeat-mode 1))
+
+
 ;;; ------------------------------ ORG ------------------------------
+
+(require 'org)
 
 (use-package emacs
   :ensure nil
@@ -147,6 +183,7 @@ The list is ordered from bottom to top."
 
 (use-package org
   :ensure
+  :after define-repeat-map
   :hook
   (org-mode . (lambda () (setq fill-column 999999)))
   (org-mode . abbrev-mode)
@@ -262,40 +299,6 @@ The list is ordered from bottom to top."
                 flycheck-next-error))
     (add-to-list 'pulsar-pulse-functions fn))
   (pulsar-global-mode))
-
-;;; ------------------------------ REPEAT ------------------------------
-
-
-(defun czm-fill-previous-paragraph ()
-  "Fill the previous paragraph."
-  (interactive)
-  (save-excursion
-    (previous-line)
-    (fill-paragraph)))
-
-(use-package define-repeat-map
-  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
-  :demand t
-
-  :config
-  (define-repeat-map paragraph
-    ("]" forward-paragraph
-     "}" forward-paragraph
-     "[" backward-paragraph
-     "{" backward-paragraph)
-    (:continue
-     "M-h" mark-paragraph
-     "h" mark-paragraph
-     "k" kill-paragraph
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "C-/" undo
-     "t" transpose-paragraphs
-     "q" czm-fill-previous-paragraph
-     "C-l" recenter-top-bottom))
-  (repeat-mode 1))
-
 
 ;;; ------------------------------ LISP ------------------------------
 
