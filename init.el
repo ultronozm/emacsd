@@ -37,3 +37,5 @@
 (when nil
   (load (concat user-emacs-directory "init-sage.el"))
   (load (concat user-emacs-directory "init-lean4.el")))
+
+(find-file (concat user-emacs-directory "init.el"))
