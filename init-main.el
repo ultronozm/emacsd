@@ -1517,3 +1517,6 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
   (interactive)
   (let ((log-files `(,my-log-file ,my-old-log-file ,my-todo-file)))
     (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
+
+(use-package wgrep) ;; use C-c C-p in embark export following ripgrep
+
