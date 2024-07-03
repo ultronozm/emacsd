@@ -33,8 +33,8 @@
                     "repo-scan"
                     "spout"
                     "symtex"
-                    "tex-numbers"
-                    "tex-continuous"
+                    "auctex-label-numbers"
+                    "auctex-cont-latexmk"
                     "tex-parens"
                     "tex-item"
                     ))
