@@ -37,6 +37,7 @@
         ("C-c s" shell)
         ("C-c f" toggle-frame-fullscreen)
         ("C-h C-f" find-function)
+        ("H-SPC" ediff-buffers)
         ("H-b" abbrev-mode)
         ("H-e" toggle-debug-on-error)
         ("H-f" follow-mode)
