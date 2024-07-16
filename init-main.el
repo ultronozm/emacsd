@@ -1490,7 +1490,13 @@ The value of `calc-language` is restored after BODY has been processed."
              (assn (assoc name git-fill-column-alist)))
     (setq fill-column (cdr assn))))
 
-(add-hook 'git-commit-mode-hook 'set-git-commit-fill-column)
+(use-package git-commit
+  :ensure nil
+  :hook
+  (git-commit-mode . set-git-commit-fill-column)
+  :bind
+  (:map git-commit-mode-map
+        ("C-c C-l" . magit-generate-changelog)))
 
 ;; maybe this is all that's needed to get indirect buffers to work?
 
