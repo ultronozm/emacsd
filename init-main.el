@@ -899,16 +899,23 @@ default OpenAI backend."
   :bind
   (:map global-map
         ("s-/" . ai-org-chat-new))
-  (:map ai-org-chat-minor-mode
+  (:map ai-org-chat-minor-mode-map
         ("s-<return>" . ai-org-chat-respond)
         ("C-c n" . ai-org-chat-branch)
-        ("C-c e" . ai-org-chat-compare-src-block))
-  :commands (ai-org-chat-minor-mode) ; for manual activation
+        ("C-c e" . ai-org-chat-compare)
+        ("C-c x" . ai-org-chat-set-context-style)
+        ("C-c a" . nil)
+        ("C-c a b" . ai-org-chat-add-buffer-context)
+        ("C-c a f" . ai-org-chat-add-file-context)
+        ("C-c a p" . ai-org-chat-add-project-files-context))
+  :commands
+  (ai-org-chat-setup-buffer ai-org-chat-minor-mode)
+
   :custom
   (ai-org-chat-user-name my-first-name)
   (ai-org-chat-dir my-tmp-gpt-dir)
-  (ai-org-chat-system-message nil))
-;; (ai-org-chat-prompt-preamble
+  (ai-org-chat-context-style 'visible-buffers))
+
 (use-package eglot
   :bind
   (:map eglot-mode-map
