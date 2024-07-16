@@ -227,6 +227,7 @@ pushes the mark somewhere useful."
   :ensure nil
 
   :custom
+  (ediff-split-window-function 'split-window-horizontally)
   (use-dialog-box nil)
   (show-paren-delay 0)
   (show-paren-style 'parenthesis)
