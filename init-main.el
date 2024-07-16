@@ -151,7 +151,8 @@
      ("a" "Inbox (annotated)" entry (file+headline my-todo-file "Inbox")
       "* %?\n%a")
      ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
-      "* %?\n%U\n" :clock-in t :clock-resume t))))
+      "* %?\n%U\n" :clock-in t :clock-resume t)))
+  (org-src-window-setup 'current-window))
 
 (defun czm-org-edit-src ()
   (interactive)
