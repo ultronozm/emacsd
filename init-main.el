@@ -286,7 +286,9 @@ The list is ordered from bottom to top."
   :diminish
   :hook
   (emacs-lisp-mode . aggressive-indent-mode)
-  (LaTeX-mode . aggressive-indent-mode))
+  (LaTeX-mode . aggressive-indent-mode)
+  (rust-mode . aggressive-indent-mode)
+  (c++-mode . aggressive-indent-mode))
 
 (use-package pulsar
   :bind (("s-l" . pulsar-pulse-line))
