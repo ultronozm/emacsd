@@ -845,6 +845,14 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
     :stream t
     :key (exec-path-from-shell-getenv "CLAUDE_API_KEY")))
 
+(defun czm-gptel-gemini ()
+  "Set up gptel to use Gemini API."
+  (interactive)
+  (setq-default
+   gptel-model "gemini-1.5-pro-latest"
+   gptel-backend (gptel-make-gemini "GEmini"
+                   :stream t :key (exec-path-from-shell-getenv "GEMINI_API_KEY"))))
+
 (defun czm-gptel-claude-sonnet ()
   (interactive)
   (setq-default
