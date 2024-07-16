@@ -17,3 +17,4 @@
     (load (concat user-emacs-directory "init-sage.el"))
     (load (concat user-emacs-directory "init-lean4.el"))
     ))
+(put 'erase-buffer 'disabled nil)
