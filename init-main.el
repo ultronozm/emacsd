@@ -219,7 +219,8 @@ The list is ordered from bottom to top."
      "C-/" undo
      "t" transpose-paragraphs
      "q" czm-fill-previous-paragraph))
-  (repeat-mode 1))
+  (repeat-mode 1)
+  (require 'ob-shell))
 
 (defun czm-new-tmp-org ()
   "Create new temporary org buffer."
