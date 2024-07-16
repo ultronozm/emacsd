@@ -76,7 +76,6 @@
 
 ;;; ------------------------------ REPEAT ------------------------------
 
-
 (defun czm-fill-previous-paragraph ()
   "Fill the previous paragraph."
   (interactive)
@@ -182,9 +181,9 @@ The list is ordered from bottom to top."
         (deactivate-mark)
         (org-archive-subtree)))))
 
-(use-package org
-  :ensure
-  :after define-repeat-map
+(use-package emacs
+  :ensure nil
+  :after define-repeat-map org
   :hook
   (org-mode . (lambda () (setq fill-column 999999)))
   (org-mode . abbrev-mode)
