@@ -854,14 +854,21 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
                    :stream t :key (exec-path-from-shell-getenv "GEMINI_API_KEY"))))
 
 (defun czm-gptel-claude-sonnet ()
+  "Set up gptel to use Claude 3 Sonnet model from Anthropic.
+This function configures gptel to use the 'claude-3-5-sonnet-20240620'
+model with streaming enabled. It uses the Anthropic API key stored in
+the CLAUDE_API_KEY environment variable."
   (interactive)
   (setq-default
    gptel-model "claude-3-5-sonnet-20240620"
-   ;; gptel-model "claude-3-sonnet-20240229"
    gptel-backend (gptel-make-anthropic "Claude"
                    :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
 
 (defun czm-gptel-claude-opus ()
+  "Set up gptel to use Claude 3 Opus model from Anthropic.
+This function configures gptel to use the 'claude-3-opus-20240229' model
+with streaming enabled. It uses the Anthropic API key stored in the
+CLAUDE_API_KEY environment variable."
   (interactive)
   (setq-default
    gptel-model "claude-3-opus-20240229"
@@ -869,12 +876,18 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
                    :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
 
 (defun czm-gptel-gpt4 ()
+  "Set up gptel to use GPT-4 model from OpenAI.
+This function configures gptel to use the 'gpt-4' model with the default
+OpenAI backend."
   (interactive)
   (setq-default
    gptel-model "gpt-4"
    gptel-backend gptel--openai))
 
 (defun czm-gptel-gpt4o ()
+  "Set up gptel to use GPT-4 Optimized model from OpenAI.
+This function configures gptel to use the 'gpt-4o' model with the
+default OpenAI backend."
   (interactive)
   (setq-default
    gptel-model "gpt-4o"
