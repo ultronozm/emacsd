@@ -33,6 +33,7 @@
   (lean4-idle-delay 0.02)
   (lean4-keybinding-lean4-toggle-info (kbd "C-c C-y"))
   (lean4-info-plain nil)
+  (lean4-info-refresh-even-if-invisible t)
   :bind (:map lean4-mode-map
               ("RET" . newline)
               ("C-j" . default-indent-new-line)
