@@ -36,7 +36,6 @@
   :bind (:map lean4-mode-map
               ("RET" . newline)
               ("C-j" . default-indent-new-line)
-              ("C-c C-q" . eglot-code-action-quickfix)
               ("C-M-i" . completion-at-point))
   :config
   :defer t)

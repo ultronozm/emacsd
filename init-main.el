@@ -883,6 +883,11 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   (ai-org-chat-dir my-tmp-gpt-dir)
   (ai-org-chat-system-message nil))
 ;; (ai-org-chat-prompt-preamble
+(use-package eglot
+  :bind
+  (:map eglot-mode-map
+        ("C-c C-q" . eglot-code-action-quickfix)
+        ("C-c C-a" . eglot-code-actions)));; (ai-org-chat-prompt-preamble
 ;;    "You are a brilliant and helpful assistant.
 
 ;; You know everything about programming: languages, syntax, debugging techniques, software design, code optimization, documentation.
