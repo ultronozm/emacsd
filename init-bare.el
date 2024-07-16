@@ -418,17 +418,17 @@ DIR must include a .project file to be considered a project."
         (narrow-to-region start (if end (1- end) (point-max))))
     (widen)))
 
-(use-package foldout
-  :ensure nil
-  :bind
-  ("C-x n w" . czm-widen-to-foldout))
-
-;; (advice-remove 'foldout-exit-fold #'czm-foldout-exit-fold-without-hiding)
-(advice-add 'foldout-exit-fold :around #'czm-foldout-exit-fold-without-hiding)
-
 (defun czm-foldout-exit-fold-without-hiding (orig-fun &rest args)
   "Exit a fold without hiding the contents."
   (let ((start (marker-position (caar foldout-fold-list))))
     (apply orig-fun '(-1))
     (when start
       (goto-char start))))
+
+(use-package foldout
+  :ensure nil
+  :bind
+  ("C-x n w" . czm-widen-to-foldout)
+  :config
+  ;; (advice-remove 'foldout-exit-fold #'czm-foldout-exit-fold-without-hiding)
+  (advice-add 'foldout-exit-fold :around #'czm-foldout-exit-fold-without-hiding))
