@@ -838,6 +838,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :defer t
   :custom
   (gptel-model "gpt-4o")
+  (gptel-max-tokens 4000)
   :config
   (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_API_KEY"))
   (gptel-make-anthropic "Claude"
