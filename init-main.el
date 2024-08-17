@@ -832,45 +832,115 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
    gptel-backend (gptel-make-gemini "GEmini"
                    :stream t :key (exec-path-from-shell-getenv "GEMINI_API_KEY"))))
 
-(defun czm-gptel-claude-sonnet ()
-  "Set up gptel to use Claude 3 Sonnet model from Anthropic.
+(when nil
+  (defun czm-gptel-claude-sonnet ()
+    "Set up gptel to use Claude 3 Sonnet model from Anthropic.
 This function configures gptel to use the 'claude-3-5-sonnet-20240620'
 model with streaming enabled. It uses the Anthropic API key stored in
 the CLAUDE_API_KEY environment variable."
-  (interactive)
-  (setq-default
-   gptel-model "claude-3-5-sonnet-20240620"
-   gptel-backend (gptel-make-anthropic "Claude"
-                   :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
+    (interactive)
+    (setq-default
+     gptel-model "claude-3-5-sonnet-20240620"
+     gptel-backend (gptel-make-anthropic "Claude"
+                     :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
 
-(defun czm-gptel-claude-opus ()
-  "Set up gptel to use Claude 3 Opus model from Anthropic.
+  (defun czm-gptel-claude-opus ()
+    "Set up gptel to use Claude 3 Opus model from Anthropic.
 This function configures gptel to use the 'claude-3-opus-20240229' model
 with streaming enabled. It uses the Anthropic API key stored in the
 CLAUDE_API_KEY environment variable."
-  (interactive)
-  (setq-default
-   gptel-model "claude-3-opus-20240229"
-   gptel-backend (gptel-make-anthropic "Claude"
-                   :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
+    (interactive)
+    (setq-default
+     gptel-model "claude-3-opus-20240229"
+     gptel-backend (gptel-make-anthropic "Claude"
+                     :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
 
-(defun czm-gptel-gpt4 ()
-  "Set up gptel to use GPT-4 model from OpenAI.
+  (defun czm-gptel-gpt4 ()
+    "Set up gptel to use GPT-4 model from OpenAI.
 This function configures gptel to use the 'gpt-4' model with the default
 OpenAI backend."
-  (interactive)
-  (setq-default
-   gptel-model "gpt-4"
-   gptel-backend gptel--openai))
+    (interactive)
+    (setq-default
+     gptel-model "gpt-4"
+     gptel-backend gptel--openai))
 
-(defun czm-gptel-gpt4o ()
-  "Set up gptel to use GPT-4 Optimized model from OpenAI.
+  (defun czm-gptel-gpt4o ()
+    "Set up gptel to use GPT-4 Optimized model from OpenAI.
 This function configures gptel to use the 'gpt-4o' model with the
 default OpenAI backend."
+    (interactive)
+    (setq-default
+     gptel-model "gpt-4o"
+     gptel-backend gptel--openai))
+
+  (defun czm-gptel-gpt4o-mini ()
+    "Set up gptel to use GPT-4 Optimized Mini model from OpenAI.
+This function configures gptel to use the 'gpt-4o-mini' model with the
+default OpenAI backend."
+    (interactive)
+    (setq-default
+     gptel-model "gpt-4o-mini"
+     gptel-backend gptel--openai)))
+
+(use-package llm
+  :ensure (:host github :repo "ahyatt/llm"
+                 :depth nil)
+  :init
+  (require 'llm-openai)
+  (require 'llm-claude)
+  (require 'llm-gemini)
+  :custom
+  (llm-warn-on-nonfree nil)
+  (llm-log t)
+  :config
+  (add-to-list 'warning-suppress-types '(llm)))
+
+(defun czm-llm-gpt4 ()
   (interactive)
-  (setq-default
-   gptel-model "gpt-4o"
-   gptel-backend gptel--openai))
+  (setq ai-org-chat-provider
+        (make-llm-openai
+         :key (exec-path-from-shell-getenv "OPENAI_API_KEY")
+         :chat-model
+         "gpt-4"
+         )))
+
+(defun czm-llm-gpt4o ()
+  (interactive)
+  (setq ai-org-chat-provider
+        (make-llm-openai
+         :key (exec-path-from-shell-getenv "OPENAI_API_KEY")
+         :chat-model
+         ;; "gpt-4o"
+         "gpt-4o-2024-08-06"
+         )))
+
+(defun czm-llm-gpt4o-mini ()
+  (interactive)
+  (setq ai-org-chat-provider
+        (make-llm-openai
+         :key (exec-path-from-shell-getenv "OPENAI_API_KEY")
+         :chat-model "gpt-4o-mini")))
+
+(defun czm-llm-sonnet ()
+  (interactive)
+  (setq ai-org-chat-provider
+        (make-llm-claude
+         :key (exec-path-from-shell-getenv "CLAUDE_API_KEY")
+         :chat-model "claude-3-5-sonnet-20240620")))
+
+(defun czm-llm-opus ()
+  (interactive)
+  (setq ai-org-chat-provider
+        (make-llm-claude
+         :key (exec-path-from-shell-getenv "CLAUDE_API_KEY")
+         :chat-model "claude-3-opus-20240229")))
+
+(defun czm-llm-gemini ()
+  (interactive)
+  (setq ai-org-chat-provider
+        (make-llm-gemini
+         :key (exec-path-from-shell-getenv "GEMINI_API_KEY")
+         :chat-model "gemini-1.5-pro-latest")))
 
 (use-package ai-org-chat
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
@@ -893,7 +963,12 @@ default OpenAI backend."
   :custom
   (ai-org-chat-user-name my-first-name)
   (ai-org-chat-dir my-tmp-gpt-dir)
-  (ai-org-chat-context-style 'visible-buffers))
+  (ai-org-chat-context-style nil)
+
+  :config
+  (czm-llm-sonnet))
+
+
 
 (use-package eglot
   :bind
