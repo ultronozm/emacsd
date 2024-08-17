@@ -11,7 +11,7 @@
       my-pdf-folder "~/Dropbox/math documents/unsorted/"
       my-math-folder "~/Dropbox/math documents/"
       my-tmp-sage-dir "~/scratch/sage"
-      my-sage-root "~/sage/sage-9.8"
+      my-sage-exe "/usr/local/bin/sage"
       my-tmp-tex-dir "~/scratch/tex"
       my-tmp-org-dir "~/scratch/org"
       my-tmp-cpp-dir "~/scratch/cpp"

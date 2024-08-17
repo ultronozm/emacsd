@@ -5,7 +5,9 @@
   :custom
   (sage-shell:use-prompt-toolkit nil)
   (sage-shell:use-simple-prompt t)
-  (sage-shell:sage-root my-sage-root)
+  (sage-shell:set-ipython-version-on-startup nil)
+  (sage-shell:sage-executable my-sage-exe)
+  (sage-shell:check-ipython-version-on-startup nil)
   :bind
   (:map sage-shell-mode-map
         ("C-c n" . czm-sage-worksheet))
@@ -42,7 +44,6 @@ entry."
   (setq org-babel-default-header-args:sage '((:session . t)
                                              (:results . "output")))
   (add-hook 'org-babel-after-execute-hook 'org-display-inline-images))
-
 
 (defun calcFunc-sage-factor ()
   "Use SAGE to factor the top element of the stack in Emacs Calc."
