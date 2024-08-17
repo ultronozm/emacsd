@@ -1520,6 +1520,21 @@ The value of `calc-language` is restored after BODY has been processed."
 
 ;;; Xref advice to restrict to project root
 
+(defun czm-xref-restrict-to-project-advice (orig-fun &rest args)
+  "Advice to restrict xref searches to the current project root."
+  (let ((project-vc-external-roots-function #'ignore))
+    (apply orig-fun args)))
+
+(define-minor-mode czm-xref-project-only-mode
+  "Toggle xref searches between project-only and including external roots."
+  :global t
+  :lighter " XPO"
+  (if czm-xref-project-only-mode
+      (advice-add 'xref-find-references :around #'czm-xref-restrict-to-project-advice)
+    (advice-remove 'xref-find-references #'czm-xref-restrict-to-project-advice)))
+
+;;; ???
+
 (use-package perfect-margin
   :defer t
   :diminish)
