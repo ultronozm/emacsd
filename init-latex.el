@@ -458,8 +458,7 @@
     (let ((filepath (expand-file-name filename dir)))
       (find-file filepath)
       (save-buffer)
-      ;; (czm-preview-timer-toggle)
-      )))
+      (czm-setup-tex-file))))
 
 (use-package dynexp
   :ensure (:host github :repo "ultronozm/dynexp.el"
