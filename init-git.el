@@ -97,3 +97,21 @@
                    "\\.el\\'"))
                 czm-repos)))
     (consult--grep "Ripgrep" #'consult--ripgrep-make-builder files nil)))
+
+
+(defvar git-fill-column-alist '(("emacs" . 64) ("auctex" . 64)))
+
+(defun set-git-commit-fill-column ()
+  (when-let ((project (project-current))
+             (root (project-root project))
+             (name (file-name-nondirectory (directory-file-name root)))
+             (assn (assoc name git-fill-column-alist)))
+    (setq fill-column (cdr assn))))
+
+(use-package git-commit
+  :ensure nil
+  :hook
+  (git-commit-mode . set-git-commit-fill-column)
+  :bind
+  (:map git-commit-mode-map
+        ("C-c C-l" . magit-generate-changelog)))
