@@ -1,12 +1,12 @@
 ;;; -*- lexical-binding: t; -*-
 
-;;; Preliminaries
+;;; --- Preliminaries ---
 
 (setq use-package-verbose t)
 (load (concat user-emacs-directory "init-bare.el"))
 (load (concat user-emacs-directory "init-settings.el"))
 
-;;; Elpaca
+;;; --- Elpaca ---
 
 (defvar elpaca-installer-version 0.7)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
@@ -55,10 +55,11 @@
   ;; Enable :elpaca use-package keyword.
   (elpaca-use-package-mode)
   ;; Assume :ensure t unless otherwise specified.
-  (setq use-package-always-ensure t)
-  )
+  (setq use-package-always-ensure t))
 
 (elpaca-wait)
+
+;;; --- Exec Path From Shell ---
 
 (use-package exec-path-from-shell
   :demand
@@ -80,7 +81,7 @@
 
 (elpaca-wait)
 
-;;; Repeat
+;;; --- Repeat ---
 
 (defun czm-fill-previous-paragraph ()
   "Fill the previous paragraph."
@@ -92,7 +93,6 @@
 (use-package define-repeat-map
   :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
   :demand t
-
   :config
   (define-repeat-map paragraph
     ("]" forward-paragraph
@@ -112,8 +112,59 @@
      "C-l" recenter-top-bottom))
   (repeat-mode 1))
 
+;;; --- General Emacs Configuration ---
 
-;;; Org
+(use-package diminish
+  :demand t
+  ;; Consider adding :after autoloads for all diminished packages
+  :after copilot
+  :config
+  (diminish 'abbrev-mode "Ab")
+  (diminish 'visual-line-mode)
+  (diminish 'outline-minor-mode)
+  (diminish 'buffer-face-mode)
+  (diminish 'eldoc-mode)
+  (diminish 'reftex-mode)
+  (diminish 'whitespace-mode)
+  (diminish 'buffer-face-mode))  ;; Repeated?
+
+(use-package easy-kill)
+(global-set-key [remap kill-ring-save] #'easy-kill)
+
+;; I know when I'm narrowing
+(setq mode-line-modes (delete "%n" mode-line-modes))
+
+(defun czm-abbreviate-elisp-mode-name ()
+  (cond
+   ((consp mode-name)
+    (setcar mode-name "E"))
+   ((stringp mode-name)
+    (when (equal mode-name "Lisp Interaction")
+      (setq mode-name "LI")))))
+
+(add-hook 'emacs-lisp-mode-hook 'czm-abbreviate-elisp-mode-name)
+
+(defun czm-set-margins (width)
+  "Set the margins of the current window to WIDTH.
+Interactively, prompt for WIDTH."
+  (interactive "nWidth: ")
+  (setq left-margin-width width right-margin-width width)
+  (set-window-margins (selected-window) width width))
+
+(use-package wgrep) ;; use C-c C-p in embark export following ripgrep
+
+(use-package perfect-margin
+  :defer t
+  :diminish)
+
+
+(use-package emacs
+  :ensure nil
+  :bind
+  (:map global-map
+        ("s-r" . elpaca-rebuild)))
+
+;;; --- Org Mode Configuration ---
 
 (require 'org)
 
@@ -161,14 +212,19 @@
 
 (defun czm-org-edit-src ()
   (interactive)
-  (let
-      ((src-buffer
-        (save-window-excursion
-          (org-edit-src-code)
-          (setq fill-column 999999) ; should this be in a latex mode hook?
-          (setq TeX-master my-preview-master)
-          (current-buffer))))
+  (let ((src-buffer
+         (save-window-excursion
+           (org-edit-src-code)
+           (setq fill-column 999999) ; should this be in a latex mode hook?
+           (setq TeX-master my-preview-master)
+           (current-buffer))))
     (switch-to-buffer src-buffer)))
+
+(defun czm-search-log ()
+  "Search your log files with `rg'."
+  (interactive)
+  (let ((log-files `(,my-log-file ,my-old-log-file ,my-todo-file)))
+    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
 
 (use-package emacs
   :ensure nil
@@ -221,17 +277,27 @@
       (find-file filepath)
       (save-buffer))))
 
-;;; Customization (disabled)
+;;; --- Customization (disabled) ---
 
 (setq custom-file (concat user-emacs-directory "init-custom.el"))
 ;; (load custom-file)
 
-;;; Personal config
+;;; --- Personal Config ---
 
 (when (file-exists-p (concat user-emacs-directory "init-personal.el"))
   (load (concat user-emacs-directory "init-personal.el")))
 
-;;; Some packages
+;;; --- Essential Packages ---
+
+;; ElDoc
+;; (use-package eldoc
+;;   :ensure nil
+;;   :custom
+;;   ;  (eldoc-echo-area-use-multiline-p truncate-sym-name-if-fiteldoc-echo-area-use-multiline-p)
+;;   (eldoc-echo-area-use-multiline-p t)
+;;   (eldoc-idle-delay 0.25))
+
+;;; --- UI Enhancements ---
 
 (use-package avy
   :custom
@@ -273,18 +339,8 @@
   (:map minibuffer-local-map
         ("C-c d" . czm-misc-insert-date)))
 
-(use-package aggressive-indent
-  :defer t
-  :diminish
-  :hook
-  (emacs-lisp-mode . aggressive-indent-mode)
-  (LaTeX-mode . aggressive-indent-mode)
-  (rust-mode . aggressive-indent-mode)
-  (c++-mode . aggressive-indent-mode))
-
 (use-package pulsar
   :bind (("s-l" . pulsar-pulse-line))
-
   :config
   (dolist (fn '(avy-goto-line
                 diff-hunk-prev
@@ -295,268 +351,6 @@
                 flycheck-next-error))
     (add-to-list 'pulsar-pulse-functions fn))
   (pulsar-global-mode))
-
-;;; Lisp
-
-(defun czm-deactivate-mark-interactively ()
-  "Deactivate the mark interactively."
-  (interactive)
-  (deactivate-mark))
-
-(defun czm-lispy-comment-maybe ()
-  "Comment the list at point, or self-insert."
-  (interactive)
-  (if (looking-at "(")
-      (lispy-comment)
-    (call-interactively #'self-insert-command)))
-
-(use-package lispy
-  :after define-repeat-map
-
-  :commands (lispy-comment
-             lispy-oneline
-             lispy-multiline
-             lispy-split
-             lispy-join
-             lispy-slurp-or-barf-right
-             lispy-slurp-or-barf-left
-             lispy-splice
-             lispy-raise
-             lispy-clone
-             lispy-tab)
-
-  :bind
-  (:map emacs-lisp-mode-map
-        (";" . czm-lispy-comment-maybe)
-        ("M-1" . lispy-describe-inline)
-        ("M-2" . lispy-arglist-inline)))
-
-(use-package emacs
-  :ensure nil
-  :after define-repeat-map
-
-  :config
-  (define-repeat-map structural-edit
-    ("n" forward-list
-     "p" backward-list
-     "u" backward-up-list
-     "M-u" up-list
-     "g" down-list)
-    (:continue
-     "M-g" czm-backward-down-list
-     "f" forward-sexp
-     "b" backward-sexp
-     "a" beginning-of-defun
-     "e" end-of-defun
-     "d" czm-deactivate-mark-interactively
-     "k" kill-sexp
-     "x" eval-last-sexp
-     "o" lispy-oneline
-     "m" lispy-multiline
-     "j" lispy-split
-     "+" lispy-join
-     ">" lispy-slurp-or-barf-right
-     "<" lispy-slurp-or-barf-left
-     "C-/" undo
-     "/" lispy-splice
-     ";" lispy-comment
-     "r" lispy-raise
-     ;;  "r" raise-sexp
-     ;; "/" delete-pair
-     "t" transpose-sexps
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "c" lispy-clone
-     "C-M-SPC" mark-sexp
-     "RET" newline-and-indent
-     "i" lispy-tab
-     "<up>" outline-move-subtree-up
-     "<down>" outline-move-subtree-down))
-  (repeat-mode 1))
-
-(use-package emacs
-  :ensure nil
-
-  :config
-
-  :bind
-  (:map global-map
-        ("s-r" . elpaca-rebuild)
-        )
-  )
-
-;;     ;; (lispy-define-key map "w" 'lispy-move-up)
-;;     ;; (lispy-define-key map "s" 'lispy-move-down)
-;;     ;; (lispy-define-key map "A" 'lispy-beginning-of-defun)
-;;     ;; (lispy-define-key map "C" 'lispy-convolute)
-;;     ;; (lispy-define-key map "X" 'lispy-convolute-left)
-;;     ;; (lispy-define-key map "q" 'lispy-ace-paren)
-;;     ;; (lispy-define-key map "-" 'lispy-ace-subword)
-;;     ;; (lispy-define-key map "e" 'lispy-eval)
-;;   ;; ;; (("C-M-K" . lispy-kill))
-;;   ;; (("C-M-k" . kill-sexp))
-
-(defun czm-edebug-eval-hook ()
-  (lispy-mode 0)
-  (copilot-mode 0)
-  (aggressive-indent-mode 0))
-
-(add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
-
-(use-package info-colors
-  :ensure (:host github :repo "ubolonton/info-colors")
-  :hook (Info-selection . info-colors-fontify-node))
-
-(use-package expand-region
-  :bind
-  (("C-=" . er/expand-region)))
-
-(let ((parameters
-       '(window-parameters . ((no-other-window . t)
-                              (no-delete-other-windows . t)))))
-  (setq
-   display-buffer-alist
-   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-      nil
-      (window-parameters (mode-line-format . none)))
-     ("\\*\\(?:help\\|grep\\|Completions\\|Occur\\)\\*"
-      display-buffer-in-side-window
-      (side . bottom) (slot . -1) (preserve-size . (nil . t))
-      ,parameters))))
-
-(let ((parameters
-       '(window-parameters . ((no-other-window . t)
-                              (no-delete-other-windows . t)))))
-  (setq
-   display-buffer-alist
-   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-      nil
-      (window-parameters (mode-line-format . none))))))
-
-
-(defun czm-set-margins (width)
-  "Set the margins of the current window to WIDTH.
-Interactively, prompt for WIDTH."
-  (interactive "nWidth: ")
-  (setq left-margin-width width right-margin-width width)
-  (set-window-margins (selected-window) width width))
-
-;; this should be a per-monitor setting, like with preview-tailor.
-;; you should generalize that package to support other settings, I
-;; guess?  there should be a "tailor" package with the basic get/set
-;; functions.  that way, you can easily set margin widths for each
-;; monitor.
-
-(use-package pos-tip
-  :defer t)
-
-;; (setq lsp-log-io t)
-(with-eval-after-load 'lsp-mode
-  (setq lsp-log-io t))
-
-(use-package consult-company)
-
-(use-package outline
-  :ensure nil
-  :defer t
-  :after define-repeat-map
-  :config
-  (define-repeat-map outline-repeat-map
-    ("n" outline-next-heading
-     "p" outline-previous-heading
-     "u" outline-up-heading
-     "f" outline-forward-same-level
-     "b" outline-backward-same-level
-     "<left>" outline-promote
-     "<right>" outline-demote
-     "<up>" outline-move-subtree-up
-     "<down>" outline-move-subtree-down
-     "x" foldout-exit-fold
-     "z" foldout-zoom-subtree
-     "a" outline-show-all
-     "c" outline-hide-entry
-     "d" outline-hide-subtree
-     "e" outline-show-entry
-     "TAB" outline-show-children
-     "k" outline-show-branches
-     "l" outline-hide-leaves
-     "RET" outline-insert-heading
-     "o" outline-hide-other
-     "q" outline-hide-sublevels
-     "s" outline-show-subtree
-     "t" outline-hide-body
-     "@" outline-mark-subtree)
-    (:continue
-     "C-M-SPC" outline-mark-subtree
-     "w" kill-region
-     "M-w" kill-ring-save
-     "C-/" undo
-     "y" yank))
-  (repeat-mode 1))
-
-
-
-                                        ; (load (concat user-emacs-directory "uniteai.el"))
-
-;; (defun my-avy-action-copy-and-yank (pt)
-;;   "Copy and yank sexp starting on PT."
-;;   (avy-action-copy pt)
-;;   (yank))
-
-;; (setq avy-dispatch-alist '((?c . avy-action-copy)
-;;                            (?k . avy-action-kill-move)
-;;                            (?K . avy-action-kill-stay)
-;;                            (?m . avy-action-mark)
-;;                            (?p . my-avy-action-copy-and-yank)))
-
-
-;; lsp-mode calculates line numbers without first calling widen.
-;; let's fix that, so that line numbers work in narrowed buffers, too.
-(defun my-lsp--cur-line (&optional point)
-  (save-restriction
-    (widen)
-    (1- (line-number-at-pos point))))
-(advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
-
-;; doesn't work out of the box with lean4-mode because the "contact"
-;; argument to eglot ends up with a non-string argument, which it
-;; shouldn't?  you're not exactly sure what's going on there.
-
-;; (use-package eglot-booster
-;;       :ensure (:host github :repo "jdtsmith/eglot-booster"
-;;                  :depth nil)
-;;   :after eglot
-;;       :config        (eglot-booster-mode))
-
-(use-package symbol-overlay
-  :bind (("M-s ," . symbol-overlay-put)
-         ("M-s n" . symbol-overlay-switch-forward)
-         ("M-s p" . symbol-overlay-switch-backward)
-         ("M-s m" . symbol-overlay-mode)
-         ("M-s n" . symbol-overlay-remove-all)))
-
-(use-package go-translate
-  :defer t
-  :custom
-  gts-translate-list '(("fr" "en"))
-  :config
-  (setq gts-default-translator
-        (gts-translator
-         :picker (gts-prompt-picker)
-         :engines (list (gts-google-engine) ;; (gts-bing-engine)
-                        )
-         :render (gts-buffer-render))))
-
-
-;;; ------------------------------ ESSENTIAL PACKAGES ------------------------------
-
-;; (use-package eldoc
-;;   :ensure nil
-;;   :custom
-;;   ;  (eldoc-echo-area-use-multiline-p truncate-sym-name-if-fiteldoc-echo-area-use-multiline-p)
-;;   (eldoc-echo-area-use-multiline-p t)
-;;   (eldoc-idle-delay 0.25))
 
 (use-package vertico
   :demand
@@ -628,32 +422,22 @@ Interactively, prompt for WIDTH."
          :map minibuffer-local-map
          ("M-s" . consult-history)                 ;; orig. next-matching-history-element
          ("M-r" . consult-history))                ;; orig. previous-matching-history-element
-
   ;; Enable automatic preview at point in the *Completions* buffer. This is
   ;; relevant when you use the default completion UI.
   :hook (completion-list-mode . consult-preview-at-point-mode)
-
-  ;; The :init configuration is always executed (Not lazy)
   :init
-
   ;; Optionally configure the register formatting. This improves the register
   ;; preview for `consult-register', `consult-register-load',
   ;; `consult-register-store' and the Emacs built-ins.
   (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format)
-
   ;; Optionally tweak the register preview window.
   ;; This adds thin lines, sorting and hides the mode line of the window.
   (advice-add #'register-preview :override #'consult-register-window)
-
   ;; Use Consult to select xref locations with preview
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
-
-  ;; Configure other variables and modes in the :config section,
-  ;; after lazily loading the package.
   :config
-
   ;; Optionally configure preview. The default value
   ;; is 'any, such that any key triggers the preview.
   ;; (setq consult-preview-key 'any)
@@ -669,15 +453,12 @@ Interactively, prompt for WIDTH."
    consult--source-recent-file consult--source-project-recent-file
    ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
-
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.
   (setq consult-narrow-key "<") ;; "C-+"
-
   ;; Optionally make narrowing help available in the minibuffer.
   ;; You may want to use `embark-prefix-help-command' or which-key instead.
   ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
-
   ;; By default `consult-project-function' uses `project-root' from project.el.
   ;; Optionally configure a different project root function.
   ;;;; 1. project.el (the default)
@@ -693,30 +474,16 @@ Interactively, prompt for WIDTH."
   ;; (setq consult-project-function nil)
   )
 
-;; Use `consult-completion-in-region' if Vertico is enabled.
-;; Otherwise use the default `completion--in-region' function.
-
-(setq completion-in-region-function
-      (lambda (&rest args)
-        (apply (if vertico-mode
-                   #'consult-completion-in-region
-                 #'completion--in-region)
-               args)))
-
-
+(use-package consult-company)
 (use-package embark
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
    ("M-." . embark-dwim)        ;; good alternative: M-.
    ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
-
   :init
-
   ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
-
   :config
-
   ;; Hide the mode line of the Embark live/completions buffers
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
@@ -729,6 +496,27 @@ Interactively, prompt for WIDTH."
   (embark-collect-mode . consult-preview-at-point-mode))
 
 (setq-default completion-in-region-function 'consult-completion-in-region)
+
+;; Use `consult-completion-in-region' if Vertico is enabled.
+;; Otherwise use the default `completion--in-region' function.
+;; (This seems redundant given the previous setting)
+(setq completion-in-region-function
+      (lambda (&rest args)
+        (apply (if vertico-mode
+                   #'consult-completion-in-region
+                 #'completion--in-region)
+               args)))
+
+(use-package info-colors
+  :ensure (:host github :repo "ubolonton/info-colors")
+  :hook (Info-selection . info-colors-fontify-node))
+;;; --- Window Management ---
+
+(use-package ace-window
+  :bind
+  ("C-x o" . ace-window)
+  ("C-x O" . ace-window-one-command)
+  ("C-x 4 o" . ace-window-prefix))
 
 ;; https://karthinks.com/software/emacs-window-management-almanac/#aw-select-the-completing-read-for-emacs-windows
 (defun ace-window-one-command ()
@@ -760,11 +548,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
    nil "[ace-window]")
   (message "Use `ace-window' to display next command buffer..."))
 
-(use-package ace-window
-  :bind
-  ("C-x o" . ace-window)
-  ("C-x O" . ace-window-one-command)
-  ("C-x 4 o" . ace-window-prefix))
+;;; --- Other Utilities ---
 
 (use-package which-key
   :diminish
@@ -780,7 +564,26 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :bind
   (:map global-map ("C-c e" . eldoc-box-help-at-point)))
 
-;;; ------------------------------ AI ------------------------------
+(use-package expand-region
+  :bind
+  (("C-=" . er/expand-region)))
+
+(use-package pos-tip
+  :defer t)
+
+(use-package go-translate
+  :defer t
+  :custom
+  gts-translate-list '(("fr" "en"))
+  :config
+  (setq gts-default-translator
+        (gts-translator
+         :picker (gts-prompt-picker)
+         :engines (list (gts-google-engine) ;; (gts-bing-engine)
+                        )
+         :render (gts-buffer-render))))
+
+;;; --- AI-Powered Tools ---
 
 (use-package copilot
   :ensure (:host github
@@ -793,10 +596,8 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
   (lean4-mode . (lambda () (setq tab-width 2)))
-
   :config
   (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
-
   :custom
   (copilot-indent-offset-warning-disable t)
   :bind
@@ -813,14 +614,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
         ("C-`" . copilot-accept-completion-by-line)
         ("C-M-`" . copilot-accept-completion-by-paragraph)
         ("C-M-<down>" . copilot-next-completion)
-        ("C-M-<up>" . copilot-previous-completion)
-        ;; ("`" . copilot-accept-completion)
-        ;; ("M-`" . copilot-accept-completion-by-word)
-        ;; ("C-`" . copilot-accept-completion-by-line)
-        ;; ("C-M-`" . copilot-accept-completion-by-paragraph)
-        ;; ("C-M-<down>" . copilot-next-completion)
-        ;; ("C-M-<up>" . copilot-previous-completion)
-        ))
+        ("C-M-<up>" . copilot-previous-completion)))
 
 (use-package gptel
   :after exec-path-from-shell
@@ -842,55 +636,54 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
    gptel-backend (gptel-make-gemini "GEmini"
                    :stream t :key (exec-path-from-shell-getenv "GEMINI_API_KEY"))))
 
-(when nil
-  (defun czm-gptel-claude-sonnet ()
-    "Set up gptel to use Claude 3 Sonnet model from Anthropic.
+(defun czm-gptel-claude-sonnet ()
+  "Set up gptel to use Claude 3 Sonnet model from Anthropic.
 This function configures gptel to use the 'claude-3-5-sonnet-20240620'
 model with streaming enabled. It uses the Anthropic API key stored in
 the CLAUDE_API_KEY environment variable."
-    (interactive)
-    (setq-default
-     gptel-model "claude-3-5-sonnet-20240620"
-     gptel-backend (gptel-make-anthropic "Claude"
-                     :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
+  (interactive)
+  (setq-default
+   gptel-model "claude-3-5-sonnet-20240620"
+   gptel-backend (gptel-make-anthropic "Claude"
+                   :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
 
-  (defun czm-gptel-claude-opus ()
-    "Set up gptel to use Claude 3 Opus model from Anthropic.
+(defun czm-gptel-claude-opus ()
+  "Set up gptel to use Claude 3 Opus model from Anthropic.
 This function configures gptel to use the 'claude-3-opus-20240229' model
 with streaming enabled. It uses the Anthropic API key stored in the
 CLAUDE_API_KEY environment variable."
-    (interactive)
-    (setq-default
-     gptel-model "claude-3-opus-20240229"
-     gptel-backend (gptel-make-anthropic "Claude"
-                     :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
+  (interactive)
+  (setq-default
+   gptel-model "claude-3-opus-20240229"
+   gptel-backend (gptel-make-anthropic "Claude"
+                   :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
 
-  (defun czm-gptel-gpt4 ()
-    "Set up gptel to use GPT-4 model from OpenAI.
+(defun czm-gptel-gpt4 ()
+  "Set up gptel to use GPT-4 model from OpenAI.
 This function configures gptel to use the 'gpt-4' model with the default
 OpenAI backend."
-    (interactive)
-    (setq-default
-     gptel-model "gpt-4"
-     gptel-backend gptel--openai))
+  (interactive)
+  (setq-default
+   gptel-model "gpt-4"
+   gptel-backend gptel--openai))
 
-  (defun czm-gptel-gpt4o ()
-    "Set up gptel to use GPT-4 Optimized model from OpenAI.
+(defun czm-gptel-gpt4o ()
+  "Set up gptel to use GPT-4 Optimized model from OpenAI.
 This function configures gptel to use the 'gpt-4o' model with the
 default OpenAI backend."
-    (interactive)
-    (setq-default
-     gptel-model "gpt-4o"
-     gptel-backend gptel--openai))
+  (interactive)
+  (setq-default
+   gptel-model "gpt-4o"
+   gptel-backend gptel--openai))
 
-  (defun czm-gptel-gpt4o-mini ()
-    "Set up gptel to use GPT-4 Optimized Mini model from OpenAI.
+(defun czm-gptel-gpt4o-mini ()
+  "Set up gptel to use GPT-4 Optimized Mini model from OpenAI.
 This function configures gptel to use the 'gpt-4o-mini' model with the
 default OpenAI backend."
-    (interactive)
-    (setq-default
-     gptel-model "gpt-4o-mini"
-     gptel-backend gptel--openai)))
+  (interactive)
+  (setq-default
+   gptel-model "gpt-4o-mini"
+   gptel-backend gptel--openai))
 
 (use-package llm
   :ensure (:host github :repo "ahyatt/llm"
@@ -910,9 +703,7 @@ default OpenAI backend."
   (setq ai-org-chat-provider
         (make-llm-openai
          :key (exec-path-from-shell-getenv "OPENAI_API_KEY")
-         :chat-model
-         "gpt-4"
-         )))
+         :chat-model "gpt-4")))
 
 (defun czm-llm-gpt4o ()
   (interactive)
@@ -963,28 +754,19 @@ default OpenAI backend."
         ("C-c n" . ai-org-chat-branch)
         ("C-c e" . ai-org-chat-compare)
         ("C-c x" . ai-org-chat-set-context-style)
-        ("C-c a" . nil)
         ("C-c a b" . ai-org-chat-add-buffer-context)
         ("C-c a f" . ai-org-chat-add-file-context)
         ("C-c a p" . ai-org-chat-add-project-files-context))
   :commands
   (ai-org-chat-setup-buffer ai-org-chat-minor-mode)
-
   :custom
   (ai-org-chat-user-name my-first-name)
   (ai-org-chat-dir my-tmp-gpt-dir)
   (ai-org-chat-context-style nil)
-
   :config
   (czm-llm-sonnet))
 
-
-
-(use-package eglot
-  :bind
-  (:map eglot-mode-map
-        ("C-c C-q" . eglot-code-action-quickfix)
-        ("C-c C-a" . eglot-code-actions)));; (ai-org-chat-prompt-preamble
+;; ai-org-chat-prompt-preamble
 ;;    "You are a brilliant and helpful assistant.
 
 ;; You know everything about programming: languages, syntax, debugging techniques, software design, code optimization, documentation.
@@ -1024,28 +806,126 @@ default OpenAI backend."
 
 ;; Never describe the results of running code.  Instead, wait for me to run the code and then ask you to continue.")
 
+;;; --- Lisp Development ---
 
-;;; ------------------------------ FLYCHECK / FLYMAKE ------------------------------
+(defun czm-deactivate-mark-interactively ()
+  "Deactivate the mark interactively."
+  (interactive)
+  (deactivate-mark))
 
+(defun czm-lispy-comment-maybe ()
+  "Comment the list at point, or self-insert."
+  (interactive)
+  (if (looking-at "(")
+      (lispy-comment)
+    (call-interactively #'self-insert-command)))
 
+(use-package lispy
+  :after define-repeat-map
+  :commands (lispy-comment
+             lispy-oneline
+             lispy-multiline
+             lispy-split
+             lispy-join
+             lispy-slurp-or-barf-right
+             lispy-slurp-or-barf-left
+             lispy-splice
+             lispy-raise
+             lispy-clone
+             lispy-tab)
+  :bind
+  (:map emacs-lisp-mode-map
+        (";" . czm-lispy-comment-maybe)
+        ("M-1" . lispy-describe-inline)
+        ("M-2" . lispy-arglist-inline)))
 
-;; C-c ! C-c	flycheck-compile
-;; C-c ! C-w	flycheck-copy-errors-as-kill
-;; C-c ! ?		flycheck-describe-checker
-;; C-c ! C		flycheck-clear
-;; C-c ! H		display-local-help
-;; C-c ! V		flycheck-version
-;; C-c ! c		flycheck-buffer
-;; C-c ! e		flycheck-explain-error-at-point
-;; C-c ! f		attrap-flycheck
-;; C-c ! h		flycheck-display-error-at-point
-;; C-c ! i		flycheck-manual
-;; C-c ! l		flycheck-list-errors
-;; C-c ! n		flycheck-next-error
-;; C-c ! p		flycheck-previous-error
-;; C-c ! s		flycheck-select-checker
-;; C-c ! v		flycheck-verify-setup
-;; C-c ! x		flycheck-disable-checker
+(use-package emacs
+  :ensure nil
+  :after define-repeat-map
+  :config
+  (define-repeat-map structural-edit
+    ("n" forward-list
+     "p" backward-list
+     "u" backward-up-list
+     "M-u" up-list
+     "g" down-list)
+    (:continue
+     "M-g" czm-backward-down-list
+     "f" forward-sexp
+     "b" backward-sexp
+     "a" beginning-of-defun
+     "e" end-of-defun
+     "d" czm-deactivate-mark-interactively
+     "k" kill-sexp
+     "x" eval-last-sexp
+     "o" lispy-oneline
+     "m" lispy-multiline
+     "j" lispy-split
+     "+" lispy-join
+     ">" lispy-slurp-or-barf-right
+     "<" lispy-slurp-or-barf-left
+     "C-/" undo
+     "/" lispy-splice
+     ";" lispy-comment
+     "r" lispy-raise
+     ;;  "r" raise-sexp
+     ;; "/" delete-pair
+     "t" transpose-sexps
+     "w" kill-region
+     "M-w" kill-ring-save
+     "y" yank
+     "c" lispy-clone
+     "C-M-SPC" mark-sexp
+     "RET" newline-and-indent
+     "i" lispy-tab
+     "<up>" outline-move-subtree-up
+     "<down>" outline-move-subtree-down))
+  (repeat-mode 1))
+
+(defun czm-edebug-eval-hook ()
+  (lispy-mode 0)
+  (copilot-mode 0)
+  (aggressive-indent-mode 0))
+
+(add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
+
+(when nil
+
+  ;; https://mail.gnu.org/archive/html/emacs-devel/2021-08/msg00411.html
+  (defvar blc-dataroot-dir
+    (file-name-directory (directory-file-name data-directory))
+    "Machine-independent data root directory.")
+
+  (defun blc-dataroot-to-src (file)
+    "Map FILE under `blc-dataroot-dir' to `source-directory'.
+Return FILE unchanged if not under `blc-dataroot-dir'."
+    (if (and (stringp file)
+             (file-in-directory-p file blc-dataroot-dir))
+        (expand-file-name (file-relative-name file blc-dataroot-dir)
+                          source-directory)
+      file))
+
+  (define-advice find-function-search-for-symbol
+      (:around (search sym type lib) blc-dataroot-to-src)
+    "Pass LIB through `blc-dataroot-to-src'."
+    (funcall search sym type (blc-dataroot-to-src lib))))
+
+;;; --- Xref advice for project-only searches ---
+
+(defun czm-xref-restrict-to-project-advice (orig-fun &rest args)
+  "Advice to restrict xref searches to the current project root."
+  (let ((project-vc-external-roots-function #'ignore))
+    (apply orig-fun args)))
+
+(define-minor-mode czm-xref-project-only-mode
+  "Toggle xref searches between project-only and including external roots."
+  :global t
+  :lighter " XPO"
+  (if czm-xref-project-only-mode
+      (advice-add 'xref-find-references :around #'czm-xref-restrict-to-project-advice)
+    (advice-remove 'xref-find-references #'czm-xref-restrict-to-project-advice)))
+
+;;; --- Flycheck / Flymake ---
 
 (use-package flycheck
   :defer t
@@ -1120,7 +1000,7 @@ default OpenAI backend."
             (overlay-put o 'before-string (flymake--eol-overlay-summary src-ovs))
           (delete-overlay o))))))
 
-;;; ------------------------------ ATTRAP ------------------------------
+;;; --- Attrap ---
 
 (use-package attrap
   :defer t
@@ -1135,46 +1015,126 @@ default OpenAI backend."
   (define-key flycheck-command-map "f" 'attrap-flycheck)
   (put 'attrap-flycheck 'repeat-map 'flymake-repeat-map))
 
-;;; ------------------------------ MARK ------------------------------
+;;; --- Display Buffer Tweaks ---
 
-(when nil
-  ;; copied from https://spwhitton.name/blog/entry/transient-mark-mode/
-  (defun spw/remap-mark-command (command &optional map)
-    "Remap a mark-* command to temporarily activate Transient Mark mode."
-    (let* ((cmd (symbol-name command))
-           (fun (intern (concat "spw/" cmd)))
-           (doc (concat "Call `"
-                        cmd
-                        "' and temporarily activate Transient Mark mode.")))
-      (fset fun `(lambda ()
-                   ,doc
-                   (interactive)
-                   (call-interactively #',command)
-                   (activate-mark)))
-      (if map
-          (define-key map (vector 'remap command) fun)
-        (global-set-key (vector 'remap command) fun))))
+(let ((parameters
+       '(window-parameters . ((no-other-window . t)
+                              (no-delete-other-windows . t)))))
+  (setq
+   display-buffer-alist
+   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+      nil
+      (window-parameters (mode-line-format . none)))
+     ("\\*\\(?:help\\|grep\\|Completions\\|Occur\\)\\*"
+      display-buffer-in-side-window
+      (side . bottom) (slot . -1) (preserve-size . (nil . t))
+      ,parameters))))
 
-  (dolist (command '(mark-word
-                     mark-sexp
-                     mark-paragraph
-                     mark-defun
-                     mark-page
-                     mark-whole-buffer
-                     rectangle-mark-mode))
-    (spw/remap-mark-command command)))
+;; This block seems redundant with the previous one?
+(let ((parameters
+       '(window-parameters . ((no-other-window . t)
+                              (no-delete-other-windows . t)))))
+  (setq
+   display-buffer-alist
+   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+      nil
+      (window-parameters (mode-line-format . none))))))
 
-;;; ------------------------------ ABBREV and SPELLING ------------------------------
+;;; --- Code Formatting and Indentation ---
 
-;; this could be its own package, accomodating git-friendly abbrev storage?
-;; need a good way to update the source.
+(use-package aggressive-indent
+  :defer t
+  :diminish
+  :hook
+  (emacs-lisp-mode . aggressive-indent-mode)
+  (LaTeX-mode . aggressive-indent-mode)
+  (rust-mode . aggressive-indent-mode)
+  (c++-mode . aggressive-indent-mode))
+
+;;; --- LSP ---
+
+(with-eval-after-load 'lsp-mode
+  (setq lsp-log-io t))
+
+;; lsp-mode line number fix for narrowed buffers
+(defun my-lsp--cur-line (&optional point)
+  (save-restriction
+    (widen)
+    (1- (line-number-at-pos point))))
+(advice-add 'lsp--cur-line :override #'my-lsp--cur-line)
+
+;; doesn't work out of the box with lean4-mode because the "contact"
+;; argument to eglot ends up with a non-string argument, which it
+;; shouldn't?  you're not exactly sure what's going on there.
+;; (use-package eglot-booster
+;;       :ensure (:host github :repo "jdtsmith/eglot-booster"
+;;                  :depth nil)
+;;   :after eglot
+;;       :config        (eglot-booster-mode))
+
+(use-package eglot
+  :bind
+  (:map eglot-mode-map
+        ("C-c C-q" . eglot-code-action-quickfix)
+        ("C-c C-a" . eglot-code-actions)))
+
+;;; --- Outline Navigation ---
+
+(use-package outline
+  :ensure nil
+  :defer t
+  :after define-repeat-map
+  :config
+  (define-repeat-map outline-repeat-map
+    ("n" outline-next-heading
+     "p" outline-previous-heading
+     "u" outline-up-heading
+     "f" outline-forward-same-level
+     "b" outline-backward-same-level
+     "<left>" outline-promote
+     "<right>" outline-demote
+     "<up>" outline-move-subtree-up
+     "<down>" outline-move-subtree-down
+     "x" foldout-exit-fold
+     "z" foldout-zoom-subtree
+     "a" outline-show-all
+     "c" outline-hide-entry
+     "d" outline-hide-subtree
+     "e" outline-show-entry
+     "TAB" outline-show-children
+     "k" outline-show-branches
+     "l" outline-hide-leaves
+     "RET" outline-insert-heading
+     "o" outline-hide-other
+     "q" outline-hide-sublevels
+     "s" outline-show-subtree
+     "t" outline-hide-body
+     "@" outline-mark-subtree)
+    (:continue
+     "C-M-SPC" outline-mark-subtree
+     "w" kill-region
+     "M-w" kill-ring-save
+     "C-/" undo
+     "y" yank))
+  (repeat-mode 1))
+
+;;; --- Symbol Overlay ---
+
+(use-package symbol-overlay
+  :bind (("M-s ," . symbol-overlay-put)
+         ("M-s n" . symbol-overlay-switch-forward)
+         ("M-s p" . symbol-overlay-switch-backward)
+         ("M-s m" . symbol-overlay-mode)
+         ("M-s n" . symbol-overlay-remove-all)))  ;; "M-s n" is repeated
+
+;;; --- Abbreviations and Spelling ---
+
+;; This could be its own package, accommodating git-friendly abbrev storage?
+;; Need a good way to update the source.
 (defun modify-abbrev-table (table abbrevs)
   "Define abbreviations in TABLE given by ABBREVS."
   (unless table
-                                        ; This probably means that you called this function before the
-                                        ; appropriate major mode was loaded.  Hence the ":after" entries
-                                        ; in the use-package declaration below
-    (error "Abbrev table does not exist" table))
+    (error "Abbrev table does not exist" table))  ;; Message could be improved
   (dolist (abbrev abbrevs)
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
@@ -1185,12 +1145,7 @@ default OpenAI backend."
   :bind
   ("s-;" . czm-spell-then-abbrev))
 
-;; ;; Forcing this to load so that c++-mode-abbrev-table is defined.
-;; (use-package cc-mode
-;;   :ensure nil
-;;   :demand)
-
-;;; --------------------------------- PDF ---------------------------------
+;;; --- PDF ---
 
 (use-package pdf-tools
   :mode ("\\.pdf\\'" . pdf-view-mode)
@@ -1210,8 +1165,7 @@ default OpenAI backend."
         ("<remap> <scroll-up-command>" . pdf-view-scroll-up-or-next-page)
         ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)))
 
-
-;;; ------------------------------ ERC ------------------------------
+;;; --- ERC (IRC Client) ---
 
 (use-package erc
   :ensure nil
@@ -1220,24 +1174,18 @@ default OpenAI backend."
   ;; (erc-insert-post-hook . erc-save-buffer-in-logs)
   :config
   (erc-timestamp-mode)
-
   ;; (defadvice save-buffers-kill-emacs (before save-logs (arg) activate)
   ;;   (save-some-buffers t (lambda () (when (and (eq major-mode 'erc-mode)
   ;;                                              (not (null buffer-file-name)))))))
-
   (defun oz/escape-applescript (str)
     "Quote \\ and \"."
     (replace-regexp-in-string "\\(\\\\\\|\"\\)" "\\\\\\1" str))
-
   (defun oz/erc-notifications-notify (orig-fun nick msg)
     "Notify that NICK send some MSG via AppleScript."
     (ns-do-applescript
      (concat "display notification \"" (oz/escape-applescript msg)
              "\" with title \"" (oz/escape-applescript nick) "\"")))
-
   (advice-add 'erc-notifications-notify :around #'oz/erc-notifications-notify)
-
-
   :custom
   (erc-join-buffer 'bury)
   (erc-timestamp-format "[%R-%m/%d]")
@@ -1258,9 +1206,7 @@ default OpenAI backend."
 ;;   (erc-netsplit-mode))
 
 
-
 ;; logging doesn't seem to be working; not sure what the story is there.
-
 (use-package erc-log
   :ensure nil
   :defer t
@@ -1277,7 +1223,6 @@ default OpenAI backend."
 ;;   :after erc
 ;;   :config
 ;;   (erc-ring-mode))
-
 ;; (use-package erc-netsplit
 ;;   :after erc
 ;;   :config
@@ -1297,8 +1242,7 @@ default OpenAI backend."
 
 ;; TODO: robust form of check-abbrev?
 
-
-;;; ------------------------------ CPP ------------------------------
+;;; --- C++ ---
 
 (c-add-style "llvm4"
              '("gnu"
@@ -1388,9 +1332,6 @@ default OpenAI backend."
   (set-fill-column 120)
   (setq next-error-function #'flymake-goto-next-error))
 
-;; defvar-keymap
-;; define-keymap
-
 (use-package emacs
   :ensure nil
   :after cc-mode
@@ -1409,8 +1350,6 @@ default OpenAI backend."
 ;;   :after clang-format
 ;;   :hook
 ;;   (c-mode-common . clang-format+-mode))
-
-;; maybe some of the following should be part of cmake-build.el?
 
 (defun czm-eshell-run (command buffer-name)
   (eshell "new")
@@ -1441,7 +1380,7 @@ default OpenAI backend."
     (let* ((this-root (cmake-build--project-root))
            (this-run-config cmake-build-run-config)
            (cmake-build-project-root this-root))
-      (if  (and nil cmake-build-before-run)
+      (if (and nil cmake-build-before-run)  ;; What is this condition checking for?
           (cmake-build--invoke-build-current
            (lambda (process event)
              (let* ((this-root this-root)
@@ -1464,7 +1403,6 @@ default OpenAI backend."
          ("s-m c" . cmake-build-clean))
   :custom
   (cmake-build-override-compile-keymap nil)
-  ;; (cmake-build-run-function 'czm-eshell-run)
   (cmake-build-export-compile-commands t)
   (cmake-build-options "-j 1")
   (cmake-build-options "-j 2")
@@ -1481,13 +1419,31 @@ default OpenAI backend."
 
 (add-to-list 'auto-mode-alist '("\\.ixx\\'" . c++-mode))
 
-;;; ------------------------------ CALC ------------------------------
+(use-package c-ts-mode
+  :ensure nil ;; emacs built-in
+  :preface
+  (defun my--c-ts-indent-style()
+    "Override the built-in BSD indentation style with some additional rules.
+         Docs: https://www.gnu.org/software/emacs/manual/html_node/elisp/Parser_002dbased-Indentation.html
+         Notes: `treesit-explore-mode' can be very useful to see where you're at in the tree-sitter tree,
+                especially paired with `(setq treesit--indent-verbose t)' to debug what rules is being
+                applied at a given point."
+    `(;; do not indent preprocessor statements
+      ((node-is "preproc") column-0 0)
+      ;; do not indent namespace children
+      ((n-p-gp nil nil "namespace_definition") grand-parent 0)
+      ;; append to bsd style
+      ,@(alist-get 'bsd (c-ts-mode--indent-styles 'cpp))))
+  :config
+  (setq c-ts-mode-indent-offset 2)
+  (setq c-ts-mode-indent-style #'my--c-ts-indent-style))
+
+;;; --- Emacs Calc ---
 
 (defun calcFunc-sage-factor ()
   "Use SAGE to factor the top element of the stack in Emacs Calc."
   (interactive)
-  (if (equal (length calc-stack)
-             0)
+  (if (equal (length calc-stack) 0)
       (error "Stack is empty"))
   (let* ((top-of-stack (calc-top))
          (top-of-stack-string (math-format-value top-of-stack))
@@ -1495,8 +1451,7 @@ default OpenAI backend."
           (format "SR(\"%s\").factor()" top-of-stack-string))
          (modified-string (symtex-evaluate sage-code))
          (modified-value (math-read-exprs modified-string)))
-    (if (eq (car-safe modified-value)
-            'error)
+    (if (eq (car-safe modified-value) 'error)
         (error "Parsing error: %s" (nth 1 modified-value))
       (calc-pop 1)
       (calc-push (car modified-value)))))
@@ -1528,127 +1483,7 @@ The value of `calc-language` is restored after BODY has been processed."
            ,@body)
        (calc-set-language old-lang))))
 
-;;; Xref advice to restrict to project root
-
-(defun czm-xref-restrict-to-project-advice (orig-fun &rest args)
-  "Advice to restrict xref searches to the current project root."
-  (let ((project-vc-external-roots-function #'ignore))
-    (apply orig-fun args)))
-
-(define-minor-mode czm-xref-project-only-mode
-  "Toggle xref searches between project-only and including external roots."
-  :global t
-  :lighter " XPO"
-  (if czm-xref-project-only-mode
-      (advice-add 'xref-find-references :around #'czm-xref-restrict-to-project-advice)
-    (advice-remove 'xref-find-references #'czm-xref-restrict-to-project-advice)))
-
-;;; ???
-
-(use-package perfect-margin
-  :defer t
-  :diminish)
-
-(use-package diminish
-  :demand t
-  :after copilot
-  :config
-  (diminish 'abbrev-mode "Ab")
-  (diminish 'visual-line-mode)
-  (diminish 'outline-minor-mode)
-  (diminish 'buffer-face-mode)
-  (diminish 'eldoc-mode)
-  (diminish 'reftex-mode)
-  (diminish 'whitespace-mode)
-  (diminish 'buffer-face-mode))
-
-;; maybe this is all that's needed to get indirect buffers to work?
-
-;; (defun set-TeX-master-from-cloned ()
-;;   (when (eq major-mode 'LaTeX-mode)
-;;     (setq TeX-master (with-current-buffer (buffer-base-buffer)
-;;                        (TeX-master-file)))))
-
-;; (add-hook 'clone-indirect-buffer-hook 'set-TeX-master-from-cloned)
-
-(use-package easy-kill)
-(global-set-key [remap kill-ring-save] #'easy-kill)
-
-;; I know when I'm narrowing
-(setq mode-line-modes (delete "%n" mode-line-modes))
-
-(defun czm-abbreviate-elisp-mode-name ()
-  (cond
-   ((consp mode-name)
-    (setcar mode-name "E"))
-   ((stringp mode-name)
-    (when (equal mode-name "Lisp Interaction")
-      (setq mode-name "LI")))))
-
-(add-hook 'emacs-lisp-mode-hook 'czm-abbreviate-elisp-mode-name)
-
-;; first approach doesn't work so well both with built-in and external
-
-;; ;; https://mail.gnu.org/archive/html/emacs-devel/2021-08/msg00431.html
-;; (add-hook 'emacs-lisp-mode-hook 'xref-etags-mode)
-
-;; ;; get rid of binding
-;; (defun czm-embark-find-definition (symbol)
-;;   "Find definition of Emacs Lisp SYMBOL."
-;;   (interactive "sSymbol: ")
-;;   (xref-find-definitions symbol))
-;; (advice-add 'embark-find-definition :override #'czm-embark-find-definition)
-
-;; https://mail.gnu.org/archive/html/emacs-devel/2021-08/msg00411.html
-
-(when nil
-  (defvar blc-dataroot-dir
-    (file-name-directory (directory-file-name data-directory))
-    "Machine-independent data root directory.")
-
-  (defun blc-dataroot-to-src (file)
-    "Map FILE under `blc-dataroot-dir' to `source-directory'.
-Return FILE unchanged if not under `blc-dataroot-dir'."
-    (if (and (stringp file)
-             (file-in-directory-p file blc-dataroot-dir))
-        (expand-file-name (file-relative-name file blc-dataroot-dir)
-                          source-directory)
-      file))
-
-  (define-advice find-function-search-for-symbol
-      (:around (search sym type lib) blc-dataroot-to-src)
-    "Pass LIB through `blc-dataroot-to-src'."
-    (funcall search sym type (blc-dataroot-to-src lib))))
-
-(defun czm-search-log ()
-  "Search your log files with `rg'."
-  (interactive)
-  (let ((log-files `(,my-log-file ,my-old-log-file ,my-todo-file)))
-    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
-
-(use-package wgrep) ;; use C-c C-p in embark export following ripgrep
-
-
-(use-package c-ts-mode
-  :ensure nil ;; emacs built-in
-  :preface
-  (defun my--c-ts-indent-style()
-    "Override the built-in BSD indentation style with some additional rules.
-         Docs: https://www.gnu.org/software/emacs/manual/html_node/elisp/Parser_002dbased-Indentation.html
-         Notes: `treesit-explore-mode' can be very useful to see where you're at in the tree-sitter tree,
-                especially paired with `(setq treesit--indent-verbose t)' to debug what rules is being
-                applied at a given point."
-    `(;; do not indent preprocessor statements
-      ((node-is "preproc") column-0 0)
-      ;; do not indent namespace children
-      ((n-p-gp nil nil "namespace_definition") grand-parent 0)
-      ;; append to bsd style
-      ,@(alist-get 'bsd (c-ts-mode--indent-styles 'cpp))))
-  :config
-  (setq c-ts-mode-indent-offset 2)
-  (setq c-ts-mode-indent-style #'my--c-ts-indent-style))
-
-;;; git
+;;; --- Git ---
 
 (use-package magit
   :defer t
@@ -1719,8 +1554,6 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
     (let ((repo-symbol (intern repo)))
       (elpaca-rebuild repo-symbol))))
 
-
-
 (defun czm-file-is-tex-or-bib (file)
   "Return t if FILE is a .tex or .bib file."
   (or (string-suffix-p ".tex" file)
@@ -1748,7 +1581,6 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
                 czm-repos)))
     (consult--grep "Ripgrep" #'consult--ripgrep-make-builder files nil)))
 
-
 (defvar git-fill-column-alist '(("emacs" . 64) ("auctex" . 64)))
 
 (defun set-git-commit-fill-column ()
@@ -1766,7 +1598,7 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
   (:map git-commit-mode-map
         ("C-c C-l" . magit-generate-changelog)))
 
-;;; LaTeX
+;;; --- LaTeX ---
 
 (defun czm-tex-buffer-face ()
   (interactive)
@@ -2361,6 +2193,17 @@ of the preamble part of REGION-TEXT."
                            (point))))
                       (yank))))
 
+;; (defun my-avy-action-copy-and-yank (pt)
+;;   "Copy and yank sexp starting on PT."
+;;   (avy-action-copy pt)
+;;   (yank))
+
+;; (setq avy-dispatch-alist '((?c . avy-action-copy)
+;;                            (?k . avy-action-kill-move)
+;;                            (?K . avy-action-kill-stay)
+;;                            (?m . avy-action-mark)
+;;                            (?p . my-avy-action-copy-and-yank)))
+
 ;; needs a bit of work -- should kill the line when it's empty, take a numeric arg, etc
 (defun czm-tex-soft-kill ()
   (interactive)
@@ -2504,7 +2347,7 @@ of the preamble part of REGION-TEXT."
 (defalias 'czm-setup-tex-file
   (kmacro "l t x SPC s-s s-p z C-n C-n C-c C-p C-a C-c C-p C-f"))
 
-;;; Sage
+;;; --- Sage ---
 
 (use-package sage-shell-mode
   :defer t
@@ -2605,7 +2448,7 @@ entry."
   (:map LaTeX-mode-map
 	       ("C-c v" . symtex-dwim)))
 
-;;; Lean
+;;; --- Lean ---
 
 ;; taken from
 ;; https://github.com/leanprover/lean-mode/commit/b224da9d2b339514c2577e5ee4c675b03c978bcd
