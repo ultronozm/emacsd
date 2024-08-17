@@ -1618,3 +1618,23 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
 
 (use-package wgrep) ;; use C-c C-p in embark export following ripgrep
 
+
+(use-package c-ts-mode
+  :ensure nil ;; emacs built-in
+  :preface
+  (defun my--c-ts-indent-style()
+    "Override the built-in BSD indentation style with some additional rules.
+         Docs: https://www.gnu.org/software/emacs/manual/html_node/elisp/Parser_002dbased-Indentation.html
+         Notes: `treesit-explore-mode' can be very useful to see where you're at in the tree-sitter tree,
+                especially paired with `(setq treesit--indent-verbose t)' to debug what rules is being
+                applied at a given point."
+    `(;; do not indent preprocessor statements
+      ((node-is "preproc") column-0 0)
+      ;; do not indent namespace children
+      ((n-p-gp nil nil "namespace_definition") grand-parent 0)
+      ;; append to bsd style
+      ,@(alist-get 'bsd (c-ts-mode--indent-styles 'cpp))))
+  :config
+  (setq c-ts-mode-indent-offset 2)
+  (setq c-ts-mode-indent-style #'my--c-ts-indent-style))
+
