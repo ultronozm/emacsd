@@ -1100,6 +1100,16 @@ default OpenAI backend."
   (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-next-error)
   (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-prev-error))
 
+(defun flymake--update-eol-overlays ()
+  "Update the `before-string' property of end-of-line overlays."
+  (save-restriction
+    (widen)
+    (dolist (o (overlays-in (point-min) (point-max)))
+      (when (overlay-get o 'flymake--eol-overlay)
+        (if-let ((src-ovs (overlay-get o 'flymake-eol-source-overlays)))
+            (overlay-put o 'before-string (flymake--eol-overlay-summary src-ovs))
+          (delete-overlay o))))))
+
 ;;; ------------------------------ ATTRAP ------------------------------
 
 (use-package attrap
@@ -1508,15 +1518,7 @@ The value of `calc-language` is restored after BODY has been processed."
            ,@body)
        (calc-set-language old-lang))))
 
-(defun flymake--update-eol-overlays ()
-  "Update the `before-string' property of end-of-line overlays."
-  (save-restriction
-    (widen)
-    (dolist (o (overlays-in (point-min) (point-max)))
-      (when (overlay-get o 'flymake--eol-overlay)
-        (if-let ((src-ovs (overlay-get o 'flymake-eol-source-overlays)))
-            (overlay-put o 'before-string (flymake--eol-overlay-summary src-ovs))
-          (delete-overlay o))))))
+;;; Xref advice to restrict to project root
 
 (use-package perfect-margin
   :defer t
