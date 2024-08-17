@@ -431,3 +431,5 @@ DIR must include a .project file to be considered a project."
   :config
   ;; (advice-remove 'foldout-exit-fold #'czm-foldout-exit-fold-without-hiding)
   (advice-add 'foldout-exit-fold :around #'czm-foldout-exit-fold-without-hiding))
+
+(put 'erase-buffer 'disabled nil)
