@@ -97,7 +97,6 @@
         ("H-1" tab-close-other)
         ("H-2" tab-bar-new-tab)
         ("M-_" delete-pair)
-        ("M-+" kill-backward-up-list)
         ("M-u" up-list)
         ("M-i" czm-mark-inner)
         ("s-a" czm-beginning-of-list)
@@ -196,28 +195,28 @@ pushes the mark somewhere useful."
 
 (dolist (key '(
                ;; s-a
-                      "s-C"
+               "s-C"
                ;; "s-D" ; dired
-                      ;; ("s-w" switch-to-buffer)
+               ;; ("s-w" switch-to-buffer)
                ;; s-f
-                      "s-E"
-                      "s-H"
-                      "s-L"
+               "s-E"
+               "s-H"
+               "s-L"
                ;; "s-M" ; manual-entry
-                      "s-S"
-                      "s-c"
-                      "s-g"
-                      "s-h"
+               "s-S"
+               "s-c"
+               "s-g"
+               "s-h"
                ;; "s-l" ; goto-line
-                      "s-m"
-                      "s-u"
-                      ;; "s-q"
+               "s-m"
+               "s-u"
+               ;; "s-q"
                ;; s-t
-                      "s-x"
-               ;; s-w
-                      ;; "s-y"
-                      "s-z"
-                      ))
+               "s-x"
+               "s-w" ; delete frame
+               ;; "s-y"
+               "s-z"
+               ))
   (global-unset-key (kbd key)))
 
 ;; H-ACFNHMD -- macOS annoyance
