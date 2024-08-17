@@ -391,6 +391,7 @@
   (lispy-mode 0)
   (copilot-mode 0)
   (aggressive-indent-mode 0))
+
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
 (use-package info-colors
@@ -423,11 +424,6 @@
       nil
       (window-parameters (mode-line-format . none))))))
 
-
-;; sometimes a key to just activate the mark is wanted
-;; (global-set-key "\M-i" (lambda () (interactive) (activate-mark)))
-;; resettle the previous occupant
-;; (global-set-key "\M-I" #'tab-to-tab-stop)
 
 (defun czm-set-margins (width)
   "Set the margins of the current window to WIDTH.
