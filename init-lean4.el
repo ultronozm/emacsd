@@ -31,13 +31,13 @@
   :commands (lean4-mode)
   :custom
   (lean4-idle-delay 0.02)
-  (lean4-keybinding-lean4-toggle-info (kbd "C-c C-y"))
   (lean4-info-plain nil)
   (lean4-info-refresh-even-if-invisible t)
   :bind (:map lean4-mode-map
               ("RET" . newline)
-              ("C-j" . default-indent-new-line)
-              ("C-M-i" . completion-at-point))
+              ("C-j" . newline-and-indent)
+              ("C-M-i" . completion-at-point)
+              ("C-c C-k" . quail-show-key))
   :config
   :defer t)
 
@@ -49,13 +49,17 @@
   :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
   :bind (:map lean4-mode-map
               ("C-c v" . czm-lean4-show-variables)
-              ("C-c C-p C-p" . czm-lean4-toggle-info-pause)
+              ;; ("C-c C-p C-p" . czm-lean4-toggle-info-pause)
               ("C-c C-m C-m" . czm-lean4-search-mathlib)
               ("C-c C-m C-h" . czm-lean4-search-mathlib-headings)
+              ("C-c C-m C-d" . flymake-overlays-mode)
+              ("C-c C-m C-t" . flymake-overlays-smart-toggle)
+              ("C-c C-m C-g" . czm-lean4-toggle-goal-overlay)
+              ("C-c C-m C-l" . czm-lean4-live-goal-mode)
               ("C-c C-," . czm-lean4-insert-section-or-namespace)
               ("C-c C-." . czm-lean4-insert-comment-block)
               ("C-c C-i" . czm-lean4-toggle-info-split-below)
-              ("C-c C-o" . czm-lean4-toggle-info-split-right)
+              ("C-c C-y" . czm-lean4-toggle-info-split-right)
               ("M-]" . czm-lean4-cycle-delimiter-forward)
               ("§" . copilot-accept-completion)
               ("M-§" . copilot-accept-completion-by-word)
@@ -100,6 +104,44 @@
                 (put-text-property start end 'face '(underline))
                                         ; shr-mark doesn't work anymore?
                 (put-text-property (1+ start) end-symbols 'face '(highlight underline))))))))))
+
+
+(defun my-flymake-overlays-fontify-text-function (text)
+  (let ((mode major-mode))
+    (with-temp-buffer
+      (delay-mode-hooks (funcall mode))
+      (insert text)
+      (font-lock-ensure)
+      (when (eq mode 'lean4-mode)
+        (save-excursion
+          (goto-char (point-min))
+          (while (and (< (point) (point-max))
+                      (not (eq (char-after (1+ (point))) ?\:)))
+            (forward-list)
+            (when (eq (char-before) ?\))
+              (save-excursion
+                (backward-list)
+                (let ((inhibit-read-only t)
+                      (start (point))
+                      (end (save-excursion (forward-list) (point)))
+                      (end-first-symbol (save-excursion (forward-word) (point)))
+                      (end-symbols (save-excursion (when (search-forward " : " nil t) (- (point) 3)))))
+                  (when end-symbols
+                    (put-text-property start end 'face '(underline))
+                                        ; shr-mark doesn't work anymore?
+                    (put-text-property (1+ start) end-symbols 'face '(highlight underline)))))))))
+      (buffer-string))))
+
+(use-package flymake-overlays
+  :ensure (:host github :repo "ultronozm/flymake-overlays.el"
+                 :depth nil)
+  :after flymake
+  :bind (:map flymake-mode-map
+              ("C-c t" . flymake-overlays-smart-toggle))
+  :hook (flymake-mode . flymake-overlays-mode)
+  :custom
+  (flymake-overlays-fontify-text-function #'my-flymake-overlays-fontify-text-function) )
+
 
 (defun czm-add-lean4-eldoc ()
   (when
