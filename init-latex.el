@@ -647,6 +647,18 @@ of the preamble part of REGION-TEXT."
   (let ((this-command #'tex-parens-down-list))
     (tex-parens-backward-down-list)))
 
+(defun czm-tex-kill-to-end-of-list ()
+  "Kill text between point and end of current list."
+  (interactive)
+  (let ((end (save-excursion (tex-parens-end-of-list) (point))))
+    (kill-region (point) end)))
+
+(defun czm-tex-kill-to-beginning-of-list ()
+  "Kill text between point and beginning of current list."
+  (interactive)
+  (let ((beginning (save-excursion (tex-parens-beginning-of-list) (point))))
+    (kill-region beginning (point))))
+
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el"
                  :depth nil)
@@ -692,7 +704,9 @@ of the preamble part of REGION-TEXT."
         ("s-j" . czm-tex-avy-jump)
         ("s-c" . czm-tex-avy-copy)
         ("s-e" . tex-parens-end-of-list)
-        ("s-a" . tex-parens-beginning-of-list))
+        ("s-a" . tex-parens-beginning-of-list)
+        ("s-E" . czm-tex-kill-to-end-of-list)
+        ("s-A" . czm-tex-kill-to-beginning-of-list))
 
   :hook
   (latex-mode . tex-parens-mode)
