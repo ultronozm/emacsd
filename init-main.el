@@ -791,7 +791,8 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   (copilot-indent-offset-warning-disable t)
   :bind
   (:map global-map
-        ("H-x" . copilot-mode))
+        ("H-x" . copilot-mode)
+        ("§" . copilot-accept-completion))
   (:map copilot-completion-map
         ("§" . copilot-accept-completion)
         ("M-§" . copilot-accept-completion-by-word)
