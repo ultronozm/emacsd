@@ -164,23 +164,6 @@
           (current-buffer))))
     (switch-to-buffer src-buffer)))
 
-(defun czm-org-collect-entry-positions (match scope &rest skip)
-  "Collect buffer point positions for org entries.
-The list is ordered from bottom to top."
-  (let ((positions ()))
-    (org-map-entries
-     (lambda () (setq positions (cons (point) positions))) match scope skip)
-    positions))
-
-(defun czm-org-archive-done-entries ()
-  (interactive)
-  (let ((positions (czm-org-collect-entry-positions "TODO={DONE\\|CANCELLED}" 'region-start-level)))
-    (dolist (pos positions)
-      (goto-char pos)
-      (save-mark-and-excursion
-        (deactivate-mark)
-        (org-archive-subtree)))))
-
 (use-package emacs
   :ensure nil
   :after define-repeat-map org
