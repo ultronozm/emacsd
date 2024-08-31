@@ -120,8 +120,6 @@
 
 (use-package diminish
   :demand t
-  ;; Consider adding :after autoloads for all diminished packages
-  :after copilot
   :config
   (diminish 'abbrev-mode "Ab")
   (diminish 'visual-line-mode)
@@ -129,8 +127,7 @@
   (diminish 'buffer-face-mode)
   (diminish 'eldoc-mode)
   (diminish 'reftex-mode)
-  (diminish 'whitespace-mode)
-  (diminish 'buffer-face-mode))  ;; Repeated?
+  (diminish 'whitespace-mode))
 
 (use-package easy-kill)
 (global-set-key [remap kill-ring-save] #'easy-kill)
@@ -496,11 +493,8 @@ Interactively, prompt for WIDTH."
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
-(setq-default completion-in-region-function 'consult-completion-in-region)
-
 ;; Use `consult-completion-in-region' if Vertico is enabled.
 ;; Otherwise use the default `completion--in-region' function.
-;; (This seems redundant given the previous setting)
 (setq completion-in-region-function
       (lambda (&rest args)
         (apply (if vertico-mode
@@ -511,6 +505,7 @@ Interactively, prompt for WIDTH."
 (use-package info-colors
   :ensure (:host github :repo "ubolonton/info-colors")
   :hook (Info-selection . info-colors-fontify-node))
+
 ;;; --- Window Management ---
 
 (use-package ace-window
@@ -998,16 +993,6 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
   (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-next-error)
   (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-prev-error))
 
-(defun flymake--update-eol-overlays ()
-  "Update the `before-string' property of end-of-line overlays."
-  (save-restriction
-    (widen)
-    (dolist (o (overlays-in (point-min) (point-max)))
-      (when (overlay-get o 'flymake--eol-overlay)
-        (if-let ((src-ovs (overlay-get o 'flymake-eol-source-overlays)))
-            (overlay-put o 'before-string (flymake--eol-overlay-summary src-ovs))
-          (delete-overlay o))))))
-
 ;;; --- Attrap ---
 
 (use-package attrap
@@ -1021,32 +1006,7 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
   :after flycheck attrap repeat
   :config
   (define-key flycheck-command-map "f" 'attrap-flycheck)
-  (put 'attrap-flycheck 'repeat-map 'flymake-repeat-map))
-
-;;; --- Display Buffer Tweaks ---
-
-(let ((parameters
-       '(window-parameters . ((no-other-window . t)
-                              (no-delete-other-windows . t)))))
-  (setq
-   display-buffer-alist
-   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-      nil
-      (window-parameters (mode-line-format . none)))
-     ("\\*\\(?:help\\|grep\\|Completions\\|Occur\\)\\*"
-      display-buffer-in-side-window
-      (side . bottom) (slot . -1) (preserve-size . (nil . t))
-      ,parameters))))
-
-;; This block seems redundant with the previous one?
-(let ((parameters
-       '(window-parameters . ((no-other-window . t)
-                              (no-delete-other-windows . t)))))
-  (setq
-   display-buffer-alist
-   `(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-      nil
-      (window-parameters (mode-line-format . none))))))
+  (put 'attrap-flycheck 'repeat-map 'flycheck-repeat-map))
 
 ;;; --- Code Formatting and Indentation ---
 
@@ -1800,7 +1760,7 @@ The value of `calc-language` is restored after BODY has been processed."
         ("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
         t))
 
-  :custom-face (preview-face ((t (:background nil)))))
+  :custom-face (preview-face ((t (:background unspecified)))))
 
 ;;  don't want foldout to include "bibliography"
 (defun czm-LaTeX-outline-level-advice (orig-fun &rest args)
@@ -2137,21 +2097,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (library-pdf-directory my-pdf-folder)
   (library-bibtex-file my-master-bib-file)
   (library-download-directory my-downloads-folder)
-  (library-org-capture-template-key "j")
-  :bind
-  ;; ("C-c n" . library-clipboard-to-refs)
-  )
-
-
-;; ;; testing this out for a bit, to make sure it works as you hoped
-;; (defun LaTeX-env-beginning-pos-col ()
-;;   "Return a cons: (POINT . COLUMN) for current environment's beginning."
-;;   (save-excursion
-;;     (LaTeX-find-matching-begin)
-;;     (LaTeX-back-to-indentation)
-;;     (cons (point) (current-column))))
-
-
+  (library-org-capture-template-key "j"))
 
 (defun preview--skip-preamble-region (region-text region-offset)
   "Skip preamble for the sake of predumped formats.
