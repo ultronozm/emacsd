@@ -155,7 +155,9 @@ Interactively, prompt for WIDTH."
 
 (use-package perfect-margin
   :defer t
-  :diminish)
+  :diminish
+  :bind
+  ("H-m" . perfect-margin-mode))
 
 
 (use-package emacs

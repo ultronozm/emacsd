@@ -43,7 +43,6 @@
         ("H-i" overwrite-mode)
         ("H-l" flymake-mode)
         ("H-k" flycheck-mode)
-        ("H-m" mmm-mode)
         ("H-s" whitespace-mode)
         ("H-v" visual-line-mode)
         ("H-w" which-function-mode)
