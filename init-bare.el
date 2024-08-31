@@ -327,20 +327,35 @@ pushes the mark somewhere useful."
 
 
 (defun czm-end-of-list ()
+  "Move to the end of the current list."
   (interactive)
-  (let ((last (point)))
-    (forward-sexp)
-    (while (> (point) last)
-      (setq last (point))
-      (forward-sexp))))
+  (let ((last (point))
+        (continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (forward-sexp)
+            (when (<= (point) last)
+              (setq continue nil)))
+        (scan-error
+         (setq continue nil)))
+      (setq last (point)))))
 
 (defun czm-beginning-of-list ()
+  "Move to the beginning of the current list."
   (interactive)
-  (let ((last (point)))
-    (backward-sexp)
-    (while (< (point) last)
-      (setq last (point))
-      (backward-sexp))))
+  (let ((last (point))
+        (continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (backward-sexp)
+            (when (>= (point) last)
+              (setq continue nil)))
+        (scan-error
+         (setq continue nil)))
+      (setq last (point)))))
+
 
 (defun czm-backward-down-list ()
   "Move backward down a list."
