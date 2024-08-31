@@ -625,10 +625,10 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   (gptel-model "gpt-4o")
   (gptel-max-tokens 4000)
   :config
-  (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_API_KEY"))
+  (setq gptel-api-key (exec-path-from-shell-getenv "OPENAI_KEY"))
   (gptel-make-anthropic "Claude"
     :stream t
-    :key (exec-path-from-shell-getenv "CLAUDE_API_KEY")))
+    :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")))
 
 (defun czm-gptel-gemini ()
   "Set up gptel to use Gemini API."
@@ -636,29 +636,29 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   (setq-default
    gptel-model "gemini-1.5-pro-latest"
    gptel-backend (gptel-make-gemini "GEmini"
-                   :stream t :key (exec-path-from-shell-getenv "GEMINI_API_KEY"))))
+                   :stream t :key (exec-path-from-shell-getenv "GEMINI_KEY"))))
 
 (defun czm-gptel-claude-sonnet ()
   "Set up gptel to use Claude 3 Sonnet model from Anthropic.
 This function configures gptel to use the 'claude-3-5-sonnet-20240620'
 model with streaming enabled. It uses the Anthropic API key stored in
-the CLAUDE_API_KEY environment variable."
+the ANTHROPIC_KEY environment variable."
   (interactive)
   (setq-default
    gptel-model "claude-3-5-sonnet-20240620"
    gptel-backend (gptel-make-anthropic "Claude"
-                   :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
+                   :stream t :key (exec-path-from-shell-getenv "ANTHROPIC_KEY"))))
 
 (defun czm-gptel-claude-opus ()
   "Set up gptel to use Claude 3 Opus model from Anthropic.
 This function configures gptel to use the 'claude-3-opus-20240229' model
 with streaming enabled. It uses the Anthropic API key stored in the
-CLAUDE_API_KEY environment variable."
+ANTHROPIC_KEY environment variable."
   (interactive)
   (setq-default
    gptel-model "claude-3-opus-20240229"
    gptel-backend (gptel-make-anthropic "Claude"
-                   :stream t :key (exec-path-from-shell-getenv "CLAUDE_API_KEY"))))
+                   :stream t :key (exec-path-from-shell-getenv "ANTHROPIC_KEY"))))
 
 (defun czm-gptel-gpt4 ()
   "Set up gptel to use GPT-4 model from OpenAI.
@@ -694,6 +694,7 @@ default OpenAI backend."
   (require 'llm-openai)
   (require 'llm-claude)
   (require 'llm-gemini)
+  (require 'llm-ollama)
   :custom
   (llm-warn-on-nonfree nil)
   (llm-log t)
@@ -704,14 +705,14 @@ default OpenAI backend."
   (interactive)
   (setq ai-org-chat-provider
         (make-llm-openai
-         :key (exec-path-from-shell-getenv "OPENAI_API_KEY")
+         :key (exec-path-from-shell-getenv "OPENAI_KEY")
          :chat-model "gpt-4")))
 
 (defun czm-llm-gpt4o ()
   (interactive)
   (setq ai-org-chat-provider
         (make-llm-openai
-         :key (exec-path-from-shell-getenv "OPENAI_API_KEY")
+         :key (exec-path-from-shell-getenv "OPENAI_KEY")
          :chat-model
          ;; "gpt-4o"
          "gpt-4o-2024-08-06"
@@ -721,29 +722,35 @@ default OpenAI backend."
   (interactive)
   (setq ai-org-chat-provider
         (make-llm-openai
-         :key (exec-path-from-shell-getenv "OPENAI_API_KEY")
+         :key (exec-path-from-shell-getenv "OPENAI_KEY")
          :chat-model "gpt-4o-mini")))
 
 (defun czm-llm-sonnet ()
   (interactive)
   (setq ai-org-chat-provider
         (make-llm-claude
-         :key (exec-path-from-shell-getenv "CLAUDE_API_KEY")
+         :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")
          :chat-model "claude-3-5-sonnet-20240620")))
 
 (defun czm-llm-opus ()
   (interactive)
   (setq ai-org-chat-provider
         (make-llm-claude
-         :key (exec-path-from-shell-getenv "CLAUDE_API_KEY")
+         :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")
          :chat-model "claude-3-opus-20240229")))
 
 (defun czm-llm-gemini ()
   (interactive)
   (setq ai-org-chat-provider
         (make-llm-gemini
-         :key (exec-path-from-shell-getenv "GEMINI_API_KEY")
+         :key (exec-path-from-shell-getenv "GEMINI_KEY")
          :chat-model "gemini-1.5-pro-latest")))
+
+(defun czm-llm-ollama-llama31 ()
+  (interactive)
+  (setq ai-org-chat-provider
+        (make-llm-ollama
+         :chat-model "llama3.1:latest")))
 
 (use-package ai-org-chat
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
