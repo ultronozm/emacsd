@@ -6,6 +6,10 @@
 (load (concat user-emacs-directory "init-bare.el"))
 (load (concat user-emacs-directory "init-settings.el"))
 
+;; disable customization interface
+(setq custom-file (concat user-emacs-directory "init-custom.el"))
+
+
 ;;; --- Elpaca ---
 
 (defvar elpaca-installer-version 0.7)
@@ -278,11 +282,6 @@ Interactively, prompt for WIDTH."
     (let ((filepath (expand-file-name filename dir)))
       (find-file filepath)
       (save-buffer))))
-
-;;; --- Customization (disabled) ---
-
-(setq custom-file (concat user-emacs-directory "init-custom.el"))
-;; (load custom-file)
 
 ;;; --- Personal Config ---
 
