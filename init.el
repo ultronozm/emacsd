@@ -1608,6 +1608,8 @@ The value of `calc-language` is restored after BODY has been processed."
   (:map git-commit-mode-map
         ("C-c C-l" . magit-generate-changelog)))
 
+(use-package diff-hl)
+
 ;;; --- LaTeX ---
 
 (defun czm-tex-buffer-face ()
