@@ -4,10 +4,9 @@
 (setq ns-alternate-modifier 'super)
 (setq ns-function-modifier 'hyper)
 (setq w32-lwindow-modifier 'super)
-(if (string-equal system-type "windows-nt" )
-    (progn
-      (w32-register-hot-key [s-])
-      (w32-register-hot-key [s])))
+(when (string-equal system-type "windows-nt" )
+  (w32-register-hot-key [s-])
+  (w32-register-hot-key [s]))
 
 (mapc (lambda (keybind)
         (let ((key (car keybind))
