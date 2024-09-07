@@ -1552,7 +1552,10 @@ The value of `calc-language` is restored after BODY has been processed."
                 czm-repos)))
     (consult--grep "Ripgrep" #'consult--ripgrep-make-builder files nil)))
 
-(defvar git-fill-column-alist '(("emacs" . 64) ("auctex" . 64)))
+(defvar git-fill-column-alist
+  '(("gnu-emacs" . 64)
+    ("emacs" . 64)
+    ("auctex" . 64)))
 
 (defun set-git-commit-fill-column ()
   (when-let ((project (project-current))
