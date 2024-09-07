@@ -2243,6 +2243,7 @@ of the preamble part of REGION-TEXT."
   (:map LaTeX-mode-map
         ("M-i" . tex-parens-mark-inner)
         ("s-j" . czm-tex-avy-jump)
+        ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
         ("s-c" . czm-tex-avy-copy)
         ("s-e" . tex-parens-end-of-list)
         ("s-a" . tex-parens-beginning-of-list)
@@ -2260,6 +2261,8 @@ of the preamble part of REGION-TEXT."
       (apply orig-fun args)))
 
   (advice-add 'expand-abbrev :around #'czm-tex-parens-expand-abbrev-advice)
+
+  (add-to-list 'preview-auto-reveal-commands #'czm-tex-jump-back-with-breadcrumb)
 
   (define-repeat-map tex-parens-structural-edit
     ("n" tex-parens-forward-list
