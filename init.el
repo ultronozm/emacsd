@@ -2552,7 +2552,8 @@ entry."
                  :depth nil)
   :after flymake
   :bind (:map flymake-mode-map
-              ("C-c t" . flymake-overlays-smart-toggle))
+              ;; ("C-c t" . flymake-overlays-smart-toggle)
+              )
   :hook (flymake-mode . flymake-overlays-mode)
   :custom
   (flymake-overlays-fontify-text-function #'my-flymake-overlays-fontify-text-function) )
