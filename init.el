@@ -306,7 +306,8 @@ Interactively, prompt for WIDTH."
   :bind
   (:map global-map
         ("C-'" . avy-goto-char-timer)
-        ("C-;" . avy-goto-line))
+        ("C-;" . avy-goto-line)
+        ("C-c g" . avy-goto-line))
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
