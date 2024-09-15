@@ -10,12 +10,12 @@
       my-downloads-folder "~/Downloads"
       my-pdf-folder "~/Dropbox/math documents/unsorted/"
       my-math-folder "~/Dropbox/math documents/"
-      my-tmp-sage-dir "~/scratch/sage"
+      my-scratch-sage-dir "~/scratch/sage"
       my-sage-exe "/usr/local/bin/sage"
-      my-tmp-tex-dir "~/scratch/tex"
-      my-tmp-org-dir "~/scratch/org"
-      my-tmp-cpp-dir "~/scratch/cpp"
-      my-tmp-gpt-dir "~/scratch/gpt")
+      my-scratch-tex-dir "~/scratch/tex"
+      my-scratch-org-dir "~/scratch/org"
+      my-scratch-cpp-dir "~/scratch/cpp"
+      my-scratch-gpt-dir "~/scratch/gpt")
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "nelson.paul.david@gmail.com")

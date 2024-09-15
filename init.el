@@ -61,6 +61,12 @@
   ;; Assume :ensure t unless otherwise specified.
   (setq use-package-always-ensure t))
 
+(use-package emacs
+  :ensure nil
+  :bind
+  (:map global-map
+        ("s-r" . elpaca-rebuild)))
+
 (elpaca-wait)
 
 ;;; --- Exec Path From Shell ---
@@ -87,17 +93,22 @@
 
 ;;; --- Repeat ---
 
-(defun czm-fill-previous-paragraph ()
+(use-package define-repeat-map
+  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
+  :demand t
+  :config
+  (repeat-mode 1))
+
+;;; --- Paragraph Editing ---
+
+(defun fill-previous-paragraph ()
   "Fill the previous paragraph."
   (interactive)
   (save-excursion
     (previous-line)
     (fill-paragraph)))
 
-(use-package define-repeat-map
-  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
-  :demand t
-  :config
+(with-eval-after-load 'define-repeat-map
   (define-repeat-map paragraph
     ("]" forward-paragraph
      "}" forward-paragraph
@@ -112,11 +123,10 @@
      "y" yank
      "C-/" undo
      "t" transpose-paragraphs
-     "q" czm-fill-previous-paragraph
-     "C-l" recenter-top-bottom))
-  (repeat-mode 1))
+     "q" fill-previous-paragraph
+     "C-l" recenter-top-bottom)))
 
-;;; --- General Emacs Configuration ---
+;;; --- Mode line ---
 
 (use-package diminish
   :demand t
@@ -129,45 +139,20 @@
   (diminish 'reftex-mode)
   (diminish 'whitespace-mode))
 
-(use-package easy-kill)
-(global-set-key [remap kill-ring-save] #'easy-kill)
-
-;; I know when I'm narrowing
+;; Remove "%n" from mode-line-modes -- I know when I'm narrowing.
 (setq mode-line-modes (delete "%n" mode-line-modes))
 
-(defun czm-abbreviate-elisp-mode-name ()
-  (cond
-   ((consp mode-name)
-    (setcar mode-name "E"))
-   ((stringp mode-name)
-    (when (equal mode-name "Lisp Interaction")
-      (setq mode-name "LI")))))
+(add-hook 'emacs-lisp-mode-hook
+          (lambda () (setq mode-name "E")))
 
-(add-hook 'emacs-lisp-mode-hook 'czm-abbreviate-elisp-mode-name)
+(add-hook 'lisp-interaction-mode-hook
+          (lambda () (setq mode-name "LI")))
 
-(defun czm-set-margins (width)
-  "Set the margins of the current window to WIDTH.
-Interactively, prompt for WIDTH."
-  (interactive "nWidth: ")
-  (setq left-margin-width width right-margin-width width)
-  (set-window-margins (selected-window) width width))
+(with-eval-after-load 'tex-mode
+  (add-hook 'LaTeX-mode-hook
+            (lambda () (setq TeX-base-mode-name "L"))))
 
-(use-package wgrep) ;; use C-c C-p in embark export following ripgrep
-
-(use-package perfect-margin
-  :defer t
-  :diminish
-  :bind
-  ("H-m" . perfect-margin-mode))
-
-
-(use-package emacs
-  :ensure nil
-  :bind
-  (:map global-map
-        ("s-r" . elpaca-rebuild)))
-
-;;; --- Org Mode Configuration ---
+;;; --- Org Mode ---
 
 (require 'org)
 
@@ -257,35 +242,22 @@ Interactively, prompt for WIDTH."
      "[" org-backward-paragraph
      "{" org-backward-paragraph)
     (:continue
-     ;; "M-h" spw/mark-paragraph
-     ;; "h" spw/mark-paragraph
      "k" kill-paragraph
      "w" kill-region
      "M-w" kill-ring-save
      "y" yank
      "C-/" undo
      "t" transpose-paragraphs
-     "q" czm-fill-previous-paragraph))
+     "q" fill-previous-paragraph))
   (repeat-mode 1)
   (require 'ob-shell))
-
-(defun czm-new-tmp-org ()
-  "Create new temporary org buffer."
-  (interactive)
-  (let ((dir (file-name-as-directory my-tmp-org-dir))
-        (filename (format-time-string "tmp-%Y%m%dT%H%M%S.org")))
-    (unless (file-directory-p dir)
-      (make-directory dir t))
-    (let ((filepath (expand-file-name filename dir)))
-      (find-file filepath)
-      (save-buffer))))
 
 ;;; --- Personal Config ---
 
 (when (file-exists-p (concat user-emacs-directory "init-personal.el"))
   (load (concat user-emacs-directory "init-personal.el")))
 
-;;; --- Essential Packages ---
+;;; --- Eldoc ---
 
 ;; ElDoc
 ;; (use-package eldoc
@@ -316,7 +288,8 @@ Interactively, prompt for WIDTH."
   :after org
   :bind
   (:map org-mode-map
-        ("C-'" . nil)))
+        ("C-'" . nil) ; disable because it is used above
+        ))
 
 (use-package czm-misc
   :ensure (:host github :repo "ultronozm/czm-misc.el"
@@ -474,6 +447,7 @@ Interactively, prompt for WIDTH."
   )
 
 (use-package consult-company)
+
 (use-package embark
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
@@ -518,6 +492,7 @@ Interactively, prompt for WIDTH."
 ;; https://karthinks.com/software/emacs-window-management-almanac/#aw-select-the-completing-read-for-emacs-windows
 (defun ace-window-one-command ()
   (interactive)
+  (require 'ace-window)
   (let ((win (aw-select " ACE")))
     (when (windowp win)
       (with-selected-window win
@@ -546,6 +521,17 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   (message "Use `ace-window' to display next command buffer..."))
 
 ;;; --- Other Utilities ---
+
+(use-package perfect-margin
+  :defer t
+  :diminish
+  :bind
+  ("H-m" . perfect-margin-mode))
+
+(use-package easy-kill
+  :bind ([remap kill-ring-save] . easy-kill))
+
+(use-package wgrep) ;; use C-c C-p in embark export following ripgrep
 
 (use-package which-key
   :diminish
@@ -579,6 +565,14 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
          :engines (list (gts-google-engine) ;; (gts-bing-engine)
                         )
          :render (gts-buffer-render))))
+
+(use-package rust-mode
+  :defer t
+  :hook
+  (rust-mode . eglot-ensure))
+
+(use-package xr
+  :defer t)
 
 ;;; --- AI-Powered Tools ---
 
@@ -625,62 +619,46 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
     :stream t
     :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")))
 
-(defun czm-gptel-gemini ()
-  "Set up gptel to use Gemini API."
-  (interactive)
-  (setq-default
-   gptel-model "gemini-1.5-pro-latest"
-   gptel-backend (gptel-make-gemini "GEmini"
-                   :stream t :key (exec-path-from-shell-getenv "GEMINI_KEY"))))
+(defvar czm-gptel-models
+  '(("GPT-4" .
+     (:model "gpt-4"
+             :backend gptel--openai))
+    ("GPT-4 Optimized" .
+     (:model "gpt-4o"
+             :backend gptel--openai))
+    ("GPT-4 Optimized Mini" .
+     (:model "gpt-4o-mini"
+             :backend gptel--openai))
+    ("Claude 3 Sonnet" .
+     (:model "claude-3-5-sonnet-20240620"
+             :backend (gptel-make-anthropic "Claude"
+                        :stream t
+                        :key (exec-path-from-shell-getenv "ANTHROPIC_KEY"))))
+    ("Claude 3 Opus" .
+     (:model "claude-3-opus-20240229"
+             :backend (gptel-make-anthropic "Claude"
+                        :stream t
+                        :key (exec-path-from-shell-getenv "ANTHROPIC_KEY"))))
+    ("Gemini" .
+     (:model "gemini-1.5-pro-latest"
+             :backend (gptel-make-gemini "Gemini"
+                        :stream t
+                        :key (exec-path-from-shell-getenv "GEMINI_KEY")))))
+  "Alist of gptel models and their configurations.")
 
-(defun czm-gptel-claude-sonnet ()
-  "Set up gptel to use Claude 3 Sonnet model from Anthropic.
-This function configures gptel to use the 'claude-3-5-sonnet-20240620'
-model with streaming enabled. It uses the Anthropic API key stored in
-the ANTHROPIC_KEY environment variable."
-  (interactive)
-  (setq-default
-   gptel-model "claude-3-5-sonnet-20240620"
-   gptel-backend (gptel-make-anthropic "Claude"
-                   :stream t :key (exec-path-from-shell-getenv "ANTHROPIC_KEY"))))
-
-(defun czm-gptel-claude-opus ()
-  "Set up gptel to use Claude 3 Opus model from Anthropic.
-This function configures gptel to use the 'claude-3-opus-20240229' model
-with streaming enabled. It uses the Anthropic API key stored in the
-ANTHROPIC_KEY environment variable."
-  (interactive)
-  (setq-default
-   gptel-model "claude-3-opus-20240229"
-   gptel-backend (gptel-make-anthropic "Claude"
-                   :stream t :key (exec-path-from-shell-getenv "ANTHROPIC_KEY"))))
-
-(defun czm-gptel-gpt4 ()
-  "Set up gptel to use GPT-4 model from OpenAI.
-This function configures gptel to use the 'gpt-4' model with the default
-OpenAI backend."
-  (interactive)
-  (setq-default
-   gptel-model "gpt-4"
-   gptel-backend gptel--openai))
-
-(defun czm-gptel-gpt4o ()
-  "Set up gptel to use GPT-4 Optimized model from OpenAI.
-This function configures gptel to use the 'gpt-4o' model with the
-default OpenAI backend."
-  (interactive)
-  (setq-default
-   gptel-model "gpt-4o"
-   gptel-backend gptel--openai))
-
-(defun czm-gptel-gpt4o-mini ()
-  "Set up gptel to use GPT-4 Optimized Mini model from OpenAI.
-This function configures gptel to use the 'gpt-4o-mini' model with the
-default OpenAI backend."
-  (interactive)
-  (setq-default
-   gptel-model "gpt-4o-mini"
-   gptel-backend gptel--openai))
+(defun czm-gptel-select-model (model)
+  "Select and configure a gptel model.
+MODEL is a string key from `czm-gptel-models'."
+  (interactive
+   (list (completing-read "Select gptel model: "
+                          (mapcar #'car czm-gptel-models))))
+  (let* ((config (alist-get model czm-gptel-models nil nil #'string=))
+         (gptel-model (plist-get config :model))
+         (gptel-backend (plist-get config :backend)))
+    (setq-default
+     gptel-model gptel-model
+     gptel-backend gptel-backend)
+    (message "Selected gptel model: %s" model)))
 
 (use-package llm
   :ensure (:host github :repo "ahyatt/llm"
@@ -696,56 +674,57 @@ default OpenAI backend."
   :config
   (add-to-list 'warning-suppress-types '(llm)))
 
-(defun czm-llm-gpt4 ()
-  (interactive)
-  (setq ai-org-chat-provider
-        (make-llm-openai
-         :key (exec-path-from-shell-getenv "OPENAI_KEY")
-         :chat-model "gpt-4")))
+(defvar czm-llm-models
+  '(("gpt4" .
+     (:provider make-llm-openai
+                :key-env "OPENAI_KEY"
+                :chat-model "gpt-4"))
+    ("gpt4o" .
+     (:provider make-llm-openai
+                :key-env "OPENAI_KEY"
+                :chat-model "gpt-4o-2024-08-06"))
+    ("gpt4o-mini" .
+     (:provider make-llm-openai
+                :key-env "OPENAI_KEY"
+                :chat-model "gpt-4o-mini"))
+    ("sonnet 3.5" .
+     (:provider make-llm-claude
+                :key-env "ANTHROPIC_KEY"
+                :chat-model "claude-3-5-sonnet-20240620"))
+    ("opus 3" .
+     (:provider make-llm-claude :
+                key-env "ANTHROPIC_KEY"
+                :chat-model "claude-3-opus-20240229"))
+    ("gemini" .
+     (:provider make-llm-gemini
+                :key-env "GEMINI_KEY"
+                :chat-model "gemini-1.5-pro-latest"))
+    ("llama 3.1" .
+     (:provider make-llm-ollama
+                :chat-model "llama3.1:latest"))
+    ("mistral" .
+     (:provider make-llm-ollama
+                :chat-model "mistral:latest")))
+  "Alist of LLM models and their configurations.")
 
-(defun czm-llm-gpt4o ()
-  (interactive)
-  (setq ai-org-chat-provider
-        (make-llm-openai
-         :key (exec-path-from-shell-getenv "OPENAI_KEY")
-         :chat-model
-         ;; "gpt-4o"
-         "gpt-4o-2024-08-06"
-         )))
-
-(defun czm-llm-gpt4o-mini ()
-  (interactive)
-  (setq ai-org-chat-provider
-        (make-llm-openai
-         :key (exec-path-from-shell-getenv "OPENAI_KEY")
-         :chat-model "gpt-4o-mini")))
-
-(defun czm-llm-sonnet ()
-  (interactive)
-  (setq ai-org-chat-provider
-        (make-llm-claude
-         :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")
-         :chat-model "claude-3-5-sonnet-20240620")))
-
-(defun czm-llm-opus ()
-  (interactive)
-  (setq ai-org-chat-provider
-        (make-llm-claude
-         :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")
-         :chat-model "claude-3-opus-20240229")))
-
-(defun czm-llm-gemini ()
-  (interactive)
-  (setq ai-org-chat-provider
-        (make-llm-gemini
-         :key (exec-path-from-shell-getenv "GEMINI_KEY")
-         :chat-model "gemini-1.5-pro-latest")))
-
-(defun czm-llm-ollama-llama31 ()
-  (interactive)
-  (setq ai-org-chat-provider
-        (make-llm-ollama
-         :chat-model "llama3.1:latest")))
+(defun czm-llm-select-model (model)
+  "Select and configure an LLM model.
+MODEL is a string key from `czm-llm-models'."
+  (interactive
+   (list (completing-read "Select LLM model: "
+                          (mapcar #'car czm-llm-models))))
+  (let* ((config (alist-get model czm-llm-models nil nil #'string=))
+         (provider (plist-get config :provider))
+         (key-env (plist-get config :key-env))
+         (chat-model (plist-get config :chat-model)))
+    (setq ai-org-chat-provider
+          (if key-env
+              (funcall provider
+                       :chat-model chat-model
+                       :key (exec-path-from-shell-getenv key-env))
+            (funcall provider
+                     :chat-model chat-model)))
+    (message "Selected model: %s" model)))
 
 (use-package ai-org-chat
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
@@ -765,10 +744,10 @@ default OpenAI backend."
   (ai-org-chat-setup-buffer ai-org-chat-minor-mode)
   :custom
   (ai-org-chat-user-name my-first-name)
-  (ai-org-chat-dir my-tmp-gpt-dir)
+  (ai-org-chat-dir my-scratch-gpt-dir)
   (ai-org-chat-context-style nil)
   :config
-  (czm-llm-sonnet))
+  (czm-llm-select-model "sonnet 3.5"))
 
 ;; ai-org-chat-prompt-preamble
 ;;    "You are a brilliant and helpful assistant.
@@ -1014,11 +993,7 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
 (use-package aggressive-indent
   :defer t
   :diminish
-  :hook
-  (emacs-lisp-mode . aggressive-indent-mode)
-  (LaTeX-mode . aggressive-indent-mode)
-  (rust-mode . aggressive-indent-mode)
-  (c++-mode . aggressive-indent-mode))
+  :hook ((emacs-lisp-mode LaTeX-mode rust-mode c++-mode) . aggressive-indent-mode))
 
 ;;; --- LSP ---
 
@@ -1213,88 +1188,89 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
 
 ;;; --- C++ ---
 
-(c-add-style "llvm4"
-             '("gnu"
-               (c-basic-offset . 2)     ; Guessed value
-               (c-offsets-alist
-                (access-label . -)         ; Guessed value
-                (block-close . 0)          ; Guessed value
-                (class-close . 0)          ; Guessed value
-                (defun-block-intro . ++) ; Guessed value
-                ;; (defun-block-intro . ++)     ; Guessed value
-                (inclass . ++)  ; Guessed value
-                (inline-close . 0)      ; Guessed value
-                ;; (inline-close . 0)                   ; Guessed value
-                (statement . 0)        ; Guessed value
-                (statement-block-intro . ++) ; Guessed value
-                (statement-cont . llvm-lineup-statement) ; Guessed value
-                ;; (statement-cont . ++)                ; Guessed value
-                (substatement . ++)        ; Guessed value
-                (topmost-intro . nil)      ; Guessed value
-                (topmost-intro-cont . +) ; Guessed value
-                (annotation-top-cont . 0)
-                (annotation-var-cont . +)
-                (arglist-close . c-lineup-close-paren)
-                (arglist-cont c-lineup-gcc-asm-reg 0)
-                ;; (arglist-cont-nonempty c-lineup-gcc-asm-reg 0)
-                (arglist-cont-nonempty . c-lineup-arglist)
-                (arglist-intro . ++)
-                ;; (arglist-intro . c-lineup-arglist-intro-after-paren)
-                (block-open . 0)
-                (brace-entry-open . 0)
-                (brace-list-close . 0)
-                (brace-list-entry . c-lineup-string-cont)
-                (brace-list-intro first c-lineup-2nd-brace-entry-in-arglist c-lineup-class-decl-init-+ +)
-                (brace-list-open . +)
-                (c . c-lineup-C-comments)
-                (case-label . 0)
-                (catch-clause . 0)
-                (class-open . 0)
-                (comment-intro . c-lineup-comment)
-                (composition-close . 0)
-                (composition-open . 0)
-                (cpp-define-intro c-lineup-cpp-define +)
-                (cpp-macro . -1000)
-                (cpp-macro-cont . +)
-                (defun-close . 0)
-                (defun-open . 0)
-                (do-while-closure . 0)
-                (else-clause . 0)
-                (extern-lang-close . 0)
-                (extern-lang-open . 0)
-                (friend . 0)
-                (func-decl-cont . +)
-                (incomposition . +)
-                (inexpr-class . +)
-                (inexpr-statement . +)
-                (inextern-lang . +)
-                (inher-cont . c-lineup-multi-inher)
-                (inher-intro . +)
-                (inlambda . 0)
-                (inline-open . 0)
-                (inmodule . +)
-                (innamespace . +)
-                (knr-argdecl . 0)
-                (knr-argdecl-intro . 5)
-                (label . 0)
-                (lambda-intro-cont . +)
-                (member-init-cont . c-lineup-multi-inher)
-                (member-init-intro . 4)
-                (module-close . 0)
-                (module-open . 0)
-                (namespace-close . 0)
-                (namespace-open . 0)
-                (objc-method-args-cont . c-lineup-ObjC-method-args)
-                (objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
-                (objc-method-intro .
-                                   [0])
-                (statement-case-intro . ++)
-                (statement-case-open . +)
-                (stream-op . c-lineup-streamop)
-                (string . c-lineup-string-cont)
-                (substatement-label . 0)
-                (substatement-open . 0)
-                (template-args-cont c-lineup-template-args +))))
+(c-add-style
+ "llvm4"
+ '("gnu"
+   (c-basic-offset . 2)     ; Guessed value
+   (c-offsets-alist
+    (access-label . -)         ; Guessed value
+    (block-close . 0)          ; Guessed value
+    (class-close . 0)          ; Guessed value
+    (defun-block-intro . ++) ; Guessed value
+    ;; (defun-block-intro . ++)     ; Guessed value
+    (inclass . ++)  ; Guessed value
+    (inline-close . 0)      ; Guessed value
+    ;; (inline-close . 0)                   ; Guessed value
+    (statement . 0)        ; Guessed value
+    (statement-block-intro . ++) ; Guessed value
+    (statement-cont . llvm-lineup-statement) ; Guessed value
+    ;; (statement-cont . ++)                ; Guessed value
+    (substatement . ++)        ; Guessed value
+    (topmost-intro . nil)      ; Guessed value
+    (topmost-intro-cont . +) ; Guessed value
+    (annotation-top-cont . 0)
+    (annotation-var-cont . +)
+    (arglist-close . c-lineup-close-paren)
+    (arglist-cont c-lineup-gcc-asm-reg 0)
+    ;; (arglist-cont-nonempty c-lineup-gcc-asm-reg 0)
+    (arglist-cont-nonempty . c-lineup-arglist)
+    (arglist-intro . ++)
+    ;; (arglist-intro . c-lineup-arglist-intro-after-paren)
+    (block-open . 0)
+    (brace-entry-open . 0)
+    (brace-list-close . 0)
+    (brace-list-entry . c-lineup-string-cont)
+    (brace-list-intro first c-lineup-2nd-brace-entry-in-arglist c-lineup-class-decl-init-+ +)
+    (brace-list-open . +)
+    (c . c-lineup-C-comments)
+    (case-label . 0)
+    (catch-clause . 0)
+    (class-open . 0)
+    (comment-intro . c-lineup-comment)
+    (composition-close . 0)
+    (composition-open . 0)
+    (cpp-define-intro c-lineup-cpp-define +)
+    (cpp-macro . -1000)
+    (cpp-macro-cont . +)
+    (defun-close . 0)
+    (defun-open . 0)
+    (do-while-closure . 0)
+    (else-clause . 0)
+    (extern-lang-close . 0)
+    (extern-lang-open . 0)
+    (friend . 0)
+    (func-decl-cont . +)
+    (incomposition . +)
+    (inexpr-class . +)
+    (inexpr-statement . +)
+    (inextern-lang . +)
+    (inher-cont . c-lineup-multi-inher)
+    (inher-intro . +)
+    (inlambda . 0)
+    (inline-open . 0)
+    (inmodule . +)
+    (innamespace . +)
+    (knr-argdecl . 0)
+    (knr-argdecl-intro . 5)
+    (label . 0)
+    (lambda-intro-cont . +)
+    (member-init-cont . c-lineup-multi-inher)
+    (member-init-intro . 4)
+    (module-close . 0)
+    (module-open . 0)
+    (namespace-close . 0)
+    (namespace-open . 0)
+    (objc-method-args-cont . c-lineup-ObjC-method-args)
+    (objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
+    (objc-method-intro .
+                       [0])
+    (statement-case-intro . ++)
+    (statement-case-open . +)
+    (stream-op . c-lineup-streamop)
+    (string . c-lineup-string-cont)
+    (substatement-label . 0)
+    (substatement-open . 0)
+    (template-args-cont c-lineup-template-args +))))
 
 (defun czm-c-mode-common-hook ()
   (c-set-style "llvm4")
@@ -1384,7 +1360,7 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
                  :depth nil)
   :defer t
   :custom
-  (czm-cpp-scratch-directory my-tmp-cpp-dir))
+  (czm-cpp-scratch-directory my-scratch-cpp-dir))
 
 (add-to-list 'auto-mode-alist '("\\.ixx\\'" . c++-mode))
 
@@ -1464,36 +1440,38 @@ The value of `calc-language` is restored after BODY has been processed."
                  :depth nil)
   :defer t)
 
-(defvar czm-repos '(
-                    "ai-org-chat"
-                    "czm-cpp"
-                    "czm-lean4"
-                    "czm-misc"
-                    "czm-preview"
-                    "czm-spell"
-                    "czm-tex-compile"
-                    "czm-tex-edit"
-                    "czm-tex-fold"
-                    "czm-tex-jump"
-                    "czm-tex-mint"
-                    "czm-tex-ref"
-                    "czm-tex-util"
-                    "dynexp"
-                    "eldoc-icebox"
-                    "flymake-overlays"
-                    "lean4-mode"
-                    "library"
-                    "preview-auto"
-                    "preview-tailor"
-                    "publish"
-                    "repo-scan"
-                    "spout"
-                    "symtex"
-                    "auctex-label-numbers"
-                    "auctex-cont-latexmk"
-                    "tex-parens"
-                    "tex-item"
-                    ))
+(defvar czm-repos
+  '(
+    "ai-org-chat"
+    "czm-cpp"
+    "czm-lean4"
+    "czm-misc"
+    "czm-preview"
+    "czm-spell"
+    "czm-tex-compile"
+    "czm-tex-edit"
+    "czm-tex-fold"
+    "czm-tex-jump"
+    "czm-tex-mint"
+    "czm-tex-ref"
+    "czm-tex-util"
+    "dynexp"
+    "eldoc-icebox"
+    "flymake-overlays"
+    "lean4-mode"
+    "library"
+    "magit-fill-column"
+    "preview-auto"
+    "preview-tailor"
+    "publish"
+    "repo-scan"
+    "spout"
+    "symtex"
+    "auctex-label-numbers"
+    "auctex-cont-latexmk"
+    "tex-parens"
+    "tex-item"
+    ))
 
 (defun czm-repos-uncompiled ()
   (interactive)
@@ -1552,22 +1530,17 @@ The value of `calc-language` is restored after BODY has been processed."
                 czm-repos)))
     (consult--grep "Ripgrep" #'consult--ripgrep-make-builder files nil)))
 
-(defvar git-fill-column-alist
-  '(("gnu-emacs" . 64)
-    ("emacs" . 64)
-    ("auctex" . 64)))
-
-(defun set-git-commit-fill-column ()
-  (when-let ((project (project-current))
-             (root (project-root project))
-             (name (file-name-nondirectory (directory-file-name root)))
-             (assn (assoc name git-fill-column-alist)))
-    (setq fill-column (cdr assn))))
+(use-package magit-fill-column
+  :ensure (:host github :repo "ultronozm/magit-fill-column.el"
+                 :depth nil)
+  :hook (git-commit-setup . magit-fill-column-set)
+  :custom
+  (magit-fill-column-alist ''(("emacs" . 64)
+                              ("auctex" . 64)
+                              ("tex-parens" . 64))))
 
 (use-package git-commit
   :ensure nil
-  :hook
-  (git-commit-mode . set-git-commit-fill-column)
   :bind
   (:map git-commit-mode-map
         ("C-c C-l" . magit-generate-changelog)))
@@ -1593,12 +1566,12 @@ The value of `calc-language` is restored after BODY has been processed."
    '("definition" LaTeX-env-label)
    '("theorem" LaTeX-env-label))
   (setq-local outline-regexp
-	             (concat "\\\\"
-		                    (regexp-opt (append latex-metasection-list
-					                                     (mapcar #'car latex-section-alist)
-					                                     '("bibliography"
+              (concat "\\\\"
+                      (regexp-opt (append latex-metasection-list
+                                          (mapcar #'car latex-section-alist)
+                                          '("bibliography"
                                             "begin{thebibliography"))
-				                              t))))
+                                  t))))
 
 (defun czm-widen-first (orig-fun &rest args)
   (save-restriction
@@ -1791,8 +1764,6 @@ The value of `calc-language` is restored after BODY has been processed."
   :config
   (advice-add 'LaTeX-outline-level :around #'czm-LaTeX-outline-level-advice))
 
-;; (spw/remap-mark-command 'sp-mark-sexp LaTeX-mode-map)
-
 (use-package czm-tex-util
   :ensure (:host github :repo "ultronozm/czm-tex-util.el"
                  :depth nil)
@@ -1807,8 +1778,8 @@ The value of `calc-language` is restored after BODY has been processed."
   (interactive)
   (if TeX-fold-mode
       (save-excursion
-	       (backward-word)
-	       (TeX-fold-item 'macro))))
+        (backward-word)
+        (TeX-fold-item 'macro))))
 
 (defun my-yank-after-advice (&rest _)
   "Fold any yanked ref or eqref."
@@ -1828,15 +1799,16 @@ The value of `calc-language` is restored after BODY has been processed."
   (TeX-fold-mode 1)
   (auctex-label-numbers-mode 1)
   (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
+  ;; (advice-add 'czm-tex-edit-insert-quote-or-wrap-region :after #'czm-tex-quote-advice)
   (advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
   (advice-add 'yank :after #'my-yank-after-advice)
   (remove-hook 'LaTeX-mode-hook #'czm-setup-and-activate-tex-fold)
   (add-hook 'LaTeX-mode-hook #'TeX-fold-mode))
 
-(defun czm-abbreviate-latex-mode-name ()
-  (setq TeX-base-mode-name "L"))
+;; (defun czm-abbreviate-latex-mode-name ()
+;;   (setq TeX-base-mode-name "L"))
 
-(add-hook 'LaTeX-mode-hook #'czm-abbreviate-latex-mode-name)
+;; (add-hook 'LaTeX-mode-hook #'czm-abbreviate-latex-mode-name)
 
 (use-package czm-tex-fold
   :ensure (:host github :repo "ultronozm/czm-tex-fold.el"
@@ -1867,10 +1839,10 @@ The value of `calc-language` is restored after BODY has been processed."
   (czm-tex-ref-labelable-environments '("align" "gather" "flalign" "multline" "lemma" "exercise" "example" "proposition" "corollary" "remark" "definition" "theorem" "eqnarray" "equation" "conjecture" "question" "figure" "table" "problem" "fact" "rem" "prop"))
   :bind
   (:map global-map
-	       ("C-c 0" . czm-tex-ref-bib))
+        ("C-c 0" . czm-tex-ref-bib))
   (:map LaTeX-mode-map
-	       ("C-c 9" . czm-tex-ref-label)
-	       ("C-c 0" . czm-tex-ref-bib)))
+        ("C-c 9" . czm-tex-ref-label)
+        ("C-c 0" . czm-tex-ref-bib)))
 
 ;; (defun czm-attrap-LaTeX-fixer (msg pos end)
 ;;   (cond
@@ -1898,23 +1870,23 @@ The value of `calc-language` is restored after BODY has been processed."
 ;;           (progn (skip-chars-backward "\n\t ")
 ;;                  (insert "%"))
 ;;         (delete-region (point) (save-excursion (skip-chars-forward " \t") (point)))
-;; 	)))
+;;   )))
 ;;    ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.") msg)
 ;;     (attrap-one-option 'enclose-with-braces
 ;;       (insert "}")
 ;;       (save-excursion
-;; 	(backward-char)
-;; 	(backward-sexp)
-;; 	(re-search-backward "[^[:alnum:]\\_\\/]")
-;; 	(forward-char)
-;; 	(insert "{")
-;; 	)))
+;;   (backward-char)
+;;   (backward-sexp)
+;;   (re-search-backward "[^[:alnum:]\\_\\/]")
+;;   (forward-char)
+;;   (insert "{")
+;;   )))
 ;;    ((s-matches? (rx "You should not use punctuation in front of quotes.") msg)
 ;;     (attrap-one-option 'swap-punctuation-with-quotes
 ;;       (progn
-;; 	(delete-char 2)
-;; 	(backward-char)
-;; 	(insert "''"))
+;;   (delete-char 2)
+;;   (backward-char)
+;;   (insert "''"))
 ;;       ))))
 
 (defun czm-attrap-LaTeX-fixer-flymake (msg pos end)
@@ -1956,27 +1928,27 @@ The value of `calc-language` is restored after BODY has been processed."
                          (delete-region (point)
                                         (save-excursion (skip-chars-forward " \t")
                                                         (point)))
-	                        )))
+                         )))
    ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.")
                 msg)
     (attrap-one-option 'enclose-with-braces
                        (forward-char)
                        (insert "}")
                        (save-excursion
-	                        (backward-char)
-	                        (backward-sexp)
-	                        (re-search-backward "[^[:alnum:]\\_\\/]")
-	                        (forward-char)
-	                        (insert "{")
-	                        )))
+                         (backward-char)
+                         (backward-sexp)
+                         (re-search-backward "[^[:alnum:]\\_\\/]")
+                         (forward-char)
+                         (insert "{")
+                         )))
    ((s-matches? (rx "You should not use punctuation in front of quotes.")
                 msg)
     (attrap-one-option 'swap-punctuation-with-quotes
                        (progn
-	                        (forward-char)
+                         (forward-char)
                          (delete-char 2)
-	                        (backward-char)
-	                        (insert "''"))))))
+                         (backward-char)
+                         (insert "''"))))))
 
 (use-package emacs
   :ensure nil
@@ -1991,18 +1963,6 @@ The value of `calc-language` is restored after BODY has been processed."
 (with-eval-after-load 'attrap
   (setcdr (assoc 'LaTeX-flymake attrap-flymake-backends-alist)
           #'czm-attrap-LaTeX-fixer-flymake))
-
-(defun czm/latex-tmp-new ()
-  "Create new temporary LaTeX buffer."
-  (interactive)
-  (let ((dir (file-name-as-directory my-tmp-tex-dir))
-	       (filename (format-time-string "tmp-%Y%m%dT%H%M%S.tex")))
-    (unless (file-directory-p dir)
-      (make-directory dir t))
-    (let ((filepath (expand-file-name filename dir)))
-      (find-file filepath)
-      (save-buffer)
-      (czm-setup-tex-file))))
 
 (use-package dynexp
   :ensure (:host github :repo "ultronozm/dynexp.el"
@@ -2076,7 +2036,7 @@ The value of `calc-language` is restored after BODY has been processed."
   ;; (LaTeX-mode . preview-auto-conditionally-enable)
   :bind
   ;; (:map LaTeX-mode-map
-	 ;;       ("H-u" . preview-auto-mode))
+  ;;       ("H-u" . preview-auto-mode))
   :config
   (setq preview-protect-point t)
   (setq preview-locating-previews-message nil)
@@ -2130,36 +2090,6 @@ of the preamble part of REGION-TEXT."
             (copy-file source dest t))))
     (message "Aborted.")))
 
-(defvar czm-tex-avy-jump-regexp
-  "\\(. \\$\\|..\n[[:space:]]*\\\\begin{\\(eq\\|ali\\)\\)")
-
-(defun czm-tex-avy-jump ()
-  (interactive)
-  (avy-jump czm-tex-avy-jump-regexp
-            :action (lambda (pos)
-                      (goto-char pos)
-                      (forward-char 2)
-                      (let ((this-command #'tex-parens-down-list))
-                        (tex-parens-down-list)))))
-
-(defun czm-tex-avy-copy ()
-  (interactive)
-  (avy-jump czm-tex-avy-jump-regexp
-            :action (lambda (pos)
-                      (save-excursion
-                        (copy-region-as-kill
-                         (+ pos 2)
-                         (save-excursion
-                           (goto-char (+ pos 2))
-                           (tex-parens-forward-list)
-                           (point))))
-                      (yank))))
-
-;; (defun my-avy-action-copy-and-yank (pt)
-;;   "Copy and yank sexp starting on PT."
-;;   (avy-action-copy pt)
-;;   (yank))
-
 ;; (setq avy-dispatch-alist '((?c . avy-action-copy)
 ;;                            (?k . avy-action-kill-move)
 ;;                            (?K . avy-action-kill-stay)
@@ -2188,79 +2118,32 @@ of the preamble part of REGION-TEXT."
   (let ((this-command #'tex-parens-down-list))
     (tex-parens-backward-down-list)))
 
-(defun czm-tex-kill-to-end-of-list ()
-  "Kill text between point and end of current list."
-  (interactive)
-  (let ((end (save-excursion (tex-parens-end-of-list) (point))))
-    (kill-region (point) end)))
-
-(defun czm-tex-kill-to-beginning-of-list ()
-  "Kill text between point and beginning of current list."
-  (interactive)
-  (let ((beginning (save-excursion (tex-parens-beginning-of-list) (point))))
-    (kill-region beginning (point))))
-
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el"
                  :depth nil)
   :after latex
   :bind
-  ;; (:map LaTeX-mode-map
-  ;;       ("C-M-f" . tex-parens-forward-sexp)
-  ;;       ("C-M-b" . tex-parens-backward-sexp)
-  ;;       ("C-M-n" . tex-parens-forward-list)
-  ;;       ("C-M-p" . tex-parens-backward-list)
-  ;;       ("C-M-u" . tex-parens-backward-up-list)
-  ;;       ("M-u" . tex-parens-up-list)
-  ;;       ("C-M-g" . tex-parens-down-list)
-  ;;       ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
-  ;;       ("M-_" . tex-parens-delete-pair)
-  ;;       ("C-M-SPC" . tex-parens-mark-sexp)
-  ;;       ("C-M-k" . tex-parens-kill-sexp)
-  ;;       ("C-M-t" . transpose-sexps)
-  ;;       ("C-M-<backspace>" . tex-parens-backward-kill-sexp)
-  ;;       ("M-+" . tex-parens-raise-sexp)
-  ;;       ("M-i" . tex-parens-mark-inner)
-  ;;       ("s-j" . czm-tex-avy-jump)
-  ;;       ("s-c" . czm-tex-avy-copy)
-  ;;       ("s-e" . tex-parens-end-of-list)
-  ;;       ("s-a" . tex-parens-beginning-of-list))
-
-  ;; (:map latex-mode-map
-  ;;       ([remap forward-sexp] . tex-parens-forward-sexp)
-  ;;       ([remap backward-sexp] . tex-parens-backward-sexp)
-  ;;       ([remap forward-list] . tex-parens-forward-list)
-  ;;       ([remap backward-list] . tex-parens-backward-list)
-  ;;       ([remap backward-up-list] . tex-parens-backward-up-list)
-  ;;       ([remap up-list] . tex-parens-up-list)
-  ;;       ([remap down-list] . tex-parens-down-list)
-  ;;       ([remap delete-pair] . tex-parens-delete-pair)
-  ;;       ([remap mark-sexp] . tex-parens-mark-sexp)
-  ;;       ([remap kill-sexp] . tex-parens-kill-sexp)
-  ;;       ([remap transpose-sexps] . transpose-sexps)
-  ;;       ([remap backward-kill-sexp] . tex-parens-backward-kill-sexp)
-  ;;       ([remap raise-sexp] . tex-parens-raise-sexp))
   (:map LaTeX-mode-map
         ("M-i" . tex-parens-mark-inner)
-        ("s-j" . czm-tex-avy-jump)
+        ("s-j" . tex-parens-avy-jump-to-math)
         ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
-        ("s-c" . czm-tex-avy-copy)
+        ("s-c" . tex-parens-avy-copy-math)
         ("s-e" . tex-parens-end-of-list)
         ("s-a" . tex-parens-beginning-of-list)
-        ("s-E" . czm-tex-kill-to-end-of-list)
-        ("s-A" . czm-tex-kill-to-beginning-of-list))
+        ("s-E" . tex-parens-kill-to-end-of-list)
+        ("s-A" . tex-parens-kill-to-beginning-of-list))
 
   :hook
   (latex-mode . tex-parens-mode)
   (LaTeX-mode . tex-parens-mode)
 
   :config
-  ;; (spw/remap-mark-command 'tex-parens-mark-sexp LaTeX-mode-map)
-  (defun czm-tex-parens-expand-abbrev-advice (orig-fun &rest args)
-    (unless (tex-parens--comment)
+  
+  (defun czm-expand-abbrev-advice (orig-fun &rest args)
+    (unless (nth 4 (syntax-ppss))
       (apply orig-fun args)))
 
-  (advice-add 'expand-abbrev :around #'czm-tex-parens-expand-abbrev-advice)
+  (advice-add 'expand-abbrev :around #'czm-expand-abbrev-advice)
 
   (add-to-list 'preview-auto-reveal-commands #'czm-tex-jump-back-with-breadcrumb)
 
@@ -2288,7 +2171,6 @@ of the preamble part of REGION-TEXT."
      "M-w" kill-ring-save
      "y" yank
      "c" lispy-clone
-     ;; "C-M-SPC" spw/tex-parens-mark-sexp
      "RET" TeX-newline))
   (repeat-mode 1))
 
@@ -2331,27 +2213,6 @@ of the preamble part of REGION-TEXT."
   ((sage-shell-mode sage-shell:sage-mode) . eldoc-mode)
   (sage-shell-after-prompt . sage-shell-view-mode))
 
-(defun czm-sage-documentation ()
-  (interactive)
-  (other-window-prefix)
-  (eww-open-file
-   (concat sage-shell:sage-root
-           "/local/share/doc/sage/html/en/index.html")))
-
-(defun czm-sage-worksheet (arg)
-  "Create new sage file in my-tmp-sage-dir.
-Given prefix ARG, open dired buffer and highlight most recent
-entry."
-  (interactive "P")
-  (if (not arg)
-      (let ((filename (format-time-string "%Y%m%dT%H%M%S.sage")))
-	       (find-file
-         (expand-file-name filename (file-name-as-directory my-tmp-sage-dir))))
-    (progn
-      (dired
-       (expand-file-name "*.sage" (file-name-as-directory my-tmp-sage-dir))
-       "-alt"))))
-
 (use-package ob-sagemath
   :defer t
   :config
@@ -2367,7 +2228,7 @@ entry."
   (let* ((top-of-stack (calc-top))
          (top-of-stack-string (math-format-value top-of-stack))
          (sage-code
-	         (format "SR(\"%s\").factor()" top-of-stack-string))
+          (format "SR(\"%s\").factor()" top-of-stack-string))
          (modified-string (symtex-evaluate sage-code))
          (modified-value (math-read-exprs modified-string)))
     (if (eq (car-safe modified-value) 'error)
@@ -2411,19 +2272,38 @@ entry."
   (:map global-map
         ("C-c V" . symtex-process))
   (:map LaTeX-mode-map
-	       ("C-c v" . symtex-dwim)))
+        ("C-c v" . symtex-dwim)))
+
+;;; --- Scratch files ---
+
+(defun czm-create-scratch-file (dir extension &optional setup-fn)
+  "Create a new temporary file in DIR with EXTENSION.
+Optionally run SETUP-FN after creating the file."
+  (let* ((dir (file-name-as-directory dir))
+         (filename (format-time-string (concat "%Y%m%dT%H%M%S--scratch." extension)))
+         (filepath (expand-file-name filename dir)))
+    (unless (file-directory-p dir)
+      (make-directory dir t))
+    (find-file filepath)
+    (save-buffer)
+    (when setup-fn (funcall setup-fn))))
+
+(defun czm-create-scratch-org ()
+  "Create new scratch org buffer."
+  (interactive)
+  (czm-create-scratch-file my-scratch-org-dir "org"))
+
+(defun czm-create-scratch-tex ()
+  "Create new scratch LaTeX buffer."
+  (interactive)
+  (czm-create-scratch-file my-scratch-tex-dir "tex" #'czm-setup-tex-file))
+
+(defun czm-create-scratch-sage ()
+  "Create new scratch sage file."
+  (interactive)
+  (czm-create-scratch-file my-scratch-sage-dir "sage"))
 
 ;;; --- Lean ---
-
-;; taken from
-;; https://github.com/leanprover/lean-mode/commit/b224da9d2b339514c2577e5ee4c675b03c978bcd
-(defun czm-lean4-set-imenu-generic-expression ()
-  (setq imenu-generic-expression '(("Inductive" "^ *\\(?:@\\[.*\\]\\)? *inductive +\\([^\n ]+\\)" 1)
-                                   ("Function" "^ *\\(?:@\\[.*\\]\\)? *def +\\([^\n ]+\\)" 1)
-                                   ("Lemma" "^ *\\(?:@\\[.*\\]\\)? *lemma +\\([^\n ]+\\)" 1)
-                                   ("Theorem" "^ *\\(?:@\\[.*\\]\\)? *theorem +\\([^\n ]+\\)" 1)
-                                   ("Theorem" "^ *\\(?:@\\[.*\\]\\)? *theorem +\\([^\n ]+\\)" 1)
-                                   ("Namespace" "^ *\\(?:@\\[.*\\]\\)? *namespace +\\([^\n ]+\\)" 1))))
 
 ;; (with-eval-after-load 'lean4-mode
 ;;   (define-key lean4-mode-map [?\t] #'company-indent-or-complete-common)
@@ -2493,59 +2373,12 @@ entry."
   :config
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
 
-
-
-(defun czm-colorize-lean4-signature ()
-  "Highlights the name of each required variable to a Lean4 theorem."
-  (when
-      (with-current-buffer eldoc-icebox-parent-buffer
-        (or
-         (eq major-mode 'lean4-mode)
-         (eq (buffer-name) "*Lean Goal*")))
-    (save-excursion
-      (goto-char (point-min))
-      (while (and (< (point) (point-max))
-                  (not (eq (char-after (1+ (point))) ?\:)))
-        (forward-list)
-        (when (eq (char-before) ?\))
-          (save-excursion
-            (backward-list)
-            (let ((inhibit-read-only t)
-                  (start (point))
-                  (end (save-excursion (forward-list) (point)))
-                  (end-first-symbol (save-excursion (forward-word) (point)))
-                  (end-symbols (save-excursion (when (search-forward " : " nil t) (- (point) 3)))))
-              (when end-symbols
-                (put-text-property start end 'face '(underline))
-                                        ; shr-mark doesn't work anymore?
-                (put-text-property (1+ start) end-symbols 'face '(highlight underline))))))))))
-
-
-(defun my-flymake-overlays-fontify-text-function (text)
-  (let ((mode major-mode))
-    (with-temp-buffer
-      (delay-mode-hooks (funcall mode))
-      (insert text)
-      (font-lock-ensure)
-      (when (eq mode 'lean4-mode)
-        (save-excursion
-          (goto-char (point-min))
-          (while (and (< (point) (point-max))
-                      (not (eq (char-after (1+ (point))) ?\:)))
-            (forward-list)
-            (when (eq (char-before) ?\))
-              (save-excursion
-                (backward-list)
-                (let ((inhibit-read-only t)
-                      (start (point))
-                      (end (save-excursion (forward-list) (point)))
-                      (end-first-symbol (save-excursion (forward-word) (point)))
-                      (end-symbols (save-excursion (when (search-forward " : " nil t) (- (point) 3)))))
-                  (when end-symbols
-                    (put-text-property start end 'face '(underline))
-                                        ; shr-mark doesn't work anymore?
-                    (put-text-property (1+ start) end-symbols 'face '(highlight underline)))))))))
-      (buffer-string))))
+(defun czm-lean4-maybe-colorize ()
+  "Highlight theorem signatures in the current Lean4 buffer or goal buffer."
+  (when (with-current-buffer eldoc-icebox-parent-buffer
+          (or (eq major-mode 'lean4-mode)
+              (eq (buffer-name) "*Lean Goal*")))
+    (czm-lean4-colorize-theorem-signature (point-min) (point-max))))
 
 (use-package flymake-overlays
   :ensure (:host github :repo "ultronozm/flymake-overlays.el"
@@ -2556,19 +2389,28 @@ entry."
               )
   :hook (flymake-mode . flymake-overlays-mode)
   :custom
-  (flymake-overlays-fontify-text-function #'my-flymake-overlays-fontify-text-function) )
-
+  (flymake-overlays-fontify-text-function #'czm-lean4-maybe-colorize))
 
 (defun czm-add-lean4-eldoc ()
-  (when
-      (with-current-buffer eldoc-icebox-parent-buffer
-        (or
-         (eq major-mode 'lean4-mode)
-         (equal (buffer-name)
-                "*Lean Goal*")))
+  (when (with-current-buffer eldoc-icebox-parent-buffer
+          (or (eq major-mode 'lean4-mode)
+              (equal (buffer-name)
+                     "*Lean Goal*")))
     (add-hook 'eldoc-documentation-functions #'lean4-info-eldoc-function
               nil t)
     (eldoc-mode)))
+
+(defun czm-eldoc-icebox-text-processor (text)
+  "Fontify TEXT, possibly with Lean4 theorem signatures.
+This function is intended to be used with flymake overlays."
+  (let ((mode major-mode))
+    (with-temp-buffer
+      (delay-mode-hooks (funcall mode))
+      (insert text)
+      (font-lock-ensure)
+      (when (eq mode 'lean4-mode)
+        (czm-lean4-colorize-theorem-signature (point-min) (point-max)))
+      (buffer-string))))
 
 (use-package eldoc-icebox
   :ensure (:host github :repo "ultronozm/eldoc-icebox.el"
@@ -2577,5 +2419,5 @@ entry."
          ("C-c C-n" . eldoc-icebox-toggle-display))
   :hook
   (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
-  (eldoc-icebox-post-display . czm-colorize-lean4-signature)
+  (eldoc-icebox-post-display . czm-eldoc-icebox-text-processor)
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
