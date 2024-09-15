@@ -3,10 +3,10 @@
 (when (string-equal system-type "darwin")
   (setq ns-command-modifier 'meta)
   (setq ns-alternate-modifier 'super)
-  (setq ns-function-modifier 'hyper)
-  (setq w32-lwindow-modifier 'super))
+  (setq ns-function-modifier 'hyper))
 
-(when (string-equal system-type "windows-nt" )
+(when (string-equal system-type "windows-nt")
+  (setq w32-lwindow-modifier 'super)
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
@@ -191,7 +191,6 @@ pushes the mark somewhere useful."
       (delete-char 1))))
 
 (advice-add 'delete-pair :override #'czm-delete-pair)
-
 
 (dolist (key '(
                ;; s-a
