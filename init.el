@@ -1535,9 +1535,9 @@ The value of `calc-language` is restored after BODY has been processed."
                  :depth nil)
   :hook (git-commit-setup . magit-fill-column-set)
   :custom
-  (magit-fill-column-alist ''(("emacs" . 64)
-                              ("auctex" . 64)
-                              ("tex-parens" . 64))))
+  (magit-fill-column-alist '(("emacs" . 64)
+                             ("auctex" . 64)
+                             ("tex-parens" . 64))))
 
 (use-package git-commit
   :ensure nil
