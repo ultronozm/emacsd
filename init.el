@@ -142,11 +142,11 @@
 ;; Remove "%n" from mode-line-modes -- I know when I'm narrowing.
 (setq mode-line-modes (delete "%n" mode-line-modes))
 
-(add-hook 'emacs-lisp-mode-hook
-          (lambda () (setq mode-name "E")))
-
-(add-hook 'lisp-interaction-mode-hook
-          (lambda () (setq mode-name "LI")))
+(use-package emacs
+  :ensure nil
+  :hook
+  (emacs-lisp-mode . (lambda () (setq mode-name "E")))
+  (lisp-interaction-mode . (lambda () (setq mode-name "LI"))))
 
 (with-eval-after-load 'tex-mode
   (add-hook 'LaTeX-mode-hook
