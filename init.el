@@ -1744,8 +1744,6 @@ The value of `calc-language` is restored after BODY has been processed."
                                         ;  (preview-gs-command "/usr/local/bin/gs")  ; compare with rungs?
                                         ;  (preview-image-type 'pnm) ; compare with png?
 
-
-
   (reftex-derive-label-parameters
    '(15 50 t 1 "-"
         ("the" "on" "in" "off" "a" "for" "by" "of" "and" "is" "to")
@@ -2073,6 +2071,7 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package library
   :after latex czm-tex-util
+  :defer t
   :ensure (:host github :repo "ultronozm/library.el"
                  :depth nil)
   :custom
@@ -2152,7 +2151,6 @@ of the preamble part of REGION-TEXT."
         ("s-A" . tex-parens-kill-to-beginning-of-list))
 
   :hook
-  (latex-mode . tex-parens-mode)
   (LaTeX-mode . tex-parens-mode)
 
   :config
