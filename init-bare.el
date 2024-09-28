@@ -274,7 +274,6 @@ pushes the mark somewhere useful."
   (column-number-mode)
   (tab-bar-history-mode))
 
-
 (use-package emacs
   :ensure nil
 
@@ -326,7 +325,6 @@ pushes the mark somewhere useful."
         (czm-backward-down-list))
     (error (message "No inner list found."))))
 
-
 (defun czm-end-of-list ()
   "Move to the end of the current list."
   (interactive)
@@ -356,7 +354,6 @@ pushes the mark somewhere useful."
         (scan-error
          (setq continue nil)))
       (setq last (point)))))
-
 
 (defun czm-backward-down-list ()
   "Move backward down a list."
