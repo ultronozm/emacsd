@@ -105,17 +105,20 @@
 ;; TODO: add "burp.el" functionality here, since it's very handy when
 ;; working with startup configs
 
-(defun czm/find-lisp-file ()
-  "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory."
-  (interactive)
-  (let* ((elisp-dir1 (expand-file-name user-emacs-directory))
-         (elisp-files (append
-                       (directory-files elisp-dir1 t "\\.el$")))
-         (default-elisp-file (concat user-emacs-directory "init.el"))
-         (selected-elisp-file (completing-read
-                               "Select elisp file: " elisp-files
-                               nil t nil nil default-elisp-file)))
-    (when selected-elisp-file (find-file selected-elisp-file))))
+(defun czm/find-lisp-file (&optional arg)
+  "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory.
+With prefix argument ARG, opens user-init-file directly."
+  (interactive "P")
+  (if arg
+      (find-file user-init-file)
+    (let* ((elisp-dir1 (expand-file-name user-emacs-directory))
+           (elisp-files (append
+                         (directory-files elisp-dir1 t "\\.el$")))
+           (default-elisp-file (concat user-emacs-directory "init.el"))
+           (selected-elisp-file (completing-read
+                                 "Select elisp file: " elisp-files
+                                 nil t nil nil default-elisp-file)))
+      (when selected-elisp-file (find-file selected-elisp-file)))))
 
 (defun czm-dired-downloads ()
   "Open the downloads directory in Dired mode."
