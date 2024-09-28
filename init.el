@@ -1982,6 +1982,10 @@ The value of `calc-language` is restored after BODY has been processed."
   :ensure (:host github :repo "ultronozm/dynexp.el"
                  :depth nil)
   :after latex
+
+  :hook
+  (LaTeX-mode . dynexp-latex-setup)
+
   :bind
   (:map LaTeX-mode-map
         ("SPC" . dynexp-space)
