@@ -1113,6 +1113,10 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
         ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)
         ("C-c g" . pdf-view-goto-page)))
 
+(use-package doc-dual-view
+  :ensure (:host github :repo "ultronozm/doc-dual-view.el"
+                 :depth nil)
+  :commands (doc-dual-view-mode))
 
 ;;; --- ERC (IRC Client) ---
 
