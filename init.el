@@ -2391,12 +2391,16 @@ Optionally run SETUP-FN after creating the file."
   :config
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
 
-(defun czm-lean4-maybe-colorize ()
-  "Highlight theorem signatures in the current Lean4 buffer or goal buffer."
-  (when (with-current-buffer eldoc-icebox-parent-buffer
-          (or (eq major-mode 'lean4-mode)
-              (eq (buffer-name) "*Lean Goal*")))
-    (czm-lean4-colorize-theorem-signature (point-min) (point-max))))
+(defun czm-lean4-maybe-colorize (text)
+  "Highlight theorem signatures in the given TEXT for Lean4 buffers."
+  (let ((mode major-mode))
+    (with-temp-buffer
+      (delay-mode-hooks (funcall mode))
+      (insert text)
+      (font-lock-ensure)
+      (when (eq mode 'lean4-mode)
+        (czm-lean4-colorize-theorem-signature (point-min) (point-max)))
+      (buffer-string))))
 
 (use-package flymake-overlays
   :ensure (:host github :repo "ultronozm/flymake-overlays.el"
