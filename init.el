@@ -1822,6 +1822,7 @@ The value of `calc-language` is restored after BODY has been processed."
   :custom
   (czm-tex-fold-bib-file my-master-bib-file)
   :hook
+  (LaTeX-mode . czm-tex-fold-misc-mode)
   (LaTeX-mode . czm-setup-and-activate-tex-fold))
 
 (use-package czm-tex-jump
