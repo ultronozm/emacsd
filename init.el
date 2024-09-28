@@ -1099,6 +1099,7 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
   (global-auto-revert-ignore-modes '(pdf-view-mode))
   (pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
+  (pdf-annot-tweak-tooltips nil)
   :config
   (pdf-tools-install :no-query)
   (require 'pdf-occur)
