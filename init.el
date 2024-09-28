@@ -1800,7 +1800,6 @@ The value of `calc-language` is restored after BODY has been processed."
   (require 'czm-tex-jump)
   (require 'czm-tex-ref)
   (czm-tex-fold-set-defaults)
-  (czm-tex-fold-install)
   (TeX-fold-mode 1)
   (auctex-label-numbers-mode 1)
   (advice-add 'TeX-insert-quote :after #'czm-tex-quote-advice)
