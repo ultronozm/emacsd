@@ -1026,6 +1026,10 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
 
 ;;; --- Outline Navigation ---
 
+(defun foldout-exit-fold-without-hiding ()
+  (interactive)
+  (foldout-exit-fold -1))
+
 (use-package outline
   :ensure nil
   :defer t
@@ -1041,7 +1045,7 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
      "<right>" outline-demote
      "<up>" outline-move-subtree-up
      "<down>" outline-move-subtree-down
-     "x" foldout-exit-fold
+     "x" foldout-exit-fold-without-hiding
      "z" foldout-zoom-subtree
      "a" outline-show-all
      "c" outline-hide-entry
