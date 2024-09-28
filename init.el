@@ -1110,7 +1110,9 @@ Return FILE unchanged if not under `blc-dataroot-dir'."
         ("<down>" . nil)
         ("<up>" . nil)
         ("<remap> <scroll-up-command>" . pdf-view-scroll-up-or-next-page)
-        ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)))
+        ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)
+        ("C-c g" . pdf-view-goto-page)))
+
 
 ;;; --- ERC (IRC Client) ---
 
