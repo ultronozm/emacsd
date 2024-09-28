@@ -446,4 +446,14 @@ DIR must include a .project file to be considered a project."
   ;; (advice-remove 'foldout-exit-fold #'czm-foldout-exit-fold-without-hiding)
   (advice-add 'foldout-exit-fold :around #'czm-foldout-exit-fold-without-hiding))
 
+(use-package calendar
+  :ensure nil
+  ;; unbind arrow keys from calendar-mode
+  :bind
+  (:map calendar-mode-map
+        ("<left>" . nil)
+        ("<right>" . nil)
+        ("<up>" . nil)
+        ("<down>" . nil)))
+
 (put 'erase-buffer 'disabled nil)
