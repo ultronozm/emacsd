@@ -1838,7 +1838,7 @@ The value of `calc-language` is restored after BODY has been processed."
   :after latex
   :bind
   (:map LaTeX-mode-map
-        ("s-r" . czm-tex-jump-avy))
+        ("s-r" . czm-tex-jump))
   :hook (LaTeX-mode . czm-tex-jump-setup))
 
 (use-package czm-tex-ref
