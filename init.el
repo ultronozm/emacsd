@@ -1490,6 +1490,7 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package dynexp
   :ensure (:host github :repo "ultronozm/dynexp.el"
+                 :files ("lisp/dynexp-abbrev.el")
                  :depth nil)
   :after latex
   :hook (LaTeX-mode . dynexp-latex-setup)
@@ -1499,8 +1500,7 @@ The value of `calc-language` is restored after BODY has been processed."
   :config
   (quietly-read-abbrev-file
    (expand-file-name "dynexp-abbrev.el"
-                     (concat (file-name-directory (locate-library "dynexp"))
-                             "lisp"))))
+                     (file-name-directory (locate-library "dynexp")))))
 
 (use-package czm-tex-edit
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el"
