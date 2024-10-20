@@ -10,165 +10,6 @@
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
-(defun czm/find-lisp-file (&optional arg)
-  "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory.
-With prefix argument ARG, opens user-init-file directly."
-  (interactive "P")
-  (if arg
-      (find-file user-init-file)
-    (let* ((elisp-dir1 (expand-file-name user-emacs-directory))
-           (elisp-files (append
-                         (directory-files elisp-dir1 t "\\.el$")))
-           (default-elisp-file (concat user-emacs-directory "init.el"))
-           (selected-elisp-file (completing-read
-                                 "Select elisp file: " elisp-files
-                                 nil t nil nil default-elisp-file)))
-      (when selected-elisp-file (find-file selected-elisp-file)))))
-
-(defun czm-dired-downloads ()
-  "Open the downloads directory in Dired mode."
-  (interactive)
-  (dired my-downloads-folder))
-
-(defun czm-find-math-document ()
-  "Find a file in the math documents folder."
-  (interactive)
-  (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
-
-(defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
-(defun edebug-compute-previous-result (previous-value)
-  (if edebug-unwrap-results
-      (setq previous-value
-            (edebug-unwrap* previous-value)))
-  (setq edebug-previous-result-raw previous-value)
-  (setq edebug-previous-result
-        (concat "Result: "
-                (edebug-safe-prin1-to-string previous-value)
-                (eval-expression-print-format previous-value))))
-
-(defun czm-dired-git-files ()
-  "Open dired buffer with files in current git repo."
-  (interactive)
-  (let ((git-files (shell-command-to-string "git ls-files")))
-    (setq git-files (split-string git-files "\n" t))
-    (dired (cons "." git-files))))
-
-;;; won't be necessary in Emacs 31+
-(defun czm-delete-pair (&optional arg)
-  "Delete a pair of characters enclosing ARG sexps that follow point.
-A negative ARG deletes a pair around the preceding ARG sexps instead.
-The option `delete-pair-blink-delay' can disable blinking.
-
-Only difference with the usual `delete-pair' is that this version
-pushes the mark somewhere useful."
-  (interactive "P")
-  (if arg
-      (setq arg (prefix-numeric-value arg))
-    (setq arg 1))
-  (if (< arg 0)
-      (save-excursion
-        (skip-chars-backward " \t")
-        (save-excursion
-          (let ((close-char (char-before)))
-            (forward-sexp arg)
-            (unless (member (list (char-after) close-char)
-                            (mapcar (lambda (p)
-                                      (if (= (length p) 3) (cdr p) p))
-                                    insert-pair-alist))
-              (error "Not after matching pair"))
-            (when (and (numberp delete-pair-blink-delay)
-                       (> delete-pair-blink-delay 0))
-              (sit-for delete-pair-blink-delay))
-            (delete-char 1)))
-        (delete-char -1))
-    (save-excursion
-      (skip-chars-forward " \t")
-      (save-excursion
-        (let ((open-char (char-after)))
-          (forward-sexp arg)
-          (unless (member (list open-char (char-before))
-                          (mapcar (lambda (p)
-                                    (if (= (length p) 3) (cdr p) p))
-                                  insert-pair-alist))
-            (error "Not before matching pair"))
-          (when (and (numberp delete-pair-blink-delay)
-                     (> delete-pair-blink-delay 0))
-            (sit-for delete-pair-blink-delay))
-          (delete-char -1)
-          (push-mark) ; added!
-          ))
-      (delete-char 1))))
-
-(advice-add 'delete-pair :override #'czm-delete-pair)
-
-
-(defun mark-inner ()
-  (interactive)
-  (condition-case nil
-      (progn
-        (backward-up-list)
-        (down-list)
-        (set-mark (point))
-        (up-list)
-        (czm-backward-down-list))
-    (error (message "No inner list found."))))
-
-(defun end-of-list ()
-  "Move to the end of the current list."
-  (interactive)
-  (let ((last (point))
-        (continue t))
-    (while continue
-      (condition-case nil
-          (progn
-            (forward-sexp)
-            (when (<= (point) last)
-              (setq continue nil)))
-        (scan-error
-         (setq continue nil)))
-      (setq last (point)))))
-
-(defun beginning-of-list ()
-  "Move to the beginning of the current list."
-  (interactive)
-  (let ((last (point))
-        (continue t))
-    (while continue
-      (condition-case nil
-          (progn
-            (backward-sexp)
-            (when (>= (point) last)
-              (setq continue nil)))
-        (scan-error
-         (setq continue nil)))
-      (setq last (point)))))
-
-(defun kill-to-end-of-list ()
-  "Kill text between point and end of current list."
-  (interactive)
-  (let ((end (save-excursion (end-of-list) (point))))
-    (kill-region (point) end)))
-
-(defun kill-to-beginning-of-list ()
-  "Kill text between point and beginning of current list."
-  (interactive)
-  (let ((beginning (save-excursion (beginning-of-list) (point))))
-    (kill-region beginning (point))))
-
-(defun backward-down-list ()
-  "Move backward down a list."
-  (interactive)
-  (down-list -1))
-
-(defun czm-set-face-heights ()
-  "Set the heights of various faces."
-  (set-face-attribute 'default nil :height 150)
-  (set-face-attribute 'mode-line nil :height 120)
-  (set-face-attribute 'mode-line-inactive nil :height 120)
-  (set-face-attribute 'tab-bar nil :height 120))
-
-(czm-set-face-heights)
-
 (use-package emacs
   :ensure nil
   :bind
@@ -183,8 +24,6 @@ pushes the mark somewhere useful."
    ("M-n" . next-error)
    ("M-p" . previous-error)
    ("M-/" . hippie-expand)
-   ("C-c d" . czm-dired-downloads)
-   ("s-d" . czm-find-math-document)
    ("C-c r" . org-capture)
    ("C-c l" . org-store-link)
    ("C-c L" . org-insert-link-global)
@@ -227,7 +66,7 @@ pushes the mark somewhere useful."
    ("s-s" . save-buffer)
    ("s-v" . view-mode)
    ("s-." . repeat)
-   ("s-i" . czm/find-lisp-file)
+   ("s-i" . find-init-file)
    ("<up>" . windmove-up)
    ("<down>" . windmove-down)
    ("<right>" . windmove-right)
@@ -320,6 +159,148 @@ pushes the mark somewhere useful."
   (column-number-mode)
   (tab-bar-history-mode)
   (display-time-mode))
+
+(defun find-init-file (&optional arg)
+  "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory.
+With prefix argument ARG, opens `user-init-file' directly."
+  (interactive "P")
+  (if arg
+      (find-file user-init-file)
+    (let* ((elisp-dir1 (expand-file-name user-emacs-directory))
+           (elisp-files (append
+                         (directory-files elisp-dir1 t "\\.el$")))
+           (default-elisp-file (concat user-emacs-directory "init.el"))
+           (selected-elisp-file (completing-read
+                                 "Select elisp file: " elisp-files
+                                 nil t nil nil default-elisp-file)))
+      (when selected-elisp-file (find-file selected-elisp-file)))))
+
+(defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
+(defun edebug-compute-previous-result (previous-value)
+  "Redefinition of built-in function `edebug-compute-previous-result'.
+This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
+  (if edebug-unwrap-results
+      (setq previous-value
+            (edebug-unwrap* previous-value)))
+  (setq edebug-previous-result-raw previous-value)
+  (setq edebug-previous-result
+        (concat "Result: "
+                (edebug-safe-prin1-to-string previous-value)
+                (eval-expression-print-format previous-value))))
+
+;;; won't be necessary in Emacs 31+
+(defun delete-pair (&optional arg)
+  "Delete a pair of characters enclosing ARG sexps that follow point.
+A negative ARG deletes a pair around the preceding ARG sexps instead.
+The option `delete-pair-blink-delay' can disable blinking.
+
+Redefinition of the usual `delete-pair'.  This version pushes the
+mark somewhere useful."
+  (interactive "P")
+  (if arg
+      (setq arg (prefix-numeric-value arg))
+    (setq arg 1))
+  (if (< arg 0)
+      (save-excursion
+        (skip-chars-backward " \t")
+        (save-excursion
+          (let ((close-char (char-before)))
+            (forward-sexp arg)
+            (unless (member (list (char-after) close-char)
+                            (mapcar (lambda (p)
+                                      (if (= (length p) 3) (cdr p) p))
+                                    insert-pair-alist))
+              (error "Not after matching pair"))
+            (when (and (numberp delete-pair-blink-delay)
+                       (> delete-pair-blink-delay 0))
+              (sit-for delete-pair-blink-delay))
+            (delete-char 1)))
+        (delete-char -1))
+    (save-excursion
+      (skip-chars-forward " \t")
+      (save-excursion
+        (let ((open-char (char-after)))
+          (forward-sexp arg)
+          (unless (member (list open-char (char-before))
+                          (mapcar (lambda (p)
+                                    (if (= (length p) 3) (cdr p) p))
+                                  insert-pair-alist))
+            (error "Not before matching pair"))
+          (when (and (numberp delete-pair-blink-delay)
+                     (> delete-pair-blink-delay 0))
+            (sit-for delete-pair-blink-delay))
+          (delete-char -1)
+          (push-mark) ; added!
+          ))
+      (delete-char 1))))
+
+(defun mark-inner ()
+  "Mark interior of the current list."
+  (interactive)
+  (condition-case nil
+      (progn
+        (backward-up-list)
+        (down-list)
+        (set-mark (point))
+        (up-list)
+        (backward-down-list))
+    (error (message "No inner list found."))))
+
+(defun end-of-list ()
+  "Move to the end of the current list."
+  (interactive)
+  (let ((last (point))
+        (continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (forward-sexp)
+            (when (<= (point) last)
+              (setq continue nil)))
+        (scan-error
+         (setq continue nil)))
+      (setq last (point)))))
+
+(defun beginning-of-list ()
+  "Move to the beginning of the current list."
+  (interactive)
+  (let ((last (point))
+        (continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (backward-sexp)
+            (when (>= (point) last)
+              (setq continue nil)))
+        (scan-error
+         (setq continue nil)))
+      (setq last (point)))))
+
+(defun kill-to-end-of-list ()
+  "Kill text between point and end of current list."
+  (interactive)
+  (let ((end (save-excursion (end-of-list) (point))))
+    (kill-region (point) end)))
+
+(defun kill-to-beginning-of-list ()
+  "Kill text between point and beginning of current list."
+  (interactive)
+  (let ((beginning (save-excursion (beginning-of-list) (point))))
+    (kill-region beginning (point))))
+
+(defun backward-down-list ()
+  "Move backward down a list."
+  (interactive)
+  (down-list -1))
+
+(defun czm-set-face-heights ()
+  "Set the heights of various faces."
+  (set-face-attribute 'default nil :height 150)
+  (set-face-attribute 'mode-line nil :height 120)
+  (set-face-attribute 'mode-line-inactive nil :height 120)
+  (set-face-attribute 'tab-bar nil :height 120))
+
+(czm-set-face-heights)
 
 (use-package recentf
   :ensure nil
@@ -418,3 +399,4 @@ If not in a fold, acts like `widen'."
               ("<right>" . nil)
               ("<up>" . nil)
               ("<down>" . nil)))
+

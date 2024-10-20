@@ -9,6 +9,21 @@
 ;; disable customization interface
 (setq custom-file (concat user-emacs-directory "init-custom.el"))
 
+(defun czm-dired-downloads ()
+  "Open the downloads directory in Dired mode."
+  (interactive)
+  (dired my-downloads-folder))
+
+(defun czm-find-math-document ()
+  "Find a file in the math documents folder."
+  (interactive)
+  (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
+
+(use-package emacs
+  :ensure nil
+  :bind
+  ("C-c d" . czm-dired-downloads)
+  ("s-d" . czm-find-math-document))
 
 ;;; --- Elpaca ---
 
