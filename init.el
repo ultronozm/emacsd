@@ -433,6 +433,27 @@
   :bind
   ("C-x o" . ace-window))
 
+;; https://www.jamescherti.com/emacs-customize-ellipsis-outline-minor-mode/
+(defun my-outline-set-global-ellipsis (ellipsis)
+  "Apply the ellipsis ELLIPSIS to outline mode globally."
+  (let* ((face-offset (* (face-id 'shadow) (ash 1 22)))
+         (value (vconcat (mapcar (lambda (c) (+ face-offset c)) ellipsis))))
+    (set-display-table-slot standard-display-table 'selective-display value)))
+
+(my-outline-set-global-ellipsis " ▼ ")
+
+(use-package auto-hide
+  :ensure (:host github :repo "ultronozm/auto-hide.el"
+                 :depth nil)
+  :config
+  (global-auto-hide-mode))
+
+(use-package outline-skip
+  :after latex
+  :ensure (:host github :repo "ultronozm/outline-skip.el"
+                 :depth nil)
+  :hook (LaTeX-mode . outline-skip-mode))
+
 ;;; --- Other Utilities ---
 
 (use-package perfect-margin
@@ -1328,20 +1349,20 @@ The value of `calc-language` is restored after BODY has been processed."
                  :depth nil)
   :after latex)
 
-(defun czm-tex-fold-macro-previous-word ()
+(defun my/backward-word-fold-macro ()
   (interactive)
-  (if TeX-fold-mode
-      (save-excursion
-        (backward-word)
-        (TeX-fold-item 'macro))))
+  (when TeX-fold-mode
+    (save-excursion
+      (backward-word)
+      (TeX-fold-item 'macro))))
 
 (defun my-yank-after-advice (&rest _)
   "Fold any yanked ref or eqref."
-  (when (and (eq major-mode 'LaTeX-mode)
-             TeX-fold-mode
-             (string-match "\\\\\\(ref\\|eqref\\){\\([^}]+\\)}"
-                           (current-kill 0)))
-    (czm-tex-fold-macro-previous-word)))
+  (and (eq major-mode 'LaTeX-mode)
+       TeX-fold-mode
+       (string-match "\\\\\\(ref\\|eqref\\){\\([^}]+\\)}"
+                     (current-kill 0))
+       (my/backward-word-fold-macro)))
 
 (defun my-latex-fold-current-environment (&rest _)
   "Fold the current LaTeX environment after `LaTeX-environment' is called."
@@ -1372,7 +1393,7 @@ The value of `calc-language` is restored after BODY has been processed."
     (add-to-list 'TeX-fold-begin-end-spec-list item))
   (dolist (item (list #'TeX-fold-quotes #'TeX-fold-dashes))
     (add-to-list 'TeX-fold-region-functions item))
-  (advice-add 'LaTeX-insert-item :after #'czm-tex-fold-macro-previous-word)
+  (advice-add 'LaTeX-insert-item :after #'my/backward-word-fold-macro)
   (advice-add 'yank :after #'my-yank-after-advice)
   (TeX-fold-mode 1)
   (auctex-label-numbers-mode 1)
@@ -1869,12 +1890,3 @@ This function is intended to be used with flymake overlays."
   (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
   (eldoc-icebox-post-display . czm-eldoc-icebox-text-processor)
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
-
-;; https://www.jamescherti.com/emacs-customize-ellipsis-outline-minor-mode/
-(defun my-outline-set-global-ellipsis (ellipsis)
-  "Apply the ellipsis ELLIPSIS to outline mode globally."
-  (let* ((face-offset (* (face-id 'shadow) (ash 1 22)))
-         (value (vconcat (mapcar (lambda (c) (+ face-offset c)) ellipsis))))
-    (set-display-table-slot standard-display-table 'selective-display value)))
-
-(my-outline-set-global-ellipsis " ▼ ")
