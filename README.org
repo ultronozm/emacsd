@@ -50,6 +50,7 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/magit-fill-column.el][magit-fill-column.el]] :: set magit commit message fill-column based on project
 - [[https://github.com/ultronozm/publish.el][publish.el]] :: convenience functions for pushing files to a git repo
 - [[https://github.com/ultronozm/repo-scan.el][repo-scan.el]] :: display status of some collection of GIT repositories
+- [[https://github.com/ultronozm/auto-hide.el][auto-hide.el]] :: automatically hide function bodies
 
 * Building Emacs on MacOS
 I'm using this config with Emacs "30.5", built from source, on MacOS.  To set this up on a fresh machine, I've done something like the following steps:
