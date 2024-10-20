@@ -329,24 +329,32 @@ mark somewhere useful."
   (setcdr other-window-repeat-map nil)
   (repeat-mode))
 
-(use-package emacs
-  :ensure nil
-  :if (not (eq window-system 'w32))
-  :after cc-mode
+;; This could be its own package, accommodating git-friendly abbrev storage?
+;; Need a good way to update the source.
+(defun modify-abbrev-table (table abbrevs)
+  "Define abbreviations in TABLE given by ABBREVS."
+  (unless table
+    (error "Abbrev table does not exist" table))  ;; Message could be improved
+  (dolist (abbrev abbrevs)
+    (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
+(use-package abbrev
+  :ensure nil
+  :config
+  (setq-default abbrev-mode t)
   :custom
   (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
   (save-abbrevs 'silently)
-
-  :hook
-  (text-mode . abbrev-mode)
-  (vc-git-log-edit-mode . abbrev-mode)
-
   :config
   (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
     (when (file-exists-p abbrev-file)
       (quietly-read-abbrev-file abbrev-file)))
   (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
+
+;; (use-package emacs
+;;   :ensure nil
+;;   :if (not (eq window-system 'w32))
+;;   :after cc-mode)
 
 (use-package calc
   :ensure nil
