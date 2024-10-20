@@ -10,97 +10,6 @@
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
-(mapc (lambda (keybind)
-        (let ((key (car keybind))
-              (cmd (cadr keybind)))
-          (global-set-key (kbd key)
-                          cmd)))
-      '(("C-c g" goto-line)
-        ("C-x C-b" ibuffer)
-        ("s-b" switch-to-buffer)
-        ("s-d" find-file)
-        ("s-0" delete-window)
-        ("s-1" delete-other-windows)
-        ("s-2" split-window-below)
-        ("s-3" split-window-right)
-        ;; ("C-m" newline-and-indent)
-        ("M-n" next-error)
-        ("M-p" previous-error)
-        ("M-/" hippie-expand)
-        ("C-c d" czm-dired-downloads)
-        ("s-d" czm-find-math-document)
-        ;; ("C-c m" compile)
-        ("C-c r" org-capture)
-        ;; ("C-c o" org-open-at-point-global)
-        ("C-c l" org-store-link)
-        ("C-c L" org-insert-link-global)
-        ("C-c a" org-agenda)
-        ("C-c s" shell)
-        ("C-c f" toggle-frame-fullscreen)
-        ("C-h C-f" find-function)
-        ("C-h C-v" find-variable)
-        ("C-h C-l" find-library)
-        ("H-SPC" ediff-buffers)
-        ("H-b" abbrev-mode)
-        ("H-e" toggle-debug-on-error)
-        ("H-f" follow-mode)
-        ("H-i" overwrite-mode)
-        ("H-l" flymake-mode)
-        ("H-k" flycheck-mode)
-        ("H-s" whitespace-mode)
-        ("H-v" visual-line-mode)
-        ("H-w" which-function-mode)
-        ("C-M-z" zap-up-to-char)
-        ("C-M-g" down-list)
-        ("M-+" raise-sexp)
-        ("M-_" delete-pair)
-        ("s-<left>" previous-buffer)
-        ("s-<right>" next-buffer)
-        ("s-<up>" (lambda ()
-                    (interactive)
-                    (enlarge-window 5)))
-        ("s-<down>" (lambda ()
-                      (interactive)
-                      (shrink-window 5)))
-        ("s-o" other-window)
-        ("s-O" (lambda ()
-                 (interactive)
-                 (other-window -1)))
-        ("C-s-o" other-frame)
-        ("C-s-O" (lambda ()
-                   (interactive)
-                   (other-frame -1)))
-        ("s-'" nil)
-        ("s-n" nil)
-        ("s-N" make-frame)
-        ("s-n" outline-next-heading)
-        ("s-p" outline-previous-heading)
-        ("s-q" bury-buffer)
-        ("s-k" kill-current-buffer)
-        ("s-K" kill-buffer-and-window)
-        ("s-s" save-buffer)
-        ("s-v" view-mode)
-        ("s-." repeat)
-        ("s-i" czm/find-lisp-file)
-        ("<up>" windmove-up)
-        ("<down>" windmove-down)
-        ("<right>" windmove-right)
-        ("<left>" windmove-left)
-        ("s-SPC" cycle-spacing)
-        ("s-6" (lambda () (interactive) (delete-indentation nil)))
-        ("s-7" (lambda () (interactive) (delete-indentation t)))
-        ("C-x C-M-t" transpose-regions)
-        ("H-0" tab-close)
-        ("H-1" tab-close-other)
-        ("H-2" tab-bar-new-tab)
-        ("M-u" up-list)
-        ("M-i" czm-mark-inner)
-        ("s-a" czm-beginning-of-list)
-        ("s-e" czm-end-of-list)))
-
-;; TODO: add "burp.el" functionality here, since it's very handy when
-;; working with startup configs
-
 (defun czm/find-lisp-file (&optional arg)
   "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory.
 With prefix argument ARG, opens user-init-file directly."
@@ -144,6 +53,7 @@ With prefix argument ARG, opens user-init-file directly."
     (setq git-files (split-string git-files "\n" t))
     (dired (cons "." git-files))))
 
+;;; won't be necessary in Emacs 31+
 (defun czm-delete-pair (&optional arg)
   "Delete a pair of characters enclosing ARG sexps that follow point.
 A negative ARG deletes a pair around the preceding ARG sexps instead.
@@ -191,38 +101,174 @@ pushes the mark somewhere useful."
 
 (advice-add 'delete-pair :override #'czm-delete-pair)
 
-(dolist (key '(
-               ;; s-a
-               "s-C"
-               ;; "s-D" ; dired
-               ;; ("s-w" switch-to-buffer)
-               ;; s-f
-               "s-E"
-               "s-H"
-               "s-L"
-               ;; "s-M" ; manual-entry
-               "s-S"
-               "s-c"
-               "s-g"
-               "s-h"
-               ;; "s-l" ; goto-line
-               "s-m"
-               "s-u"
-               ;; "s-q"
-               ;; s-t
-               "s-x"
-               "s-w" ; delete frame
-               ;; "s-y"
-               "s-z"
-               ))
-  (global-unset-key (kbd key)))
 
-;; H-ACFNHMD -- macOS annoyance
+(defun mark-inner ()
+  (interactive)
+  (condition-case nil
+      (progn
+        (backward-up-list)
+        (down-list)
+        (set-mark (point))
+        (up-list)
+        (czm-backward-down-list))
+    (error (message "No inner list found."))))
 
+(defun end-of-list ()
+  "Move to the end of the current list."
+  (interactive)
+  (let ((last (point))
+        (continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (forward-sexp)
+            (when (<= (point) last)
+              (setq continue nil)))
+        (scan-error
+         (setq continue nil)))
+      (setq last (point)))))
+
+(defun beginning-of-list ()
+  "Move to the beginning of the current list."
+  (interactive)
+  (let ((last (point))
+        (continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (backward-sexp)
+            (when (>= (point) last)
+              (setq continue nil)))
+        (scan-error
+         (setq continue nil)))
+      (setq last (point)))))
+
+(defun kill-to-end-of-list ()
+  "Kill text between point and end of current list."
+  (interactive)
+  (let ((end (save-excursion (end-of-list) (point))))
+    (kill-region (point) end)))
+
+(defun kill-to-beginning-of-list ()
+  "Kill text between point and beginning of current list."
+  (interactive)
+  (let ((beginning (save-excursion (beginning-of-list) (point))))
+    (kill-region beginning (point))))
+
+(defun backward-down-list ()
+  "Move backward down a list."
+  (interactive)
+  (down-list -1))
+
+(defun czm-set-face-heights ()
+  "Set the heights of various faces."
+  (set-face-attribute 'default nil :height 150)
+  (set-face-attribute 'mode-line nil :height 120)
+  (set-face-attribute 'mode-line-inactive nil :height 120)
+  (set-face-attribute 'tab-bar nil :height 120))
+
+(czm-set-face-heights)
 
 (use-package emacs
   :ensure nil
-
+  :bind
+  (("C-c g" . goto-line)
+   ("C-x C-b" . ibuffer)
+   ("s-b" . switch-to-buffer)
+   ("s-d" . find-file)
+   ("s-0" . delete-window)
+   ("s-1" . delete-other-windows)
+   ("s-2" . split-window-below)
+   ("s-3" . split-window-right)
+   ("M-n" . next-error)
+   ("M-p" . previous-error)
+   ("M-/" . hippie-expand)
+   ("C-c d" . czm-dired-downloads)
+   ("s-d" . czm-find-math-document)
+   ("C-c r" . org-capture)
+   ("C-c l" . org-store-link)
+   ("C-c L" . org-insert-link-global)
+   ("C-c a" . org-agenda)
+   ("C-c s" . shell)
+   ("C-c f" . toggle-frame-fullscreen)
+   ("C-h C-f" . find-function)
+   ("C-h C-v" . find-variable)
+   ("C-h C-l" . find-library)
+   ("H-SPC" . ediff-buffers)
+   ("H-b" . abbrev-mode)
+   ("H-e" . toggle-debug-on-error)
+   ("H-f" . follow-mode)
+   ("H-i" . overwrite-mode)
+   ("H-l" . flymake-mode)
+   ("H-k" . flycheck-mode)
+   ("H-s" . whitespace-mode)
+   ("H-v" . visual-line-mode)
+   ("H-w" . which-function-mode)
+   ("C-M-z" . zap-up-to-char)
+   ("C-M-g" . down-list)
+   ("M-+" . raise-sexp)
+   ("M-_" . delete-pair)
+   ("s-<left>" . previous-buffer)
+   ("s-<right>" . next-buffer)
+   ("s-<up>" . (lambda () (interactive) (enlarge-window 5)))
+   ("s-<down>" . (lambda () (interactive) (shrink-window 5)))
+   ("s-o" . other-window)
+   ("s-O" . (lambda () (interactive) (other-window -1)))
+   ("C-s-o" . other-frame)
+   ("C-s-O" . (lambda () (interactive) (other-frame -1)))
+   ("s-'" . nil)
+   ("s-n" . nil)
+   ("s-N" . make-frame)
+   ("s-n" . outline-next-heading)
+   ("s-p" . outline-previous-heading)
+   ("s-q" . bury-buffer)
+   ("s-k" . kill-current-buffer)
+   ("s-K" . kill-buffer-and-window)
+   ("s-s" . save-buffer)
+   ("s-v" . view-mode)
+   ("s-." . repeat)
+   ("s-i" . czm/find-lisp-file)
+   ("<up>" . windmove-up)
+   ("<down>" . windmove-down)
+   ("<right>" . windmove-right)
+   ("<left>" . windmove-left)
+   ("s-SPC" . cycle-spacing)
+   ("s-6" . (lambda () (interactive) (delete-indentation nil)))
+   ("s-7" . (lambda () (interactive) (delete-indentation t)))
+   ("C-x C-M-t" . transpose-regions)
+   ("H-0" . tab-close)
+   ("H-1" . tab-close-other)
+   ("H-2" . tab-bar-new-tab)
+   ("M-u" . up-list)
+   ("M-i" . mark-inner)
+   ("s-a" . beginning-of-list)
+   ("s-e" . end-of-list)
+   ("s-A" . kill-to-beginning-of-list)
+   ("s-E" . kill-to-end-of-list)
+   ;; s-a
+   ("s-C" . nil)
+   ;; "s-D" ; dired
+   ;; ("s-w" switch-to-buffer)
+   ;; s-f
+   ;; "s-E"
+   ("s-H" . nil)
+   ("s-L" . nil)
+   ;; "s-M" ; manual-entry
+   ("s-S" . nil)
+   ("s-c" . nil)
+   ("s-g" . nil)
+   ("s-h" . nil)
+   ;; "s-l" ; goto-line
+   ("s-m" . nil)
+   ("s-u" . nil)
+   ;; "s-q"
+   ;; s-t
+   ("s-x" . nil)
+   ("s-w" . nil) ; delete frame
+   ;; "s-y"
+   ("s-z" . nil)
+   ;; H-ACFNHMD -- macOS annoyance
+   )
   :custom
   (ediff-split-window-function 'split-window-horizontally)
   (use-dialog-box nil)
@@ -259,10 +305,11 @@ pushes the mark somewhere useful."
              (concat user-emacs-directory "auto-save/"))
       t)))
   (ediff-window-setup-function 'ediff-setup-windows-plain)
-
+  (display-time-default-load-average nil)
   :config
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
+  (put 'erase-buffer 'disabled nil)
   (fset 'yes-or-no-p 'y-or-n-p)
   (setq-default indent-tabs-mode nil)
   (electric-pair-mode)
@@ -271,41 +318,29 @@ pushes the mark somewhere useful."
   (save-place-mode)
   (line-number-mode)
   (column-number-mode)
-  (tab-bar-history-mode))
-
-(use-package emacs
-  :ensure nil
-
-  :custom
-  (display-time-default-load-average nil)
-
-  :config
+  (tab-bar-history-mode)
   (display-time-mode))
 
 (use-package recentf
   :ensure nil
-
-  :custom
-  (recentf-max-saved-items 100)
-  :config
-  (recentf-mode))
+  :custom (recentf-max-saved-items 100)
+  :config (recentf-mode))
 
 (use-package prog-mode
   :ensure nil
-  :hook
-  (prog-mode . outline-minor-mode))
+  :hook (prog-mode . outline-minor-mode))
 
-(use-package emacs
+(use-package outline
   :ensure nil
-  :after outline
-  :bind (:map outline-minor-mode-map
-              ("C-M-<down-mouse-1>" . nil)
-              ("C-M-<down-mouse-2>" . nil)
-              ("C-M-<down-mouse-3>" . nil)
-              ("<right-margin> S-<mouse-1>" . nil)
-              ("<right-margin> <mouse-1>" . nil)
-              ("<left-margin> S-<mouse-1>" . nil)
-              ("<left-margin> <mouse-1>" . nil)))
+  :bind
+  (:map outline-minor-mode-map
+        ("C-M-<down-mouse-1>" . nil)
+        ("C-M-<down-mouse-2>" . nil)
+        ("C-M-<down-mouse-3>" . nil)
+        ("<right-margin> S-<mouse-1>" . nil)
+        ("<right-margin> <mouse-1>" . nil)
+        ("<left-margin> S-<mouse-1>" . nil)
+        ("<left-margin> <mouse-1>" . nil)))
 
 (use-package repeat
   :ensure nil
@@ -313,92 +348,34 @@ pushes the mark somewhere useful."
   (setcdr other-window-repeat-map nil)
   (repeat-mode))
 
-(defun czm-mark-inner ()
-  (interactive)
-  (condition-case nil
-      (progn
-        (backward-up-list)
-        (down-list)
-        (set-mark (point))
-        (up-list)
-        (czm-backward-down-list))
-    (error (message "No inner list found."))))
+(use-package emacs
+  :ensure nil
+  :if (not (eq window-system 'w32))
+  :after cc-mode
 
-(defun czm-end-of-list ()
-  "Move to the end of the current list."
-  (interactive)
-  (let ((last (point))
-        (continue t))
-    (while continue
-      (condition-case nil
-          (progn
-            (forward-sexp)
-            (when (<= (point) last)
-              (setq continue nil)))
-        (scan-error
-         (setq continue nil)))
-      (setq last (point)))))
+  :custom
+  (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
+  (save-abbrevs 'silently)
 
-(defun czm-beginning-of-list ()
-  "Move to the beginning of the current list."
-  (interactive)
-  (let ((last (point))
-        (continue t))
-    (while continue
-      (condition-case nil
-          (progn
-            (backward-sexp)
-            (when (>= (point) last)
-              (setq continue nil)))
-        (scan-error
-         (setq continue nil)))
-      (setq last (point)))))
+  :hook
+  (text-mode . abbrev-mode)
+  (vc-git-log-edit-mode . abbrev-mode)
 
-(defun czm-backward-down-list ()
-  "Move backward down a list."
-  (interactive)
-  (down-list -1))
-
-(defun czm-set-face-heights ()
-  "Set the heights of various faces."
-  (set-face-attribute 'default nil :height 150)
-  (set-face-attribute 'mode-line nil :height 120)
-  (set-face-attribute 'mode-line-inactive nil :height 120)
-  (set-face-attribute 'tab-bar nil :height 120))
-
-(czm-set-face-heights)
-
-(unless (eq window-system 'w32)
-  (use-package emacs
-    :ensure nil
-
-    :after cc-mode
-
-    :custom
-    (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
-    (save-abbrevs 'silently)
-
-    :hook
-    (text-mode . abbrev-mode)
-    (vc-git-log-edit-mode . abbrev-mode)
-
-    :config
-    (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
-      (when (file-exists-p abbrev-file)
-        (quietly-read-abbrev-file abbrev-file)))
-    (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))))
+  :config
+  (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
+    (when (file-exists-p abbrev-file)
+      (quietly-read-abbrev-file abbrev-file)))
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
 
 (use-package calc
   :ensure nil
   :defer t
-  :custom
-  (calc-kill-line-numbering nil))
+  :custom (calc-kill-line-numbering nil))
 
 (use-package eglot
   :ensure nil
   :defer t
-  :custom
-  (eglot-connect-timeout 120))
+  :custom (eglot-connect-timeout 120))
 
 ;; don't remember the point of this
 (cl-defmethod project-root ((project (head local)))
@@ -413,10 +390,9 @@ DIR must include a .project file to be considered a project."
 
 (use-package project
   :ensure nil
+  :config (add-to-list 'project-find-functions 'czm/project-try-local))
 
-  :config
-  (add-to-list 'project-find-functions 'czm/project-try-local))
-
+;; in current Emacs master, can eventually be deleted from here
 (defun foldout-widen-to-current-fold ()
   "Widen to the current fold level.
 If in a fold, widen to that fold's boundaries.
@@ -433,17 +409,12 @@ If not in a fold, acts like `widen'."
 
 (use-package foldout
   :ensure nil
-  :bind
-  ("C-x n w" . foldout-widen-to-current-fold))
+  :bind ("C-x n w" . foldout-widen-to-current-fold))
 
 (use-package calendar
   :ensure nil
-  ;; unbind arrow keys from calendar-mode
-  :bind
-  (:map calendar-mode-map
-        ("<left>" . nil)
-        ("<right>" . nil)
-        ("<up>" . nil)
-        ("<down>" . nil)))
-
-(put 'erase-buffer 'disabled nil)
+  :bind (:map calendar-mode-map
+              ("<left>" . nil)
+              ("<right>" . nil)
+              ("<up>" . nil)
+              ("<down>" . nil)))
