@@ -16,7 +16,6 @@
   (("C-c g" . goto-line)
    ("C-x C-b" . ibuffer)
    ("s-b" . switch-to-buffer)
-   ("s-d" . find-file)
    ("s-0" . delete-window)
    ("s-1" . delete-other-windows)
    ("s-2" . split-window-below)
@@ -158,7 +157,8 @@
   (line-number-mode)
   (column-number-mode)
   (tab-bar-history-mode)
-  (display-time-mode))
+  (display-time-mode)
+  (add-to-list 'auto-mode-alist '("\\.info\\'" . Info-on-current-buffer)))
 
 (defun find-init-file (&optional arg)
   "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory.

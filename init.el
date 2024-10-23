@@ -454,6 +454,16 @@
                  :depth nil)
   :hook (LaTeX-mode . outline-skip-mode))
 
+(use-package smerge-mode
+  :ensure nil
+  :defer
+  :config
+  (map-keymap
+   (lambda (_key cmd)
+     (when (symbolp cmd)
+       (put cmd 'repeat-map 'smerge-basic-map)))
+   smerge-basic-map))
+
 ;;; --- Other Utilities ---
 
 (use-package perfect-margin
@@ -1405,8 +1415,8 @@ The value of `calc-language` is restored after BODY has been processed."
                   ((TeX-fold-format-theorem-environment . "◼")
                    ("idea" "solution"))))
     (add-to-list 'TeX-fold-begin-end-spec-list item))
-  (dolist (item (list #'TeX-fold-quotes #'TeX-fold-dashes))
-    (add-to-list 'TeX-fold-region-functions item))
+  ;; (dolist (item (list #'TeX-fold-quotes #'TeX-fold-dashes))
+  ;;   (add-to-list 'TeX-fold-region-functions item))
   (advice-add 'LaTeX-insert-item :after #'my/backward-word-fold-macro)
   (advice-add 'yank :after #'my-yank-after-advice)
   (TeX-fold-mode 1)
@@ -1516,17 +1526,19 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package dynexp
   :ensure (:host github :repo "ultronozm/dynexp.el"
-                 :files ("lisp/dynexp-abbrev.el")
+                 ;; :files ("lisp/dynexp-abbrev.el")
                  :depth nil)
   :after latex
   :hook (LaTeX-mode . dynexp-latex-setup)
   :bind (:map LaTeX-mode-map
               ("SPC" . dynexp-space)
               ("TAB" . dynexp-next))
-  :config
-  (quietly-read-abbrev-file
-   (expand-file-name "dynexp-abbrev.el"
-                     (file-name-directory (locate-library "dynexp")))))
+  ;; :config
+  ;; (quietly-read-abbrev-file
+  ;;  (expand-file-name "dynexp-abbrev.el"
+  ;;                    (file-name-directory (locate-library "dynexp"))))
+  )
+
 
 (use-package czm-tex-edit
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el"
