@@ -21,7 +21,7 @@ Be sure to add your Emacs executable to the PATH environment variable.
 Most of the functionality of my config has been extracted into the following packages.
 
 ** LaTeX editing
-- +[[https://github.com/ultronozm/czm-preview.el][czm-preview.el]] :: extensions for preview.el+ (subsumed by AUCTeX 14.0.5+ and =preview-auto=)
+- +[[https://github.com/ultronozm/czm-preview.el][czm-preview.el]]+ :: +extensions for preview.el+ (subsumed by AUCTeX 14.0.5+ and =preview-auto=)
 - [[https://github.com/ultronozm/auctex-cont-latexmk.el][auctex-cont-latexmk.el]] :: run latexmk continuously, report errors via flymake
 - [[https://github.com/ultronozm/auctex-label-numbers.el][auctex-label-numbers.el]] :: numbering for LaTeX previews and folds
 - [[https://github.com/ultronozm/czm-tex-edit.el][czm-tex-edit.el]] :: helper functions for editing LaTeX
@@ -33,7 +33,7 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/dynexp.el][dynexp.el]] :: snippets via abbrev-mode
 - [[https://github.com/ultronozm/preview-auto.el][preview-auto.el]] :: automatic previews in AUCTeX
 - [[https://github.com/ultronozm/preview-tailor.el][preview-tailor.el]] :: tailor AUCTeX preview scale to monitor/text scale
-- +[[https://github.com/ultronozm/spout.el][spout.el]] :: speed keys for outline/foldout modes+ (subsumed by =repeat-mode=)
+- +[[https://github.com/ultronozm/spout.el][spout.el+]] :: +speed keys for outline/foldout modes+ (subsumed by =repeat-mode=)
 - [[https://github.com/ultronozm/symtex.el][symtex.el]] :: evaluate SAGE code on parts of a TeX buffer
 - [[https://github.com/ultronozm/tex-item.el][tex-item.el]] :: commands for working with tex items
 - [[https://github.com/ultronozm/tex-parens.el][tex-parens.el]] :: like lisp.el but for tex
