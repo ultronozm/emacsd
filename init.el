@@ -1147,72 +1147,40 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package repo-scan
   :ensure (:host github :repo "ultronozm/repo-scan.el"
                  :depth nil)
+  :custom
+  (repo-scan-repos
+   '("ai-org-chat"
+     "auto-hide"
+     "czm-cpp"
+     "czm-lean4"
+     "czm-misc"
+     "czm-preview"
+     "czm-spell"
+     "czm-tex-compile"
+     "czm-tex-edit"
+     "czm-tex-fold"
+     "czm-tex-jump"
+     "czm-tex-mint"
+     "czm-tex-ref"
+     "czm-tex-util"
+     "doc-dual-view"
+     "dynexp"
+     "eldoc-icebox"
+     "flymake-overlays"
+     "lean4-mode"
+     "library"
+     "magit-fill-column"
+     "preview-auto"
+     "preview-tailor"
+     "publish"
+     "repo-scan"
+     "spout"
+     "symtex"
+     "auctex-label-numbers"
+     "auctex-cont-latexmk"
+     "tex-parens"
+     "tex-item"))
   :defer t)
-
-(defvar czm-repos
-  '(
-    "ai-org-chat"
-    "auto-hide"
-    "czm-cpp"
-    "czm-lean4"
-    "czm-misc"
-    "czm-preview"
-    "czm-spell"
-    "czm-tex-compile"
-    "czm-tex-edit"
-    "czm-tex-fold"
-    "czm-tex-jump"
-    "czm-tex-mint"
-    "czm-tex-ref"
-    "czm-tex-util"
-    "doc-dual-view"
-    "dynexp"
-    "eldoc-icebox"
-    "flymake-overlays"
-    "lean4-mode"
-    "library"
-    "magit-fill-column"
-    "preview-auto"
-    "preview-tailor"
-    "publish"
-    "repo-scan"
-    "spout"
-    "symtex"
-    "auctex-label-numbers"
-    "auctex-cont-latexmk"
-    "tex-parens"
-    "tex-item"
-    ))
-
-(defun czm-repos-uncompiled ()
-  (interactive)
-  (dolist (name czm-repos)
-    (let ((elc-file
-           (concat user-emacs-directory
-                   (file-name-as-directory "elpaca")
-                   (file-name-as-directory "builds")
-                   (file-name-as-directory name)
-                   name ".elc")))
-      (unless (file-exists-p elc-file)
-        (message "%s.elc not found" name)))))
-
-(defun czm-pull-my-stuff ()
-  (interactive)
-  (let* ((repos (append
-                 (mapcar
-                  (lambda (name)
-                    (concat user-emacs-directory
-                            (file-name-as-directory "elpaca")
-                            (file-name-as-directory "repos")
-                            name))
-                  czm-repos))))
-    (repo-scan-pull repos)))
-
-(defun czm-rebuild-my-stuff ()
-  (interactive)
-  (dolist (repo czm-repos)
-    (let ((repo-symbol (intern repo)))
-      (elpaca-rebuild repo-symbol))))
 
 (defun czm-file-is-tex-or-bib (file)
   "Return t if FILE is a .tex or .bib file."
@@ -1226,20 +1194,6 @@ The value of `calc-language` is restored after BODY has been processed."
   :custom
   (publish-repo-root "~/math")
   (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
-
-(defun czm-search-my-repos ()
-  (interactive)
-  ;; files: all elisp files in my repos
-  (let ((files (mapcan
-                (lambda (name)
-                  (directory-files-recursively
-                   (concat user-emacs-directory
-                           (file-name-as-directory "elpaca")
-                           (file-name-as-directory "repos")
-                           name)
-                   "\\.el\\'"))
-                czm-repos)))
-    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder files nil)))
 
 (use-package magit-fill-column
   :ensure (:host github :repo "ultronozm/magit-fill-column.el"
@@ -1860,17 +1814,6 @@ Optionally run SETUP-FN after creating the file."
   :config
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
 
-(defun czm-lean4-maybe-colorize (text)
-  "Highlight theorem signatures in the given TEXT for Lean4 buffers."
-  (let ((mode major-mode))
-    (with-temp-buffer
-      (delay-mode-hooks (funcall mode))
-      (insert text)
-      (font-lock-ensure)
-      (when (eq mode 'lean4-mode)
-        (czm-lean4-colorize-theorem-signature (point-min) (point-max)))
-      (buffer-string))))
-
 (use-package flymake-overlays
   :ensure (:host github :repo "ultronozm/flymake-overlays.el"
                  :depth nil)
@@ -1891,22 +1834,6 @@ Optionally run SETUP-FN after creating the file."
               nil t)
     (eldoc-mode)))
 
-(defun czm-eldoc-icebox-text-processor ()
-  "Fontify buffer, possibly with Lean4 theorem signatures.
-This function is intended to be used with flymake overlays."
-  (let ((text (buffer-string))
-        (mode major-mode))
-    (let ((newtext
-           (with-temp-buffer
-             (delay-mode-hooks (funcall mode))
-             (insert text)
-             (font-lock-ensure)
-             (when (eq mode 'lean4-mode)
-               (czm-lean4-colorize-theorem-signature (point-min) (point-max)))
-             (buffer-string))))
-      (delete-region (point-min) (point-max))
-      (insert newtext))))
-
 (use-package eldoc-icebox
   :ensure (:host github :repo "ultronozm/eldoc-icebox.el"
                  :depth nil)
@@ -1914,5 +1841,5 @@ This function is intended to be used with flymake overlays."
          ("C-c C-n" . eldoc-icebox-toggle-display))
   :hook
   (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
-  (eldoc-icebox-post-display . czm-eldoc-icebox-text-processor)
+  (eldoc-icebox-post-display . czm-lean4-fontify-buffer)
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
