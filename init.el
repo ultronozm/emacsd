@@ -3,11 +3,11 @@
 ;;; --- Preliminaries ---
 
 (setq use-package-verbose t)
-(load (concat user-emacs-directory "init-bare.el"))
-(load (concat user-emacs-directory "init-settings.el"))
+(load (locate-user-emacs-file "init-bare.el"))
+(load (locate-user-emacs-file "init-settings.el"))
 
 ;; disable customization interface
-(setq custom-file (concat user-emacs-directory "init-custom.el"))
+(setq custom-file (locate-user-emacs-file "init-custom.el"))
 
 (defun czm-dired-downloads ()
   "Open the downloads directory in Dired mode."
@@ -262,8 +262,9 @@
 
 ;;; --- Personal Config ---
 
-(when (file-exists-p (concat user-emacs-directory "init-personal.el"))
-  (load (concat user-emacs-directory "init-personal.el")))
+(let ((file (locate-user-emacs-file "init-personal.el")))
+  (when (file-exists-p file)
+    (load file)))
 
 ;;; --- UI Enhancements ---
 
@@ -341,24 +342,18 @@
 
 (use-package consult
   :bind (("C-c M-x" . consult-mode-command)
-         ("C-c h" . consult-history)
-         ("C-c k" . consult-kmacro)
-         ("C-c m" . consult-man)
          ("C-c i" . consult-info)
-         ("C-x M-:" . consult-complex-command)
-         ("s-b" . consult-buffer)
-         ("C-x 4 b" . consult-buffer-other-window)
-         ("C-x 5 b" . consult-buffer-other-frame)
-         ("C-x r b" . consult-bookmark)
-         ("C-x p b" . consult-project-buffer)
-         ("M-#" . consult-register-load)
-         ("M-'" . consult-register-store)
-         ("C-M-#" . consult-register)
-         ("M-y" . consult-yank-pop)
+         ([remap repeat-complex-command] . consult-complex-command)
+         ([remap switch-to-buffer] . consult-buffer)
+         ([remap bookmark-jump] . consult-bookmark)
+         ([remap project-switch-to-buffer] . consult-project-buffer)
+         ("s-t" . consult-register-load)
+         ("s-T" . consult-register-store)
+         ("C-s-t" . consult-register)
+         ([remap yank-pop] . consult-yank-pop)
          ("M-g e" . consult-compile-error)
          ("M-g f" . consult-flymake)
-         ("M-g g" . consult-goto-line)
-         ("M-g M-g" . consult-goto-line)
+         ([remap goto-line] . consult-goto-line)
          ("M-g o" . consult-outline)
          ("M-g m" . consult-mark)
          ("M-g k" . consult-global-mark)
@@ -375,8 +370,7 @@
          ("M-s u" . consult-focus-lines)
          ("M-s e" . consult-isearch-history)
          :map isearch-mode-map
-         ("M-e" . consult-isearch-history)
-         ("M-s e" . consult-isearch-history)
+         ([remap isearch-edit-string] . consult-isearch-history)
          ("M-s l" . consult-line)
          ("M-s L" . consult-line-multi)
          :map minibuffer-local-map
@@ -1174,7 +1168,6 @@ The value of `calc-language` is restored after BODY has been processed."
      "preview-tailor"
      "publish"
      "repo-scan"
-     "spout"
      "symtex"
      "auctex-label-numbers"
      "auctex-cont-latexmk"
@@ -1291,6 +1284,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (TeX-fold-quotes-on-insert t)
   (TeX-fold-bib-files (list my-master-bib-file))
   (TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
+  (TeX-insert-macro-default-style 'mandatory-args-only)
   ;; (TeX-suppress-ignored-warnings t)
   :custom-face
   (preview-face ((t (:background unspecified)))))
@@ -1843,3 +1837,7 @@ Optionally run SETUP-FN after creating the file."
   (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
   (eldoc-icebox-post-display . czm-lean4-fontify-buffer)
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
+
+(use-package consult-abbrev
+  :ensure (:host github :repo "ultronozm/consult-abbrev.el"
+                 :depth nil))

@@ -83,12 +83,10 @@
    ("s-e" . end-of-list)
    ("s-A" . kill-to-beginning-of-list)
    ("s-E" . kill-to-end-of-list)
-   ;; s-a
    ("s-C" . nil)
    ;; "s-D" ; dired
    ;; ("s-w" switch-to-buffer)
    ;; s-f
-   ;; "s-E"
    ("s-H" . nil)
    ("s-L" . nil)
    ;; "s-M" ; manual-entry
@@ -187,52 +185,6 @@ This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
         (concat "Result: "
                 (edebug-safe-prin1-to-string previous-value)
                 (eval-expression-print-format previous-value))))
-
-;;; won't be necessary in Emacs 31+
-(defun delete-pair (&optional arg)
-  "Delete a pair of characters enclosing ARG sexps that follow point.
-A negative ARG deletes a pair around the preceding ARG sexps instead.
-The option `delete-pair-blink-delay' can disable blinking.
-
-Redefinition of the usual `delete-pair'.  This version pushes the
-mark somewhere useful."
-  (interactive "P")
-  (if arg
-      (setq arg (prefix-numeric-value arg))
-    (setq arg 1))
-  (if (< arg 0)
-      (save-excursion
-        (skip-chars-backward " \t")
-        (save-excursion
-          (let ((close-char (char-before)))
-            (forward-sexp arg)
-            (unless (member (list (char-after) close-char)
-                            (mapcar (lambda (p)
-                                      (if (= (length p) 3) (cdr p) p))
-                                    insert-pair-alist))
-              (error "Not after matching pair"))
-            (when (and (numberp delete-pair-blink-delay)
-                       (> delete-pair-blink-delay 0))
-              (sit-for delete-pair-blink-delay))
-            (delete-char 1)))
-        (delete-char -1))
-    (save-excursion
-      (skip-chars-forward " \t")
-      (save-excursion
-        (let ((open-char (char-after)))
-          (forward-sexp arg)
-          (unless (member (list open-char (char-before))
-                          (mapcar (lambda (p)
-                                    (if (= (length p) 3) (cdr p) p))
-                                  insert-pair-alist))
-            (error "Not before matching pair"))
-          (when (and (numberp delete-pair-blink-delay)
-                     (> delete-pair-blink-delay 0))
-            (sit-for delete-pair-blink-delay))
-          (delete-char -1)
-          (push-mark) ; added!
-          ))
-      (delete-char 1))))
 
 (defun mark-inner ()
   "Mark interior of the current list."
@@ -381,21 +333,6 @@ DIR must include a .project file to be considered a project."
   :ensure nil
   :config (add-to-list 'project-find-functions 'czm/project-try-local))
 
-;; in current Emacs master, can eventually be deleted from here
-(defun foldout-widen-to-current-fold ()
-  "Widen to the current fold level.
-If in a fold, widen to that fold's boundaries.
-If not in a fold, acts like `widen'."
-  (interactive)
-  (if foldout-fold-list
-      (let* ((last-fold (car foldout-fold-list))
-             (start (car last-fold))
-             (end (cdr last-fold)))
-        (widen)
-        (narrow-to-region start
-                          (if end (1- (marker-position end)) (point-max))))
-    (widen)))
-
 (use-package foldout
   :ensure nil
   :bind ("C-x n w" . foldout-widen-to-current-fold))
@@ -403,8 +340,7 @@ If not in a fold, acts like `widen'."
 (use-package calendar
   :ensure nil
   :bind (:map calendar-mode-map
-              ("<left>" . nil)
-              ("<right>" . nil)
-              ("<up>" . nil)
-              ("<down>" . nil)))
+              ("<left>" . nil) ("<right>" . nil)
+              ("<up>" . nil) ("<down>" . nil)))
 
+(load (locate-user-emacs-file "init-obsolete.el"))
