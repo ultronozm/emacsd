@@ -1,13 +1,16 @@
 ;;; -*- lexical-binding: t; -*-
 
-;;; --- Preliminaries ---
-
 (setq use-package-verbose t)
-(load (locate-user-emacs-file "init-bare.el"))
-(load (locate-user-emacs-file "init-settings.el"))
 
 ;; disable customization interface
 (setq custom-file (locate-user-emacs-file "init-custom.el"))
+
+;; bare essentials
+(load (locate-user-emacs-file "init-bare.el"))
+
+;;; --- Settings ---
+
+(load (locate-user-emacs-file "init-settings.el"))
 
 (defun czm-dired-downloads ()
   "Open the downloads directory in Dired mode."
@@ -725,15 +728,15 @@
   :ensure nil
   :after flymake preview
   :config
-  (add-to-list 'preview-auto-reveal-commands #'flymake-goto-next-error)
-  (add-to-list 'preview-auto-reveal-commands #'flymake-goto-prev-error))
+  (dolist (cmd '(flymake-goto-next-error flymake-goto-prev-error))
+    (add-to-list 'preview-auto-reveal-commands cmd)))
 
 (use-package emacs
   :ensure nil
   :after flymake tex-fold
   :config
-  (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-next-error)
-  (add-to-list 'TeX-fold-auto-reveal-commands #'flymake-goto-prev-error))
+  (dolist (cmd '(flymake-goto-next-error flymake-goto-prev-error))
+    (add-to-list 'TeX-fold-auto-reveal-commands cmd)))
 
 ;;; --- Attrap ---
 
@@ -815,8 +818,7 @@
 ;;; --- Spelling ---
 
 (use-package czm-spell
-  :ensure (:host github :repo "ultronozm/czm-spell.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-spell.el" :depth nil)
   :after latex
   :bind ("s-;" . czm-spell-then-abbrev))
 
@@ -1249,6 +1251,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (LaTeX-mode . visual-line-mode)
   (LaTeX-mode . (lambda () (setq fill-column 999999)))
   (LaTeX-mode . czm-setup-and-activate-tex-fold)
+  (prog-mode . (lambda () (setq-local TeX-master my-preview-master)))
   :bind
   (:map LaTeX-mode-map
         ("s-c" . preview-clearout-at-point)
@@ -1399,16 +1402,14 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (defun czm-attrap-LaTeX-fixer-flymake (msg pos end)
   (cond
-   ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.")
-                msg)
+   ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.") msg)
     (list (attrap-option 'fix-open-dquote
                          (delete-region pos (1+ pos))
                          (insert "``"))
           (attrap-option 'fix-close-dquote
                          (delete-region pos (1+ pos))
                          (insert "''"))))
-   ((s-matches? (rx "Non-breaking space (`~') should have been used.")
-                msg)
+   ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
     (attrap-one-option 'non-breaking-space
                        (if (looking-at (rx space))
                            (delete-region pos (1+ pos))
@@ -1458,39 +1459,22 @@ The value of `calc-language` is restored after BODY has been processed."
                          (backward-char)
                          (insert "''"))))))
 
-(use-package emacs
-  :ensure nil
-  :after flycheck attrap
-  :config
-  (add-to-list 'attrap-flycheck-checkers-alist '(tex-chktex . czm-attrap-LaTeX-fixer)))
-
-(use-package latex-flymake
-  :ensure nil
-  :after latex)
-
-(with-eval-after-load 'attrap
-  (setcdr (assoc 'LaTeX-flymake attrap-flymake-backends-alist)
-          #'czm-attrap-LaTeX-fixer-flymake))
+(with-eval-after-load 'latex
+  (require 'latex-flymake)
+  (with-eval-after-load 'attrap
+    (setcdr (assoc 'LaTeX-flymake attrap-flymake-backends-alist)
+            #'czm-attrap-LaTeX-fixer-flymake)))
 
 (use-package dynexp
-  :ensure (:host github :repo "ultronozm/dynexp.el"
-                 ;; :files ("lisp/dynexp-abbrev.el")
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/dynexp.el" :depth nil)
   :after latex
   :hook (LaTeX-mode . dynexp-latex-setup)
   :bind (:map LaTeX-mode-map
               ("SPC" . dynexp-space)
-              ("TAB" . dynexp-next))
-  ;; :config
-  ;; (quietly-read-abbrev-file
-  ;;  (expand-file-name "dynexp-abbrev.el"
-  ;;                    (file-name-directory (locate-library "dynexp"))))
-  )
-
+              ("TAB" . dynexp-next)))
 
 (use-package czm-tex-edit
-  :ensure (:host github :repo "ultronozm/czm-tex-edit.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-tex-edit.el" :depth nil)
   :after latex dynexp
   ;; :demand ; should come after latex and dynexp
   :bind
@@ -1522,8 +1506,7 @@ The value of `calc-language` is restored after BODY has been processed."
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
 (use-package auctex-cont-latexmk
-  :ensure (:host github :repo "ultronozm/auctex-cont-latexmk.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/auctex-cont-latexmk.el" :depth nil)
   :after latex
   :bind (:map LaTeX-mode-map ("C-c k" . auctex-cont-latexmk-toggle))
   :custom
@@ -1531,14 +1514,8 @@ The value of `calc-language` is restored after BODY has been processed."
    '("latexmk -pvc -shell-escape -pdf -view=none -e "
      ("$pdflatex=q/pdflatex %O -synctex=1 -interaction=nonstopmode %S/"))))
 
-(defun my/set-TeX-master ()
-  (setq-local TeX-master "~/doit/preview-master.tex"))
-
-(add-hook 'prog-mode-hook #'my/set-TeX-master)
-
 (use-package preview-auto
-  :ensure (:host github :repo "ultronozm/preview-auto.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/preview-auto.el" :depth nil)
   :after latex
   :hook (LaTeX-mode . preview-auto-setup)
   :config
@@ -1551,15 +1528,13 @@ The value of `calc-language` is restored after BODY has been processed."
    '(preview-LaTeX-disable-pdfoutput)))
 
 (use-package auctex-label-numbers
-  :ensure (:host github :repo "ultronozm/auctex-label-numbers.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/auctex-label-numbers.el" :depth nil)
   :after latex)
 
 (use-package library
   :after latex czm-tex-util
   :defer t
-  :ensure (:host github :repo "ultronozm/library.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/library.el" :depth nil)
   :custom
   (library-pdf-directory my-pdf-folder)
   (library-bibtex-file my-master-bib-file)
@@ -1572,8 +1547,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (call-interactively #'tex-parens-backward-down-list))
 
 (use-package tex-parens
-  :ensure (:host github :repo "ultronozm/tex-parens.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/tex-parens.el" :depth nil)
   :after latex
   :bind (:map LaTeX-mode-map
               ("M-i" . tex-parens-mark-inner)
@@ -1619,8 +1593,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (repeat-mode 1))
 
 (use-package tex-item
-  :ensure (:host github :repo "ultronozm/tex-item.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/tex-item.el" :depth nil)
   :after latex
   :config
   (defvar-keymap tex-item-map
@@ -1680,8 +1653,7 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package mmm-mode
   :defer t
-  :custom
-  (mmm-global-mode nil)
+  :custom (mmm-global-mode nil)
   :config
   (face-spec-set 'mmm-default-submode-face
                  '((((background light)) (:background "#ddffff"))
@@ -1689,14 +1661,11 @@ The value of `calc-language` is restored after BODY has been processed."
                  'face-defface-spec))
 
 (use-package czm-tex-mint
-  :ensure (:host github :repo "ultronozm/czm-tex-mint.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-tex-mint.el" :depth nil)
   :after latex mmm-mode
   :demand t
-  :custom
-  (LaTeX-command "latex -shell-escape")
-  :config
-  (czm-tex-mint-initialize)
+  :custom (LaTeX-command "latex -shell-escape")
+  :config (czm-tex-mint-initialize)
   :bind
   (:map czm-tex-mint-mode-map
         ("C-c C-c" . czm-tex-mint-evaluate)
@@ -1706,15 +1675,11 @@ The value of `calc-language` is restored after BODY has been processed."
   (mmm-sage-shell:sage-mode-exit . czm-tex-mint-disable))
 
 (use-package symtex
-  :ensure (:host github
-                 :repo "ultronozm/symtex.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/symtex.el" :depth nil)
   :after latex
   :bind
-  (:map global-map
-        ("C-c V" . symtex-process))
-  (:map LaTeX-mode-map
-        ("C-c v" . symtex-dwim)))
+  (:map global-map ("C-c V" . symtex-process))
+  (:map LaTeX-mode-map ("C-c v" . symtex-dwim)))
 
 ;;; --- Scratch files ---
 
@@ -1749,11 +1714,10 @@ Optionally run SETUP-FN after creating the file."
 
 (defun czm-set-lean4-local-variables ()
   (setq preview-tailor-local-multiplier 0.7)
-  (setq TeX-master "~/doit/preview-master.tex"))
+  (setq TeX-master my-preview-master))
 
 (use-package lean4-mode
-  :ensure (:host github :repo "ultronozm/lean4-mode"
-                 :files ("*.el" "data"))
+  :ensure (:host github :repo "ultronozm/lean4-mode" :files ("*.el" "data"))
   :diminish
   :hook
   (lean4-mode . czm-lean4-set-imenu-generic-expression)
@@ -1772,8 +1736,7 @@ Optionally run SETUP-FN after creating the file."
   :defer t)
 
 (use-package czm-lean4
-  :ensure (:host github :repo "ultronozm/czm-lean4.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-lean4.el" :depth nil)
   :after lean4-mode preview-auto
   :hook (lean4-mode . czm-lean4-mode-hook)
   :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
@@ -1809,8 +1772,7 @@ Optionally run SETUP-FN after creating the file."
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
 
 (use-package flymake-overlays
-  :ensure (:host github :repo "ultronozm/flymake-overlays.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/flymake-overlays.el" :depth nil)
   :after flymake
   :bind (:map flymake-mode-map
               ;; ("C-c t" . flymake-overlays-smart-toggle)
@@ -1829,8 +1791,7 @@ Optionally run SETUP-FN after creating the file."
     (eldoc-mode)))
 
 (use-package eldoc-icebox
-  :ensure (:host github :repo "ultronozm/eldoc-icebox.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/eldoc-icebox.el" :depth nil)
   :bind (("C-c C-h" . eldoc-icebox-store)
          ("C-c C-n" . eldoc-icebox-toggle-display))
   :hook
@@ -1839,5 +1800,4 @@ Optionally run SETUP-FN after creating the file."
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
 
 (use-package consult-abbrev
-  :ensure (:host github :repo "ultronozm/consult-abbrev.el"
-                 :depth nil))
+  :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil))
