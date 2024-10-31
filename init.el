@@ -219,12 +219,6 @@
            (current-buffer))))
     (switch-to-buffer src-buffer)))
 
-(defun czm-search-log ()
-  "Search your log files with `rg'."
-  (interactive)
-  (let ((log-files `(,my-log-file ,my-old-log-file ,my-todo-file)))
-    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
-
 (use-package emacs
   :ensure nil
   :after define-repeat-map org
@@ -403,6 +397,12 @@
                  args))))
 
 (use-package consult-company)
+
+(defun czm-search-log ()
+  "Search your log files with `rg'."
+  (interactive)
+  (let ((log-files `(,my-log-file ,my-old-log-file ,my-todo-file)))
+    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
 
 (use-package embark
   :bind
@@ -849,8 +849,7 @@
         ("C-c g" . pdf-view-goto-page)))
 
 (use-package doc-dual-view
-  :ensure (:host github :repo "ultronozm/doc-dual-view.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/doc-dual-view.el" :depth nil)
   :commands (doc-dual-view-mode))
 
 ;;; --- ERC (IRC Client) ---
@@ -1041,8 +1040,7 @@
 ;;   (c-mode-common . clang-format+-mode))
 
 (use-package cmake-build
-  :ensure (:host github :repo "ultronozm/cmake-build.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/cmake-build.el" :depth nil)
   :bind (("s-m m" . cmake-build-menu)
          ("s-m 1" . cmake-build-set-cmake-profile)
          ("s-m 2" . cmake-build-clear-cache-and-configure)
@@ -1060,9 +1058,7 @@
   (cmake-build-options "-j 8 --verbose"))
 
 (use-package czm-cpp
-  :ensure (:host github :repo "ultronozm/czm-cpp.el"
-                 :files ("*.el" "template")
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-cpp.el" :files ("*.el" "template") :depth nil)
   :defer t
   :custom
   (czm-cpp-scratch-directory my-scratch-cpp-dir))
@@ -1138,11 +1134,21 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package magit
   :defer t
   :hook
-  (magit-status-mode . visual-line-mode))
+  (magit-status-mode . visual-line-mode)
+  :config
+  ;; repeat map consisting of:
+  ;; C-c ^ RET	magit-smerge-keep-current
+  ;; C-c ^ b		magit-smerge-keep-base
+  ;; C-c ^ l		magit-smerge-keep-lower
+  ;; C-c ^ u		magit-smerge-keep-upper
+  (define-repeat-map magit-smerge-repeat-map
+    ("RET" magit-smerge-keep-current
+     "b" magit-smerge-keep-base
+     "l" magit-smerge-keep-lower
+     "u" magit-smerge-keep-upper)))
 
 (use-package repo-scan
-  :ensure (:host github :repo "ultronozm/repo-scan.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/repo-scan.el" :depth nil)
   :custom
   (repo-scan-repos
    '("ai-org-chat"
@@ -1183,16 +1189,14 @@ The value of `calc-language` is restored after BODY has been processed."
       (string-suffix-p ".bib" file)))
 
 (use-package publish
-  :ensure (:host github :repo "ultronozm/publish.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/publish.el" :depth nil)
   :defer t
   :custom
   (publish-repo-root "~/math")
   (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
 
 (use-package magit-fill-column
-  :ensure (:host github :repo "ultronozm/magit-fill-column.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/magit-fill-column.el" :depth nil)
   :hook (git-commit-setup . magit-fill-column-set)
   :custom
   (magit-fill-column-alist '(("emacs" . 64)
@@ -1209,6 +1213,28 @@ The value of `calc-language` is restored after BODY has been processed."
   :defer t)
 
 ;;; --- LaTeX ---
+
+(use-package tex-mode
+  :ensure nil
+  :config
+  (dolist (sym '(("``" . ?“) ("''" . ?”)))
+    (add-to-list 'tex--prettify-symbols-alist sym)))
+
+(defun my-LaTeX-mode-setup ()
+  (turn-on-reftex)
+  (apply #'LaTeX-add-environments
+         (mapcar (lambda (env) (list env 'LaTeX-env-label))
+                 '("lemma" "exercise" "example" "proposition"
+                   "corollary" "remark" "definition" "theorem"
+                   "proof")))
+  (setq buffer-face-mode-face
+        '(:height 216 :width normal :family "Andale Mono"))
+  (buffer-face-mode)
+  (outline-minor-mode)
+  (abbrev-mode)
+  (visual-line-mode)
+  (setq fill-column 999999)
+  (czm-setup-and-activate-tex-fold))
 
 (use-package latex
   :ensure (auctex
@@ -1234,23 +1260,8 @@ The value of `calc-language` is restored after BODY has been processed."
   (put 'LaTeX-narrow-to-environment 'disabled nil)
   (TeX-source-correlate-mode)
   :hook
-  (LaTeX-mode . turn-on-reftex)
-  (LaTeX-mode . (lambda ()
-                  (apply
-                   #'LaTeX-add-environments
-                   (mapcar (lambda (env) (list env 'LaTeX-env-label))
-                           '("lemma" "exercise" "example" "proposition"
-                             "corollary" "remark" "definition" "theorem"
-                             "proof")))))
-  (LaTeX-mode . (lambda ()
-                  (setq buffer-face-mode-face
-                        '(:height 216 :width normal :family "Andale Mono"))
-                  (buffer-face-mode)))
-  (LaTeX-mode . outline-minor-mode)
-  (LaTeX-mode . abbrev-mode)
-  (LaTeX-mode . visual-line-mode)
-  (LaTeX-mode . (lambda () (setq fill-column 999999)))
-  (LaTeX-mode . czm-setup-and-activate-tex-fold)
+  (LaTeX-mode . my-LaTeX-mode-setup)
+  (TeX-mode . prettify-symbols-mode)
   (prog-mode . (lambda () (setq-local TeX-master my-preview-master)))
   :bind
   (:map LaTeX-mode-map
@@ -1268,9 +1279,8 @@ The value of `calc-language` is restored after BODY has been processed."
   (TeX-auto-save t)
   (TeX-parse-self t)
   (TeX-outline-extra
-   (mapcar
-    (lambda (env) (list env 1))
-    '("\\\\bibliography\\b" "\\\\printindex\\b" "\\\\begin{thebibliography")))
+   (mapcar (lambda (env) (list env 1)) '("\\\\bibliography\\b" "\\\\printindex\\b" "\\\\begin{thebibliography")))
+  ;; Don't ask for section labels.  Do fold after inserting a section.
   (LaTeX-section-hook '(LaTeX-section-heading
                         LaTeX-section-title
                         LaTeX-section-section
@@ -1284,17 +1294,17 @@ The value of `calc-language` is restored after BODY has been processed."
   
   (preview-auto-cache-preamble t)
   (preview-image-type 'dvipng)
-  (TeX-fold-quotes-on-insert t)
+  ;; (TeX-fold-quotes-on-insert t)
   (TeX-fold-bib-files (list my-master-bib-file))
   (TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
   (TeX-insert-macro-default-style 'mandatory-args-only)
   ;; (TeX-suppress-ignored-warnings t)
+  (LaTeX-insert-into-comments nil)
   :custom-face
   (preview-face ((t (:background unspecified)))))
 
 (use-package preview-tailor
-  :ensure (:host github :repo "ultronozm/preview-tailor.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/preview-tailor.el" :depth nil)
   :after preview
   :demand
   :config
@@ -1306,8 +1316,7 @@ The value of `calc-language` is restored after BODY has been processed."
    (lambda () (if (string-suffix-p ".lean" (buffer-file-name)) 0.6 0.833))))
 
 (use-package czm-tex-util
-  :ensure (:host github :repo "ultronozm/czm-tex-util.el"
-                 :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-tex-util.el" :depth nil)
   :after latex)
 
 (defun my/backward-word-fold-macro ()
@@ -1368,6 +1377,7 @@ The value of `calc-language` is restored after BODY has been processed."
     (add-to-list 'TeX-fold-begin-end-spec-list item))
   ;; (dolist (item (list #'TeX-fold-quotes #'TeX-fold-dashes))
   ;;   (add-to-list 'TeX-fold-region-functions item))
+  (setq TeX-fold-region-functions '(TeX-fold-verbs))
   (advice-add 'LaTeX-insert-item :after #'my/backward-word-fold-macro)
   (advice-add 'yank :after #'my-yank-after-advice)
   (TeX-fold-mode 1)
@@ -1376,8 +1386,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (add-hook 'LaTeX-mode-hook #'TeX-fold-mode))
 
 (use-package czm-tex-jump
-  :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git"
-                 :depth nil)
+  :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git" :depth nil)
   ;; :after avy
   :after latex
   :bind
@@ -1561,10 +1570,6 @@ The value of `calc-language` is restored after BODY has been processed."
   :hook
   (LaTeX-mode . tex-parens-mode)
   :config
-  (defun czm-expand-abbrev-advice (orig-fun &rest args)
-    (unless (nth 4 (syntax-ppss))
-      (apply orig-fun args)))
-  (advice-add 'expand-abbrev :around #'czm-expand-abbrev-advice)
   (add-to-list 'preview-auto-reveal-commands #'czm-tex-jump-back-with-breadcrumb)
   (define-repeat-map tex-parens-structural-edit
     ("n" tex-parens-forward-list
@@ -1720,7 +1725,6 @@ Optionally run SETUP-FN after creating the file."
   :ensure (:host github :repo "ultronozm/lean4-mode" :files ("*.el" "data"))
   :diminish
   :hook
-  (lean4-mode . czm-lean4-set-imenu-generic-expression)
   (lean4-mode . czm-set-lean4-local-variables)
   :commands (lean4-mode)
   :custom
@@ -1738,7 +1742,8 @@ Optionally run SETUP-FN after creating the file."
 (use-package czm-lean4
   :ensure (:host github :repo "ultronozm/czm-lean4.el" :depth nil)
   :after lean4-mode preview-auto
-  :hook (lean4-mode . czm-lean4-mode-hook)
+  :hook
+  (lean4-mode . czm-lean4-mode-hook)
   :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
   :bind (:map lean4-mode-map
               ("C-c v" . czm-lean4-show-variables)

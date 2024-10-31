@@ -290,6 +290,13 @@ This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
   (dolist (abbrev abbrevs)
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
+;; forget the point of this:
+
+;; (defun czm-expand-abbrev-advice (orig-fun &rest args)
+;;   (unless (and (eq major-mode 'LaTeX-mode)
+;;                (nth 4 (syntax-ppss)))
+;;     (apply orig-fun args)))
+
 (use-package abbrev
   :ensure nil
   :config
@@ -301,7 +308,9 @@ This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
   (let ((abbrev-file (concat user-emacs-directory "abbrev_defs.el")))
     (when (file-exists-p abbrev-file)
       (quietly-read-abbrev-file abbrev-file)))
-  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))
+  ;; (advice-add 'expand-abbrev :around #'czm-expand-abbrev-advice)
+  )
 
 (use-package calc
   :ensure nil
