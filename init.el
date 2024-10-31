@@ -1,6 +1,7 @@
 ;;; -*- lexical-binding: t; -*-
 
-(setq use-package-verbose t)
+(setq use-package-verbose t
+      use-package-minimum-reported-time 0.02)
 
 ;; disable customization interface
 (setq custom-file (locate-user-emacs-file "init-custom.el"))
@@ -90,20 +91,24 @@
 ;;; --- Exec Path From Shell ---
 
 (use-package exec-path-from-shell
+  :disabled
   :demand
   :if (memq window-system '(mac ns))
   :config
   (exec-path-from-shell-initialize))
 
-(elpaca-wait)
-
-;;; --- Repeat ---
-
-(use-package define-repeat-map
-  :ensure (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el")
-  :demand t
+(use-package exec-path-from-shell
+  ;; :disabled
+  :demand
+  :if (memq window-system '(mac ns))
+  ;; :init
+  ;; (setq exec-path-from-shell-arguments nil) ;; remove -l -i
   :config
-  (repeat-mode 1))
+  (exec-path-from-shell-copy-env "PATH")
+  ;; (exec-path-from-shell-initialize)
+  )
+
+(elpaca-wait)
 
 ;;; --- Paragraph Editing ---
 
@@ -114,23 +119,26 @@
     (previous-line)
     (fill-paragraph)))
 
-(with-eval-after-load 'define-repeat-map
-  (define-repeat-map paragraph
-    ("]" forward-paragraph
-     "}" forward-paragraph
-     "[" backward-paragraph
-     "{" backward-paragraph)
-    (:continue
-     "M-h" mark-paragraph
-     "h" mark-paragraph
-     "k" kill-paragraph
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "C-/" undo
-     "t" transpose-paragraphs
-     "q" fill-previous-paragraph
-     "C-l" recenter-top-bottom)))
+(use-package emacs
+  :ensure nil
+  :bind
+  (:repeat-map
+   paragraph-repeat-map
+   ("]" . forward-paragraph)
+   ("}" . forward-paragraph)
+   ("[" . backward-paragraph)
+   ("{" . backward-paragraph)
+   :continue-only
+   ("M-h" . mark-paragraph)
+   ("h" . mark-paragraph)
+   ("k" . kill-paragraph)
+   ("w" . kill-region)
+   ("M-w" . kill-ring-save)
+   ("y" . yank)
+   ("C-/" . undo)
+   ("t" . transpose-paragraphs)
+   ("q" . fill-previous-paragraph)
+   ("C-l" . recenter-top-bottom)))
 
 ;;; --- Mode line ---
 
@@ -219,9 +227,8 @@
            (current-buffer))))
     (switch-to-buffer src-buffer)))
 
-(use-package emacs
+(use-package org
   :ensure nil
-  :after define-repeat-map org
   :hook
   (org-mode . (lambda () (setq fill-column 999999)))
   (org-mode . abbrev-mode)
@@ -240,21 +247,20 @@
         ("C-c p" . czm-org-edit-src)
         ("M-{" . org-backward-paragraph)
         ("M-}" . org-forward-paragraph))
+  (:repeat-map
+   org-paragraph-repeat-map
+   ("]" . org-forward-paragraph)
+   ("}" . org-forward-paragraph)
+   ("[" . org-backward-paragraph)
+   ("{" . org-backward-paragraph)
+   :continue-only
+   ("w" . kill-region)
+   ("M-w" . kill-ring-save)
+   ("y" . yank)
+   ("C-/" . undo)
+   ("t" . transpose-paragraphs)
+   ("q" . fill-previous-paragraph))
   :config
-  (define-repeat-map org-paragraph
-    ("]" org-forward-paragraph
-     "}" org-forward-paragraph
-     "[" org-backward-paragraph
-     "{" org-backward-paragraph)
-    (:continue
-     "k" kill-paragraph
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "C-/" undo
-     "t" transpose-paragraphs
-     "q" fill-previous-paragraph))
-  (repeat-mode 1)
   (require 'ob-shell))
 
 ;;; --- Personal Config ---
@@ -321,19 +327,21 @@
   (pulsar-global-mode))
 
 (use-package vertico
-  :demand
-  :config
-  (vertico-mode))
+  :defer t
+  :after minibuffer
+  :init (vertico-mode))
 
 (use-package marginalia
-  :demand
+  :after minibuffer
+  :init (marginalia-mode)
   :config
   (marginalia-mode)
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle)))
 
 (use-package orderless
-  :demand
+  :defer t
+  :after minibuffer
   :custom
   (completion-styles '(orderless basic)))
 
@@ -396,8 +404,6 @@
                    #'completion--in-region)
                  args))))
 
-(use-package consult-company)
-
 (defun czm-search-log ()
   "Search your log files with `rg'."
   (interactive)
@@ -439,12 +445,6 @@
 
 (my-outline-set-global-ellipsis " ▼ ")
 
-(use-package auto-hide
-  :ensure (:host github :repo "ultronozm/auto-hide.el"
-                 :depth nil)
-  :config
-  (global-auto-hide-mode))
-
 (use-package outline-skip
   :after latex
   :ensure (:host github :repo "ultronozm/outline-skip.el"
@@ -471,7 +471,8 @@
 (use-package easy-kill
   :bind ([remap kill-ring-save] . easy-kill))
 
-(use-package wgrep) ;; use C-c C-p in embark export following ripgrep
+(use-package wgrep ;; use C-c C-p in embark export following ripgrep
+  :defer t)
 
 (use-package which-key
   :diminish
@@ -479,6 +480,7 @@
   (which-key-mode))
 
 (use-package ace-link ; activate using 'o' in info/help/(...)
+  :defer t
   :config
   (ace-link-setup-default))
 
@@ -552,13 +554,13 @@
         ("C-M-<up>" . copilot-previous-completion)))
 
 (use-package llm
+  :defer t
   :ensure (:host github :repo "ahyatt/llm"
                  :depth nil)
-  :init
-  (require 'llm-openai)
-  (require 'llm-claude)
-  (require 'llm-gemini)
-  (require 'llm-ollama)
+  ;; :init
+  ;; (require 'llm-openai)
+  ;; (require 'llm-gemini)
+  ;; (require 'llm-ollama)
   :custom
   (llm-warn-on-nonfree nil)
   (llm-log t)
@@ -583,28 +585,10 @@
   (ai-org-chat-dir my-scratch-gpt-dir)
   (ai-org-chat-context-style nil)
   :config
+  (require 'llm-claude)
   (ai-org-chat-select-model "sonnet 3.5"))
 
 ;;; --- Lisp Development ---
-
-(use-package lispy
-  :after define-repeat-map
-  :commands (lispy-comment
-             lispy-multiline
-             lispy-split
-             lispy-join
-             lispy-slurp-or-barf-right
-             lispy-slurp-or-barf-left
-             lispy-splice
-             lispy-clone
-             lispy-tab
-             lispy-move-up
-             lispy-move-down)
-  :bind
-  (:map emacs-lisp-mode-map
-        (";" . czm-lispy-comment-maybe)
-        ("M-1" . lispy-describe-inline)
-        ("M-2" . lispy-arglist-inline)))
 
 (defun czm-lispy-comment-maybe ()
   "Comment the list at point, or self-insert."
@@ -613,43 +597,44 @@
       (lispy-comment)
     (call-interactively #'self-insert-command)))
 
-(use-package emacs
-  :ensure nil
-  :after define-repeat-map
-  :config
-  (define-repeat-map structural-edit
-    ("n" forward-list
-     "p" backward-list
-     "u" backward-up-list
-     "M-u" up-list
-     "g" down-list)
-    (:continue
-     "M-g" backward-down-list
-     "f" forward-sexp
-     "b" backward-sexp
-     "a" beginning-of-defun
-     "e" end-of-defun
-     "k" kill-sexp
-     "x" eval-last-sexp
-     "m" lispy-multiline
-     "j" lispy-split
-     "+" lispy-join
-     ">" lispy-slurp-or-barf-right
-     "<" lispy-slurp-or-barf-left
-     "C-/" undo
-     "/" lispy-splice
-     ";" lispy-comment
-     "t" transpose-sexps
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "c" lispy-clone
-     "C-M-SPC" mark-sexp
-     "RET" newline-and-indent
-     "i" lispy-tab
-     "<up>" lispy-move-up
-     "<down>" lispy-move-down))
-  (repeat-mode 1))
+(use-package lispy
+  :bind
+  (:map emacs-lisp-mode-map
+        (";" . czm-lispy-comment-maybe)
+        ("M-1" . lispy-describe-inline)
+        ("M-2" . lispy-arglist-inline))
+  (:repeat-map structural-edit-map
+               ("n" . forward-list)
+               ("p" . backward-list)
+               ("u" . backward-up-list)
+               ("M-u" . up-list)
+               ("g" . down-list)
+               :continue-only
+               ("M-g" . backward-down-list)
+               ("f" . forward-sexp)
+               ("b" . backward-sexp)
+               ("a" . beginning-of-defun)
+               ("e" . end-of-defun)
+               ("k" . kill-sexp)
+               ("x" . eval-last-sexp)
+               ("m" . lispy-multiline)
+               ("j" . lispy-split)
+               ("+" . lispy-join)
+               (">" . lispy-slurp-or-barf-right)
+               ("<" . lispy-slurp-or-barf-left)
+               ("C-/" . undo)
+               ("/" . lispy-splice)
+               (";" . lispy-comment)
+               ("t" . transpose-sexps)
+               ("w" . kill-region)
+               ("M-w" . kill-ring-save)
+               ("y" . yank)
+               ("c" . lispy-clone)
+               ("C-M-SPC" . mark-sexp)
+               ("RET" . newline-and-indent)
+               ("i" . lispy-tab)
+               ("<up>" . lispy-move-up)
+               ("<down>" . lispy-move-down)))
 
 (defun czm-edebug-eval-hook ()
   (lispy-mode 0)
@@ -677,27 +662,28 @@
 
 (use-package flycheck 
   :defer t
+  :bind
+  (:repeat-map
+   flycheck-repeat-map
+   ("C-c" . flycheck-compile)
+   ("C-w" . flycheck-copy-errors-as-kill)
+   ("?" . flycheck-describe-checker)
+   ("C" . flycheck-clear)
+   ("H" . display-local-help)
+   ("V" . flycheck-version)
+   ("c" . flycheck-buffer)
+   ("e" . flycheck-explain-error-at-point)
+   ("f" . attrap-flycheck)
+   ("h" . flycheck-display-error-at-point)
+   ("i" . flycheck-manual)
+   ("l" . flycheck-list-errors)
+   ("n" . flycheck-next-error)
+   ("p" . flycheck-previous-error)
+   ("s" . flycheck-select-checker)
+   ("v" . flycheck-verify-setup)
+   ("x" . flycheck-disable-checker))
   :config
-  (setq flycheck-emacs-lisp-load-path 'inherit)
-  (define-repeat-map flycheck-repeat-map
-    ("C-c" flycheck-compile
-     "C-w" flycheck-copy-errors-as-kill
-     "?" flycheck-describe-checker
-     "C" flycheck-clear
-     "H" display-local-help
-     "V" flycheck-version
-     "c" flycheck-buffer
-     "e" flycheck-explain-error-at-point
-     "f" attrap-flycheck
-     "h" flycheck-display-error-at-point
-     "i" flycheck-manual
-     "l" flycheck-list-errors
-     "n" flycheck-next-error
-     "p" flycheck-previous-error
-     "s" flycheck-select-checker
-     "v" flycheck-verify-setup
-     "x" flycheck-disable-checker))
-  (repeat-mode 1))
+  (setq flycheck-emacs-lisp-load-path 'inherit))
 
 (use-package flycheck-package
   :defer t
@@ -709,20 +695,17 @@
   :custom
   (flymake-mode-line-lighter "F")
   (flymake-show-diagnostics-at-end-of-line t)
-  :after define-repeat-map
-  :config
-  (define-repeat-map flymake-repeat-map
-    ("n" flymake-goto-next-error
-     "p" flymake-goto-prev-error
-     "f" attrap-flymake
-     "M-n" flymake-goto-next-error
-     "M-p" flymake-goto-prev-error
-     "l" flymake-show-diagnostics-buffer))
-  (repeat-mode 1)
   :bind
   (:map flymake-mode-map
         ("M-n" . flymake-goto-next-error)
-        ("M-p" . flymake-goto-prev-error)))
+        ("M-p" . flymake-goto-prev-error))
+  (:repeat-map flymake-repeat-map
+               ("n" . flymake-goto-next-error)
+               ("p" . flymake-goto-prev-error)
+               ("f" . attrap-flymake)
+               ("M-n" . flymake-goto-next-error)
+               ("M-p" . flymake-goto-prev-error)
+               ("l" . flymake-show-diagnostics-buffer))  )
 
 (use-package emacs
   :ensure nil
@@ -760,6 +743,16 @@
   :hook
   ((emacs-lisp-mode LaTeX-mode rust-mode c++-mode) . aggressive-indent-mode))
 
+;;; --- treesit ---
+
+(use-package treesit-auto
+  :defer t
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
+
 ;;; --- LSP ---
 
 (use-package eglot
@@ -774,46 +767,42 @@
   (interactive)
   (foldout-exit-fold -1))
 
-(use-package foldout
-  :ensure nil)
-
 (use-package outline
   :ensure nil
   :defer t
-  :after define-repeat-map
-  :config
-  (define-repeat-map outline-repeat-map
-    ("n" outline-next-heading
-     "p" outline-previous-heading
-     "u" outline-up-heading
-     "f" outline-forward-same-level
-     "b" outline-backward-same-level
-     "<left>" outline-promote
-     "<right>" outline-demote
-     "<up>" outline-move-subtree-up
-     "<down>" outline-move-subtree-down
-     "x" foldout-exit-fold-without-hiding
-     "z" foldout-zoom-subtree
-     "a" outline-show-all
-     "c" outline-hide-entry
-     "d" outline-hide-subtree
-     "e" outline-show-entry
-     "TAB" outline-show-children
-     "k" outline-show-branches
-     "l" outline-hide-leaves
-     "RET" outline-insert-heading
-     "o" outline-hide-other
-     "q" outline-hide-sublevels
-     "s" outline-show-subtree
-     "t" outline-hide-body
-     "@" outline-mark-subtree)
-    (:continue
-     "C-M-SPC" outline-mark-subtree
-     "w" kill-region
-     "M-w" kill-ring-save
-     "C-/" undo
-     "y" yank))
-  (repeat-mode 1))
+  :bind
+  (:repeat-map
+   outline-repeat-map
+   ("n" . outline-next-heading)
+   ("p" . outline-previous-heading)
+   ("u" . outline-up-heading)
+   ("f" . outline-forward-same-level)
+   ("b" . outline-backward-same-level)
+   ("<left>" . outline-promote)
+   ("<right>" . outline-demote)
+   ("<up>" . outline-move-subtree-up)
+   ("<down>" . outline-move-subtree-down)
+   ("x" . foldout-exit-fold-without-hiding)
+   ("z" . foldout-zoom-subtree)
+   ("a" . outline-show-all)
+   ("c" . outline-hide-entry)
+   ("d" . outline-hide-subtree)
+   ("e" . outline-show-entry)
+   ("TAB" . outline-show-children)
+   ("k" . outline-show-branches)
+   ("l" . outline-hide-leaves)
+   ("RET" . outline-insert-heading)
+   ("o" . outline-hide-other)
+   ("q" . outline-hide-sublevels)
+   ("s" . outline-show-subtree)
+   ("t" . outline-hide-body)
+   ("@" . outline-mark-subtree)
+   :continue-only
+   ("C-M-SPC" . outline-mark-subtree)
+   ("w" . kill-region)
+   ("M-w" . kill-ring-save)
+   ("C-/" . undo)
+   ("y" . yank)))
 
 ;;; --- Spelling ---
 
@@ -1067,6 +1056,7 @@
 
 (use-package c-ts-mode
   :ensure nil ;; emacs built-in
+  :defer t
   :preface
   (defun my--c-ts-indent-style()
     "Override the built-in BSD indentation style with some additional rules.
@@ -1080,6 +1070,10 @@
       ((n-p-gp nil nil "namespace_definition") grand-parent 0)
       ;; append to bsd style
       ,@(alist-get 'bsd (c-ts-mode--indent-styles 'cpp))))
+  :init
+  (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
+  (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
+  (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-or-c++-ts-mode))
   :config
   (setq c-ts-mode-indent-offset 2)
   (setq c-ts-mode-indent-style #'my--c-ts-indent-style))
@@ -1135,17 +1129,13 @@ The value of `calc-language` is restored after BODY has been processed."
   :defer t
   :hook
   (magit-status-mode . visual-line-mode)
-  :config
-  ;; repeat map consisting of:
-  ;; C-c ^ RET	magit-smerge-keep-current
-  ;; C-c ^ b		magit-smerge-keep-base
-  ;; C-c ^ l		magit-smerge-keep-lower
-  ;; C-c ^ u		magit-smerge-keep-upper
-  (define-repeat-map magit-smerge-repeat-map
-    ("RET" magit-smerge-keep-current
-     "b" magit-smerge-keep-base
-     "l" magit-smerge-keep-lower
-     "u" magit-smerge-keep-upper)))
+  :bind
+  (:repeat-map
+   magit-smerge-repeat-map
+   ("RET" . magit-smerge-keep-current)
+   ("b" . magit-smerge-keep-base)
+   ("l" . magit-smerge-keep-lower)
+   ("u" . magit-smerge-keep-upper)))
 
 (use-package repo-scan
   :ensure (:host github :repo "ultronozm/repo-scan.el" :depth nil)
@@ -1216,6 +1206,7 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package tex-mode
   :ensure nil
+  :defer t
   :config
   (dolist (sym '(("``" . ?“) ("''" . ?”)))
     (add-to-list 'tex--prettify-symbols-alist sym)))
@@ -1250,7 +1241,7 @@ The value of `calc-language` is restored after BODY has been processed."
            :build (:not elpaca--compile-info) ;; Make will take care of this step
            :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
            :version (lambda (_) (require 'tex-site) AUCTeX-version))
-  :demand                             ; otherwise, madness ensues.
+  ;; :demand                             ; otherwise, madness ensues.
   :config
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
   (setq TeX-lisp-directory TeX-data-directory)
@@ -1306,7 +1297,7 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package preview-tailor
   :ensure (:host github :repo "ultronozm/preview-tailor.el" :depth nil)
   :after preview
-  :demand
+  ;; :demand
   :config
   (preview-tailor-init)
   :hook
@@ -1558,43 +1549,49 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package tex-parens
   :ensure (:host github :repo "ultronozm/tex-parens.el" :depth nil)
   :after latex
-  :bind (:map LaTeX-mode-map
-              ("M-i" . tex-parens-mark-inner)
-              ("s-j" . tex-parens-avy-jump-to-math)
-              ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
-              ("s-c" . tex-parens-avy-copy-math)
-              ("s-e" . tex-parens-end-of-list)
-              ("s-a" . tex-parens-beginning-of-list)
-              ("s-E" . tex-parens-kill-to-end-of-list)
-              ("s-A" . tex-parens-kill-to-beginning-of-list))
+  :bind
+  (:map
+   LaTeX-mode-map
+   ("M-i" . tex-parens-mark-inner)
+   ("s-j" . tex-parens-avy-jump-to-math)
+   ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
+   ("s-c" . tex-parens-avy-copy-math)
+   ("s-e" . tex-parens-end-of-list)
+   ("s-a" . tex-parens-beginning-of-list)
+   ("s-E" . tex-parens-kill-to-end-of-list)
+   ("s-A" . tex-parens-kill-to-beginning-of-list))
+  (:repeat-map
+   tex-parens-structural-edit-repeat-map
+   ("n" . tex-parens-forward-list)
+   ("p" . tex-parens-backward-list)
+   ("u" . tex-parens-backward-up-list)
+   ("n" . tex-parens-forward-list)
+   ("p" . tex-parens-backward-list)
+   ("u" . tex-parens-backward-up-list)
+   ("M-u" . tex-parens-up-list)
+   ("g" . tex-parens-down-list)
+   ("M-g" . tex-parens-backward-down-list)
+   :continue-only
+   ("f" . tex-parens-forward-sexp)
+   ("b" . tex-parens-backward-sexp)
+   ("a" . beginning-of-defun)
+   ("e" . end-of-defun)
+   ("k" . kill-sexp)
+   (">" . tex-parens-burp-right)
+   ("<" . tex-parens-burp-left)
+   ("C-/" . undo)
+   ("r" . tex-parens-raise-sexp)
+   ("/" . tex-parens-delete-pair)
+   ("t" . transpose-sexps)
+   ("w" . kill-region)
+   ("M-w" . kill-ring-save)
+   ("y" . yank)
+   ("c" . lispy-clone)
+   ("RET" . TeX-newline))
   :hook
   (LaTeX-mode . tex-parens-mode)
   :config
   (add-to-list 'preview-auto-reveal-commands #'czm-tex-jump-back-with-breadcrumb)
-  (define-repeat-map tex-parens-structural-edit
-    ("n" tex-parens-forward-list
-     "p" tex-parens-backward-list
-     "u" tex-parens-backward-up-list
-     "M-u" tex-parens-up-list
-     "g" tex-parens-down-list
-     "M-g" tex-parens-backward-down-list)
-    (:continue
-     "f" tex-parens-forward-sexp
-     "b" tex-parens-backward-sexp
-     "a" beginning-of-defun
-     "e" end-of-defun
-     "k" kill-sexp
-     ">" tex-parens-burp-right
-     "<" tex-parens-burp-left
-     "C-/" undo
-     "r" tex-parens-raise-sexp
-     "/" tex-parens-delete-pair
-     "t" transpose-sexps
-     "w" kill-region
-     "M-w" kill-ring-save
-     "y" yank
-     "c" lispy-clone
-     "RET" TeX-newline))
   (repeat-mode 1))
 
 (use-package tex-item
@@ -1668,7 +1665,7 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package czm-tex-mint
   :ensure (:host github :repo "ultronozm/czm-tex-mint.el" :depth nil)
   :after latex mmm-mode
-  :demand t
+  ;; :demand t
   :custom (LaTeX-command "latex -shell-escape")
   :config (czm-tex-mint-initialize)
   :bind
@@ -1741,7 +1738,7 @@ Optionally run SETUP-FN after creating the file."
 
 (use-package czm-lean4
   :ensure (:host github :repo "ultronozm/czm-lean4.el" :depth nil)
-  :after lean4-mode preview-auto
+  :after lean4-mode preview-auto flymake-overlays
   :hook
   (lean4-mode . czm-lean4-mode-hook)
   :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
@@ -1773,6 +1770,7 @@ Optionally run SETUP-FN after creating the file."
   :custom
   (czm-lean4-info-window-height-fraction 0.4)
   (czm-lean4-info-window-width-fraction 0.47)
+  (flymake-overlays-fontify-text-function #'czm-lean4-maybe-colorize)
   :config
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
 
@@ -1782,9 +1780,7 @@ Optionally run SETUP-FN after creating the file."
   :bind (:map flymake-mode-map
               ;; ("C-c t" . flymake-overlays-smart-toggle)
               )
-  :hook (flymake-mode . flymake-overlays-mode)
-  :custom
-  (flymake-overlays-fontify-text-function #'czm-lean4-maybe-colorize))
+  :hook (flymake-mode . flymake-overlays-mode))
 
 (defun czm-add-lean4-eldoc ()
   (when (with-current-buffer eldoc-icebox-parent-buffer
@@ -1805,4 +1801,5 @@ Optionally run SETUP-FN after creating the file."
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
 
 (use-package consult-abbrev
-  :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil))
+  :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil)
+  :commands (consult-abbrev))
