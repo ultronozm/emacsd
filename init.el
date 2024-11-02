@@ -1428,7 +1428,9 @@ The value of `calc-language` is restored after BODY has been processed."
                  ("\\mathbb{W}" . ?𝕎)
                  ("\\mathbb{X}" . ?𝕏)
                  ("\\mathbb{Y}" . ?𝕐)
-                 ("\\mathbb{Z}" . ?ℤ)))
+                 ("\\mathbb{Z}" . ?ℤ)
+                 ("\\eps" . ?ε)
+                 ))
     (add-to-list 'tex--prettify-symbols-alist sym)))
 
 (defun my-LaTeX-mode-setup ()
