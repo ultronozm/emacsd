@@ -1,7 +1,8 @@
 ;;; -*- lexical-binding: t; -*-
 
 (setq use-package-verbose t
-      use-package-minimum-reported-time 0.02)
+      use-package-minimum-reported-time 0.005)
+;; (setq use-package-compute-statistics t)
 
 ;; disable customization interface
 (setq custom-file (locate-user-emacs-file "init-custom.el"))
@@ -98,13 +99,12 @@
   (exec-path-from-shell-initialize))
 
 (use-package exec-path-from-shell
-  ;; :disabled
-  :demand
+  :defer t
   :if (memq window-system '(mac ns))
   ;; :init
   ;; (setq exec-path-from-shell-arguments nil) ;; remove -l -i
-  :config
-  (exec-path-from-shell-copy-env "PATH")
+  ;; :config
+  ;; (exec-path-from-shell-copy-env "PATH")
   ;; (exec-path-from-shell-initialize)
   )
 
@@ -146,12 +146,9 @@
   :demand t
   :config
   (diminish 'abbrev-mode "Ab")
-  (diminish 'visual-line-mode)
-  (diminish 'outline-minor-mode)
-  (diminish 'buffer-face-mode)
-  (diminish 'eldoc-mode)
-  (diminish 'reftex-mode)
-  (diminish 'whitespace-mode))
+  (dolist (mode '(visual-line-mode outline-minor-mode buffer-face-mode
+                                   eldoc-mode reftex-mode whitespace-mode))
+    (diminish mode)))
 
 ;; Remove "%n" from mode-line-modes -- I know when I'm narrowing.
 (setq mode-line-modes (delete "%n" mode-line-modes))
@@ -285,6 +282,57 @@
   (:map isearch-mode-map
         ("M-j" . avy-isearch)))
 
+(defun avy-action-embark (pt)
+  (unwind-protect
+      (save-excursion
+        (goto-char pt)
+        (embark-act))
+    (select-window
+     (cdr (ring-ref avy-ring 0))))
+  t)
+
+(defun avy-action-easy-kill (pt)
+  (unless (require 'easy-kill nil t)
+    (user-error "Easy Kill not found, please install."))
+  (cl-letf* ((bounds (if (use-region-p)
+                         (prog1 (cons (region-beginning) (region-end))
+                           (deactivate-mark))
+                       (bounds-of-thing-at-point 'sexp)))
+             (transpose-map
+              (define-keymap
+                "M-t" (lambda () (interactive "*")
+                        (pcase-let ((`(,beg . ,end) (easy-kill--bounds)))
+                          (transpose-regions (car bounds) (cdr bounds) beg end
+                                             'leave-markers)))))
+             ((symbol-function 'easy-kill-activate-keymap)
+              (lambda ()
+                (let ((map (easy-kill-map)))
+                  (set-transient-map
+                   (make-composed-keymap transpose-map map)
+                   (lambda ()
+                     ;; Prevent any error from activating the keymap forever.
+                     (condition-case err
+                         (or (and (not (easy-kill-exit-p this-command))
+                                  (or (eq this-command
+                                          (lookup-key map (this-single-command-keys)))
+                                      (let ((cmd (key-binding
+                                                  (this-single-command-keys) nil t)))
+                                        (command-remapping cmd nil (list map)))))
+                             (ignore
+                              (easy-kill-destroy-candidate)
+                              (unless (or (easy-kill-get mark) (easy-kill-exit-p this-command))
+                                (easy-kill-save-candidate))))
+                       (error (message "%s:%s" this-command (error-message-string err))
+                              nil)))
+                   (lambda ()
+                     (let ((dat (ring-ref avy-ring 0)))
+                       (select-frame-set-input-focus
+                        (window-frame (cdr dat)))
+                       (select-window (cdr dat))
+                       (goto-char (car dat)))))))))
+    (goto-char pt)
+    (easy-kill)))
+
 (use-package emacs
   :ensure nil
   :after org
@@ -326,22 +374,35 @@
     (add-to-list 'pulsar-pulse-functions fn))
   (pulsar-global-mode))
 
+;; (use-package vertico
+;;   :defer t
+;;   :after minibuffer
+;;   :init (vertico-mode))
+
+;; (use-package marginalia
+;;   :after minibuffer
+;;   :init (marginalia-mode)
+;;   :config
+;;   (marginalia-mode)
+;;   :bind (:map minibuffer-local-map
+;;               ("M-A" . marginalia-cycle)))
+
+;; (use-package orderless
+;;   :defer t
+;;   :after minibuffer
+;;   :custom
+;;   (completion-styles '(orderless basic)))
+
 (use-package vertico
-  :defer t
-  :after minibuffer
-  :init (vertico-mode))
+  :config (vertico-mode))
 
 (use-package marginalia
-  :after minibuffer
-  :init (marginalia-mode)
-  :config
-  (marginalia-mode)
+  :demand
+  :config (marginalia-mode)
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle)))
 
 (use-package orderless
-  :defer t
-  :after minibuffer
   :custom
   (completion-styles '(orderless basic)))
 
@@ -586,7 +647,70 @@
   (ai-org-chat-context-style nil)
   :config
   (require 'llm-claude)
+  (require 'exec-path-from-shell)
   (ai-org-chat-select-model "sonnet 3.5"))
+
+(defun ai-org-chat-suggest-filename-function ()
+  "Blah"
+  (make-llm-function-call
+   :function (lambda (suggested-name)
+               (cons 'suggested-name suggested-name))
+   :name "suggest_filename"
+   :description "Suggest a better filename for the current file."
+   :args (list (make-llm-function-arg
+                :name "suggested_name"
+                :description "The suggested new filename."
+                :type 'string
+                :required t))))
+
+(defun ai-org-chat-suggest-better-filename ()
+  "Ask LLM for a better filename and prompt user to rename the current file."
+  (interactive)
+  (unless (buffer-file-name)
+    (user-error "Current buffer is not visiting a file"))
+
+  (let* ((current-name (file-name-nondirectory (buffer-file-name)))
+         (file-content (buffer-substring-no-properties (point-min) (point-max)))
+         (buffer (current-buffer))
+         (prompt (format "Given the following file content and current filename '%s', suggest a better, more descriptive filename.  Make sure to keep the file extension the same.  Also, if the filename contains a timestamp at or near the beginning, then preserve that -- follow that timestamp with double dashes followed by a name separated by single dashes.  Use the suggest_filename function to provide your suggestion.\n\nFile content:\n%s"
+                         current-name
+                         (if (> (length file-content) 1000)
+                             (concat (substring file-content 0 1000) "...")
+                           file-content)))
+         (final-cb
+          (lambda (response)
+            (with-current-buffer buffer
+              (if (and (listp response)
+                       (equal (caar response) "suggest_filename"))
+                  (let* ((suggested-name (cddar response))
+                         (current-dir (file-name-directory (buffer-file-name)))
+                         (new-path (read-file-name "Rename file to: "
+                                                   current-dir
+                                                   nil
+                                                   nil
+                                                   suggested-name)))
+                    (when (y-or-n-p (format "Rename '%s' to '%s'? "
+                                            (buffer-file-name)
+                                            new-path))
+                      (require 'dired-aux) ; Ensure dired-rename-file is available
+                      (dired-rename-file (buffer-file-name) new-path 1)
+                      (message "File renamed to '%s'" (file-name-nondirectory new-path))))
+                (user-error "Failed to get a valid filename suggestion from LLM")))))
+         (error-cb
+          (lambda (err msg)
+            (message "Error: %s - %s" err msg))))
+
+    (llm-chat-async ai-org-chat-provider
+                    (llm-make-chat-prompt
+                     prompt
+                     :functions (list (ai-org-chat-suggest-filename-function)))
+                    final-cb
+                    error-cb)))
+
+;;; --- Python ---
+
+(use-package elpy
+  :defer t)
 
 ;;; --- Lisp Development ---
 
@@ -642,6 +766,25 @@
   (aggressive-indent-mode 0))
 
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
+
+(defun isearch-forward-enclosing-defun ()
+  "Start an incremental search for the name of the enclosing defun."
+  (interactive)
+  (end-of-defun)
+  (beginning-of-defun)
+  (down-list)
+  (forward-sexp 2)
+  (isearch-forward-symbol-at-point))
+
+(global-set-key (kbd "M-s q") 'isearch-forward-enclosing-defun)
+
+(use-package symbol-overlay
+  :bind (("M-s ," . symbol-overlay-put)
+         ("M-s n" . symbol-overlay-switch-forward)
+         ("M-s p" . symbol-overlay-switch-backward)
+         ;; ("M-s m" . symbol-overlay-mode)
+         ;; ("M-s n" . symbol-overlay-remove-all)
+         ))
 
 ;;; --- xref advice for project-only searches ---
 
@@ -753,6 +896,8 @@
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 
+;; (add-to-list 'treesit-extra-load-path "/Users/au710211/gnu-emacs/admin/notes/tree-sitter/build-module/dist")
+
 ;;; --- LSP ---
 
 (use-package eglot
@@ -836,6 +981,13 @@
         ("<remap> <scroll-up-command>" . pdf-view-scroll-up-or-next-page)
         ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)
         ("C-c g" . pdf-view-goto-page)))
+
+(defun my/pdf-annot-setup (_a)
+  (LaTeX-mode)
+  (setq TeX-master my-preview-master)
+  (preview-auto-mode))
+
+(setq pdf-annot-edit-contents-setup-function #'my/pdf-annot-setup)
 
 (use-package doc-dual-view
   :ensure (:host github :repo "ultronozm/doc-dual-view.el" :depth nil)
@@ -1071,10 +1223,12 @@
       ;; append to bsd style
       ,@(alist-get 'bsd (c-ts-mode--indent-styles 'cpp))))
   :init
-  (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
+  ;; commenting out c-mode remap because it seems a bit premature
+  ;; (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
   (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
-  (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-or-c++-ts-mode))
+  ;; (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-or-c++-ts-mode))
   :config
+  (require 'treesit-auto)
   (setq c-ts-mode-indent-offset 2)
   (setq c-ts-mode-indent-style #'my--c-ts-indent-style))
 
@@ -1208,7 +1362,73 @@ The value of `calc-language` is restored after BODY has been processed."
   :ensure nil
   :defer t
   :config
-  (dolist (sym '(("``" . ?“) ("''" . ?”)))
+  (dolist (sym '(("``" . ?“)
+                 ("''" . ?”)
+                 ("\\begin{equation*}" . ?↴)
+                 ("\\begin{equation}" . ?↴)
+                 ("\\end{equation*}" . ?↲)
+                 ("\\end{equation}" . ?↲)
+                 ("\\begin{align*}" . ?⌈)
+                 ("\\begin{align}" . ?⌈)
+                 ("\\end{align*}" . ?⌋)
+                 ("\\end{align}" . ?⌋)
+                 ("\\begin{multline*}" . ?⎧)
+                 ("\\begin{multline}" . ?⎧)
+                 ("\\end{multline*}" . ?⎭)
+                 ("\\end{multline}" . ?⎭)
+                 ("\\S" . ?§)
+                 ("\\Bbb{A}" . ?𝔸)
+                 ("\\Bbb{B}" . ?𝔹)
+                 ("\\Bbb{C}" . ?ℂ)
+                 ("\\Bbb{D}" . ?𝔻)
+                 ("\\Bbb{E}" . ?𝔼)
+                 ("\\Bbb{F}" . ?𝔽)
+                 ("\\Bbb{G}" . ?𝔾)
+                 ("\\Bbb{H}" . ?ℍ)
+                 ("\\Bbb{I}" . ?𝕀)
+                 ("\\Bbb{J}" . ?𝕁)
+                 ("\\Bbb{K}" . ?𝕂)
+                 ("\\Bbb{L}" . ?𝕃)
+                 ("\\Bbb{M}" . ?𝕄)
+                 ("\\Bbb{N}" . ?ℕ)
+                 ("\\Bbb{O}" . ?𝕆)
+                 ("\\Bbb{P}" . ?ℙ)
+                 ("\\Bbb{Q}" . ?ℚ)
+                 ("\\Bbb{R}" . ?ℝ)
+                 ("\\Bbb{S}" . ?𝕊)
+                 ("\\Bbb{T}" . ?𝕋)
+                 ("\\Bbb{U}" . ?𝕌)
+                 ("\\Bbb{V}" . ?𝕍)
+                 ("\\Bbb{W}" . ?𝕎)
+                 ("\\Bbb{X}" . ?𝕏)
+                 ("\\Bbb{Y}" . ?𝕐)
+                 ("\\Bbb{Z}" . ?ℤ)
+                 ("\\mathbb{A}" . ?𝔸)
+                 ("\\mathbb{B}" . ?𝔹)
+                 ("\\mathbb{C}" . ?ℂ)
+                 ("\\mathbb{D}" . ?𝔻)
+                 ("\\mathbb{E}" . ?𝔼)
+                 ("\\mathbb{F}" . ?𝔽)
+                 ("\\mathbb{G}" . ?𝔾)
+                 ("\\mathbb{H}" . ?ℍ)
+                 ("\\mathbb{I}" . ?𝕀)
+                 ("\\mathbb{J}" . ?𝕁)
+                 ("\\mathbb{K}" . ?𝕂)
+                 ("\\mathbb{L}" . ?𝕃)
+                 ("\\mathbb{M}" . ?𝕄)
+                 ("\\mathbb{N}" . ?ℕ)
+                 ("\\mathbb{O}" . ?𝕆)
+                 ("\\mathbb{P}" . ?ℙ)
+                 ("\\mathbb{Q}" . ?ℚ)
+                 ("\\mathbb{R}" . ?ℝ)
+                 ("\\mathbb{S}" . ?𝕊)
+                 ("\\mathbb{T}" . ?𝕋)
+                 ("\\mathbb{U}" . ?𝕌)
+                 ("\\mathbb{V}" . ?𝕍)
+                 ("\\mathbb{W}" . ?𝕎)
+                 ("\\mathbb{X}" . ?𝕏)
+                 ("\\mathbb{Y}" . ?𝕐)
+                 ("\\mathbb{Z}" . ?ℤ)))
     (add-to-list 'tex--prettify-symbols-alist sym)))
 
 (defun my-LaTeX-mode-setup ()
@@ -1512,7 +1732,7 @@ The value of `calc-language` is restored after BODY has been processed."
   :custom
   (auctex-cont-latexmk-command
    '("latexmk -pvc -shell-escape -pdf -view=none -e "
-     ("$pdflatex=q/pdflatex %O -synctex=1 -interaction=nonstopmode %S/"))))
+     ("$pdflatex=q/pdflatex %O -synctex=1 -file-line-error -interaction=nonstopmode %S/"))))
 
 (use-package preview-auto
   :ensure (:host github :repo "ultronozm/preview-auto.el" :depth nil)
@@ -1756,14 +1976,6 @@ Optionally run SETUP-FN after creating the file."
               ("C-c C-i" . czm-lean4-toggle-info-split-below)
               ("C-c C-y" . czm-lean4-toggle-info-split-right)
               ("M-]" . czm-lean4-cycle-delimiter-forward)
-              ("§" . copilot-accept-completion)
-              ("M-§" . copilot-accept-completion-by-word)
-              ("C-§" . copilot-accept-completion-by-line)
-              ("C-M-§" . copilot-accept-completion-by-paragraph)
-              ("`" . copilot-accept-completion)
-              ("M-`" . copilot-accept-completion-by-word)
-              ("C-`" . copilot-accept-completion-by-line)
-              ("C-M-`" . copilot-accept-completion-by-paragraph)
               ("M-[" . czm-lean4-cycle-delimiter-backward))
   :bind (:map lean4-mode-map
               ("s-f" . czm-lean4-preview-fold-block))
@@ -1772,7 +1984,11 @@ Optionally run SETUP-FN after creating the file."
   (czm-lean4-info-window-width-fraction 0.47)
   (flymake-overlays-fontify-text-function #'czm-lean4-maybe-colorize)
   :config
-  (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay))
+  (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay)
+  (map-keymap
+   (lambda (key cmd)
+     (define-key lean4-mode-map (vector key) cmd))
+   copilot-completion-map))
 
 (use-package flymake-overlays
   :ensure (:host github :repo "ultronozm/flymake-overlays.el" :depth nil)

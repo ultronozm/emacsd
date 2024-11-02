@@ -54,6 +54,7 @@ mark somewhere useful."
 If in a fold, widen to that fold's boundaries.
 If not in a fold, acts like `widen'."
   (interactive)
+  (require 'foldout)
   (if foldout-fold-list
       (let* ((last-fold (car foldout-fold-list))
              (start (car last-fold))
@@ -364,6 +365,13 @@ function symbol (unquoted)."
       t)))
   (ediff-window-setup-function 'ediff-setup-windows-plain)
   (display-time-default-load-average nil)
+  (tab-bar-format
+   '(
+     ;; tab-bar-format-menu-bar
+     ;; tab-bar-format-history
+     tab-bar-format-tabs-groups
+     tab-bar-format-align-right
+     tab-bar-format-global))
   :config
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
@@ -560,7 +568,7 @@ DIR must include a .project file to be considered a project."
 
 (use-package foldout
   :ensure nil
-  :defer t
+  :demand
   :bind ("C-x n w" . foldout-widen-to-current-fold))
 
 (use-package calendar
