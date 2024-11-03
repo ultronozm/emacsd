@@ -8,6 +8,7 @@
 (setq custom-file (locate-user-emacs-file "init-custom.el"))
 
 ;; bare essentials
+(load (locate-user-emacs-file "init-patches.el"))
 (load (locate-user-emacs-file "init-bare.el"))
 
 ;;; --- Settings ---
