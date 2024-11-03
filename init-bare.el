@@ -13,97 +13,100 @@
 (use-package emacs
   :ensure nil
   :bind
-  (("C-c g" . goto-line)
-   ("C-x C-b" . ibuffer)
-   ("s-b" . switch-to-buffer)
-   ("s-0" . delete-window)
-   ("s-1" . delete-other-windows)
-   ("s-2" . split-window-below)
-   ("s-3" . split-window-right)
-   ("M-n" . next-error)
-   ("M-p" . previous-error)
-   ([remap dabbrev-expand] . hippie-expand)
-   ("C-c r" . org-capture)
-   ("C-c l" . org-store-link)
+  (("<up>" . windmove-up)
+   ("<down>" . windmove-down)
+   ("<left>" . windmove-left)
+   ("<right>" . windmove-right)
+   ("C-M-g" . down-list)
+   ("C-M-z" . zap-up-to-char)
    ("C-c L" . org-insert-link-global)
    ("C-c a" . org-agenda)
-   ("C-c s" . shell)
    ("C-c f" . toggle-frame-fullscreen)
+   ("C-c g" . goto-line)
+   ("C-c l" . org-store-link)
+   ("C-c r" . org-capture)
+   ("C-c s" . shell)
    ("C-h C-f" . find-function)
-   ("C-h C-v" . find-variable)
    ("C-h C-l" . find-library)
+   ("C-h C-v" . find-variable)
+   ("C-s-O" . (lambda () (interactive) (other-frame -1)))
+   ("C-s-o" . other-frame)
+   ("C-x C-M-t" . transpose-regions)
+   ("C-x C-b" . ibuffer)
+   ("C-z" . nil)
+   ("C-z C-e" . pp-macroexpand-last-sexp)
+   ("C-z C-s" . desktop-save-in-desktop-dir)
+   ("C-z C-f" . desktop-read)
+   ("H-0" . tab-close)
+   ("H-1" . tab-close-other)
+   ("H-2" . tab-bar-new-tab)
    ("H-SPC" . ediff-buffers)
+   ;; H-ACFNHMD -- macOS annoyance
    ("H-b" . abbrev-mode)
    ("H-e" . toggle-debug-on-error)
    ("H-f" . follow-mode)
    ("H-i" . overwrite-mode)
-   ("H-l" . flymake-mode)
    ("H-k" . flycheck-mode)
+   ("H-l" . flymake-mode)
    ("H-s" . whitespace-mode)
    ("H-v" . visual-line-mode)
    ("H-w" . which-function-mode)
-   ("C-M-z" . zap-up-to-char)
-   ("C-M-g" . down-list)
    ("M-+" . raise-sexp)
    ("M-_" . delete-pair)
-   ("s-<left>" . previous-buffer)
-   ("s-<right>" . next-buffer)
+   ("M-i" . mark-inner)
+   ("M-n" . next-error)
+   ("M-p" . previous-error)
+   ("M-u" . up-list)
+   ([remap dabbrev-expand] . hippie-expand)
+   ("s-'" . nil)
+   ("s-." . repeat)
+   ("s-0" . delete-window)
+   ("s-1" . delete-other-windows)
+   ("s-2" . split-window-below)
+   ("s-3" . split-window-right)
+   ("s-6" . (lambda () (interactive) (delete-indentation nil)))
+   ("s-7" . (lambda () (interactive) (delete-indentation t)))
    ("s-<up>" . (lambda () (interactive) (enlarge-window 5)))
    ("s-<down>" . (lambda () (interactive) (shrink-window 5)))
-   ("s-o" . other-window)
-   ("s-O" . (lambda () (interactive) (other-window -1)))
-   ("C-s-o" . other-frame)
-   ("C-s-O" . (lambda () (interactive) (other-frame -1)))
-   ("s-'" . nil)
+   ("s-<left>" . previous-buffer)
+   ("s-<right>" . next-buffer)
+   ("s-SPC" . cycle-spacing)
+   ("s-a" . beginning-of-list)
+   ("s-A" . kill-to-beginning-of-list)
+   ("s-b" . switch-to-buffer)
+   ("s-c" . nil)
+   ("s-C" . nil)
+   ;; "s-D" ; dired
+   ("s-e" . end-of-list)
+   ("s-E" . kill-to-end-of-list)
+   ;; s-f
+   ("s-g" . nil)
+   ("s-h" . nil)
+   ("s-H" . nil)
+   ("s-i" . find-init-file)
+   ("s-k" . kill-current-buffer)
+   ("s-K" . kill-buffer-and-window)
+   ;; "s-l" ; goto-line
+   ("s-L" . nil)
+   ("s-m" . nil)
+   ;; "s-M" ; manual-entry
    ("s-n" . nil)
    ("s-N" . make-frame)
    ("s-n" . outline-next-heading)
+   ("s-o" . other-window)
+   ("s-O" . (lambda () (interactive) (other-window -1)))
    ("s-p" . outline-previous-heading)
    ("s-q" . bury-buffer)
-   ("s-k" . kill-current-buffer)
-   ("s-K" . kill-buffer-and-window)
    ("s-s" . save-buffer)
-   ("s-v" . view-mode)
-   ("s-." . repeat)
-   ("s-i" . find-init-file)
-   ("<up>" . windmove-up)
-   ("<down>" . windmove-down)
-   ("<right>" . windmove-right)
-   ("<left>" . windmove-left)
-   ("s-SPC" . cycle-spacing)
-   ("s-6" . (lambda () (interactive) (delete-indentation nil)))
-   ("s-7" . (lambda () (interactive) (delete-indentation t)))
-   ("C-x C-M-t" . transpose-regions)
-   ("H-0" . tab-close)
-   ("H-1" . tab-close-other)
-   ("H-2" . tab-bar-new-tab)
-   ("M-u" . up-list)
-   ("M-i" . mark-inner)
-   ("s-a" . beginning-of-list)
-   ("s-e" . end-of-list)
-   ("s-A" . kill-to-beginning-of-list)
-   ("s-E" . kill-to-end-of-list)
-   ("s-C" . nil)
-   ;; "s-D" ; dired
-   ;; ("s-w" switch-to-buffer)
-   ;; s-f
-   ("s-H" . nil)
-   ("s-L" . nil)
-   ;; "s-M" ; manual-entry
    ("s-S" . nil)
-   ("s-c" . nil)
-   ("s-g" . nil)
-   ("s-h" . nil)
-   ;; "s-l" ; goto-line
-   ("s-m" . nil)
    ("s-u" . nil)
-   ;; "s-q"
-   ;; s-t
-   ("s-x" . nil)
+   ("s-v" . view-mode)
    ("s-w" . nil) ; delete frame
+   ("s-x" . nil)
    ;; "s-y"
-   ("s-z" . nil)
-   ;; H-ACFNHMD -- macOS annoyance
+   ("s-z" . nil))
+  (:map
+   emacs-lisp-mode-map
    )
   :custom
   (ediff-split-window-function 'split-window-horizontally)
@@ -149,12 +152,18 @@
      tab-bar-format-tabs-groups
      tab-bar-format-align-right
      tab-bar-format-global))
+  (recentf-max-saved-items 100)
+  (calc-kill-line-numbering nil)
+  (eglot-connect-timeout 120)
+  (safe-local-variable-values
+   '((checkdoc-minor-mode . t)))
   :config
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
   (put 'erase-buffer 'disabled nil)
   (fset 'yes-or-no-p 'y-or-n-p)
   (setq-default indent-tabs-mode nil)
+  (setq desktop-dirname user-emacs-directory)
   (electric-pair-mode)
   (minibuffer-depth-indicate-mode)
   (global-auto-revert-mode)
@@ -162,7 +171,12 @@
   (column-number-mode)
   (tab-bar-history-mode)
   (display-time-mode)
-  (add-to-list 'auto-mode-alist '("\\.info\\'" . Info-on-current-buffer)))
+  (add-to-list 'auto-mode-alist '("\\.info\\'" . Info-on-current-buffer))
+  (setcdr other-window-repeat-map nil)
+  (repeat-mode)
+  (recentf-mode)
+  :hook
+  (prog-mode . outline-minor-mode))
 
 (defun find-init-file (&optional arg)
   "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory.
@@ -253,39 +267,67 @@ This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
 
 (defun czm-set-face-heights ()
   "Set the heights of various faces."
-  (set-face-attribute 'default nil :height 150)
-  (set-face-attribute 'mode-line nil :height 120)
-  (set-face-attribute 'mode-line-inactive nil :height 120)
-  (set-face-attribute 'tab-bar nil :height 120))
+  (pcase-dolist
+      (`(,face . ,height)
+       '((default . 150)
+         (mode-line . 120)
+         (mode-line-inactive . 120)
+         (tab-bar . 120)))
+    (set-face-attribute face nil :height height)))
 
 (czm-set-face-heights)
 
-(use-package recentf
-  :ensure nil
-  :custom (recentf-max-saved-items 100)
-  :config (recentf-mode))
-
-(use-package prog-mode
-  :ensure nil
-  :hook (prog-mode . outline-minor-mode))
+(defun foldout-exit-fold-without-hiding ()
+  (interactive)
+  (foldout-exit-fold -1))
 
 (use-package outline
   :ensure nil
-  :bind
-  (:map outline-minor-mode-map
-        ("C-M-<down-mouse-1>" . nil)
-        ("C-M-<down-mouse-2>" . nil)
-        ("C-M-<down-mouse-3>" . nil)
-        ("<right-margin> S-<mouse-1>" . nil)
-        ("<right-margin> <mouse-1>" . nil)
-        ("<left-margin> S-<mouse-1>" . nil)
-        ("<left-margin> <mouse-1>" . nil)))
-
-(use-package repeat
-  :ensure nil
+  :defer t
   :config
-  (setcdr other-window-repeat-map nil)
-  (repeat-mode))
+  (require 'foldout)
+  :bind
+  (:map
+   outline-minor-mode-map
+   ("C-M-<down-mouse-1>" . nil)
+   ("C-M-<down-mouse-2>" . nil)
+   ("C-M-<down-mouse-3>" . nil)
+   ("<right-margin> S-<mouse-1>" . nil)
+   ("<right-margin> <mouse-1>" . nil)
+   ("<left-margin> S-<mouse-1>" . nil)
+   ("<left-margin> <mouse-1>" . nil))
+  (:repeat-map
+   outline-repeat-map
+   ("n" . outline-next-heading)
+   ("p" . outline-previous-heading)
+   ("u" . outline-up-heading)
+   ("f" . outline-forward-same-level)
+   ("b" . outline-backward-same-level)
+   ("<left>" . outline-promote)
+   ("<right>" . outline-demote)
+   ("<up>" . outline-move-subtree-up)
+   ("<down>" . outline-move-subtree-down)
+   ("x" . foldout-exit-fold-without-hiding)
+   ("z" . foldout-zoom-subtree)
+   ("a" . outline-show-all)
+   ("c" . outline-hide-entry)
+   ("d" . outline-hide-subtree)
+   ("e" . outline-show-entry)
+   ("TAB" . outline-show-children)
+   ("k" . outline-show-branches)
+   ("l" . outline-hide-leaves)
+   ("RET" . outline-insert-heading)
+   ("o" . outline-hide-other)
+   ("q" . outline-hide-sublevels)
+   ("s" . outline-show-subtree)
+   ("t" . outline-hide-body)
+   ("@" . outline-mark-subtree)
+   :continue-only
+   ("C-M-SPC" . outline-mark-subtree)
+   ("w" . kill-region)
+   ("M-w" . kill-ring-save)
+   ("C-/" . undo)
+   ("y" . yank)))
 
 ;; This could be its own package, accommodating git-friendly abbrev storage?
 ;; Need a good way to update the source.
@@ -296,15 +338,9 @@ This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
   (dolist (abbrev abbrevs)
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
-;; forget the point of this:
-
-;; (defun czm-expand-abbrev-advice (orig-fun &rest args)
-;;   (unless (and (eq major-mode 'LaTeX-mode)
-;;                (nth 4 (syntax-ppss)))
-;;     (apply orig-fun args)))
-
 (use-package abbrev
   :ensure nil
+  :defer
   :hook ((prog-mode text-mode) . abbrev-mode)
   :custom
   (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
@@ -313,19 +349,7 @@ This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
   (let ((file (concat user-emacs-directory "abbrev_defs.el")))
     (when (file-exists-p file)
       (quietly-read-abbrev-file file)))
-  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el"))
-  ;; (advice-add 'expand-abbrev :around #'czm-expand-abbrev-advice)
-  )
-
-(use-package calc
-  :ensure nil
-  :defer t
-  :custom (calc-kill-line-numbering nil))
-
-(use-package eglot
-  :ensure nil
-  :defer t
-  :custom (eglot-connect-timeout 120))
+  (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
 
 ;; don't remember the point of this
 (cl-defmethod project-root ((project (head local)))
@@ -338,20 +362,14 @@ DIR must include a .project file to be considered a project."
   (let ((root (locate-dominating-file dir ".project")))
     (and root (cons 'local root))))
 
-(use-package project
-  :ensure nil
-  :defer t
-  :config (add-to-list 'project-find-functions 'czm/project-try-local))
+(with-eval-after-load 'project
+  (add-to-list 'project-find-functions 'czm/project-try-local))
 
-(use-package foldout
-  :ensure nil
-  :demand
-  :bind ("C-x n w" . foldout-widen-to-current-fold))
+(bind-keys
+ :package foldout
+ ("C-x n w" . foldout-widen-to-current-fold))
 
-(use-package calendar
-  :ensure nil
-  :defer t
-  :bind (:map calendar-mode-map
-              ("<left>" . nil) ("<right>" . nil)
-              ("<up>" . nil) ("<down>" . nil)))
-
+(bind-keys
+ :package calendar
+ :map calendar-mode-map
+ ("<left>" nil) ("<right>" nil) ("<up>" nil) ("<down>" nil))

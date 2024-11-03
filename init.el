@@ -1,18 +1,15 @@
 ;;; -*- lexical-binding: t; -*-
 
-(setq use-package-verbose t
-      use-package-minimum-reported-time 0.005)
+;;; basics
+(setopt use-package-verbose t
+        use-package-minimum-reported-time 0.1)
 ;; (setq use-package-compute-statistics t)
 
 ;; disable customization interface
 (setq custom-file (locate-user-emacs-file "init-custom.el"))
 
-;; bare essentials
 (load (locate-user-emacs-file "init-patches.el"))
 (load (locate-user-emacs-file "init-bare.el"))
-
-;;; --- Settings ---
-
 (load (locate-user-emacs-file "init-settings.el"))
 
 (defun czm-dired-downloads ()
@@ -20,18 +17,34 @@
   (interactive)
   (dired my-downloads-folder))
 
+(keymap-global-set "C-c d" #'czm-dired-downloads)
+
 (defun czm-find-math-document ()
   "Find a file in the math documents folder."
   (interactive)
+  (require 'project)
   (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
 
-(use-package emacs
-  :ensure nil
-  :bind
-  ("C-c d" . czm-dired-downloads)
-  ("s-d" . czm-find-math-document))
+(keymap-global-set "s-d" #'czm-find-math-document)
 
-;;; --- Elpaca ---
+;; use-package keyword :repo-scan, for packages that I develop
+
+(defalias 'use-package-normalize/:repo-scan 'use-package-normalize-predicate)
+
+(defun use-package-handler/:repo-scan (name _keyword pred rest state)
+  "Handle :repo-scan keyword in `use-package' forms.
+If the predicate is true, add NAME to `repo-scan-repos'."
+  (use-package-concat
+   (when pred
+     `((with-eval-after-load 'repo-scan
+         (add-to-list 'repo-scan-repos ,(symbol-name name)))))
+   (use-package-process-keywords name rest state)))
+
+(unless (memq :repo-scan use-package-keywords)
+  (setq use-package-keywords
+        (use-package-list-insert :repo-scan use-package-keywords :init)))
+
+;;; elpaca
 
 (defvar elpaca-installer-version 0.7)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
@@ -75,43 +88,31 @@
 (when (eq window-system 'w32)
   (elpaca-no-symlink-mode))
 
-;; Install use-package support
 (elpaca elpaca-use-package
-  ;; Enable :elpaca use-package keyword.
   (elpaca-use-package-mode)
-  ;; Assume :ensure t unless otherwise specified.
   (setq use-package-always-ensure t))
 
-(use-package emacs
-  :ensure nil
-  :bind
-  (:map global-map
-        ("s-r" . elpaca-rebuild)))
+(keymap-global-set "s-r" #'elpaca-rebuild)
 
 (elpaca-wait)
 
-;;; --- Exec Path From Shell ---
+;;; exec-path-from-shell
+
+;; This needs to come early so that environment variables are set up
+;; properly (for copilot, latex, ...)
 
 (use-package exec-path-from-shell
-  :disabled
-  :demand
-  :if (memq window-system '(mac ns))
+  :if (memq window-system '(mac ns x))
+  :init
+  ;; With this next option, it's important that PATH is set up inside
+  ;; .zshenv rather than .zshrc.
+  (setq exec-path-from-shell-arguments nil)
   :config
   (exec-path-from-shell-initialize))
 
-(use-package exec-path-from-shell
-  :defer t
-  :if (memq window-system '(mac ns))
-  ;; :init
-  ;; (setq exec-path-from-shell-arguments nil) ;; remove -l -i
-  ;; :config
-  ;; (exec-path-from-shell-copy-env "PATH")
-  ;; (exec-path-from-shell-initialize)
-  )
-
 (elpaca-wait)
 
-;;; --- Paragraph Editing ---
+;;; lots of packages
 
 (defun fill-previous-paragraph ()
   "Fill the previous paragraph."
@@ -120,28 +121,29 @@
     (previous-line)
     (fill-paragraph)))
 
-(use-package emacs
-  :ensure nil
-  :bind
-  (:repeat-map
-   paragraph-repeat-map
-   ("]" . forward-paragraph)
-   ("}" . forward-paragraph)
-   ("[" . backward-paragraph)
-   ("{" . backward-paragraph)
-   :continue-only
-   ("M-h" . mark-paragraph)
-   ("h" . mark-paragraph)
-   ("k" . kill-paragraph)
-   ("w" . kill-region)
-   ("M-w" . kill-ring-save)
-   ("y" . yank)
-   ("C-/" . undo)
-   ("t" . transpose-paragraphs)
-   ("q" . fill-previous-paragraph)
-   ("C-l" . recenter-top-bottom)))
+(bind-keys
+ :repeat-map paragraph-repeat-map
+ ("]" . forward-paragraph)
+ ("}" . forward-paragraph)
+ ("[" . backward-paragraph)
+ ("{" . backward-paragraph)
+ :continue-only
+ ("M-h" . mark-paragraph)
+ ("h" . mark-paragraph)
+ ("k" . kill-paragraph)
+ ("w" . kill-region)
+ ("M-w" . kill-ring-save)
+ ("y" . yank)
+ ("C-/" . undo)
+ ("t" . transpose-paragraphs)
+ ("q" . fill-previous-paragraph)
+ ("C-l" . recenter-top-bottom))
 
-;;; --- Mode line ---
+(use-package aggressive-indent
+  :defer t
+  :diminish
+  :hook
+  ((emacs-lisp-mode LaTeX-mode rust-mode c++-mode) . aggressive-indent-mode))
 
 (use-package diminish
   :demand t
@@ -154,24 +156,37 @@
 ;; Remove "%n" from mode-line-modes -- I know when I'm narrowing.
 (setq mode-line-modes (delete "%n" mode-line-modes))
 
-(use-package emacs
-  :ensure nil
-  :hook
-  (emacs-lisp-mode . (lambda () (setq mode-name "E")))
-  (lisp-interaction-mode . (lambda () (setq mode-name "LI"))))
+(add-hook 'emacs-lisp-mode-hook (lambda () (setq mode-name "E")))
+(add-hook 'lisp-interaction-mode-hook (lambda () (setq mode-name "LI")))
 
 (with-eval-after-load 'tex-mode
   (add-hook 'LaTeX-mode-hook
             (lambda () (setq TeX-base-mode-name "L"))))
 
-;;; --- Org Mode ---
+;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2024-06/msg01858.html
+(use-package org
+  :ensure nil
+  :demand)
 
-(require 'org)
+(defun czm-org-edit-src ()
+  "Edit source block at point, with some customizations.
+- Set fill-column to a large number.
+- Set TeX-master to my-preview-master."
+  (interactive)
+  (let ((src-buffer
+         (save-window-excursion
+           (org-edit-src-code)
+           (setq fill-column 999999) ; should this be in a latex mode hook?
+           (setq TeX-master my-preview-master)
+           (current-buffer))))
+    (switch-to-buffer src-buffer)))
 
-(use-package emacs
+(use-package org
   :ensure nil
   :hook
   (org-mode . visual-line-mode)
+  (org-mode . (lambda () (setq fill-column 999999)))
+  (org-mode . abbrev-mode)
   :custom
   (org-default-notes-file my-todo-file)
   (org-directory "~/")
@@ -210,26 +225,7 @@
       "* %?\n%U\n" :clock-in t :clock-resume t)
      ("d" "Diary" entry (file+datetree simple-journal-db-file)
       "* %U \n%?%i\n" :tree-type week)))
-  (org-src-window-setup 'current-window))
-
-(defun czm-org-edit-src ()
-  "Edit source block at point, with some customizations.
-- Set fill-column to a large number.
-- Set TeX-master to my-preview-master."
-  (interactive)
-  (let ((src-buffer
-         (save-window-excursion
-           (org-edit-src-code)
-           (setq fill-column 999999) ; should this be in a latex mode hook?
-           (setq TeX-master my-preview-master)
-           (current-buffer))))
-    (switch-to-buffer src-buffer)))
-
-(use-package org
-  :ensure nil
-  :hook
-  (org-mode . (lambda () (setq fill-column 999999)))
-  (org-mode . abbrev-mode)
+  (org-src-window-setup 'current-window)
   :bind
   (:map org-mode-map
         ("C-c 1" .
@@ -259,29 +255,16 @@
    ("t" . transpose-paragraphs)
    ("q" . fill-previous-paragraph))
   :config
-  (require 'ob-shell))
-
-;;; --- Personal Config ---
+  (require 'ob-shell)
+  (dolist (item '(("m" . org-babel-mark-block)
+                  ("\C-m" . org-babel-mark-block)))
+    (add-to-list 'org-babel-key-bindings item))
+  (pcase-dolist (`(,key . ,def) org-babel-key-bindings)
+    (define-key org-babel-map key def)))
 
 (let ((file (locate-user-emacs-file "init-personal.el")))
   (when (file-exists-p file)
     (load file)))
-
-;;; --- UI Enhancements ---
-
-(use-package avy
-  :custom
-  (avy-single-candidate-jump nil)
-  :config
-  (setf (alist-get ?  avy-dispatch-alist) 'avy-action-embark)
-  (setf (alist-get ?w avy-dispatch-alist) 'avy-action-easy-kill)
-  :bind
-  (:map global-map
-        ("C-'" . avy-goto-char-timer)
-        ("C-;" . avy-goto-line)
-        ("C-c g" . avy-goto-line))
-  (:map isearch-mode-map
-        ("M-j" . avy-isearch)))
 
 (defun avy-action-embark (pt)
   (unwind-protect
@@ -334,15 +317,64 @@
     (goto-char pt)
     (easy-kill)))
 
-(use-package emacs
-  :ensure nil
-  :after org
+(use-package avy
+  :custom
+  (avy-single-candidate-jump nil)
+  :config
+  (setq
+   avy-dispatch-alist
+   '((?x . avy-action-kill-move)
+     (?X . avy-action-kill-stay)
+     (?t . avy-action-teleport)
+     (?T . avy-action-teleport-whole-line)
+     (?m . avy-action-mark)
+     (?n . avy-action-copy)
+     (?y . avy-action-yank)
+     (?Y . avy-action-yank-whole-line)
+     (?i . avy-action-ispell)
+     (?z . avy-action-zap-to-char)
+     (?  . avy-action-embark)
+     (?w . avy-action-easy-kill)
+     (?K . avy-action-kill-whole-line)
+     ))
+  (with-eval-after-load 'org
+    (keymap-set org-mode-map "C-'" nil))
+
+  (defun avy-action-teleport-whole-line (pt)
+    (avy-action-kill-whole-line pt)
+    (save-excursion (yank)) t)
+
+  (defun avy-action-kill-whole-line (pt)
+    (unwind-protect
+        (save-excursion
+          (goto-char pt)
+          (kill-whole-line)
+          (avy-resume)))
+    (select-window
+     (cdr
+      (ring-ref avy-ring 0)))
+    t)
+
+  (defun avy-action-yank-whole-line (pt)
+    (avy-action-copy-whole-line pt)
+    (save-excursion (yank))
+    t)
+
+  (defun avy-action-exchange (pt)
+    "Exchange sexp at PT with the one at point."
+    (set-mark pt)
+    (transpose-sexps 0))
+
   :bind
-  (:map org-mode-map
-        ("C-'" . nil) ; disable because it is used above
-        ))
+  (:map global-map
+        ("C-'" . avy-goto-char-timer)
+        ("C-;" . avy-goto-line)
+        ("C-c g" . avy-goto-line))
+  (:map isearch-mode-map
+        ("M-j" . avy-isearch)))
 
 (use-package czm-misc
+  :repo-scan
   :ensure (:host github :repo "ultronozm/czm-misc.el"
                  :depth nil)
   :bind (("s-@" . czm-misc-split-window-below-variant)
@@ -374,25 +406,6 @@
                 flycheck-next-error))
     (add-to-list 'pulsar-pulse-functions fn))
   (pulsar-global-mode))
-
-;; (use-package vertico
-;;   :defer t
-;;   :after minibuffer
-;;   :init (vertico-mode))
-
-;; (use-package marginalia
-;;   :after minibuffer
-;;   :init (marginalia-mode)
-;;   :config
-;;   (marginalia-mode)
-;;   :bind (:map minibuffer-local-map
-;;               ("M-A" . marginalia-cycle)))
-
-;; (use-package orderless
-;;   :defer t
-;;   :after minibuffer
-;;   :custom
-;;   (completion-styles '(orderless basic)))
 
 (use-package vertico
   :config (vertico-mode))
@@ -523,8 +536,6 @@
        (put cmd 'repeat-map 'smerge-basic-map)))
    smerge-basic-map))
 
-;;; --- Other Utilities ---
-
 (use-package perfect-margin
   :defer t
   :diminish
@@ -542,7 +553,7 @@
   (which-key-mode))
 
 (use-package ace-link ; activate using 'o' in info/help/(...)
-  :defer t
+  :defer 2
   :config
   (ace-link-setup-default))
 
@@ -577,8 +588,6 @@
 
 (use-package xr
   :defer t)
-
-;;; --- AI-Powered Tools ---
 
 (use-package copilot
   :ensure (:host github
@@ -630,6 +639,7 @@
   (add-to-list 'warning-suppress-types '(llm)))
 
 (use-package ai-org-chat
+  :repo-scan
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
                  :depth nil)
   :defer t
@@ -708,12 +718,8 @@
                     final-cb
                     error-cb)))
 
-;;; --- Python ---
-
 (use-package elpy
   :defer t)
-
-;;; --- Lisp Development ---
 
 (defun czm-lispy-comment-maybe ()
   "Comment the list at point, or self-insert."
@@ -724,47 +730,49 @@
 
 (use-package lispy
   :bind
-  (:map emacs-lisp-mode-map
-        (";" . czm-lispy-comment-maybe)
-        ("M-1" . lispy-describe-inline)
-        ("M-2" . lispy-arglist-inline))
-  (:repeat-map structural-edit-map
-               ("n" . forward-list)
-               ("p" . backward-list)
-               ("u" . backward-up-list)
-               ("M-u" . up-list)
-               ("g" . down-list)
-               :continue-only
-               ("M-g" . backward-down-list)
-               ("f" . forward-sexp)
-               ("b" . backward-sexp)
-               ("a" . beginning-of-defun)
-               ("e" . end-of-defun)
-               ("k" . kill-sexp)
-               ("x" . eval-last-sexp)
-               ("m" . lispy-multiline)
-               ("j" . lispy-split)
-               ("+" . lispy-join)
-               (">" . lispy-slurp-or-barf-right)
-               ("<" . lispy-slurp-or-barf-left)
-               ("C-/" . undo)
-               ("/" . lispy-splice)
-               (";" . lispy-comment)
-               ("t" . transpose-sexps)
-               ("w" . kill-region)
-               ("M-w" . kill-ring-save)
-               ("y" . yank)
-               ("c" . lispy-clone)
-               ("C-M-SPC" . mark-sexp)
-               ("RET" . newline-and-indent)
-               ("i" . lispy-tab)
-               ("<up>" . lispy-move-up)
-               ("<down>" . lispy-move-down)))
+  (:map
+   emacs-lisp-mode-map
+   (";" . czm-lispy-comment-maybe)
+   ("M-1" . lispy-describe-inline)
+   ("M-2" . lispy-arglist-inline))
+  (:repeat-map
+   structural-edit-map
+   ("n" . forward-list)
+   ("p" . backward-list)
+   ("u" . backward-up-list)
+   ("M-u" . up-list)
+   ("g" . down-list)
+   :continue-only
+   ("M-g" . backward-down-list)
+   ("f" . forward-sexp)
+   ("b" . backward-sexp)
+   ("a" . beginning-of-defun)
+   ("e" . end-of-defun)
+   ("k" . kill-sexp)
+   ("x" . eval-last-sexp)
+   ("m" . lispy-multiline)
+   ("j" . lispy-split)
+   ("+" . lispy-join)
+   (">" . lispy-slurp-or-barf-right)
+   ("<" . lispy-slurp-or-barf-left)
+   ("C-/" . undo)
+   ("/" . lispy-splice)
+   (";" . lispy-comment)
+   ("t" . transpose-sexps)
+   ("w" . kill-region)
+   ("M-w" . kill-ring-save)
+   ("y" . yank)
+   ("c" . lispy-clone)
+   ("C-M-SPC" . mark-sexp)
+   ("RET" . newline-and-indent)
+   ("i" . lispy-tab)
+   ("<up>" . lispy-move-up)
+   ("<down>" . lispy-move-down)))
 
 (defun czm-edebug-eval-hook ()
-  (lispy-mode 0)
-  (copilot-mode 0)
-  (aggressive-indent-mode 0))
+  (dolist (cmd '(lispy-mode copilot-mode aggressive-indent-mode))
+    (when (fboundp cmd)
+      (funcall cmd 0))))
 
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
@@ -777,17 +785,16 @@
   (forward-sexp 2)
   (isearch-forward-symbol-at-point))
 
-(global-set-key (kbd "M-s q") 'isearch-forward-enclosing-defun)
+(keymap-global-set "M-s q" #'isearch-forward-enclosing-defun)
 
 (use-package symbol-overlay
-  :bind (("M-s ," . symbol-overlay-put)
-         ("M-s n" . symbol-overlay-switch-forward)
-         ("M-s p" . symbol-overlay-switch-backward)
-         ;; ("M-s m" . symbol-overlay-mode)
-         ;; ("M-s n" . symbol-overlay-remove-all)
-         ))
-
-;;; --- xref advice for project-only searches ---
+  :bind
+  (("M-s ," . symbol-overlay-put)
+   ("M-s n" . symbol-overlay-switch-forward)
+   ("M-s p" . symbol-overlay-switch-backward)
+   ;; ("M-s m" . symbol-overlay-mode)
+   ;; ("M-s n" . symbol-overlay-remove-all)
+   ))
 
 (defun czm-xref-restrict-to-project-advice (orig-fun &rest args)
   "Advice to restrict xref searches to the current project root."
@@ -802,9 +809,7 @@
       (advice-add 'xref-find-references :around #'czm-xref-restrict-to-project-advice)
     (advice-remove 'xref-find-references #'czm-xref-restrict-to-project-advice)))
 
-;;; --- Flycheck / Flymake ---
-
-(use-package flycheck 
+(use-package flycheck
   :defer t
   :bind
   (:repeat-map
@@ -849,45 +854,21 @@
                ("f" . attrap-flymake)
                ("M-n" . flymake-goto-next-error)
                ("M-p" . flymake-goto-prev-error)
-               ("l" . flymake-show-diagnostics-buffer))  )
-
-(use-package emacs
-  :ensure nil
-  :after flymake preview
+               ("l" . flymake-show-diagnostics-buffer))
   :config
-  (dolist (cmd '(flymake-goto-next-error flymake-goto-prev-error))
-    (add-to-list 'preview-auto-reveal-commands cmd)))
-
-(use-package emacs
-  :ensure nil
-  :after flymake tex-fold
-  :config
-  (dolist (cmd '(flymake-goto-next-error flymake-goto-prev-error))
-    (add-to-list 'TeX-fold-auto-reveal-commands cmd)))
-
-;;; --- Attrap ---
+  (with-eval-after-load 'preview
+    (dolist (cmd '(flymake-goto-next-error flymake-goto-prev-error))
+      (add-to-list 'preview-auto-reveal-commands cmd)))
+  (with-eval-after-load 'tex-fold
+    (dolist (cmd '(flymake-goto-next-error flymake-goto-prev-error))
+      (add-to-list 'TeX-fold-auto-reveal-commands cmd))))
 
 (use-package attrap
   :defer t
   :after flycheck
   :config
-  (setq saved-match-data nil))
-
-(use-package emacs
-  :ensure nil
-  :after flycheck attrap repeat
-  :config
+  (setq saved-match-data nil)
   (define-key flycheck-command-map "f" 'attrap-flycheck))
-
-;;; --- Code Formatting and Indentation ---
-
-(use-package aggressive-indent
-  :defer t
-  :diminish
-  :hook
-  ((emacs-lisp-mode LaTeX-mode rust-mode c++-mode) . aggressive-indent-mode))
-
-;;; --- treesit ---
 
 (use-package treesit-auto
   :defer t
@@ -897,67 +878,52 @@
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 
-;; (add-to-list 'treesit-extra-load-path "/Users/au710211/gnu-emacs/admin/notes/tree-sitter/build-module/dist")
-
-;;; --- LSP ---
-
 (use-package eglot
   :bind
   (:map eglot-mode-map
         ("C-c C-q" . eglot-code-action-quickfix)
         ("C-c C-a" . eglot-code-actions)))
 
-;;; --- Outline Navigation ---
+(defun czm-create-scratch-file (dir extension &optional setup-fn)
+  "Create a new temporary file in DIR with EXTENSION.
+Optionally run SETUP-FN after creating the file."
+  (let* ((dir (file-name-as-directory dir))
+         (filename (format-time-string (concat "%Y%m%dT%H%M%S--scratch." extension)))
+         (filepath (expand-file-name filename dir)))
+    (unless (file-directory-p dir)
+      (make-directory dir t))
+    (find-file filepath)
+    (save-buffer)
+    (when setup-fn (funcall setup-fn))))
+
+(defun czm-create-scratch-org ()
+  "Create new scratch org buffer."
+  (interactive)
+  (czm-create-scratch-file my-scratch-org-dir "org"))
+
+(defun czm-create-scratch-tex ()
+  "Create new scratch LaTeX buffer."
+  (interactive)
+  (czm-create-scratch-file my-scratch-tex-dir "tex" #'czm-setup-tex-file))
+
+(defun czm-create-scratch-sage ()
+  "Create new scratch sage file."
+  (interactive)
+  (czm-create-scratch-file my-scratch-sage-dir "sage"))
+
+(use-package consult-abbrev
+  :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil)
+  :commands (consult-abbrev))
 
 (defun foldout-exit-fold-without-hiding ()
   (interactive)
   (foldout-exit-fold -1))
 
-(use-package outline
-  :ensure nil
-  :defer t
-  :bind
-  (:repeat-map
-   outline-repeat-map
-   ("n" . outline-next-heading)
-   ("p" . outline-previous-heading)
-   ("u" . outline-up-heading)
-   ("f" . outline-forward-same-level)
-   ("b" . outline-backward-same-level)
-   ("<left>" . outline-promote)
-   ("<right>" . outline-demote)
-   ("<up>" . outline-move-subtree-up)
-   ("<down>" . outline-move-subtree-down)
-   ("x" . foldout-exit-fold-without-hiding)
-   ("z" . foldout-zoom-subtree)
-   ("a" . outline-show-all)
-   ("c" . outline-hide-entry)
-   ("d" . outline-hide-subtree)
-   ("e" . outline-show-entry)
-   ("TAB" . outline-show-children)
-   ("k" . outline-show-branches)
-   ("l" . outline-hide-leaves)
-   ("RET" . outline-insert-heading)
-   ("o" . outline-hide-other)
-   ("q" . outline-hide-sublevels)
-   ("s" . outline-show-subtree)
-   ("t" . outline-hide-body)
-   ("@" . outline-mark-subtree)
-   :continue-only
-   ("C-M-SPC" . outline-mark-subtree)
-   ("w" . kill-region)
-   ("M-w" . kill-ring-save)
-   ("C-/" . undo)
-   ("y" . yank)))
-
-;;; --- Spelling ---
-
 (use-package czm-spell
+  :repo-scan
   :ensure (:host github :repo "ultronozm/czm-spell.el" :depth nil)
-  :after latex
+  ;; :after latex
   :bind ("s-;" . czm-spell-then-abbrev))
-
-;;; --- PDF ---
 
 (use-package doc-view
   :ensure nil
@@ -991,10 +957,11 @@
 (setq pdf-annot-edit-contents-setup-function #'my/pdf-annot-setup)
 
 (use-package doc-dual-view
+  :repo-scan
   :ensure (:host github :repo "ultronozm/doc-dual-view.el" :depth nil)
   :commands (doc-dual-view-mode))
 
-;;; --- ERC (IRC Client) ---
+;;; erc
 
 (use-package erc
   :ensure nil
@@ -1071,7 +1038,7 @@
 
 ;; TODO: robust form of check-abbrev?
 
-;;; --- C++ ---
+;;; c/c++
 
 (c-add-style
  "llvm4"
@@ -1162,9 +1129,8 @@
   (set-fill-column 120)
   (setq next-error-function #'flymake-goto-next-error))
 
-(use-package emacs
+(use-package cc-mode
   :ensure nil
-  :after cc-mode
   :bind
   ("C-c M-o" . ff-find-other-file)
   :hook
@@ -1200,6 +1166,7 @@
   (cmake-build-options "-j 8 --verbose"))
 
 (use-package czm-cpp
+  :repo-scan
   :ensure (:host github :repo "ultronozm/czm-cpp.el" :files ("*.el" "template") :depth nil)
   :defer t
   :custom
@@ -1233,7 +1200,7 @@
   (setq c-ts-mode-indent-offset 2)
   (setq c-ts-mode-indent-style #'my--c-ts-indent-style))
 
-;;; --- Emacs Calc ---
+;;; calc
 
 (defun calcFunc-sage-factor ()
   "Use SAGE to factor the top element of the stack in Emacs Calc."
@@ -1278,7 +1245,7 @@ The value of `calc-language` is restored after BODY has been processed."
            ,@body)
        (calc-set-language old-lang))))
 
-;;; --- Git ---
+;;; git
 
 (use-package magit
   :defer t
@@ -1292,48 +1259,13 @@ The value of `calc-language` is restored after BODY has been processed."
    ("l" . magit-smerge-keep-lower)
    ("u" . magit-smerge-keep-upper)))
 
-(use-package repo-scan
-  :ensure (:host github :repo "ultronozm/repo-scan.el" :depth nil)
-  :custom
-  (repo-scan-repos
-   '("ai-org-chat"
-     "auto-hide"
-     "czm-cpp"
-     "czm-lean4"
-     "czm-misc"
-     "czm-preview"
-     "czm-spell"
-     "czm-tex-compile"
-     "czm-tex-edit"
-     "czm-tex-fold"
-     "czm-tex-jump"
-     "czm-tex-mint"
-     "czm-tex-ref"
-     "czm-tex-util"
-     "doc-dual-view"
-     "dynexp"
-     "eldoc-icebox"
-     "flymake-overlays"
-     "lean4-mode"
-     "library"
-     "magit-fill-column"
-     "preview-auto"
-     "preview-tailor"
-     "publish"
-     "repo-scan"
-     "symtex"
-     "auctex-label-numbers"
-     "auctex-cont-latexmk"
-     "tex-parens"
-     "tex-item"))
-  :defer t)
-
 (defun czm-file-is-tex-or-bib (file)
   "Return t if FILE is a .tex or .bib file."
   (or (string-suffix-p ".tex" file)
       (string-suffix-p ".bib" file)))
 
 (use-package publish
+  :repo-scan
   :ensure (:host github :repo "ultronozm/publish.el" :depth nil)
   :defer t
   :custom
@@ -1341,6 +1273,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
 
 (use-package magit-fill-column
+  :repo-scan
   :ensure (:host github :repo "ultronozm/magit-fill-column.el" :depth nil)
   :hook (git-commit-setup . magit-fill-column-set)
   :custom
@@ -1357,82 +1290,106 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package diff-hl
   :defer t)
 
-;;; --- LaTeX ---
+(use-package repo-scan
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/repo-scan.el" :depth nil)
+  :defer t)
+
+;;; latex
 
 (use-package tex-mode
   :ensure nil
   :defer t
   :config
-  (dolist (sym '(("``" . ?“)
-                 ("''" . ?”)
-                 ("\\begin{equation*}" . ?↴)
-                 ("\\begin{equation}" . ?↴)
-                 ("\\end{equation*}" . ?↲)
-                 ("\\end{equation}" . ?↲)
-                 ("\\begin{align*}" . ?⌈)
-                 ("\\begin{align}" . ?⌈)
-                 ("\\end{align*}" . ?⌋)
-                 ("\\end{align}" . ?⌋)
-                 ("\\begin{multline*}" . ?⎧)
-                 ("\\begin{multline}" . ?⎧)
-                 ("\\end{multline*}" . ?⎭)
-                 ("\\end{multline}" . ?⎭)
-                 ("\\S" . ?§)
-                 ("\\Bbb{A}" . ?𝔸)
-                 ("\\Bbb{B}" . ?𝔹)
-                 ("\\Bbb{C}" . ?ℂ)
-                 ("\\Bbb{D}" . ?𝔻)
-                 ("\\Bbb{E}" . ?𝔼)
-                 ("\\Bbb{F}" . ?𝔽)
-                 ("\\Bbb{G}" . ?𝔾)
-                 ("\\Bbb{H}" . ?ℍ)
-                 ("\\Bbb{I}" . ?𝕀)
-                 ("\\Bbb{J}" . ?𝕁)
-                 ("\\Bbb{K}" . ?𝕂)
-                 ("\\Bbb{L}" . ?𝕃)
-                 ("\\Bbb{M}" . ?𝕄)
-                 ("\\Bbb{N}" . ?ℕ)
-                 ("\\Bbb{O}" . ?𝕆)
-                 ("\\Bbb{P}" . ?ℙ)
-                 ("\\Bbb{Q}" . ?ℚ)
-                 ("\\Bbb{R}" . ?ℝ)
-                 ("\\Bbb{S}" . ?𝕊)
-                 ("\\Bbb{T}" . ?𝕋)
-                 ("\\Bbb{U}" . ?𝕌)
-                 ("\\Bbb{V}" . ?𝕍)
-                 ("\\Bbb{W}" . ?𝕎)
-                 ("\\Bbb{X}" . ?𝕏)
-                 ("\\Bbb{Y}" . ?𝕐)
-                 ("\\Bbb{Z}" . ?ℤ)
-                 ("\\mathbb{A}" . ?𝔸)
-                 ("\\mathbb{B}" . ?𝔹)
-                 ("\\mathbb{C}" . ?ℂ)
-                 ("\\mathbb{D}" . ?𝔻)
-                 ("\\mathbb{E}" . ?𝔼)
-                 ("\\mathbb{F}" . ?𝔽)
-                 ("\\mathbb{G}" . ?𝔾)
-                 ("\\mathbb{H}" . ?ℍ)
-                 ("\\mathbb{I}" . ?𝕀)
-                 ("\\mathbb{J}" . ?𝕁)
-                 ("\\mathbb{K}" . ?𝕂)
-                 ("\\mathbb{L}" . ?𝕃)
-                 ("\\mathbb{M}" . ?𝕄)
-                 ("\\mathbb{N}" . ?ℕ)
-                 ("\\mathbb{O}" . ?𝕆)
-                 ("\\mathbb{P}" . ?ℙ)
-                 ("\\mathbb{Q}" . ?ℚ)
-                 ("\\mathbb{R}" . ?ℝ)
-                 ("\\mathbb{S}" . ?𝕊)
-                 ("\\mathbb{T}" . ?𝕋)
-                 ("\\mathbb{U}" . ?𝕌)
-                 ("\\mathbb{V}" . ?𝕍)
-                 ("\\mathbb{W}" . ?𝕎)
-                 ("\\mathbb{X}" . ?𝕏)
-                 ("\\mathbb{Y}" . ?𝕐)
-                 ("\\mathbb{Z}" . ?ℤ)
-                 ("\\eps" . ?ε)
-                 ))
-    (add-to-list 'tex--prettify-symbols-alist sym)))
+  (mapc
+   (lambda (sym) (add-to-list 'tex--prettify-symbols-alist sym))
+   '(("``" . ?“)
+     ("''" . ?”)
+     ("\\begin{equation*}" . ?↴)
+     ("\\begin{equation}" . ?↴)
+     ("\\end{equation*}" . ?↲)
+     ("\\end{equation}" . ?↲)
+     ("\\begin{align*}" . ?⌈)
+     ("\\begin{align}" . ?⌈)
+     ("\\end{align*}" . ?⌋)
+     ("\\end{align}" . ?⌋)
+     ("\\begin{multline*}" . ?⎧)
+     ("\\begin{multline}" . ?⎧)
+     ("\\end{multline*}" . ?⎭)
+     ("\\end{multline}" . ?⎭)
+     ("\\S" . ?§)
+     ("\\Bbb{A}" . ?𝔸)
+     ("\\Bbb{B}" . ?𝔹)
+     ("\\Bbb{C}" . ?ℂ)
+     ("\\Bbb{D}" . ?𝔻)
+     ("\\Bbb{E}" . ?𝔼)
+     ("\\Bbb{F}" . ?𝔽)
+     ("\\Bbb{G}" . ?𝔾)
+     ("\\Bbb{H}" . ?ℍ)
+     ("\\Bbb{I}" . ?𝕀)
+     ("\\Bbb{J}" . ?𝕁)
+     ("\\Bbb{K}" . ?𝕂)
+     ("\\Bbb{L}" . ?𝕃)
+     ("\\Bbb{M}" . ?𝕄)
+     ("\\Bbb{N}" . ?ℕ)
+     ("\\Bbb{O}" . ?𝕆)
+     ("\\Bbb{P}" . ?ℙ)
+     ("\\Bbb{Q}" . ?ℚ)
+     ("\\Bbb{R}" . ?ℝ)
+     ("\\Bbb{S}" . ?𝕊)
+     ("\\Bbb{T}" . ?𝕋)
+     ("\\Bbb{U}" . ?𝕌)
+     ("\\Bbb{V}" . ?𝕍)
+     ("\\Bbb{W}" . ?𝕎)
+     ("\\Bbb{X}" . ?𝕏)
+     ("\\Bbb{Y}" . ?𝕐)
+     ("\\Bbb{Z}" . ?ℤ)
+     ("\\mathbb{A}" . ?𝔸)
+     ("\\mathbb{B}" . ?𝔹)
+     ("\\mathbb{C}" . ?ℂ)
+     ("\\mathbb{D}" . ?𝔻)
+     ("\\mathbb{E}" . ?𝔼)
+     ("\\mathbb{F}" . ?𝔽)
+     ("\\mathbb{G}" . ?𝔾)
+     ("\\mathbb{H}" . ?ℍ)
+     ("\\mathbb{I}" . ?𝕀)
+     ("\\mathbb{J}" . ?𝕁)
+     ("\\mathbb{K}" . ?𝕂)
+     ("\\mathbb{L}" . ?𝕃)
+     ("\\mathbb{M}" . ?𝕄)
+     ("\\mathbb{N}" . ?ℕ)
+     ("\\mathbb{O}" . ?𝕆)
+     ("\\mathbb{P}" . ?ℙ)
+     ("\\mathbb{Q}" . ?ℚ)
+     ("\\mathbb{R}" . ?ℝ)
+     ("\\mathbb{S}" . ?𝕊)
+     ("\\mathbb{T}" . ?𝕋)
+     ("\\mathbb{U}" . ?𝕌)
+     ("\\mathbb{V}" . ?𝕍)
+     ("\\mathbb{W}" . ?𝕎)
+     ("\\mathbb{X}" . ?𝕏)
+     ("\\mathbb{Y}" . ?𝕐)
+     ("\\mathbb{Z}" . ?ℤ)
+     ("\\eps" . ?ε)
+     ("\\frac{1}{2}" . "½") ("\\tfrac{1}{2}" . "½")
+     ("\\frac{1}{3}" . "⅓") ("\\tfrac{1}{3}" . "⅓")
+     ("\\frac{2}{3}" . "⅔") ("\\tfrac{2}{3}" . "⅔")
+     ("\\frac{1}{4}" . "¼") ("\\tfrac{1}{4}" . "¼")
+     ("\\frac{3}{4}" . "¾") ("\\tfrac{3}{4}" . "¾")
+     ("\\frac{1}{5}" . "⅕") ("\\tfrac{1}{5}" . "⅕")
+     ("\\frac{2}{5}" . "⅖") ("\\tfrac{2}{5}" . "⅖")
+     ("\\frac{3}{5}" . "⅗") ("\\tfrac{3}{5}" . "⅗")
+     ("\\frac{4}{5}" . "⅘") ("\\tfrac{4}{5}" . "⅘")
+     ("\\frac{1}{6}" . "⅙") ("\\tfrac{1}{6}" . "⅙")
+     ("\\frac{5}{6}" . "⅚") ("\\tfrac{5}{6}" . "⅚")
+     ("\\frac{1}{7}" . "⅐") ("\\tfrac{1}{7}" . "⅐")
+     ("\\frac{1}{8}" . "⅛") ("\\tfrac{1}{8}" . "⅛")
+     ("\\frac{3}{8}" . "⅜") ("\\tfrac{3}{8}" . "⅜")
+     ("\\frac{5}{8}" . "⅝") ("\\tfrac{5}{8}" . "⅝")
+     ("\\frac{7}{8}" . "⅞") ("\\tfrac{7}{8}" . "⅞")
+     ("\\frac{1}{9}" . "⅑") ("\\tfrac{1}{9}" . "⅑")
+     ("\\frac{1}{10}" . "⅒") ("\\tfrac{1}{10}" . "⅒")
+     )))
 
 (defun my-LaTeX-mode-setup ()
   (turn-on-reftex)
@@ -1505,7 +1462,7 @@ The value of `calc-language` is restored after BODY has been processed."
                             (font-lock-fontify-region beg end)
                             (TeX-fold-region beg end))
                           (forward-line 1))))
-  
+
   (preview-auto-cache-preamble t)
   (preview-image-type 'dvipng)
   ;; (TeX-fold-quotes-on-insert t)
@@ -1518,9 +1475,10 @@ The value of `calc-language` is restored after BODY has been processed."
   (preview-face ((t (:background unspecified)))))
 
 (use-package preview-tailor
+  :repo-scan
   :ensure (:host github :repo "ultronozm/preview-tailor.el" :depth nil)
   :after preview
-  ;; :demand
+  :demand
   :config
   (preview-tailor-init)
   :hook
@@ -1530,6 +1488,7 @@ The value of `calc-language` is restored after BODY has been processed."
    (lambda () (if (string-suffix-p ".lean" (buffer-file-name)) 0.6 0.833))))
 
 (use-package czm-tex-util
+  :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-util.el" :depth nil)
   :after latex)
 
@@ -1600,6 +1559,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (add-hook 'LaTeX-mode-hook #'TeX-fold-mode))
 
 (use-package czm-tex-jump
+  :repo-scan
   :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git" :depth nil)
   ;; :after avy
   :after latex
@@ -1609,6 +1569,7 @@ The value of `calc-language` is restored after BODY has been processed."
   :hook (LaTeX-mode . czm-tex-jump-setup))
 
 (use-package czm-tex-ref
+  :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-ref.el"
                  :depth nil)
   :after latex
@@ -1689,6 +1650,7 @@ The value of `calc-language` is restored after BODY has been processed."
             #'czm-attrap-LaTeX-fixer-flymake)))
 
 (use-package dynexp
+  :repo-scan
   :ensure (:host github :repo "ultronozm/dynexp.el" :depth nil)
   :after latex
   :hook (LaTeX-mode . dynexp-latex-setup)
@@ -1697,6 +1659,7 @@ The value of `calc-language` is restored after BODY has been processed."
               ("TAB" . dynexp-next)))
 
 (use-package czm-tex-edit
+  :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el" :depth nil)
   :after latex dynexp
   ;; :demand ; should come after latex and dynexp
@@ -1729,6 +1692,7 @@ The value of `calc-language` is restored after BODY has been processed."
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
 (use-package auctex-cont-latexmk
+  :repo-scan
   :ensure (:host github :repo "ultronozm/auctex-cont-latexmk.el" :depth nil)
   :after latex
   :bind (:map LaTeX-mode-map ("C-c k" . auctex-cont-latexmk-toggle))
@@ -1738,6 +1702,7 @@ The value of `calc-language` is restored after BODY has been processed."
      ("$pdflatex=q/pdflatex %O -synctex=1 -file-line-error -interaction=nonstopmode %S/"))))
 
 (use-package preview-auto
+  :repo-scan
   :ensure (:host github :repo "ultronozm/preview-auto.el" :depth nil)
   :after latex
   :hook (LaTeX-mode . preview-auto-setup)
@@ -1751,10 +1716,12 @@ The value of `calc-language` is restored after BODY has been processed."
    '(preview-LaTeX-disable-pdfoutput)))
 
 (use-package auctex-label-numbers
+  :repo-scan
   :ensure (:host github :repo "ultronozm/auctex-label-numbers.el" :depth nil)
   :after latex)
 
 (use-package library
+  :repo-scan
   :after latex czm-tex-util
   :defer t
   :ensure (:host github :repo "ultronozm/library.el" :depth nil)
@@ -1770,6 +1737,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (call-interactively #'tex-parens-backward-down-list))
 
 (use-package tex-parens
+  :repo-scan
   :ensure (:host github :repo "ultronozm/tex-parens.el" :depth nil)
   :after latex
   :bind
@@ -1818,6 +1786,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (repeat-mode 1))
 
 (use-package tex-item
+  :repo-scan
   :ensure (:host github :repo "ultronozm/tex-item.el" :depth nil)
   :after latex
   :config
@@ -1836,7 +1805,7 @@ The value of `calc-language` is restored after BODY has been processed."
 (defalias 'czm-setup-tex-file
   (kmacro "l t x SPC s-s s-p z C-n C-n C-c C-p C-a C-c C-p C-f"))
 
-;;; --- Sage ---
+;;; sage
 
 (use-package sage-shell-mode
   :defer t
@@ -1886,6 +1855,7 @@ The value of `calc-language` is restored after BODY has been processed."
                  'face-defface-spec))
 
 (use-package czm-tex-mint
+  :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-mint.el" :depth nil)
   :after latex mmm-mode
   ;; :demand t
@@ -1900,48 +1870,21 @@ The value of `calc-language` is restored after BODY has been processed."
   (mmm-sage-shell:sage-mode-exit . czm-tex-mint-disable))
 
 (use-package symtex
+  :repo-scan
   :ensure (:host github :repo "ultronozm/symtex.el" :depth nil)
   :after latex
   :bind
   (:map global-map ("C-c V" . symtex-process))
   (:map LaTeX-mode-map ("C-c v" . symtex-dwim)))
 
-;;; --- Scratch files ---
-
-(defun czm-create-scratch-file (dir extension &optional setup-fn)
-  "Create a new temporary file in DIR with EXTENSION.
-Optionally run SETUP-FN after creating the file."
-  (let* ((dir (file-name-as-directory dir))
-         (filename (format-time-string (concat "%Y%m%dT%H%M%S--scratch." extension)))
-         (filepath (expand-file-name filename dir)))
-    (unless (file-directory-p dir)
-      (make-directory dir t))
-    (find-file filepath)
-    (save-buffer)
-    (when setup-fn (funcall setup-fn))))
-
-(defun czm-create-scratch-org ()
-  "Create new scratch org buffer."
-  (interactive)
-  (czm-create-scratch-file my-scratch-org-dir "org"))
-
-(defun czm-create-scratch-tex ()
-  "Create new scratch LaTeX buffer."
-  (interactive)
-  (czm-create-scratch-file my-scratch-tex-dir "tex" #'czm-setup-tex-file))
-
-(defun czm-create-scratch-sage ()
-  "Create new scratch sage file."
-  (interactive)
-  (czm-create-scratch-file my-scratch-sage-dir "sage"))
-
-;;; --- Lean ---
+;;; lean
 
 (defun czm-set-lean4-local-variables ()
   (setq preview-tailor-local-multiplier 0.7)
   (setq TeX-master my-preview-master))
 
 (use-package lean4-mode
+  :repo-scan
   :ensure (:host github :repo "ultronozm/lean4-mode" :files ("*.el" "data"))
   :diminish
   :hook
@@ -1960,6 +1903,7 @@ Optionally run SETUP-FN after creating the file."
   :defer t)
 
 (use-package czm-lean4
+  :repo-scan
   :ensure (:host github :repo "ultronozm/czm-lean4.el" :depth nil)
   :after lean4-mode preview-auto flymake-overlays
   :hook
@@ -1994,6 +1938,7 @@ Optionally run SETUP-FN after creating the file."
    copilot-completion-map))
 
 (use-package flymake-overlays
+  :repo-scan
   :ensure (:host github :repo "ultronozm/flymake-overlays.el" :depth nil)
   :after flymake
   :bind (:map flymake-mode-map
@@ -2011,6 +1956,7 @@ Optionally run SETUP-FN after creating the file."
     (eldoc-mode)))
 
 (use-package eldoc-icebox
+  :repo-scan
   :ensure (:host github :repo "ultronozm/eldoc-icebox.el" :depth nil)
   :bind (("C-c C-h" . eldoc-icebox-store)
          ("C-c C-n" . eldoc-icebox-toggle-display))
@@ -2018,7 +1964,3 @@ Optionally run SETUP-FN after creating the file."
   (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
   (eldoc-icebox-post-display . czm-lean4-fontify-buffer)
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
-
-(use-package consult-abbrev
-  :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil)
-  :commands (consult-abbrev))
