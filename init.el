@@ -331,12 +331,10 @@ If the predicate is true, add NAME to `repo-scan-repos'."
      (?n . avy-action-copy)
      (?y . avy-action-yank)
      (?Y . avy-action-yank-whole-line)
-     (?i . avy-action-ispell)
      (?z . avy-action-zap-to-char)
      (?  . avy-action-embark)
      (?w . avy-action-easy-kill)
-     (?K . avy-action-kill-whole-line)
-     ))
+     (?K . avy-action-kill-whole-line)))
   (with-eval-after-load 'org
     (keymap-set org-mode-map "C-'" nil))
 
@@ -558,7 +556,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (ace-link-setup-default))
 
 (use-package eldoc-box
-  :commands (eldoc-box-help-at-point)
   :bind
   (:map global-map ("C-c e" . eldoc-box-help-at-point)))
 
@@ -650,14 +647,11 @@ If the predicate is true, add NAME to `repo-scan-repos'."
         ("s-<return>" . ai-org-chat-respond)
         ("C-c n" . ai-org-chat-branch)
         ("C-c e" . ai-org-chat-compare))
-  :commands
-  (ai-org-chat-setup-buffer ai-org-chat-minor-mode)
   :custom
   (ai-org-chat-user-name my-first-name)
   (ai-org-chat-dir my-scratch-gpt-dir)
   (ai-org-chat-context-style nil)
   :config
-  (require 'llm-claude)
   (require 'exec-path-from-shell)
   (ai-org-chat-select-model "sonnet 3.5"))
 
@@ -912,8 +906,9 @@ Optionally run SETUP-FN after creating the file."
   (czm-create-scratch-file my-scratch-sage-dir "sage"))
 
 (use-package consult-abbrev
-  :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil)
-  :commands (consult-abbrev))
+  :repo-scan
+  :defer t
+  :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil))
 
 (defun foldout-exit-fold-without-hiding ()
   (interactive)
@@ -958,8 +953,8 @@ Optionally run SETUP-FN after creating the file."
 
 (use-package doc-dual-view
   :repo-scan
-  :ensure (:host github :repo "ultronozm/doc-dual-view.el" :depth nil)
-  :commands (doc-dual-view-mode))
+  :defer t
+  :ensure (:host github :repo "ultronozm/doc-dual-view.el" :depth nil))
 
 ;;; erc
 
@@ -1889,7 +1884,6 @@ The value of `calc-language` is restored after BODY has been processed."
   :diminish
   :hook
   (lean4-mode . czm-set-lean4-local-variables)
-  :commands (lean4-mode)
   :custom
   (lean4-idle-delay 0.02)
   (lean4-info-plain nil)
