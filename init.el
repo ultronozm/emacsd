@@ -8,7 +8,6 @@
 ;; disable customization interface
 (setq custom-file (locate-user-emacs-file "init-custom.el"))
 
-(load (locate-user-emacs-file "init-patches.el"))
 (load (locate-user-emacs-file "init-bare.el"))
 (load (locate-user-emacs-file "init-settings.el"))
 
@@ -88,6 +87,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (when (eq window-system 'w32)
   (elpaca-no-symlink-mode))
 
+(push 'notmuch elpaca-ignored-dependencies)
+
 (elpaca elpaca-use-package
   (elpaca-use-package-mode)
   (setq use-package-always-ensure t))
@@ -127,6 +128,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
  ("}" . forward-paragraph)
  ("[" . backward-paragraph)
  ("{" . backward-paragraph)
+ :exit
+ ("C-/" . undo)
  :continue-only
  ("M-h" . mark-paragraph)
  ("h" . mark-paragraph)
@@ -134,7 +137,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
  ("w" . kill-region)
  ("M-w" . kill-ring-save)
  ("y" . yank)
- ("C-/" . undo)
  ("t" . transpose-paragraphs)
  ("q" . fill-previous-paragraph)
  ("C-l" . recenter-top-bottom))
@@ -364,12 +366,16 @@ If the predicate is true, add NAME to `repo-scan-repos'."
     (transpose-sexps 0))
 
   :bind
-  (:map global-map
-        ("C-'" . avy-goto-char-timer)
-        ("C-;" . avy-goto-line)
-        ("C-c g" . avy-goto-line))
-  (:map isearch-mode-map
-        ("M-j" . avy-isearch)))
+  (("C-'" . avy-goto-char-timer)
+   ("C-;" . avy-goto-line)
+   ("C-c g" . avy-goto-line)
+   ("M-s M-p" . avy-goto-line-above)
+   ("M-s M-n" . avy-goto-line-below)
+   ("M-s C-w" . avy-kill-region)
+   ("M-s M-w" . avy-kill-ring-save-region))
+  (:map
+   isearch-mode-map
+   ("M-j" . avy-isearch)))
 
 (use-package czm-misc
   :repo-scan
@@ -1242,6 +1248,10 @@ The value of `calc-language` is restored after BODY has been processed."
 
 ;;; git
 
+(use-package transient
+  :ensure t
+  :demand t)
+
 (use-package magit
   :defer t
   :hook
@@ -1425,6 +1435,13 @@ The value of `calc-language` is restored after BODY has been processed."
     (push '("latex" . LaTeX) org-src-lang-modes))
   (put 'LaTeX-narrow-to-environment 'disabled nil)
   (TeX-source-correlate-mode)
+  (let ((cmds '(other-window ace-window consult-register-load)))
+    (with-eval-after-load 'preview
+      (dolist (cmd cmds)
+        (add-to-list 'preview-auto-reveal-commands cmd)))
+    (with-eval-after-load 'tex-fold
+      (dolist (cmd cmds)
+        (add-to-list 'TeX-fold-auto-reveal-commands cmd))))
   :hook
   (LaTeX-mode . my-LaTeX-mode-setup)
   (TeX-mode . prettify-symbols-mode)
@@ -1653,6 +1670,24 @@ The value of `calc-language` is restored after BODY has been processed."
               ("SPC" . dynexp-space)
               ("TAB" . dynexp-next)))
 
+(defun czm-tex-font-fold-advice (&rest _)
+  "Advice to fold macros after `TeX-font' is called."
+  (when TeX-fold-mode
+    (save-excursion
+      ;; Move to the beginning of the newly inserted macro
+      (when (looking-back "[{}]" (- (point) 1))
+        (backward-sexp))
+      (let ((macro-start (point)))
+        ;; Move to the end of the macro
+        (forward-sexp)
+        ;; Ensure proper fontification
+        (font-lock-ensure macro-start (point))
+        ;; Move back and fold
+        (goto-char macro-start)
+        (TeX-fold-macro)))))
+
+(advice-add 'TeX-font :after #'czm-tex-font-fold-advice)
+
 (use-package czm-tex-edit
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el" :depth nil)
@@ -1660,11 +1695,11 @@ The value of `calc-language` is restored after BODY has been processed."
   ;; :demand ; should come after latex and dynexp
   :bind
   (:map LaTeX-mode-map
-        ("C-c t i" . czm-tex-edit-emphasize)
-        ("C-c t a" . czm-tex-edit-alertify)
-        ("C-c t b" . czm-tex-edit-bold)
-        ("C-c t l" . czm-tex-edit-underline)
-        ("C-c t u" . czm-tex-edit-unemphasize)
+        ;; ("C-c t i" . czm-tex-edit-emphasize)
+        ;; ("C-c t a" . czm-tex-edit-alertify)
+        ;; ("C-c t b" . czm-tex-edit-bold)
+        ;; ("C-c t l" . czm-tex-edit-underline)
+        ;; ("C-c t u" . czm-tex-edit-unemphasize)
         ("C-c t e" . czm-tex-edit-external-document-link)
         ("C-c p e" . czm-tex-edit-repeat-most-recent-equation)
         ("C-c p d" . czm-tex-edit-repeat-line-contents)

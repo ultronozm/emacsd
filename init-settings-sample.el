@@ -17,8 +17,8 @@
       my-scratch-cpp-dir "~/scratch/cpp"
       my-scratch-gpt-dir "~/scratch/gpt")
 
-(customize-set-variable 'user-full-name "Paul D. Nelson")
-(customize-set-variable 'user-mail-address "nelson.paul.david@gmail.com")
+(customize-set-variable 'user-full-name "Paul Nelson")
+(customize-set-variable 'user-mail-address "ultrono@gmail.com")
 
 (setenv "LIBRARY_PATH"
         (mapconcat

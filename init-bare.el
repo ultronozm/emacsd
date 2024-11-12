@@ -1,5 +1,9 @@
 ;;; -*- lexical-binding: t; -*-
 
+(let ((file (locate-user-emacs-file "init-patches.el")))
+  (when (file-exists-p file)
+    (load file)))
+
 (when (string-equal system-type "darwin")
   (setq ns-command-modifier 'meta)
   (setq ns-alternate-modifier 'super)
@@ -34,6 +38,7 @@
    ("C-x C-M-t" . transpose-regions)
    ("C-x C-b" . ibuffer)
    ("C-z" . nil)
+   ("C-z c" . calendar)
    ("C-z C-e" . pp-macroexpand-last-sexp)
    ("C-z C-s" . desktop-save-in-desktop-dir)
    ("C-z C-f" . desktop-read)
@@ -90,15 +95,13 @@
    ("s-L" . nil)
    ("s-m" . nil)
    ;; "s-M" ; manual-entry
-   ("s-n" . nil)
-   ("s-N" . make-frame)
    ("s-n" . outline-next-heading)
+   ("s-N" . make-frame)
    ("s-o" . other-window)
    ("s-O" . (lambda () (interactive) (other-window -1)))
    ("s-p" . outline-previous-heading)
    ("s-q" . bury-buffer)
    ("s-s" . save-buffer)
-   ("s-S" . nil)
    ("s-u" . nil)
    ("s-v" . view-mode)
    ("s-w" . nil) ; delete frame
@@ -125,7 +128,7 @@
   (max-lisp-eval-depth 12000)
   (bookmark-save-flag 1)
   (dired-create-destination-dirs 'ask)
-  (dired-isearch-filenames t)
+  ;; (dired-isearch-filenames t)
   (dired-vc-rename-file t)
   (large-file-warning-threshold 20000000)
   (vc-follow-symlinks t)
@@ -156,7 +159,8 @@
   (calc-kill-line-numbering nil)
   (eglot-connect-timeout 120)
   (safe-local-variable-values
-   '((checkdoc-minor-mode . t)))
+   '((checkdoc-minor-mode . t)
+     (eval outline-hide-sublevels 5)))
   :config
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
