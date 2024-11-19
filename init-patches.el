@@ -221,3 +221,53 @@ function symbol (unquoted)."
                                  next)) map)))))))
 
 (advice-add #'bind-keys-form :override #'my-bind-keys-form)
+
+(require 'use-package-bind-key)
+
+(defun use-package-normalize-binder (name keyword args)
+  (let ((arg args)
+        args*)
+    (while arg
+      (let ((x (car arg)))
+        (cond
+         ;; (KEY . COMMAND)
+         ((and (consp x)
+               (or (stringp (car x))
+                   (vectorp (car x)))
+               (or (use-package-recognize-function (cdr x) t #'stringp)))
+          (setq args* (nconc args* (list x)))
+          (setq arg (cdr arg)))
+         ;; KEYWORD
+         ;;   :map KEYMAP
+         ;;   :prefix-docstring STRING
+         ;;   :prefix-map SYMBOL
+         ;;   :prefix STRING
+	        ;;   :repeat-docstring STRING
+         ;;   :repeat-map SYMBOL
+         ;;   :filter SEXP
+         ;;   :menu-name STRING
+         ;;   :package SYMBOL
+	        ;;   :continue(-only) and :exit are used within :repeat-map
+         ((or (and (eq x :map) (symbolp (cadr arg)))
+              (and (eq x :prefix) (stringp (cadr arg)))
+              (and (eq x :prefix-map) (symbolp (cadr arg)))
+              (and (eq x :prefix-docstring) (stringp (cadr arg)))
+	             (and (eq x :repeat-map) (symbolp (cadr arg)))
+	             (memq x '(:continue :continue-only :exit))
+              (and (eq x :repeat-docstring) (stringp (cadr arg)))
+              (eq x :filter)
+              (and (eq x :menu-name) (stringp (cadr arg)))
+              (and (eq x :package) (symbolp (cadr arg))))
+          (setq args* (nconc args* (list x (cadr arg))))
+          (setq arg (cddr arg)))
+         ((listp x)
+          (setq args*
+                (nconc args* (use-package-normalize-binder name keyword x)))
+          (setq arg (cdr arg)))
+         (t
+          ;; Error!
+          (use-package-error
+           (concat (symbol-name name)
+                   " wants arguments acceptable to the `bind-keys' macro,"
+                   " or a list of such values"))))))
+    args*))

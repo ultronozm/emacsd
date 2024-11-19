@@ -183,6 +183,16 @@ If the predicate is true, add NAME to `repo-scan-repos'."
            (current-buffer))))
     (switch-to-buffer src-buffer)))
 
+(defun my/org-schedule-and-refile ()
+  "Schedule the current heading and refile it to the Scheduled node."
+  (interactive)
+  (call-interactively #'org-schedule)
+  (let* ((org-refile-target-verify-function
+          (lambda () (string= (nth 4 (org-heading-components)) "Scheduled")))
+         (rfloc (car (org-refile-get-targets))))
+    (when rfloc
+      (org-refile nil nil rfloc))))
+
 (use-package org
   :ensure nil
   :hook
@@ -190,6 +200,12 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (org-mode . (lambda () (setq fill-column 999999)))
   (org-mode . abbrev-mode)
   :custom
+  (org-agenda-custom-commands
+   '(("n" "Agenda and all TODOs"
+      ((agenda "")
+       (todo "TODO")
+       (tags "CLOSED>=\"<today>\""
+             ((org-agenda-overriding-header "\nCompleted today\n")))))))
   (org-default-notes-file my-todo-file)
   (org-directory "~/")
   (org-agenda-files `(,my-todo-file))
@@ -203,18 +219,14 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)))
   (org-hide-leading-stars t)
   (org-list-allow-alphabetical t)
-  (org-odd-levels-only nil)
-  (org-refile-targets
-   '((org-agenda-files :regexp . "Notes")
-     (my-todo-file :regexp . "Inbox")
-     (my-todo-file :regexp . "Reference")
-     (my-todo-file :regexp . "Someday")
-     (my-todo-file :regexp . "Scheduler")
-     (my-todo-file :regexp . "Tasks")))
-  (org-refile-use-outline-path t)
+  (org-refile-targets nil)
+  (org-refile-use-outline-path nil)
   ;; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
   (org-src-preserve-indentation t)
+  (org-agenda-skip-scheduled-if-done t)
   (org-tags-column -70)
+  (org-todo-keywords
+   '((sequence "TODO(t)" "|" "DONE(d)" "CANCELED(c)")))
   (org-use-speed-commands t)
   (org-capture-templates
    '(("i" "Inbox" entry (file+headline my-todo-file "Inbox")
@@ -262,11 +274,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                   ("\C-m" . org-babel-mark-block)))
     (add-to-list 'org-babel-key-bindings item))
   (pcase-dolist (`(,key . ,def) org-babel-key-bindings)
-    (define-key org-babel-map key def)))
-
-(let ((file (locate-user-emacs-file "init-personal.el")))
-  (when (file-exists-p file)
-    (load file)))
+    (define-key org-babel-map key def))
+  (add-to-list 'org-speed-commands '("S" . my/org-schedule-and-refile) t))
 
 (defun avy-action-embark (pt)
   (unwind-protect
@@ -574,15 +583,9 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 (use-package go-translate
   :defer t
-  :custom
-  gts-translate-list '(("fr" "en"))
   :config
-  (setq gts-default-translator
-        (gts-translator
-         :picker (gts-prompt-picker)
-         :engines (list (gts-google-engine) ;; (gts-bing-engine)
-                        )
-         :render (gts-buffer-render))))
+  (setq gt-langs '(da en))
+  (setq gt-default-translator (gt-translator :engines (gt-google-engine))))
 
 (use-package rust-mode
   :defer t
@@ -600,7 +603,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                  :depth nil)
   :diminish " Co"
   :hook
-  ((prog-mode LaTeX-mode git-commit-mode) . copilot-mode)
+  ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
   (lean4-mode . (lambda () (setq tab-width 2)))
   :config
@@ -1968,6 +1971,7 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package flymake-overlays
   :repo-scan
+  :disabled
   :ensure (:host github :repo "ultronozm/flymake-overlays.el" :depth nil)
   :after flymake
   :bind (:map flymake-mode-map
@@ -1993,3 +1997,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (eldoc-icebox-post-display . shrink-window-if-larger-than-buffer)
   (eldoc-icebox-post-display . czm-lean4-fontify-buffer)
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
+
+(let ((file (locate-user-emacs-file "init-personal.el")))
+  (when (file-exists-p file)
+    (load file)))
