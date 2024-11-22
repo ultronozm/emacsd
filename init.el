@@ -165,118 +165,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (add-hook 'LaTeX-mode-hook
             (lambda () (setq TeX-base-mode-name "L"))))
 
-;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2024-06/msg01858.html
-(use-package org
-  :ensure nil
-  :demand)
-
-(defun czm-org-edit-src ()
-  "Edit source block at point, with some customizations.
-- Set fill-column to a large number.
-- Set TeX-master to my-preview-master."
-  (interactive)
-  (let ((src-buffer
-         (save-window-excursion
-           (org-edit-src-code)
-           (setq fill-column 999999) ; should this be in a latex mode hook?
-           (setq TeX-master my-preview-master)
-           (current-buffer))))
-    (switch-to-buffer src-buffer)))
-
-(defun my/org-schedule-and-refile ()
-  "Schedule the current heading and refile it to the Scheduled node."
-  (interactive)
-  (call-interactively #'org-schedule)
-  (let* ((org-refile-target-verify-function
-          (lambda () (string= (nth 4 (org-heading-components)) "Scheduled")))
-         (rfloc (car (org-refile-get-targets))))
-    (when rfloc
-      (org-refile nil nil rfloc))))
-
-(use-package org
-  :ensure nil
-  :hook
-  (org-mode . visual-line-mode)
-  (org-mode . (lambda () (setq fill-column 999999)))
-  (org-mode . abbrev-mode)
-  :custom
-  (org-agenda-custom-commands
-   '(("n" "Agenda and all TODOs"
-      ((agenda "")
-       (todo "TODO")
-       (tags "CLOSED>=\"<today>\""
-             ((org-agenda-overriding-header "\nCompleted today\n")))))))
-  (org-default-notes-file my-todo-file)
-  (org-directory "~/")
-  (org-agenda-files `(,my-todo-file))
-  (org-goto-auto-isearch nil)
-  (org-agenda-include-diary t)
-  (org-babel-load-languages '((latex . t) (emacs-lisp . t) (python . t)))
-  (org-babel-python-command "python3")
-  (org-confirm-babel-evaluate nil)
-  (org-link-elisp-confirm-function nil)
-  (org-enforce-todo-dependencies t)
-  (org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)))
-  (org-hide-leading-stars t)
-  (org-list-allow-alphabetical t)
-  (org-refile-targets nil)
-  (org-refile-use-outline-path nil)
-  ;; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
-  (org-src-preserve-indentation t)
-  (org-agenda-skip-scheduled-if-done t)
-  (org-tags-column -70)
-  (org-todo-keywords
-   '((sequence "TODO(t)" "|" "DONE(d)" "CANCELED(c)")))
-  (org-use-speed-commands t)
-  (org-capture-templates
-   '(("i" "Inbox" entry (file+headline my-todo-file "Inbox")
-      "* %?\n  %i")
-     ("j" "Journal" entry (file+datetree my-log-file)
-      "* %?\nEntered on %U\n")
-     ("a" "Inbox (annotated)" entry (file+headline my-todo-file "Inbox")
-      "* %?\n%a")
-     ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
-      "* %?\n%U\n" :clock-in t :clock-resume t)
-     ("d" "Diary" entry (file+datetree simple-journal-db-file)
-      "* %U \n%?%i\n" :tree-type week)))
-  (org-src-window-setup 'current-window)
-  :bind
-  (:map org-mode-map
-        ("C-c 1" .
-         (lambda() (interactive)
-           (progn
-             (insert "#+begin_src latex")
-             (newline))))
-        ("C-c 2" .
-         (lambda() (interactive)
-           (progn
-             (insert "#+end_src")
-             (newline))))
-        ("C-c p" . czm-org-edit-src)
-        ("M-{" . org-backward-paragraph)
-        ("M-}" . org-forward-paragraph))
-  (:repeat-map
-   org-paragraph-repeat-map
-   ("]" . org-forward-paragraph)
-   ("}" . org-forward-paragraph)
-   ("[" . org-backward-paragraph)
-   ("{" . org-backward-paragraph)
-   :continue-only
-   ("w" . kill-region)
-   ("M-w" . kill-ring-save)
-   ("y" . yank)
-   ("C-/" . undo)
-   ("t" . transpose-paragraphs)
-   ("q" . fill-previous-paragraph))
-  :config
-  (require 'ob-shell)
-  (dolist (item '(("m" . org-babel-mark-block)
-                  ("\C-m" . org-babel-mark-block)))
-    (add-to-list 'org-babel-key-bindings item))
-  (pcase-dolist (`(,key . ,def) org-babel-key-bindings)
-    (define-key org-babel-map key def))
-  (add-to-list 'org-speed-commands '("S" . my/org-schedule-and-refile) t))
-
 (defun avy-action-embark (pt)
   (unwind-protect
       (save-excursion
@@ -595,132 +483,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (use-package xr
   :defer t)
 
-(use-package copilot
-  :ensure (:host github
-                 :repo "zerolfx/copilot.el"
-                 ;; :repo "ultronozm/copilot.el"
-                 :files ("*.el" "dist")
-                 :depth nil)
-  :diminish " Co"
-  :hook
-  ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
-  (emacs-lisp-mode . (lambda () (setq tab-width 1)))
-  (lean4-mode . (lambda () (setq tab-width 2)))
-  :config
-  (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
-  (copilot--define-accept-completion-by-action
-   copilot-accept-completion-by-sentence #'forward-sentence)
-  :custom
-  (copilot-indent-offset-warning-disable t)
-  :bind
-  (:map global-map
-        ("H-x" . copilot-mode)
-        ("§" . copilot-accept-completion))
-  (:map copilot-completion-map
-        ("§" . copilot-accept-completion)
-        ("M-§" . copilot-accept-completion-by-word)
-        ("C-§" . copilot-accept-completion-by-line)
-        ("s-§" . copilot-accept-completion-by-sentence)
-        ("C-M-§" . copilot-accept-completion-by-paragraph)
-        ("`" . nil)
-        ("M-`" . copilot-accept-completion-by-word)
-        ("C-`" . copilot-accept-completion-by-line)
-        ("s-`" . copilot-accept-completion-by-sentence)
-        ("C-M-`" . copilot-accept-completion-by-paragraph)
-        ("C-M-<down>" . copilot-next-completion)
-        ("C-M-<up>" . copilot-previous-completion)))
-
-(use-package llm
-  :defer t
-  :ensure (:host github :repo "ahyatt/llm"
-                 :depth nil)
-  ;; :init
-  ;; (require 'llm-openai)
-  ;; (require 'llm-gemini)
-  ;; (require 'llm-ollama)
-  :custom
-  (llm-warn-on-nonfree nil)
-  (llm-log t)
-  :config
-  (add-to-list 'warning-suppress-types '(llm)))
-
-(use-package ai-org-chat
-  :repo-scan
-  :ensure (:host github :repo "ultronozm/ai-org-chat.el"
-                 :depth nil)
-  :defer t
-  :bind
-  (:map global-map
-        ("s-/" . ai-org-chat-new))
-  (:map ai-org-chat-minor-mode-map
-        ("s-<return>" . ai-org-chat-respond)
-        ("C-c n" . ai-org-chat-branch)
-        ("C-c e" . ai-org-chat-compare))
-  :custom
-  (ai-org-chat-user-name my-first-name)
-  (ai-org-chat-dir my-scratch-gpt-dir)
-  (ai-org-chat-context-style nil)
-  :config
-  (require 'exec-path-from-shell)
-  (ai-org-chat-select-model "sonnet 3.5"))
-
-(defun ai-org-chat-suggest-filename-function ()
-  "Blah"
-  (make-llm-function-call
-   :function (lambda (suggested-name)
-               (cons 'suggested-name suggested-name))
-   :name "suggest_filename"
-   :description "Suggest a better filename for the current file."
-   :args (list (make-llm-function-arg
-                :name "suggested_name"
-                :description "The suggested new filename."
-                :type 'string
-                :required t))))
-
-(defun ai-org-chat-suggest-better-filename ()
-  "Ask LLM for a better filename and prompt user to rename the current file."
-  (interactive)
-  (unless (buffer-file-name)
-    (user-error "Current buffer is not visiting a file"))
-
-  (let* ((current-name (file-name-nondirectory (buffer-file-name)))
-         (file-content (buffer-substring-no-properties (point-min) (point-max)))
-         (buffer (current-buffer))
-         (prompt (format "Given the following file content and current filename '%s', suggest a better, more descriptive filename.  Make sure to keep the file extension the same.  Also, if the filename contains a timestamp at or near the beginning, then preserve that -- follow that timestamp with double dashes followed by a name separated by single dashes.  Use the suggest_filename function to provide your suggestion.\n\nFile content:\n%s"
-                         current-name
-                         (if (> (length file-content) 1000)
-                             (concat (substring file-content 0 1000) "...")
-                           file-content)))
-         (final-cb
-          (lambda (response)
-            (with-current-buffer buffer
-              (if (and (listp response)
-                       (equal (caar response) "suggest_filename"))
-                  (let* ((suggested-name (cddar response))
-                         (current-dir (file-name-directory (buffer-file-name)))
-                         (new-path (read-file-name "Rename file to: "
-                                                   current-dir
-                                                   nil
-                                                   nil
-                                                   suggested-name)))
-                    (when (y-or-n-p (format "Rename '%s' to '%s'? "
-                                            (buffer-file-name)
-                                            new-path))
-                      (require 'dired-aux) ; Ensure dired-rename-file is available
-                      (dired-rename-file (buffer-file-name) new-path 1)
-                      (message "File renamed to '%s'" (file-name-nondirectory new-path))))
-                (user-error "Failed to get a valid filename suggestion from LLM")))))
-         (error-cb
-          (lambda (err msg)
-            (message "Error: %s - %s" err msg))))
-
-    (llm-chat-async ai-org-chat-provider
-                    (llm-make-chat-prompt
-                     prompt
-                     :functions (list (ai-org-chat-suggest-filename-function)))
-                    final-cb
-                    error-cb)))
-
 (use-package elpy
   :defer t)
 
@@ -964,6 +726,652 @@ Optionally run SETUP-FN after creating the file."
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/doc-dual-view.el" :depth nil))
+
+;;; org
+
+
+;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2024-06/msg01858.html
+(use-package org
+  :ensure nil
+  :demand)
+
+(defun czm-org-edit-src ()
+  "Edit source block at point, with some customizations.
+- Set fill-column to a large number.
+- Set TeX-master to my-preview-master."
+  (interactive)
+  (let ((src-buffer
+         (save-window-excursion
+           (org-edit-src-code)
+           (setq fill-column 999999) ; should this be in a latex mode hook?
+           (setq TeX-master my-preview-master)
+           (current-buffer))))
+    (switch-to-buffer src-buffer)))
+
+(defun my/org-schedule-and-refile ()
+  "Schedule the current heading and refile it to the Scheduled node."
+  (interactive)
+  (call-interactively #'org-schedule)
+  (let* ((org-refile-target-verify-function
+          (lambda () (string= (nth 4 (org-heading-components)) "Scheduled")))
+         (rfloc (car (org-refile-get-targets))))
+    (when rfloc
+      (org-refile nil nil rfloc))))
+
+(use-package org
+  :ensure nil
+  :hook
+  (org-mode . visual-line-mode)
+  (org-mode . (lambda () (setq fill-column 999999)))
+  (org-mode . abbrev-mode)
+  :custom
+  (org-agenda-custom-commands
+   '(("n" "Agenda and all TODOs"
+      ((agenda "")
+       (todo "TODO")
+       (tags "CLOSED>=\"<today>\""
+             ((org-agenda-overriding-header "\nCompleted today\n")))))))
+  (org-default-notes-file my-todo-file)
+  (org-directory "~/")
+  (org-agenda-files `(,my-todo-file ,my-projects-file))
+  (org-goto-auto-isearch nil)
+  (org-agenda-include-diary t)
+  (org-babel-load-languages '((latex . t) (emacs-lisp . t) (python . t)))
+  (org-babel-python-command "python3")
+  (org-confirm-babel-evaluate nil)
+  (org-link-elisp-confirm-function nil)
+  (org-enforce-todo-dependencies t)
+  (org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)))
+  (org-hide-leading-stars t)
+  (org-list-allow-alphabetical t)
+  (org-refile-targets nil)
+  (org-refile-use-outline-path nil)
+  ;; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
+  (org-src-preserve-indentation t)
+  (org-agenda-skip-scheduled-if-done t)
+  (org-tags-column -70)
+  (org-todo-keywords
+   '((sequence "TODO(t)" "|" "DONE(d)" "CANCELED(c)")))
+  (org-use-speed-commands t)
+  (org-capture-templates
+   '(("i" "Inbox" entry (file+headline my-todo-file "Inbox")
+      "* %?\n  %i")
+     ("j" "Journal" entry (file+datetree my-log-file)
+      "* %?\nEntered on %U\n")
+     ("a" "Inbox (annotated)" entry (file+headline my-todo-file "Inbox")
+      "* %?\n%a")
+     ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
+      "* %?\n%U\n" :clock-in t :clock-resume t)
+     ("d" "Diary" entry (file+datetree simple-journal-db-file)
+      "* %U \n%?%i\n" :tree-type week)))
+  (org-src-window-setup 'current-window)
+  :bind
+  (:map org-mode-map
+        ("C-c 1" .
+         (lambda() (interactive)
+           (progn
+             (insert "#+begin_src latex")
+             (newline))))
+        ("C-c 2" .
+         (lambda() (interactive)
+           (progn
+             (insert "#+end_src")
+             (newline))))
+        ("C-c p" . czm-org-edit-src)
+        ("M-{" . org-backward-paragraph)
+        ("M-}" . org-forward-paragraph))
+  (:repeat-map
+   org-paragraph-repeat-map
+   ("]" . org-forward-paragraph)
+   ("}" . org-forward-paragraph)
+   ("[" . org-backward-paragraph)
+   ("{" . org-backward-paragraph)
+   :continue-only
+   ("w" . kill-region)
+   ("M-w" . kill-ring-save)
+   ("y" . yank)
+   ("C-/" . undo)
+   ("t" . transpose-paragraphs)
+   ("q" . fill-previous-paragraph))
+  :config
+  (require 'ob-shell)
+  (dolist (item '(("m" . org-babel-mark-block)
+                  ("\C-m" . org-babel-mark-block)))
+    (add-to-list 'org-babel-key-bindings item))
+  (pcase-dolist (`(,key . ,def) org-babel-key-bindings)
+    (define-key org-babel-map key def))
+  (add-to-list 'org-speed-commands '("S" . my/org-schedule-and-refile) t))
+
+(defvar my/org-tex-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "SPC") 'dynexp-space)
+    (define-key map (kbd "TAB") 'dynexp-next)
+    map)
+  "Keymap for my/org-tex-mode.")
+
+(define-minor-mode my/org-tex-mode
+  "Minor mode for using LaTeX abbrevs in other major modes."
+  :lighter " LaTeXAbbrev"
+  :keymap my/org-tex-mode-map
+  (if my/org-tex-mode
+      ;; When enabling the mode
+      (when (boundp 'LaTeX-mode-abbrev-table)
+        (setq local-abbrev-table LaTeX-mode-abbrev-table))
+    ;; When disabling the mode
+    (setq local-abbrev-table
+          (symbol-value (derived-mode-abbrev-table-name major-mode)))))
+
+(defun my/org-archive-done-tasks ()
+  "Archive all done tasks in the current buffer."
+  (interactive)
+  (org-archive-all-matches
+   (lambda (_beg _end)
+     (looking-at
+      (concat
+       "^\\*+ "
+       (regexp-opt '("DONE" "CANCELED")))))))
+
+;;; mail
+
+(use-package rmail
+  :ensure nil
+  :defer t
+  :config
+  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode))
+  :bind
+  ("C-z r" . (lambda ()
+               (interactive)
+               (let ((current-prefix-arg '(4)))
+                 (call-interactively #'rmail))))
+  ("C-z R" . rmail)
+  :custom
+  (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
+  (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
+  (rmail-movemail-program "movemail")
+  (rmail-primary-inbox-list (list my-mail-inbox))
+  (rmail-secondary-file-directory my-mail-folder)
+  (rmail-secondary-file-regexp "^.*\\.rmail$")
+  (rmail-remote-password-required t)
+  (rmail-remote-password
+   (let ((auth-info (car (auth-source-search
+                          :host my-mail-host-imap
+                          :port my-mail-port
+                          :user my-mail-user
+                          :max 1))))
+     (when auth-info
+       (let ((secret (plist-get auth-info :secret)))
+         (if (functionp secret)
+             (funcall secret)
+           secret)))))
+  (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\):")
+  (rmail-delete-after-output t))
+
+(use-package sendmail
+  :ensure nil
+  :defer t
+  :config
+  (setq
+   mail-host-address my-mail-host
+   sendmail-program "msmtp"
+   message-send-mail-function 'message-send-mail-with-sendmail
+   message-default-mail-headers
+   (let ((file (abbreviate-file-name
+                (expand-file-name "sent.rmail" my-mail-folder))))
+     (format "Fcc: %s\n" file))))
+
+(use-package message
+  :ensure nil
+  :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
+  :custom
+  (message-make-forward-subject-function #'message-forward-subject-fwd)
+  :config
+  (defun my-message-smart-tab ()
+    "Call `mail-abbrev-insert-alias' in address fields.
+Otherwise, call `message-tab'."
+    (interactive)
+    (if (and (message-point-in-header-p)
+             (save-excursion
+               (beginning-of-line)
+               (looking-at "^\\([A-Za-z]-\\)?\\(To\\|Cc\\|Bcc\\|From\\|Reply-to\\):")))
+        (call-interactively #'mail-abbrev-insert-alias)
+      (message-tab)))
+  :bind
+  (:map message-mode-map
+        ("C-c @" . mail-abbrev-insert-alias)
+        ("TAB" . my-message-smart-tab)))
+
+(with-eval-after-load 'rmail
+
+  (keymap-global-set "C-c C-@" 'dim:mailrc-add-entry)
+
+  ;;https://tapoueh.org/blog/2009/09/improving-~-.mailrc-usage/
+
+  (defun dim:generate-default-alias (address)
+    "Generate a default alias from an email ADDRESS.
+ADDRESS should be a cons cell of (email . name) as returned by mail-header-parse-address.
+Returns a string suitable for use as an email alias."
+    (if (cdr address)  ; If we have a name component
+        (let* ((name (cdr address))
+               (email (car address))
+               ;; Extract domain parts
+               (domain-parts (split-string (cadr (split-string email "@")) "\\."))
+               ;; Get penultimate part of domain (or last if only one part)
+               (domain-part (if (> (length domain-parts) 1)
+                                (nth (- (length domain-parts) 2) domain-parts)
+                              (car domain-parts)))
+               ;; Convert name to lowercase, keep only letters and spaces
+               (cleaned-name (downcase (replace-regexp-in-string
+                                        "[^a-zA-Z ]" ""
+                                        name)))
+               ;; Replace spaces with dashes
+               (dashed-name (replace-regexp-in-string " +" "-" cleaned-name)))
+          (concat dashed-name "-" domain-part))
+      ;; If no name component, just return the email address
+      (car address)))
+
+  ;; automate adding mail at point to ~/.mailrc
+  (defun dim:mailrc-add-entry (alias)
+    "Read email at point and add it to mail aliases file.
+If ALIAS is empty, generate a default alias based on the name and domain."
+    (interactive
+     (let* ((addr (thing-at-point 'email-address))
+            (default-alias (when addr (dim:generate-default-alias addr))))
+       (list (read-string (format "Alias%s: "
+                                  (if default-alias
+                                      (format " (default %s)" default-alias)
+                                    ""))
+                          nil nil default-alias))))
+    (let ((address (thing-at-point 'email-address))
+          (buffer (find-file-noselect mail-personal-alias-file t)))
+      (when address
+        (with-current-buffer buffer
+          ;; we don't support updating existing alias in the file
+          (save-excursion
+            (goto-char (point-min))
+            (if (search-forward (concat "alias " alias) nil t)
+                (error "Alias %s is already present in .mailrc" alias)))
+
+          (save-current-buffer
+            (save-excursion
+              (goto-char (point-max))
+              (insert (format "\nalias %s \"%s <%s>\""
+                              alias (cdr address) (car address)))))))))
+
+  (require 'mail-parse)
+
+  (defun thing-at-point-bounds-of-email-address ()
+    "Return a cons of begin and end position of email address at point, including full name."
+    (save-excursion
+      (let* ((search-point (point))
+             ;; Look backwards for comma or colon
+             (start (save-excursion
+                      (if (re-search-backward "[:,]" (line-beginning-position) t)
+                          (1+ (point))
+                        (line-beginning-position))))
+             ;; Look forward for comma or colon, but don't include it
+             (end (save-excursion
+                    (goto-char search-point)
+                    (if (re-search-forward "[:,]" (line-end-position) t)
+                        (1- (point))
+                      (line-end-position)))))
+        (cons start end))))
+
+  (defun thing-at-point-email-address ()
+    "return full email address at point"
+    (let* ((bounds (thing-at-point-bounds-of-email-address))
+	          (email-address-text
+	           (when bounds (buffer-substring-no-properties (car bounds) (cdr bounds)))))
+      (mail-header-parse-address email-address-text)))
+
+  (put 'email-address 'bounds-of-thing-at-point 'thing-at-point-bounds-of-email-address)
+  (put 'email-address 'thing-at-point 'thing-at-point-email-address)
+
+  (require 'rmailsum)
+
+  (defun rmail-parse-address-basic (from)
+    "Extract name from email address FROM.
+Returns name if found, otherwise returns the email address."
+    (if (string-match "\\([^<]*\\)<\\([^>]+\\)>" from)
+        (let ((name (match-string 1 from))
+              (addr (match-string 2 from)))
+          ;; If name is empty or just whitespace, return addr
+          (if (string-match "\\`[ \t]*\\'" name)
+              addr
+            ;; Otherwise return name with any trailing whitespace removed
+            (replace-regexp-in-string "[ \t]*\\'" "" name)))
+      from))
+
+  (defvar rmail-summary-address-width 53)
+  (defun rmail-header-summary ()
+    "Return a message summary based on the message headers.
+The value is a list of two strings, the first and second parts of the summary.
+
+The current buffer must already be narrowed to the message headers for
+the message being processed."
+    (goto-char (point-min))
+    (list
+     (concat (save-excursion
+	              (if (not (re-search-forward "^Date:" nil t))
+		                 "      "
+	                ;; Match month names case-insensitively
+	                (cond ((let ((case-fold-search t))
+			                       (re-search-forward "\\([^0-9:]\\)\\([0-3]?[0-9]\\)\\([- \t_]+\\)\\([adfjmnos][aceopu][bcglnprtvy]\\)"
+					                                        (line-end-position) t))
+		                      (format "%2d-%3s"
+			                             (string-to-number (buffer-substring
+						                                             (match-beginning 2)
+						                                             (match-end 2)))
+			                             (buffer-substring
+			                              (match-beginning 4) (match-end 4))))
+		                     ((let ((case-fold-search t))
+			                       (re-search-forward "\\([^a-z]\\)\\([adfjmnos][acepou][bcglnprtvy]\\)\\([-a-z \t_]*\\)\\([0-9][0-9]?\\)"
+					                                        (line-end-position) t))
+		                      (format "%2d-%3s"
+			                             (string-to-number (buffer-substring
+						                                             (match-beginning 4)
+						                                             (match-end 4)))
+			                             (buffer-substring
+			                              (match-beginning 2) (match-end 2))))
+		                     ((re-search-forward "\\(19\\|20\\)\\([0-9][0-9]\\)-\\([01][0-9]\\)-\\([0-3][0-9]\\)"
+		                                         (line-end-position) t)
+		                      (format "%2s%2s%2s"
+			                             (buffer-substring
+			                              (match-beginning 2) (match-end 2))
+			                             (buffer-substring
+			                              (match-beginning 3) (match-end 3))
+			                             (buffer-substring
+			                              (match-beginning 4) (match-end 4))))
+		                     (t "??????"))))
+	            "  "
+	            (save-excursion
+	              (let* (
+                      (from (and (re-search-forward "^From:[ \t]*" nil t)
+                                 (buffer-substring
+                                  (1- (point))
+                                  (progn
+                                    (while (progn (forward-line 1)
+                                                  (looking-at "[ \t]")))
+                                    (forward-char -1)
+                                    (skip-chars-backward " \t")
+                                    (point)))))
+                      ;; (from (and (re-search-forward "^From:[ \t]*" nil t)
+                      ;;            (let ((raw-from (buffer-substring
+                      ;;                             (1- (point))
+                      ;;                             (progn
+                      ;;                               (while (progn (forward-line 1)
+                      ;;                                             (looking-at "[ \t]")))
+                      ;;                               (forward-char -1)
+                      ;;                               (skip-chars-backward " \t")
+                      ;;                               (point)))))
+                      ;;              ;; Decode any MIME encoding in the From field
+                      ;;              (setq raw-from (rfc2047-decode-string raw-from))
+                      ;;              ;; Extract the name or address
+                      ;;              (rmail-parse-address-basic raw-from))))
+                      len mch lo newline)
+                 ;; If there are multiple lines in FROM,
+                 ;; discard up to the last newline in it.
+                 (while (and (stringp from)
+                             (setq newline (string-search "\n" from)))
+                   (setq from (substring from (1+ newline))))
+	                (if (or (null from)
+		                       (string-match
+			                       (or rmail-user-mail-address-regexp
+			                           (concat "^\\("
+				                                  (regexp-quote (user-login-name))
+				                                  "\\($\\|@\\)\\|"
+				                                  (regexp-quote user-mail-address)
+				                                  "\\>\\)"))
+			                       from))
+		                   ;; No From field, or it's this user.
+		                   (save-excursion
+		                     (goto-char (point-min))
+		                     (if (not (re-search-forward "^To:[ \t]*" nil t))
+			                        nil
+		                       (setq from
+			                            (concat "to: "
+				                                   (mail-strip-quoted-names
+				                                    (buffer-substring
+				                                     (point)
+				                                     (progn (end-of-line)
+					                                           (skip-chars-backward " \t")
+					                                           (point)))))))))
+	                (if (null from)
+		                   "                         "
+		                 ;; We are going to return only 25 characters of the
+		                 ;; address, so make sure it is RFC2047 decoded before
+		                 ;; taking its substring.  This is important when the address is not on the same line as the name, e.g.:
+		                 ;; To: =?UTF-8?Q?=C5=A0t=C4=9Bp=C3=A1n_?= =?UTF-8?Q?N=C4=9Bmec?=
+		                 ;; <stepnem@gmail.com>
+		                 (setq from (rfc2047-decode-string from))
+                   ;; We cannot tolerate any leftover newlines in From,
+                   ;; as that disrupts the rmail-summary display.
+                   ;; Newlines can be left in From if it was malformed,
+                   ;; e.g. had unbalanced quotes.
+                   (setq from (replace-regexp-in-string "\n+" " " from))
+		                 (setq len (length from))
+		                 (setq mch (string-match "[@%]" from))
+                   (let ((a (- rmail-summary-address-width 11)))
+		                   (format (concat "%" (format "%s" rmail-summary-address-width) "s")
+			                          (if (or (not mch) (<= len rmail-summary-address-width))
+			                              (substring from (max 0 (- len rmail-summary-address-width)))
+			                            (substring from
+				                                      (setq lo (cond ((< (- mch a) 0) 0)
+						                                                   ((< len (+ mch 11))
+						                                                    (- len rmail-summary-address-width))
+						                                                   (t (- mch a))))
+				                                      (min len (+ lo rmail-summary-address-width))))))))))
+     (concat (if (re-search-forward "^Subject:" nil t)
+	                (let (pos str)
+		                 (skip-chars-forward " \t")
+		                 (setq pos (point))
+		                 (forward-line 1)
+		                 (setq str (buffer-substring pos (1- (point))))
+		                 (while (looking-at "[ \t]")
+		                   (setq str (concat str " "
+				                                   (buffer-substring (match-end 0)
+						                                                   (line-end-position))))
+		                   (forward-line 1))
+		                 str)
+	              (re-search-forward "[\n][\n]+" nil t)
+	              (buffer-substring (point) (progn (end-of-line) (point))))
+	            "\n")))
+
+  (defun my-rmail-read-file-advice (orig-fun prompt &rest args)
+    (if (and current-prefix-arg
+             (equal prompt "Run rmail on RMAIL file: "))
+        (let ((default-directory my-mail-folder))
+          (apply orig-fun prompt args))
+      (apply orig-fun prompt args)))
+
+  (advice-add 'read-file-name :around #'my-rmail-read-file-advice))
+
+
+;;; ai stuff
+
+(use-package copilot
+  :ensure (:host github
+                 :repo "zerolfx/copilot.el"
+                 ;; :repo "ultronozm/copilot.el"
+                 :files ("*.el" "dist")
+                 :depth nil)
+  :diminish " Co"
+  :hook
+  ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
+  (emacs-lisp-mode . (lambda () (setq tab-width 1)))
+  (lean4-mode . (lambda () (setq tab-width 2)))
+  :config
+  (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
+  (copilot--define-accept-completion-by-action
+   copilot-accept-completion-by-sentence #'forward-sentence)
+  :custom
+  (copilot-indent-offset-warning-disable t)
+  :bind
+  (:map global-map
+        ("H-x" . copilot-mode)
+        ("§" . copilot-accept-completion))
+  (:map copilot-completion-map
+        ("§" . copilot-accept-completion)
+        ("M-§" . copilot-accept-completion-by-word)
+        ("C-§" . copilot-accept-completion-by-line)
+        ("s-§" . copilot-accept-completion-by-sentence)
+        ("C-M-§" . copilot-accept-completion-by-paragraph)
+        ("`" . nil)
+        ("M-`" . copilot-accept-completion-by-word)
+        ("C-`" . copilot-accept-completion-by-line)
+        ("s-`" . copilot-accept-completion-by-sentence)
+        ("C-M-`" . copilot-accept-completion-by-paragraph)
+        ("C-M-<down>" . copilot-next-completion)
+        ("C-M-<up>" . copilot-previous-completion)))
+
+(use-package llm
+  :defer t
+  :ensure (:host github :repo "ahyatt/llm"
+                 :depth nil)
+  ;; :init
+  ;; (require 'llm-openai)
+  ;; (require 'llm-gemini)
+  ;; (require 'llm-ollama)
+  :custom
+  (llm-warn-on-nonfree nil)
+  (llm-log t)
+  :config
+  (add-to-list 'warning-suppress-types '(llm)))
+
+(use-package ai-org-chat
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/ai-org-chat.el"
+                 :depth nil)
+  :defer t
+  :bind
+  (:map global-map
+        ("s-/" . ai-org-chat-new))
+  (:map ai-org-chat-minor-mode-map
+        ("s-<return>" . ai-org-chat-respond)
+        ("C-c n" . ai-org-chat-branch)
+        ("C-c e" . ai-org-chat-compare))
+  :custom
+  (ai-org-chat-user-name my-first-name)
+  (ai-org-chat-dir my-scratch-gpt-dir)
+  (ai-org-chat-context-style nil)
+  :config
+  (require 'exec-path-from-shell)
+  (ai-org-chat-select-model "sonnet 3.5"))
+
+;; I use the following functions to provide context to ai-org-chat
+
+(defun my/agenda-for-today ()
+  "Return string containing agenda for today."
+  (interactive)
+  (save-window-excursion
+    (require 'org-agenda)
+    (let ((org-agenda-span 'day)
+          (org-agenda-prefix-format
+           '((agenda . "  %-12:c%?-12t%6e  %s"))))
+      (org-agenda nil "a")
+      (buffer-substring-no-properties (point-min) (point-max)))))
+
+(defun my/agenda-for-week ()
+  "Return string containing full agenda for the next seven days."
+  (interactive)
+  (save-window-excursion
+    (require 'org-agenda)
+    (let ((org-agenda-span 'day)
+          (org-agenda-start-on-weekday nil)  ; start from today regardless of weekday
+          (org-agenda-start-day (format-time-string "%Y-%m-%d"))
+          (org-agenda-ndays 7)  ; show exactly 7 days
+          (org-agenda-prefix-format
+           '((agenda . "  %-12:c%?-12t%6e  %s"))))
+      (org-agenda nil "a")
+      (buffer-substring-no-properties (point-min) (point-max)))))
+
+(defun my/projects-for-year ()
+  "Return string containing projects.org agenda for next year.
+Skips empty days and diary holidays."
+  (interactive)
+  (save-window-excursion
+    (require 'org-agenda)
+    ;; Temporarily modify diary handling
+    (let* ((diary-contents (with-temp-buffer
+                             (insert-file-contents diary-file)
+                             (buffer-string)))
+           (filtered-diary
+            (with-temp-buffer
+              (insert diary-contents)
+              (goto-char (point-min))
+              (keep-lines "^[^&]" (point-min) (point-max))
+              (buffer-string)))
+           (org-agenda-files (list my-projects-file))
+           (org-agenda-span 365)
+           (org-agenda-start-on-weekday nil)
+           (org-agenda-start-day (format-time-string "%Y-%m-%d"))
+           (org-agenda-prefix-format
+            '((agenda . "  %-12:c%?-12t%6e  %s")))
+           (org-agenda-include-diary t)
+           (diary-show-holidays-flag nil)
+           (org-agenda-show-all-dates nil))
+      ;; Use temporary diary file
+      (with-temp-file "/tmp/temp-diary"
+        (insert filtered-diary))
+      (let ((diary-file "/tmp/temp-diary"))
+        (org-agenda nil "a")
+        (buffer-substring-no-properties (point-min) (point-max))))))
+
+(defun ai-org-chat-suggest-filename-function ()
+  "Blah"
+  (make-llm-function-call
+   :function (lambda (suggested-name)
+               (cons 'suggested-name suggested-name))
+   :name "suggest_filename"
+   :description "Suggest a better filename for the current file."
+   :args (list (make-llm-function-arg
+                :name "suggested_name"
+                :description "The suggested new filename."
+                :type 'string
+                :required t))))
+
+(defun ai-org-chat-suggest-better-filename ()
+  "Ask LLM for a better filename and prompt user to rename the current file."
+  (interactive)
+  (unless (buffer-file-name)
+    (user-error "Current buffer is not visiting a file"))
+
+  (let* ((current-name (file-name-nondirectory (buffer-file-name)))
+         (file-content (buffer-substring-no-properties (point-min) (point-max)))
+         (buffer (current-buffer))
+         (prompt (format "Given the following file content and current filename '%s', suggest a better, more descriptive filename.  Make sure to keep the file extension the same.  Also, if the filename contains a timestamp at or near the beginning, then preserve that -- follow that timestamp with double dashes followed by a name separated by single dashes.  Use the suggest_filename function to provide your suggestion.\n\nFile content:\n%s"
+                         current-name
+                         (if (> (length file-content) 1000)
+                             (concat (substring file-content 0 1000) "...")
+                           file-content)))
+         (final-cb
+          (lambda (response)
+            (with-current-buffer buffer
+              (if (and (listp response)
+                       (equal (caar response) "suggest_filename"))
+                  (let* ((suggested-name (cddar response))
+                         (current-dir (file-name-directory (buffer-file-name)))
+                         (new-path (read-file-name "Rename file to: "
+                                                   current-dir
+                                                   nil
+                                                   nil
+                                                   suggested-name)))
+                    (when (y-or-n-p (format "Rename '%s' to '%s'? "
+                                            (buffer-file-name)
+                                            new-path))
+                      (require 'dired-aux) ; Ensure dired-rename-file is available
+                      (dired-rename-file (buffer-file-name) new-path 1)
+                      (message "File renamed to '%s'" (file-name-nondirectory new-path))))
+                (user-error "Failed to get a valid filename suggestion from LLM")))))
+         (error-cb
+          (lambda (err msg)
+            (message "Error: %s - %s" err msg))))
+
+    (llm-chat-async ai-org-chat-provider
+                    (llm-make-chat-prompt
+                     prompt
+                     :functions (list (ai-org-chat-suggest-filename-function)))
+                    final-cb
+                    error-cb)))
 
 ;;; erc
 
@@ -1267,6 +1675,12 @@ The value of `calc-language` is restored after BODY has been processed."
    ("l" . magit-smerge-keep-lower)
    ("u" . magit-smerge-keep-upper)))
 
+(setq auth-sources '("~/.authinfo.gpg"))
+
+(use-package forge
+  :ensure
+  :after magit)
+
 (defun czm-file-is-tex-or-bib (file)
   "Return t if FILE is a .tex or .bib file."
   (or (string-suffix-p ".tex" file)
@@ -1277,7 +1691,7 @@ The value of `calc-language` is restored after BODY has been processed."
   :ensure (:host github :repo "ultronozm/publish.el" :depth nil)
   :defer t
   :custom
-  (publish-repo-root "~/math")
+  (publish-repo-root my-publish-math-repo)
   (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
 
 (use-package magit-fill-column
@@ -1397,7 +1811,14 @@ The value of `calc-language` is restored after BODY has been processed."
      ("\\frac{7}{8}" . "⅞") ("\\tfrac{7}{8}" . "⅞")
      ("\\frac{1}{9}" . "⅑") ("\\tfrac{1}{9}" . "⅑")
      ("\\frac{1}{10}" . "⅒") ("\\tfrac{1}{10}" . "⅒")
-     )))
+     ("\\lvert" . ?|)
+     ("\\rvert" . ?|)
+     ("\\lVert" . ?‖)
+     ("\\rVert" . ?‖)
+     ("\\ " . ?⎵)
+   ;; ("^{-1}" . [?⁻ '(Br . Bl) ?¹])
+   ;; ("^{-1}" . [8315 185])
+   )))
 
 (defun my-LaTeX-mode-setup ()
   (turn-on-reftex)
