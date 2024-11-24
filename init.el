@@ -873,22 +873,31 @@ Optionally run SETUP-FN after creating the file."
 
 ;;; mail
 
+(defun my-rmail-mode-hook ()
+  (setq preview-tailor-local-multiplier 0.6)
+  (setq TeX-master my-preview-master))
+
 (use-package rmail
   :ensure nil
   :defer t
-  :config
-  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode))
   :bind
   ("C-z r" . (lambda ()
                (interactive)
                (let ((current-prefix-arg '(4)))
                  (call-interactively #'rmail))))
   ("C-z R" . rmail)
+  ("C-c C-@" . dim:mailrc-add-entry)
+  :hook (rmail-mode . my-rmail-mode-hook)
   :custom
   (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
   (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
   (rmail-movemail-program "movemail")
   (rmail-primary-inbox-list (list my-mail-inbox))
+  (rmail-automatic-folder-directives
+   '(("bug-gnu-emacs.rmail"
+      "x-beenthere" "bug-gnu-emacs@gnu.org"
+      "to" "^(?!.*ultrono@gmail).*$"
+      "from" "^(?!.*ultrono@gmail).*$")))
   (rmail-secondary-file-directory my-mail-folder)
   (rmail-secondary-file-regexp "^.*\\.rmail$")
   (rmail-remote-password-required t)
@@ -904,45 +913,11 @@ Optionally run SETUP-FN after creating the file."
              (funcall secret)
            secret)))))
   (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\):")
-  (rmail-delete-after-output t))
-
-(use-package sendmail
-  :ensure nil
-  :defer t
+  (rmail-delete-after-output t)
+  (rmail-automatic-folder-directives
+   '())
   :config
-  (setq
-   mail-host-address my-mail-host
-   sendmail-program "msmtp"
-   message-send-mail-function 'message-send-mail-with-sendmail
-   message-default-mail-headers
-   (let ((file (abbreviate-file-name
-                (expand-file-name "sent.rmail" my-mail-folder))))
-     (format "Fcc: %s\n" file))))
-
-(use-package message
-  :ensure nil
-  :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
-  :custom
-  (message-make-forward-subject-function #'message-forward-subject-fwd)
-  :config
-  (defun my-message-smart-tab ()
-    "Call `mail-abbrev-insert-alias' in address fields.
-Otherwise, call `message-tab'."
-    (interactive)
-    (if (and (message-point-in-header-p)
-             (save-excursion
-               (beginning-of-line)
-               (looking-at "^\\([A-Za-z]-\\)?\\(To\\|Cc\\|Bcc\\|From\\|Reply-to\\):")))
-        (call-interactively #'mail-abbrev-insert-alias)
-      (message-tab)))
-  :bind
-  (:map message-mode-map
-        ("C-c @" . mail-abbrev-insert-alias)
-        ("TAB" . my-message-smart-tab)))
-
-(with-eval-after-load 'rmail
-
-  (keymap-global-set "C-c C-@" 'dim:mailrc-add-entry)
+  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode))
 
   ;;https://tapoueh.org/blog/2009/09/improving-~-.mailrc-usage/
 
@@ -1026,156 +1001,6 @@ If ALIAS is empty, generate a default alias based on the name and domain."
   (put 'email-address 'bounds-of-thing-at-point 'thing-at-point-bounds-of-email-address)
   (put 'email-address 'thing-at-point 'thing-at-point-email-address)
 
-  (require 'rmailsum)
-
-  (defun rmail-parse-address-basic (from)
-    "Extract name from email address FROM.
-Returns name if found, otherwise returns the email address."
-    (if (string-match "\\([^<]*\\)<\\([^>]+\\)>" from)
-        (let ((name (match-string 1 from))
-              (addr (match-string 2 from)))
-          ;; If name is empty or just whitespace, return addr
-          (if (string-match "\\`[ \t]*\\'" name)
-              addr
-            ;; Otherwise return name with any trailing whitespace removed
-            (replace-regexp-in-string "[ \t]*\\'" "" name)))
-      from))
-
-  (defvar rmail-summary-address-width 53)
-  (defun rmail-header-summary ()
-    "Return a message summary based on the message headers.
-The value is a list of two strings, the first and second parts of the summary.
-
-The current buffer must already be narrowed to the message headers for
-the message being processed."
-    (goto-char (point-min))
-    (list
-     (concat (save-excursion
-	              (if (not (re-search-forward "^Date:" nil t))
-		                 "      "
-	                ;; Match month names case-insensitively
-	                (cond ((let ((case-fold-search t))
-			                       (re-search-forward "\\([^0-9:]\\)\\([0-3]?[0-9]\\)\\([- \t_]+\\)\\([adfjmnos][aceopu][bcglnprtvy]\\)"
-					                                        (line-end-position) t))
-		                      (format "%2d-%3s"
-			                             (string-to-number (buffer-substring
-						                                             (match-beginning 2)
-						                                             (match-end 2)))
-			                             (buffer-substring
-			                              (match-beginning 4) (match-end 4))))
-		                     ((let ((case-fold-search t))
-			                       (re-search-forward "\\([^a-z]\\)\\([adfjmnos][acepou][bcglnprtvy]\\)\\([-a-z \t_]*\\)\\([0-9][0-9]?\\)"
-					                                        (line-end-position) t))
-		                      (format "%2d-%3s"
-			                             (string-to-number (buffer-substring
-						                                             (match-beginning 4)
-						                                             (match-end 4)))
-			                             (buffer-substring
-			                              (match-beginning 2) (match-end 2))))
-		                     ((re-search-forward "\\(19\\|20\\)\\([0-9][0-9]\\)-\\([01][0-9]\\)-\\([0-3][0-9]\\)"
-		                                         (line-end-position) t)
-		                      (format "%2s%2s%2s"
-			                             (buffer-substring
-			                              (match-beginning 2) (match-end 2))
-			                             (buffer-substring
-			                              (match-beginning 3) (match-end 3))
-			                             (buffer-substring
-			                              (match-beginning 4) (match-end 4))))
-		                     (t "??????"))))
-	            "  "
-	            (save-excursion
-	              (let* (
-                      (from (and (re-search-forward "^From:[ \t]*" nil t)
-                                 (buffer-substring
-                                  (1- (point))
-                                  (progn
-                                    (while (progn (forward-line 1)
-                                                  (looking-at "[ \t]")))
-                                    (forward-char -1)
-                                    (skip-chars-backward " \t")
-                                    (point)))))
-                      ;; (from (and (re-search-forward "^From:[ \t]*" nil t)
-                      ;;            (let ((raw-from (buffer-substring
-                      ;;                             (1- (point))
-                      ;;                             (progn
-                      ;;                               (while (progn (forward-line 1)
-                      ;;                                             (looking-at "[ \t]")))
-                      ;;                               (forward-char -1)
-                      ;;                               (skip-chars-backward " \t")
-                      ;;                               (point)))))
-                      ;;              ;; Decode any MIME encoding in the From field
-                      ;;              (setq raw-from (rfc2047-decode-string raw-from))
-                      ;;              ;; Extract the name or address
-                      ;;              (rmail-parse-address-basic raw-from))))
-                      len mch lo newline)
-                 ;; If there are multiple lines in FROM,
-                 ;; discard up to the last newline in it.
-                 (while (and (stringp from)
-                             (setq newline (string-search "\n" from)))
-                   (setq from (substring from (1+ newline))))
-	                (if (or (null from)
-		                       (string-match
-			                       (or rmail-user-mail-address-regexp
-			                           (concat "^\\("
-				                                  (regexp-quote (user-login-name))
-				                                  "\\($\\|@\\)\\|"
-				                                  (regexp-quote user-mail-address)
-				                                  "\\>\\)"))
-			                       from))
-		                   ;; No From field, or it's this user.
-		                   (save-excursion
-		                     (goto-char (point-min))
-		                     (if (not (re-search-forward "^To:[ \t]*" nil t))
-			                        nil
-		                       (setq from
-			                            (concat "to: "
-				                                   (mail-strip-quoted-names
-				                                    (buffer-substring
-				                                     (point)
-				                                     (progn (end-of-line)
-					                                           (skip-chars-backward " \t")
-					                                           (point)))))))))
-	                (if (null from)
-		                   "                         "
-		                 ;; We are going to return only 25 characters of the
-		                 ;; address, so make sure it is RFC2047 decoded before
-		                 ;; taking its substring.  This is important when the address is not on the same line as the name, e.g.:
-		                 ;; To: =?UTF-8?Q?=C5=A0t=C4=9Bp=C3=A1n_?= =?UTF-8?Q?N=C4=9Bmec?=
-		                 ;; <stepnem@gmail.com>
-		                 (setq from (rfc2047-decode-string from))
-                   ;; We cannot tolerate any leftover newlines in From,
-                   ;; as that disrupts the rmail-summary display.
-                   ;; Newlines can be left in From if it was malformed,
-                   ;; e.g. had unbalanced quotes.
-                   (setq from (replace-regexp-in-string "\n+" " " from))
-		                 (setq len (length from))
-		                 (setq mch (string-match "[@%]" from))
-                   (let ((a (- rmail-summary-address-width 11)))
-		                   (format (concat "%" (format "%s" rmail-summary-address-width) "s")
-			                          (if (or (not mch) (<= len rmail-summary-address-width))
-			                              (substring from (max 0 (- len rmail-summary-address-width)))
-			                            (substring from
-				                                      (setq lo (cond ((< (- mch a) 0) 0)
-						                                                   ((< len (+ mch 11))
-						                                                    (- len rmail-summary-address-width))
-						                                                   (t (- mch a))))
-				                                      (min len (+ lo rmail-summary-address-width))))))))))
-     (concat (if (re-search-forward "^Subject:" nil t)
-	                (let (pos str)
-		                 (skip-chars-forward " \t")
-		                 (setq pos (point))
-		                 (forward-line 1)
-		                 (setq str (buffer-substring pos (1- (point))))
-		                 (while (looking-at "[ \t]")
-		                   (setq str (concat str " "
-				                                   (buffer-substring (match-end 0)
-						                                                   (line-end-position))))
-		                   (forward-line 1))
-		                 str)
-	              (re-search-forward "[\n][\n]+" nil t)
-	              (buffer-substring (point) (progn (end-of-line) (point))))
-	            "\n")))
-
   (defun my-rmail-read-file-advice (orig-fun prompt &rest args)
     (if (and current-prefix-arg
              (equal prompt "Run rmail on RMAIL file: "))
@@ -1185,6 +1010,24 @@ the message being processed."
 
   (advice-add 'read-file-name :around #'my-rmail-read-file-advice))
 
+(use-package sendmail
+  :ensure nil
+  :defer t
+  :config
+  (setq
+   mail-host-address "gmail.com"
+   sendmail-program "msmtp"
+   message-send-mail-function 'message-send-mail-with-sendmail
+   message-default-mail-headers
+   (let ((file (abbreviate-file-name
+                (expand-file-name "sent.rmail" my-mail-folder))))
+     (format "Fcc: %s\n" file))))
+
+(use-package message
+  :ensure nil
+  :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
+  :custom
+  (message-make-forward-subject-function #'message-forward-subject-fwd))
 
 ;;; ai stuff
 
