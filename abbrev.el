@@ -3,8 +3,7 @@
 (modify-abbrev-table
  c++-mode-abbrev-table
  '(
-   ("cppheader" "
-#include <cstdio>
+   ("cppheader" "#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <climits>
@@ -22,6 +21,8 @@
 #include <algorithm>
 #include <numeric>
 #include <functional>
+#include <cassert>
+#include <ranges>
 using namespace std;
 #define loop(i,i0,i1) for(int i=(i0);i<(i1);i++)
 #define step(i,i0,i1,di) for(int i=(i0);i<(i1);i+=(di))

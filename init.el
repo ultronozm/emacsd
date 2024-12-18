@@ -141,19 +141,20 @@ If the predicate is true, add NAME to `repo-scan-repos'."
  ("q" . fill-previous-paragraph)
  ("C-l" . recenter-top-bottom))
 
-(use-package aggressive-indent
-  :defer t
-  :diminish
-  :hook
-  ((emacs-lisp-mode LaTeX-mode rust-mode c++-mode) . aggressive-indent-mode))
-
 (use-package diminish
   :demand t
   :config
   (diminish 'abbrev-mode "Ab")
-  (dolist (mode '(visual-line-mode outline-minor-mode buffer-face-mode
+  (dolist (mode '(visual-line-mode outline-minor-mode
                                    eldoc-mode reftex-mode whitespace-mode))
-    (diminish mode)))
+    (with-eval-after-load 'mode
+      (diminish mode))))
+
+(use-package aggressive-indent
+  :defer t
+  :diminish
+  :hook
+  ((emacs-lisp-mode LaTeX-mode rust-mode) . aggressive-indent-mode))
 
 ;; Remove "%n" from mode-line-modes -- I know when I'm narrowing.
 (setq mode-line-modes (delete "%n" mode-line-modes))
@@ -294,6 +295,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
          ("C-x j" . czm-misc-dired-popup))
   (:map minibuffer-local-map
         ("C-c d" . czm-misc-insert-date)))
+
 
 (use-package pulsar
   :bind (("s-l" . pulsar-pulse-line))
@@ -472,7 +474,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (use-package go-translate
   :defer t
   :config
-  (setq gt-langs '(da en))
+  (setq gt-langs '(da en fr de))
   (setq gt-default-translator (gt-translator :engines (gt-google-engine))))
 
 (use-package rust-mode
@@ -729,7 +731,6 @@ Optionally run SETUP-FN after creating the file."
 
 ;;; org
 
-
 ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2024-06/msg01858.html
 (use-package org
   :ensure nil
@@ -770,7 +771,20 @@ Optionally run SETUP-FN after creating the file."
       ((agenda "")
        (todo "TODO")
        (tags "CLOSED>=\"<today>\""
-             ((org-agenda-overriding-header "\nCompleted today\n")))))))
+             ((org-agenda-overriding-header "\nCompleted today\n")))))
+     ("y" "Year view"
+      ((agenda ""
+               ((org-agenda-files (list my-projects-file))
+                (org-agenda-span 365)
+                (org-agenda-start-on-weekday nil)
+                (org-agenda-start-day (format-time-string "%Y-%m-%d"))
+                (org-agenda-prefix-format
+                 '((agenda . "  %-12:c%?-12t%6e  %s")))
+                (org-agenda-show-all-dates nil)
+                (diary-show-holidays-flag nil)
+                (org-agenda-include-diary t))))
+      ((org-agenda-skip-function
+        '(org-agenda-skip-entry-if 'todo 'done))))))
   (org-default-notes-file my-todo-file)
   (org-directory "~/")
   (org-agenda-files `(,my-todo-file ,my-projects-file))
@@ -787,6 +801,7 @@ Optionally run SETUP-FN after creating the file."
   (org-refile-targets nil)
   (org-refile-use-outline-path nil)
   ;; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
+  (org-agenda-skip-deadline-if-done t)
   (org-src-preserve-indentation t)
   (org-agenda-skip-scheduled-if-done t)
   (org-tags-column -70)
@@ -840,7 +855,9 @@ Optionally run SETUP-FN after creating the file."
     (add-to-list 'org-babel-key-bindings item))
   (pcase-dolist (`(,key . ,def) org-babel-key-bindings)
     (define-key org-babel-map key def))
-  (add-to-list 'org-speed-commands '("S" . my/org-schedule-and-refile) t))
+  (add-to-list 'org-speed-commands '("S" . my/org-schedule-and-refile) t)
+  (add-to-list 'org-src-lang-modes '("lean" . lean4))
+  )
 
 (defvar my/org-tex-mode-map
   (let ((map (make-sparse-keymap)))
@@ -874,8 +891,18 @@ Optionally run SETUP-FN after creating the file."
 ;;; mail
 
 (defun my-rmail-mode-hook ()
-  (setq preview-tailor-local-multiplier 0.6)
+  (setq-local preview-tailor-local-multiplier 0.6)
   (setq TeX-master my-preview-master))
+
+(defun my/rmail-refile-and-store-link ()
+  "Refile current Rmail message to scheduled.rmail and store an org link to it."
+  (interactive)
+  (let ((scheduled-file (expand-file-name "scheduled.rmail" my-mail-folder)))
+    (rmail-output scheduled-file)
+    (let ((scheduled-buffer (find-file-noselect scheduled-file)))
+      (with-current-buffer scheduled-buffer
+        (rmail-last-message)
+        (org-store-link nil t)))))
 
 (use-package rmail
   :ensure nil
@@ -887,6 +914,8 @@ Optionally run SETUP-FN after creating the file."
                  (call-interactively #'rmail))))
   ("C-z R" . rmail)
   ("C-c C-@" . dim:mailrc-add-entry)
+  (:map rmail-mode-map
+        ("S" . my/rmail-refile-and-store-link))
   :hook (rmail-mode . my-rmail-mode-hook)
   :custom
   (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
@@ -894,11 +923,11 @@ Optionally run SETUP-FN after creating the file."
   (rmail-movemail-program "movemail")
   (rmail-primary-inbox-list (list my-mail-inbox))
   (rmail-automatic-folder-directives
-   '(("bug-gnu-emacs.rmail"
-      "x-beenthere" "bug-gnu-emacs@gnu.org"
-      "to" "^(?!.*ultrono@gmail).*$"
-      "from" "^(?!.*ultrono@gmail).*$")))
-  (rmail-secondary-file-directory my-mail-folder)
+   `((,(expand-file-name "bug-gnu-emacs.rmail" my-mail-folder)
+      "sender" "bug-gnu-emacs-bounces")
+     (,(expand-file-name "emacs-devel.rmail" my-mail-folder)
+      "sender" "emacs-devel-bounces")))
+  (rmail-secondary-file-directory (file-name-as-directory my-mail-folder))
   (rmail-secondary-file-regexp "^.*\\.rmail$")
   (rmail-remote-password-required t)
   (rmail-remote-password
@@ -912,10 +941,8 @@ Optionally run SETUP-FN after creating the file."
          (if (functionp secret)
              (funcall secret)
            secret)))))
-  (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\):")
+  (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
   (rmail-delete-after-output t)
-  (rmail-automatic-folder-directives
-   '())
   :config
   (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode))
 
@@ -999,16 +1026,7 @@ If ALIAS is empty, generate a default alias based on the name and domain."
       (mail-header-parse-address email-address-text)))
 
   (put 'email-address 'bounds-of-thing-at-point 'thing-at-point-bounds-of-email-address)
-  (put 'email-address 'thing-at-point 'thing-at-point-email-address)
-
-  (defun my-rmail-read-file-advice (orig-fun prompt &rest args)
-    (if (and current-prefix-arg
-             (equal prompt "Run rmail on RMAIL file: "))
-        (let ((default-directory my-mail-folder))
-          (apply orig-fun prompt args))
-      (apply orig-fun prompt args)))
-
-  (advice-add 'read-file-name :around #'my-rmail-read-file-advice))
+  (put 'email-address 'thing-at-point 'thing-at-point-email-address))
 
 (use-package sendmail
   :ensure nil
@@ -1042,6 +1060,7 @@ If ALIAS is empty, generate a default alias based on the name and domain."
   ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
   (lean4-mode . (lambda () (setq tab-width 2)))
+  (c++-mode . (lambda () (setq tab-width 4)))
   :config
   (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
   (copilot--define-accept-completion-by-action
@@ -1388,6 +1407,9 @@ Skips empty days and diary holidays."
   :ensure nil
   :bind
   ("C-c M-o" . ff-find-other-file)
+  (:map c-mode-base-map
+        ("C-c C-c" . compile)
+        ("C-c C-r" . recompile))
   :hook
   (c-mode-common . c-toggle-hungry-state)
   (c-mode-common . abbrev-mode)
@@ -1448,7 +1470,7 @@ Skips empty days and diary holidays."
   :init
   ;; commenting out c-mode remap because it seems a bit premature
   ;; (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
-  (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
+  ;; (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
   ;; (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-or-c++-ts-mode))
   :config
   (require 'treesit-auto)
@@ -2196,12 +2218,13 @@ The value of `calc-language` is restored after BODY has been processed."
               ("C-M-i" . completion-at-point)
               ("C-c C-k" . quail-show-key))
   :config
+  (add-to-list 'lean4-workspace-roots "~/.elan/toolchains/leanprover--lean4---v4.15.0-rc1/src/lean/")
   :defer t)
 
 (use-package czm-lean4
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-lean4.el" :depth nil)
-  :after lean4-mode preview-auto flymake-overlays
+  :after lean4-mode
   :hook
   (lean4-mode . czm-lean4-mode-hook)
   :hook (magit-section-mode . czm-lean4-magit-section-mode-hook)
@@ -2225,8 +2248,10 @@ The value of `calc-language` is restored after BODY has been processed."
   :custom
   (czm-lean4-info-window-height-fraction 0.4)
   (czm-lean4-info-window-width-fraction 0.47)
-  (flymake-overlays-fontify-text-function #'czm-lean4-maybe-colorize)
   :config
+  (with-eval-after-load 'flymake
+    (setopt flymake-overlays-fontify-text-function #'czm-lean4-maybe-colorize)
+    (require 'flymake-overlays))
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay)
   (map-keymap
    (lambda (key cmd)
@@ -2235,7 +2260,6 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package flymake-overlays
   :repo-scan
-  :disabled
   :ensure (:host github :repo "ultronozm/flymake-overlays.el" :depth nil)
   :after flymake
   :bind (:map flymake-mode-map

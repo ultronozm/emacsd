@@ -161,6 +161,7 @@
   (safe-local-variable-values
    '((checkdoc-minor-mode . t)
      (eval outline-hide-sublevels 5)))
+  (diary-comment-start ";;")
   :config
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
@@ -180,7 +181,9 @@
   (repeat-mode)
   (recentf-mode)
   :hook
-  (prog-mode . outline-minor-mode))
+  (prog-mode . outline-minor-mode)
+  (dired-mode . dired-hide-details-mode)
+  (dired-mode . hl-line-mode))
 
 (defun find-init-file (&optional arg)
   "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory.

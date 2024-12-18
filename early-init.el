@@ -4,4 +4,5 @@
 (scroll-bar-mode 0)
 (setq-default
  default-frame-alist
- '((fullscreen . fullboth)))
+ '((fullscreen . fullboth)
+   (vertical-scroll-bars . nil)))
