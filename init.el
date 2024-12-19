@@ -892,7 +892,7 @@ Optionally run SETUP-FN after creating the file."
 
 (defun my-rmail-mode-hook ()
   (setq-local preview-tailor-local-multiplier 0.6)
-  (setq TeX-master my-preview-master))
+  (setq-local TeX-master my-preview-master))
 
 (defun my/rmail-refile-and-store-link ()
   "Refile current Rmail message to scheduled.rmail and store an org link to it."
