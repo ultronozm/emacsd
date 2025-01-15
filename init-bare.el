@@ -39,6 +39,7 @@
    ("C-x C-b" . ibuffer)
    ("C-z" . nil)
    ("C-z c" . calendar)
+   ("C-z C-c" . restart-emacs)
    ("C-z C-e" . pp-macroexpand-last-sexp)
    ("C-z C-s" . desktop-save-in-desktop-dir)
    ("C-z C-f" . desktop-read)
@@ -159,7 +160,8 @@
   (calc-kill-line-numbering nil)
   (eglot-connect-timeout 120)
   (safe-local-variable-values
-   '((checkdoc-minor-mode . t)
+   '((cmake-build-project-root . "./cpp")
+     (checkdoc-minor-mode . t)
      (eval outline-hide-sublevels 5)))
   (diary-comment-start ";;")
   :config
@@ -178,6 +180,7 @@
   (display-time-mode)
   (add-to-list 'auto-mode-alist '("\\.info\\'" . Info-on-current-buffer))
   (setcdr other-window-repeat-map nil)
+  (setcdr buffer-navigation-repeat-map nil)
   (repeat-mode)
   (recentf-mode)
   :hook

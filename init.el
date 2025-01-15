@@ -45,7 +45,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 ;;; elpaca
 
-(defvar elpaca-installer-version 0.7)
+(defvar elpaca-installer-version 0.8)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -62,18 +62,18 @@ If the predicate is true, add NAME to `repo-scan-repos'."
     (make-directory repo t)
     (when (< emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
-        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                 ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                 ,@(when-let ((depth (plist-get order :depth)))
-                                                     (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                 ,(plist-get order :repo) ,repo))))
-                 ((zerop (call-process "git" nil buffer t "checkout"
-                                       (or (plist-get order :ref) "--"))))
-                 (emacs (concat invocation-directory invocation-name))
-                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                 ((require 'elpaca))
-                 ((elpaca-generate-autoloads "elpaca" repo)))
+        (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                  ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                  ,@(when-let* ((depth (plist-get order :depth)))
+                                                      (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                  ,(plist-get order :repo) ,repo))))
+                  ((zerop (call-process "git" nil buffer t "checkout"
+                                        (or (plist-get order :ref) "--"))))
+                  (emacs (concat invocation-directory invocation-name))
+                  ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                        "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                  ((require 'elpaca))
+                  ((elpaca-generate-autoloads "elpaca" repo)))
             (progn (message "%s" (buffer-string)) (kill-buffer buffer))
           (error "%s" (with-current-buffer buffer (buffer-string))))
       ((error) (warn "%s" err) (delete-directory repo 'recursive))))
@@ -641,6 +641,40 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   :defer t
   :custom
   (treesit-auto-install 'prompt)
+  (global-treesit-auto-modes
+   '(yaml-mode yaml-ts-mode wgsl-mode wgsl-ts-mode wat-mode wat-ts-mode
+               wat-mode wat-ts-wast-mode vue-mode vue-ts-mode vhdl-mode
+               vhdl-ts-mode verilog-mode verilog-ts-mode typst-mode
+               typst-ts-mode typescript-mode typescript-ts-mode
+               typescript-tsx-mode tsx-ts-mode toml-mode conf-toml-mode
+               toml-ts-mode surface-mode surface-ts-mode sql-mode
+               sql-ts-mode scala-mode scala-ts-mode rust-mode rust-ts-mode
+               ruby-mode ruby-ts-mode ess-mode r-ts-mode python-mode
+               python-ts-mode protobuf-mode protobuf-ts-mode perl-mode
+               perl-ts-mode org-mode org-ts-mode nushell-mode
+               nushell-ts-mode nix-mode nix-ts-mode markdown-mode
+               poly-markdown-mode markdown-ts-mode makefile-mode
+               makefile-ts-mode magik-mode magik-ts-mode lua-mode
+               lua-ts-mode latex-mode latex-ts-mode kotlin-mode
+               kotlin-ts-mode julia-mode julia-ts-mode js-json-mode
+               json-ts-mode js2-mode javascript-mode js-mode js-ts-mode
+               java-mode java-ts-mode janet-mode janet-ts-mode sgml-mode
+               mhtml-mode html-ts-mode heex-mode heex-ts-mode go-mod-mode
+               go-mod-ts-mode go-mode go-ts-mode glsl-mode glsl-ts-mode
+               elixir-mode elixir-ts-mode dockerfile-mode
+               dockerfile-ts-mode dart-mode dart-ts-mode css-mode
+               css-ts-mode common-lisp-mode
+               commonlisp-ts-mode cmake-mode cmake-ts-mode clojurec-mode
+               clojurescript-mode clojure-mode clojure-ts-mode csharp-mode
+               csharp-ts-mode blueprint-mode
+               blueprint-ts-mode bibtex-mode bibtex-ts-mode sh-mode
+               bash-ts-mode awk-mode awk-ts-mode))
+  (treesit-auto-langs
+   '(awk bash bibtex blueprint c-sharp clojure cmake commonlisp css dart
+         dockerfile elixir glsl go gomod heex html janet java javascript
+         json julia kotlin latex lua magik make markdown nix nu org perl
+         proto python r ruby rust scala sql surface toml tsx typescript
+         typst verilog vhdl vue wast wat wgsl yaml))
   :config
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
@@ -729,6 +763,33 @@ Optionally run SETUP-FN after creating the file."
   :defer t
   :ensure (:host github :repo "ultronozm/doc-dual-view.el" :depth nil))
 
+(use-package typescript-mode
+  :ensure t)
+
+(use-package julia-ts-mode
+  :ensure (:host github :repo "dhanak/julia-ts-mode"
+                 :depth nil)
+  :mode "\\.jl$")
+
+(use-package eglot-jl
+  :defer t
+  :config
+  (eglot-jl-init))
+
+(use-package nerd-icons
+  :ensure t)
+
+(use-package nerd-icons-completion
+  :ensure t
+  :after marginalia
+  :config
+  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+
+(use-package nerd-icons-dired
+  :ensure t
+  :hook
+  (dired-mode . nerd-icons-dired-mode))
+
 ;;; org
 
 ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2024-06/msg01858.html
@@ -759,6 +820,37 @@ Optionally run SETUP-FN after creating the file."
     (when rfloc
       (org-refile nil nil rfloc))))
 
+(defvar my/last-src-language "elisp"
+  "The most recently used language in source blocks.")
+
+(defun my/org-insert-block-with-yank (block-type &optional language)
+  "Insert an org block of BLOCK-TYPE with yanked content.
+If LANGUAGE is provided, use it for source blocks.
+Automatically clean up extra newlines at boundaries."
+  (push-mark)
+  (let ((content (string-trim (current-kill 0))))
+    (if (equal block-type "src")
+        (progn
+          (setq my/last-src-language language)
+          (insert (format "#+begin_src %s\n%s\n#+end_src" language content)))
+      (insert (format "#+begin_%s\n%s\n#+end_%s" block-type content block-type)))
+    (org-edit-special)
+    (org-edit-src-exit)
+    (forward-line 2)
+    (newline)))
+
+(defun my/org-insert-example-with-yank ()
+  "Insert an example block with yanked content."
+  (interactive)
+  (my/org-insert-block-with-yank "example"))
+
+(defun my/org-insert-src-with-yank (language)
+  "Insert a source block with yanked content and specified LANGUAGE."
+  (interactive
+   (list (read-string (format "Language (%s): " my/last-src-language)
+                      nil nil my/last-src-language)))
+  (my/org-insert-block-with-yank "src" language))
+
 (use-package org
   :ensure nil
   :hook
@@ -766,6 +858,7 @@ Optionally run SETUP-FN after creating the file."
   (org-mode . (lambda () (setq fill-column 999999)))
   (org-mode . abbrev-mode)
   :custom
+  (org-hide-emphasis-markers t)
   (org-agenda-custom-commands
    '(("n" "Agenda and all TODOs"
       ((agenda "")
@@ -834,7 +927,9 @@ Optionally run SETUP-FN after creating the file."
              (newline))))
         ("C-c p" . czm-org-edit-src)
         ("M-{" . org-backward-paragraph)
-        ("M-}" . org-forward-paragraph))
+        ("M-}" . org-forward-paragraph)
+        ("C-c C-' e" . my/org-insert-example-with-yank)
+        ("C-c C-' s" . my/org-insert-src-with-yank))
   (:repeat-map
    org-paragraph-repeat-map
    ("]" . org-forward-paragraph)
@@ -848,6 +943,23 @@ Optionally run SETUP-FN after creating the file."
    ("C-/" . undo)
    ("t" . transpose-paragraphs)
    ("q" . fill-previous-paragraph))
+  (:map org-mode-map
+        ("C-c M-n" . org-forward-element)
+        ("C-c M-p" . org-backward-element)
+        :repeat-map org-element-repeat-map
+        ("n" . org-forward-element)
+        ("p" . org-backward-element)
+        ("u" . org-up-element)
+        ("g" . org-down-element)
+        :continue-only
+        ("h" . org-mark-element)
+        ("t" . org-transpose-element)
+        ("w" . kill-region)
+        ("M-w" . kill-ring-save)
+        ("y" . yank)
+        ("C-/" . undo)
+        ("f" . org-drag-element-forward)
+        ("b" . org-drag-element-backward))
   :config
   (require 'ob-shell)
   (dolist (item '(("m" . org-babel-mark-block)
@@ -857,6 +969,7 @@ Optionally run SETUP-FN after creating the file."
     (define-key org-babel-map key def))
   (add-to-list 'org-speed-commands '("S" . my/org-schedule-and-refile) t)
   (add-to-list 'org-src-lang-modes '("lean" . lean4))
+  (add-to-list 'org-src-lang-modes '("cmake" . cmake-ts))
   )
 
 (defvar my/org-tex-mode-map
@@ -887,6 +1000,16 @@ Optionally run SETUP-FN after creating the file."
       (concat
        "^\\*+ "
        (regexp-opt '("DONE" "CANCELED")))))))
+
+(use-package org-modern
+  :ensure t
+  :config
+  (global-org-modern-mode 1))
+
+(use-package org-appear
+  :ensure t
+  :hook
+  (org-mode . org-appear-mode))
 
 ;;; mail
 
@@ -1085,6 +1208,8 @@ If ALIAS is empty, generate a default alias based on the name and domain."
         ("C-M-<down>" . copilot-next-completion)
         ("C-M-<up>" . copilot-previous-completion)))
 
+(use-package plz-event-source)
+
 (use-package llm
   :defer t
   :ensure (:host github :repo "ahyatt/llm"
@@ -1107,6 +1232,8 @@ If ALIAS is empty, generate a default alias based on the name and domain."
   :bind
   (:map global-map
         ("s-/" . ai-org-chat-new))
+  (:map project-prefix-map
+        ("a" . ai-org-chat-project))
   (:map ai-org-chat-minor-mode-map
         ("s-<return>" . ai-org-chat-respond)
         ("C-c n" . ai-org-chat-branch)
@@ -1114,7 +1241,7 @@ If ALIAS is empty, generate a default alias based on the name and domain."
   :custom
   (ai-org-chat-user-name my-first-name)
   (ai-org-chat-dir my-scratch-gpt-dir)
-  (ai-org-chat-context-style nil)
+  (ai-org-chat-content-wrapper #'ai-org-chat--wrap-xml)
   :config
   (require 'exec-path-from-shell)
   (ai-org-chat-select-model "sonnet 3.5"))
@@ -1132,19 +1259,40 @@ If ALIAS is empty, generate a default alias based on the name and domain."
       (org-agenda nil "a")
       (buffer-substring-no-properties (point-min) (point-max)))))
 
+(defun my/current-date-and-time ()
+  "Return string describing current date and time."
+  (format-time-string "%A, %B %d, %Y at %I:%M %p"))
+
 (defun my/agenda-for-week ()
   "Return string containing full agenda for the next seven days."
   (interactive)
   (save-window-excursion
     (require 'org-agenda)
     (let ((org-agenda-span 'day)
-          (org-agenda-start-on-weekday nil)  ; start from today regardless of weekday
+          (org-agenda-start-on-weekday nil) ; start from today regardless of weekday
           (org-agenda-start-day (format-time-string "%Y-%m-%d"))
-          (org-agenda-ndays 7)  ; show exactly 7 days
+          (org-agenda-ndays 7)
           (org-agenda-prefix-format
            '((agenda . "  %-12:c%?-12t%6e  %s"))))
       (org-agenda nil "a")
       (buffer-substring-no-properties (point-min) (point-max)))))
+
+(defun my/filter-diary-contents ()
+  "Return diary contents without holiday entries."
+  (with-temp-buffer
+    (insert-file-contents diary-file)
+    (goto-char (point-min))
+    (keep-lines "^[^&]" (point-min) (point-max))
+    (buffer-string)))
+
+(defun my/with-filtered-diary (fn)
+  "Execute FN with a filtered version of the diary.
+Temporarily creates and uses a diary file without holiday entries."
+  (let ((filtered-contents (my/filter-diary-contents)))
+    (with-temp-file "/tmp/temp-diary"
+      (insert filtered-contents))
+    (let ((diary-file "/tmp/temp-diary"))
+      (funcall fn))))
 
 (defun my/projects-for-year ()
   "Return string containing projects.org agenda for next year.
@@ -1152,44 +1300,79 @@ Skips empty days and diary holidays."
   (interactive)
   (save-window-excursion
     (require 'org-agenda)
-    ;; Temporarily modify diary handling
-    (let* ((diary-contents (with-temp-buffer
-                             (insert-file-contents diary-file)
-                             (buffer-string)))
-           (filtered-diary
-            (with-temp-buffer
-              (insert diary-contents)
-              (goto-char (point-min))
-              (keep-lines "^[^&]" (point-min) (point-max))
-              (buffer-string)))
-           (org-agenda-files (list my-projects-file))
-           (org-agenda-span 365)
-           (org-agenda-start-on-weekday nil)
-           (org-agenda-start-day (format-time-string "%Y-%m-%d"))
-           (org-agenda-prefix-format
-            '((agenda . "  %-12:c%?-12t%6e  %s")))
-           (org-agenda-include-diary t)
-           (diary-show-holidays-flag nil)
-           (org-agenda-show-all-dates nil))
-      ;; Use temporary diary file
-      (with-temp-file "/tmp/temp-diary"
-        (insert filtered-diary))
-      (let ((diary-file "/tmp/temp-diary"))
-        (org-agenda nil "a")
-        (buffer-substring-no-properties (point-min) (point-max))))))
+    (let ((org-agenda-files (list my-projects-file))
+          (org-agenda-span 365)
+          (org-agenda-start-on-weekday nil)
+          (org-agenda-start-day (format-time-string "%Y-%m-%d"))
+          (org-agenda-prefix-format
+           '((agenda . "  %-12:c%?-12t%6e  %s")))
+          (org-agenda-include-diary t)
+          (diary-show-holidays-flag nil)
+          (org-agenda-show-all-dates nil))
+      (my/with-filtered-diary
+       (lambda ()
+         (org-agenda nil "a")
+         (buffer-substring-no-properties (point-min) (point-max)))))))
 
-(defun ai-org-chat-suggest-filename-function ()
-  "Blah"
-  (make-llm-function-call
-   :function (lambda (suggested-name)
-               (cons 'suggested-name suggested-name))
-   :name "suggest_filename"
-   :description "Suggest a better filename for the current file."
-   :args (list (make-llm-function-arg
-                :name "suggested_name"
-                :description "The suggested new filename."
-                :type 'string
-                :required t))))
+(use-package content-quoter
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/content-quoter.el"
+                 :depth nil)
+  :defer t)
+
+(defun ai-org-chat-suggest-better-filename ()
+  "Ask LLM for a better filename and prompt user to rename the current file."
+  (interactive)
+  (unless (buffer-file-name)
+    (user-error "Current buffer is not visiting a file"))
+
+  (let* ((current-name (file-name-nondirectory (buffer-file-name)))
+         (file-content (buffer-substring-no-properties (point-min) (point-max)))
+         (buffer (current-buffer))
+         (suggest-filename-tool
+          (llm-make-tool-function
+           :function (lambda (callback suggested-name)
+                       (funcall callback suggested-name))
+           :name "suggest_filename"
+           :description "Suggest a better filename for the current file."
+           :args '((:name "suggested_name"
+                          :description "The suggested new filename."
+                          :type "string"
+                          :required t))
+           :async t))
+         (prompt (format "Given the following file content and current filename '%s', suggest a better, more descriptive filename.  Make sure to keep the file extension the same.  Also, if the filename contains a timestamp at or near the beginning, then preserve that -- follow that timestamp with double dashes followed by a name separated by single dashes.  Use the suggest_filename function to provide your suggestion.\n\nFile content:\n%s"
+                         current-name
+                         (if (> (length file-content) 1000)
+                             (concat (substring file-content 0 1000) "...")
+                           file-content)))
+         (final-cb
+          (lambda (response)
+            (with-current-buffer buffer
+              (let* ((suggested-name response)
+                     (current-dir (file-name-directory (buffer-file-name)))
+                     (new-path (read-file-name "Rename file to: "
+                                               current-dir
+                                               nil
+                                               nil
+                                               suggested-name)))
+                (when (y-or-n-p (format "Rename '%s' to '%s'? "
+                                        (buffer-file-name)
+                                        new-path))
+                  (require 'dired-aux) ; Ensure dired-rename-file is available
+                  (dired-rename-file (buffer-file-name) new-path 1)
+                  (message "File renamed to '%s'"
+                           (file-name-nondirectory new-path)))))))
+         (error-cb
+          (lambda (err msg)
+            (message "Error: %s - %s" err msg))))
+
+    (llm-chat-async ai-org-chat-provider
+                    (llm-make-chat-prompt
+                     prompt
+                     :tools (list suggest-filename-tool))
+                    final-cb
+                    error-cb)))
+
 
 (defun ai-org-chat-suggest-better-filename ()
   "Ask LLM for a better filename and prompt user to rename the current file."
@@ -1205,13 +1388,26 @@ Skips empty days and diary holidays."
                          (if (> (length file-content) 1000)
                              (concat (substring file-content 0 1000) "...")
                            file-content)))
+         (filename-tool
+          (llm-make-tool-function
+           :function (lambda (callback suggested-name)
+                       (funcall callback suggested-name))
+           :name "suggest_filename"
+           :description "Suggest a better filename for the current file."
+           :args '((:name "suggested_name"
+                          :description "The suggested new filename."
+                          :type "string"
+                          :required t))
+           :async t))
          (final-cb
           (lambda (response)
             (with-current-buffer buffer
-              (if (and (listp response)
-                       (equal (caar response) "suggest_filename"))
-                  (let* ((suggested-name (cddar response))
-                         (current-dir (file-name-directory (buffer-file-name)))
+              (if-let* ((suggestion-pair (and (listp response)
+                                              (car response)))
+                        (suggested-name (and (equal (car suggestion-pair)
+                                                    "suggest_filename")
+                                             (cdr suggestion-pair))))
+                  (let* ((current-dir (file-name-directory (buffer-file-name)))
                          (new-path (read-file-name "Rename file to: "
                                                    current-dir
                                                    nil
@@ -1220,7 +1416,7 @@ Skips empty days and diary holidays."
                     (when (y-or-n-p (format "Rename '%s' to '%s'? "
                                             (buffer-file-name)
                                             new-path))
-                      (require 'dired-aux) ; Ensure dired-rename-file is available
+                      (require 'dired-aux)
                       (dired-rename-file (buffer-file-name) new-path 1)
                       (message "File renamed to '%s'" (file-name-nondirectory new-path))))
                 (user-error "Failed to get a valid filename suggestion from LLM")))))
@@ -1231,9 +1427,12 @@ Skips empty days and diary holidays."
     (llm-chat-async ai-org-chat-provider
                     (llm-make-chat-prompt
                      prompt
-                     :functions (list (ai-org-chat-suggest-filename-function)))
+                     :tools (list filename-tool))
                     final-cb
                     error-cb)))
+
+
+
 
 ;;; erc
 
@@ -1433,7 +1632,8 @@ Skips empty days and diary holidays."
          ("s-m b" . cmake-build-current)
          ("s-m o" . ff-find-other-file)
          ("s-m r" . cmake-build-run)
-         ("s-m c" . cmake-build-clean))
+         ("s-m c" . cmake-build-clean)
+         ("s-m i" . cmake-build-open-project-data))
   :custom
   (cmake-build-override-compile-keymap nil)
   (cmake-build-export-compile-commands t)
@@ -1452,6 +1652,7 @@ Skips empty days and diary holidays."
 (add-to-list 'auto-mode-alist '("\\.ixx\\'" . c++-mode))
 
 (use-package c-ts-mode
+  :disabled
   :ensure nil ;; emacs built-in
   :defer t
   :preface
@@ -1476,6 +1677,13 @@ Skips empty days and diary holidays."
   (require 'treesit-auto)
   (setq c-ts-mode-indent-offset 2)
   (setq c-ts-mode-indent-style #'my--c-ts-indent-style))
+
+(use-package cmake-ts-mode
+  :ensure nil
+  :defer t
+  :mode ("CMakeLists\\.txt\\'" "\\.cmake\\'")
+  :config
+  (require 'treesit-auto))
 
 ;;; calc
 
@@ -2253,6 +2461,7 @@ The value of `calc-language` is restored after BODY has been processed."
     (setopt flymake-overlays-fontify-text-function #'czm-lean4-maybe-colorize)
     (require 'flymake-overlays))
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay)
+  (advice-add 'lean4-info-buffer-redisplay :after #'czm-lean4--goal-overlay-update-adapter)
   (map-keymap
    (lambda (key cmd)
      (define-key lean4-mode-map (vector key) cmd))
