@@ -64,7 +64,7 @@
    ("M-p" . previous-error)
    ("M-u" . up-list)
    ([remap dabbrev-expand] . hippie-expand)
-   ("s-'" . nil)
+   ("s-'" . expand-abbrev)
    ("s-." . repeat)
    ("s-0" . delete-window)
    ("s-1" . delete-other-windows)

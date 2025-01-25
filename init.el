@@ -1329,60 +1329,6 @@ Skips empty days and diary holidays."
   (let* ((current-name (file-name-nondirectory (buffer-file-name)))
          (file-content (buffer-substring-no-properties (point-min) (point-max)))
          (buffer (current-buffer))
-         (suggest-filename-tool
-          (llm-make-tool-function
-           :function (lambda (callback suggested-name)
-                       (funcall callback suggested-name))
-           :name "suggest_filename"
-           :description "Suggest a better filename for the current file."
-           :args '((:name "suggested_name"
-                          :description "The suggested new filename."
-                          :type "string"
-                          :required t))
-           :async t))
-         (prompt (format "Given the following file content and current filename '%s', suggest a better, more descriptive filename.  Make sure to keep the file extension the same.  Also, if the filename contains a timestamp at or near the beginning, then preserve that -- follow that timestamp with double dashes followed by a name separated by single dashes.  Use the suggest_filename function to provide your suggestion.\n\nFile content:\n%s"
-                         current-name
-                         (if (> (length file-content) 1000)
-                             (concat (substring file-content 0 1000) "...")
-                           file-content)))
-         (final-cb
-          (lambda (response)
-            (with-current-buffer buffer
-              (let* ((suggested-name response)
-                     (current-dir (file-name-directory (buffer-file-name)))
-                     (new-path (read-file-name "Rename file to: "
-                                               current-dir
-                                               nil
-                                               nil
-                                               suggested-name)))
-                (when (y-or-n-p (format "Rename '%s' to '%s'? "
-                                        (buffer-file-name)
-                                        new-path))
-                  (require 'dired-aux) ; Ensure dired-rename-file is available
-                  (dired-rename-file (buffer-file-name) new-path 1)
-                  (message "File renamed to '%s'"
-                           (file-name-nondirectory new-path)))))))
-         (error-cb
-          (lambda (err msg)
-            (message "Error: %s - %s" err msg))))
-
-    (llm-chat-async ai-org-chat-provider
-                    (llm-make-chat-prompt
-                     prompt
-                     :tools (list suggest-filename-tool))
-                    final-cb
-                    error-cb)))
-
-
-(defun ai-org-chat-suggest-better-filename ()
-  "Ask LLM for a better filename and prompt user to rename the current file."
-  (interactive)
-  (unless (buffer-file-name)
-    (user-error "Current buffer is not visiting a file"))
-
-  (let* ((current-name (file-name-nondirectory (buffer-file-name)))
-         (file-content (buffer-substring-no-properties (point-min) (point-max)))
-         (buffer (current-buffer))
          (prompt (format "Given the following file content and current filename '%s', suggest a better, more descriptive filename.  Make sure to keep the file extension the same.  Also, if the filename contains a timestamp at or near the beginning, then preserve that -- follow that timestamp with double dashes followed by a name separated by single dashes.  Use the suggest_filename function to provide your suggestion.\n\nFile content:\n%s"
                          current-name
                          (if (> (length file-content) 1000)
@@ -1396,7 +1342,7 @@ Skips empty days and diary holidays."
            :description "Suggest a better filename for the current file."
            :args '((:name "suggested_name"
                           :description "The suggested new filename."
-                          :type "string"
+                          :type string
                           :required t))
            :async t))
          (final-cb
