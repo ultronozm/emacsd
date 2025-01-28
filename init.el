@@ -1156,7 +1156,7 @@ If ALIAS is empty, generate a default alias based on the name and domain."
   :defer t
   :config
   (setq
-   mail-host-address "gmail.com"
+   mail-host-address my-mail-host
    sendmail-program "msmtp"
    message-send-mail-function 'message-send-mail-with-sendmail
    message-default-mail-headers
