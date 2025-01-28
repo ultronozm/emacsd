@@ -1017,16 +1017,6 @@ Automatically clean up extra newlines at boundaries."
   (setq-local preview-tailor-local-multiplier 0.6)
   (setq-local TeX-master my-preview-master))
 
-(defun my/rmail-refile-and-store-link ()
-  "Refile current Rmail message to scheduled.rmail and store an org link to it."
-  (interactive)
-  (let ((scheduled-file (expand-file-name "scheduled.rmail" my-mail-folder)))
-    (rmail-output scheduled-file)
-    (let ((scheduled-buffer (find-file-noselect scheduled-file)))
-      (with-current-buffer scheduled-buffer
-        (rmail-last-message)
-        (org-store-link nil t)))))
-
 (use-package rmail
   :ensure nil
   :defer t
@@ -1036,9 +1026,8 @@ Automatically clean up extra newlines at boundaries."
                (let ((current-prefix-arg '(4)))
                  (call-interactively #'rmail))))
   ("C-z R" . rmail)
-  ("C-c C-@" . dim:mailrc-add-entry)
   (:map rmail-mode-map
-        ("S" . my/rmail-refile-and-store-link))
+        ("S" . czm-mail-refile-and-store-link))
   :hook (rmail-mode . my-rmail-mode-hook)
   :custom
   (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
@@ -1067,89 +1056,7 @@ Automatically clean up extra newlines at boundaries."
   (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
   (rmail-delete-after-output t)
   :config
-  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode))
-
-  ;;https://tapoueh.org/blog/2009/09/improving-~-.mailrc-usage/
-
-  (defun dim:generate-default-alias (address)
-    "Generate a default alias from an email ADDRESS.
-ADDRESS should be a cons cell of (email . name) as returned by mail-header-parse-address.
-Returns a string suitable for use as an email alias."
-    (if (cdr address)  ; If we have a name component
-        (let* ((name (cdr address))
-               (email (car address))
-               ;; Extract domain parts
-               (domain-parts (split-string (cadr (split-string email "@")) "\\."))
-               ;; Get penultimate part of domain (or last if only one part)
-               (domain-part (if (> (length domain-parts) 1)
-                                (nth (- (length domain-parts) 2) domain-parts)
-                              (car domain-parts)))
-               ;; Convert name to lowercase, keep only letters and spaces
-               (cleaned-name (downcase (replace-regexp-in-string
-                                        "[^a-zA-Z ]" ""
-                                        name)))
-               ;; Replace spaces with dashes
-               (dashed-name (replace-regexp-in-string " +" "-" cleaned-name)))
-          (concat dashed-name "-" domain-part))
-      ;; If no name component, just return the email address
-      (car address)))
-
-  ;; automate adding mail at point to ~/.mailrc
-  (defun dim:mailrc-add-entry (alias)
-    "Read email at point and add it to mail aliases file.
-If ALIAS is empty, generate a default alias based on the name and domain."
-    (interactive
-     (let* ((addr (thing-at-point 'email-address))
-            (default-alias (when addr (dim:generate-default-alias addr))))
-       (list (read-string (format "Alias%s: "
-                                  (if default-alias
-                                      (format " (default %s)" default-alias)
-                                    ""))
-                          nil nil default-alias))))
-    (let ((address (thing-at-point 'email-address))
-          (buffer (find-file-noselect mail-personal-alias-file t)))
-      (when address
-        (with-current-buffer buffer
-          ;; we don't support updating existing alias in the file
-          (save-excursion
-            (goto-char (point-min))
-            (if (search-forward (concat "alias " alias) nil t)
-                (error "Alias %s is already present in .mailrc" alias)))
-
-          (save-current-buffer
-            (save-excursion
-              (goto-char (point-max))
-              (insert (format "\nalias %s \"%s <%s>\""
-                              alias (cdr address) (car address)))))))))
-
-  (require 'mail-parse)
-
-  (defun thing-at-point-bounds-of-email-address ()
-    "Return a cons of begin and end position of email address at point, including full name."
-    (save-excursion
-      (let* ((search-point (point))
-             ;; Look backwards for comma or colon
-             (start (save-excursion
-                      (if (re-search-backward "[:,]" (line-beginning-position) t)
-                          (1+ (point))
-                        (line-beginning-position))))
-             ;; Look forward for comma or colon, but don't include it
-             (end (save-excursion
-                    (goto-char search-point)
-                    (if (re-search-forward "[:,]" (line-end-position) t)
-                        (1- (point))
-                      (line-end-position)))))
-        (cons start end))))
-
-  (defun thing-at-point-email-address ()
-    "return full email address at point"
-    (let* ((bounds (thing-at-point-bounds-of-email-address))
-	          (email-address-text
-	           (when bounds (buffer-substring-no-properties (car bounds) (cdr bounds)))))
-      (mail-header-parse-address email-address-text)))
-
-  (put 'email-address 'bounds-of-thing-at-point 'thing-at-point-bounds-of-email-address)
-  (put 'email-address 'thing-at-point 'thing-at-point-email-address))
+  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode)))
 
 (use-package sendmail
   :ensure nil
@@ -1169,6 +1076,25 @@ If ALIAS is empty, generate a default alias based on the name and domain."
   :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
   :custom
   (message-make-forward-subject-function #'message-forward-subject-fwd))
+
+(use-package czm-mail
+  :repo-scan
+  :after rmail
+  :demand
+  :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil)
+  :bind
+  ("C-c C-@" . czm-mail-mailrc-add-entry)
+  (:map rmail-mode-map
+        ("S" . czm-mail-refile-and-store-link))
+  (:map message-mode-map
+        ("TAB" . czm-mail-message-tab))
+  :custom
+  (czm-mail-refile-file (expand-file-name "scheduled.rmail" my-mail-folder))
+  :config
+  (czm-mail-setup-email-parsing)
+  (advice-add 'read-file-name :around #'czm-mail-read-file-advice)
+  (advice-add #'rmail-header-summary :override #'czm-mail-header-summary))
+
 
 ;;; ai stuff
 
