@@ -25,7 +25,7 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/auctex-cont-latexmk.el][auctex-cont-latexmk.el]] :: run latexmk continuously, report errors via flymake
 - [[https://github.com/ultronozm/auctex-label-numbers.el][auctex-label-numbers.el]] :: numbering for LaTeX previews and folds
 - [[https://github.com/ultronozm/czm-tex-edit.el][czm-tex-edit.el]] :: helper functions for editing LaTeX
-- [[https://github.com/ultronozm/czm-tex-fold.el][czm-tex-fold.el]] :: extensions for tex-fold.el
+- [[https://github.com/ultronozm/czm-tex-fold.el][czm-tex-fold.el]] :: extensions for tex-fold.el (largely subsumed by AUCTeX 14.0.8+)
 - [[https://github.com/ultronozm/czm-tex-jump.el][czm-tex-jump.el]] :: jump to references in a TeX buffer using avy
 - [[https://github.com/ultronozm/czm-tex-mint.el][czm-tex-mint.el]] :: evaluate minted sage blocks in TeX buffers
 - [[https://github.com/ultronozm/czm-tex-ref.el][czm-tex-ref.el]] :: interface for LaTeX labels/citations
@@ -60,7 +60,7 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/outline-skip.el][outline-skip.el]] :: skip certain outline headings
 
 * Building Emacs on MacOS
-I'm using this config with Emacs "30.5", built from source, on MacOS.  To set this up on a fresh machine, I've done something like the following steps:
+I'm using this config with Emacs "31.5", built from source, on MacOS.  To set this up on a fresh machine, I've done something like the following steps:
 - Install Xcode, homebrew and Node.
 - Run the following in a terminal:
 #+begin_src bash
