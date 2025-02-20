@@ -471,12 +471,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (use-package pos-tip
   :defer t)
 
-(use-package go-translate
-  :defer t
-  :config
-  (setq gt-langs '(da en fr de))
-  (setq gt-default-translator (gt-translator :engines (gt-google-engine))))
-
 (use-package rust-mode
   :defer t
   :hook
@@ -738,9 +732,6 @@ Optionally run SETUP-FN after creating the file."
   (global-auto-revert-ignore-modes '(pdf-view-mode))
   (pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
   (pdf-annot-tweak-tooltips nil)
-  :config
-  (pdf-tools-install :no-query)
-  (require 'pdf-occur)
   :bind
   (:map pdf-view-mode-map
         ("j" . pdf-view-jump-to-register)
@@ -749,7 +740,18 @@ Optionally run SETUP-FN after creating the file."
         ("<up>" . nil)
         ("<remap> <scroll-up-command>" . pdf-view-scroll-up-or-next-page)
         ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)
-        ("C-c g" . pdf-view-goto-page)))
+        ("C-c g" . pdf-view-goto-page))
+  :config
+  (pdf-tools-install :no-query)
+  (require 'pdf-occur)
+  (add-to-list 'display-buffer-alist
+               '("\\*Edit Annotation .*\\.pdf\\*"
+                 (display-buffer-reuse-mode-window
+                  display-buffer-in-side-window)
+                 (side . right)
+                 (slot . 0)
+                 (window-width . 0.5)
+                 (reusable-frames . visible))))
 
 (defun my/pdf-annot-setup (_a)
   (LaTeX-mode)
@@ -762,6 +764,18 @@ Optionally run SETUP-FN after creating the file."
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/doc-dual-view.el" :depth nil))
+
+(use-package pdf-extract
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/pdf-extract.el"))
+
+(use-package pdf-tools-org-extract
+  :repo-scan
+  :after pdf-annot
+  :demand
+  :ensure (:host github :repo "ultronozm/pdf-tools-org-extract.el")
+  :bind (:map pdf-view-mode-map
+              ("C-c C-a e" . pdf-tools-org-extract-annotations)))
 
 (use-package typescript-mode
   :ensure t)
@@ -789,6 +803,46 @@ Optionally run SETUP-FN after creating the file."
   :ensure t
   :hook
   (dired-mode . nerd-icons-dired-mode))
+
+;;; translation
+
+(use-package go-translate
+  :defer t
+  :config
+  (setq gt-langs '(da en fr de))
+  (setq gt-default-translator (gt-translator :engines (gt-google-engine))))
+
+(defun gt-eldoc-documentation-function (callback)
+  "Return translation at point via eldoc's callback mechanism."
+  (condition-case nil
+      (let ((translator (clone gt-default-translator)))
+        (oset translator render
+              (lambda (fn)
+                (let (result)
+                  (funcall fn
+                           (lambda (s) (setq result s)))
+                  (when (and callback result)
+                    (funcall callback result
+                             :face 'font-lock-doc-face)))))
+        (gt-start translator))
+    (error nil))
+  nil)
+
+;;;###autoload
+(define-minor-mode gt-eldoc-mode
+  "Minor mode to show translations via eldoc."
+  :lighter " GT-ElDoc"
+  (if gt-eldoc-mode
+      (add-hook 'eldoc-documentation-functions #'gt-eldoc-documentation-function nil t)
+    (remove-hook 'eldoc-documentation-functions #'gt-eldoc-documentation-function t)))
+
+;;;###autoload
+(define-minor-mode gt-eldoc-mode
+  "Minor mode to show translations via eldoc."
+  :lighter " GT-ElDoc"
+  (if gt-eldoc-mode
+      (add-hook 'eldoc-documentation-functions #'gt-eldoc-documentation-function nil t)
+    (remove-hook 'eldoc-documentation-functions #'gt-eldoc-documentation-function t)))
 
 ;;; org
 
@@ -851,12 +905,37 @@ Automatically clean up extra newlines at boundaries."
                       nil nil my/last-src-language)))
   (my/org-insert-block-with-yank "src" language))
 
+(defun czm-org-preview-setup ()
+  "Set up org-mode buffer for use with preview-auto-mode."
+  (setq-local TeX-master my-preview-master)
+  (setq-local preview-tailor-local-multiplier 0.7))
+
+(defvar my/org-tex-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "SPC") 'dynexp-space)
+    (define-key map (kbd "TAB") 'dynexp-next)
+    map)
+  "Keymap for my/org-tex-mode.")
+
+(define-minor-mode my/org-tex-mode
+  "Minor mode for using LaTeX abbrevs in other major modes."
+  :lighter " LaTeXAbbrev"
+  :keymap my/org-tex-mode-map
+  (if my/org-tex-mode
+      ;; When enabling the mode
+      (when (boundp 'LaTeX-mode-abbrev-table)
+        (setq local-abbrev-table LaTeX-mode-abbrev-table))
+    ;; When disabling the mode
+    (setq local-abbrev-table
+          (symbol-value (derived-mode-abbrev-table-name major-mode)))))
+
 (use-package org
   :ensure nil
   :hook
   (org-mode . visual-line-mode)
   (org-mode . (lambda () (setq fill-column 999999)))
   (org-mode . abbrev-mode)
+  (org-mode . czm-org-preview-setup)
   :custom
   (org-hide-emphasis-markers t)
   (org-agenda-custom-commands
@@ -883,7 +962,9 @@ Automatically clean up extra newlines at boundaries."
   (org-agenda-files `(,my-todo-file ,my-projects-file))
   (org-goto-auto-isearch nil)
   (org-agenda-include-diary t)
-  (org-babel-load-languages '((latex . t) (emacs-lisp . t) (python . t)))
+  (org-babel-load-languages '((latex . t) (emacs-lisp . t)
+                              (python . t) (R . t)
+                              (shell . t) (sql . t)))
   (org-babel-python-command "python3")
   (org-confirm-babel-evaluate nil)
   (org-link-elisp-confirm-function nil)
@@ -929,7 +1010,8 @@ Automatically clean up extra newlines at boundaries."
         ("M-{" . org-backward-paragraph)
         ("M-}" . org-forward-paragraph)
         ("C-c C-' e" . my/org-insert-example-with-yank)
-        ("C-c C-' s" . my/org-insert-src-with-yank))
+        ("C-c C-' s" . my/org-insert-src-with-yank)
+        ("H-o" . #'my/org-tex-mode))
   (:repeat-map
    org-paragraph-repeat-map
    ("]" . org-forward-paragraph)
@@ -969,27 +1051,10 @@ Automatically clean up extra newlines at boundaries."
     (define-key org-babel-map key def))
   (add-to-list 'org-speed-commands '("S" . my/org-schedule-and-refile) t)
   (add-to-list 'org-src-lang-modes '("lean" . lean4))
+  (add-to-list 'org-src-lang-modes '("tex" . latex))
   (add-to-list 'org-src-lang-modes '("cmake" . cmake-ts))
+  (add-to-list 'org-src-lang-modes '("yaml" . yaml-ts))
   )
-
-(defvar my/org-tex-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "SPC") 'dynexp-space)
-    (define-key map (kbd "TAB") 'dynexp-next)
-    map)
-  "Keymap for my/org-tex-mode.")
-
-(define-minor-mode my/org-tex-mode
-  "Minor mode for using LaTeX abbrevs in other major modes."
-  :lighter " LaTeXAbbrev"
-  :keymap my/org-tex-mode-map
-  (if my/org-tex-mode
-      ;; When enabling the mode
-      (when (boundp 'LaTeX-mode-abbrev-table)
-        (setq local-abbrev-table LaTeX-mode-abbrev-table))
-    ;; When disabling the mode
-    (setq local-abbrev-table
-          (symbol-value (derived-mode-abbrev-table-name major-mode)))))
 
 (defun my/org-archive-done-tasks ()
   "Archive all done tasks in the current buffer."
@@ -1038,9 +1103,22 @@ Automatically clean up extra newlines at boundaries."
    `((,(expand-file-name "bug-gnu-emacs.rmail" my-mail-folder)
       "sender" "bug-gnu-emacs-bounces")
      (,(expand-file-name "emacs-devel.rmail" my-mail-folder)
-      "sender" "emacs-devel-bounces")))
+      "sender" "emacs-devel-bounces")
+     (,(expand-file-name "arxiv.rmail" my-mail-folder)
+      "subject" "math daily Subj-class mailing"
+      "from" "arXiv\\.org")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "noreply@github.com"
+      "subject" "Payment Receipt")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "invoice+statements@mail.anthropic.com"
+      "subject" "Your receipt from Anthropic")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "googleplay-noreply@google.com"
+      "subject" "Your Google Play Order Receipt")))
   (rmail-secondary-file-directory (file-name-as-directory my-mail-folder))
   (rmail-secondary-file-regexp "^.*\\.rmail$")
+  (rmail-default-file (expand-file-name "scheduled.rmail" my-mail-folder))
   (rmail-remote-password-required t)
   (rmail-remote-password
    (let ((auth-info (car (auth-source-search
@@ -1091,9 +1169,7 @@ Automatically clean up extra newlines at boundaries."
   :custom
   (czm-mail-refile-file (expand-file-name "scheduled.rmail" my-mail-folder))
   :config
-  (czm-mail-setup-email-parsing)
-  (advice-add 'read-file-name :around #'czm-mail-read-file-advice)
-  (advice-add #'rmail-header-summary :override #'czm-mail-header-summary))
+  (czm-mail-setup))
 
 
 ;;; ai stuff
@@ -1110,6 +1186,8 @@ Automatically clean up extra newlines at boundaries."
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
   (lean4-mode . (lambda () (setq tab-width 2)))
   (c++-mode . (lambda () (setq tab-width 4)))
+  (rust-mode . (lambda () (setq tab-width 4)))
+  (sage-shell:sage-mode . (lambda () (setq tab-width 4)))
   :config
   (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
   (copilot--define-accept-completion-by-action
@@ -1261,7 +1339,7 @@ Skips empty days and diary holidays."
                              (concat (substring file-content 0 1000) "...")
                            file-content)))
          (filename-tool
-          (llm-make-tool-function
+          (llm-make-tool
            :function (lambda (callback suggested-name)
                        (funcall callback suggested-name))
            :name "suggest_filename"
@@ -1811,6 +1889,8 @@ The value of `calc-language` is restored after BODY has been processed."
     (with-eval-after-load 'tex-fold
       (dolist (cmd cmds)
         (add-to-list 'TeX-fold-auto-reveal-commands cmd))))
+  (advice-add 'text-scale-adjust :after (lambda (&rest _) (preview-clearout-buffer)))
+  (advice-add 'global-text-scale-adjust :after (lambda (&rest _) (preview-clearout-buffer)))
   :hook
   (LaTeX-mode . my-LaTeX-mode-setup)
   (TeX-mode . prettify-symbols-mode)
@@ -2279,8 +2359,8 @@ The value of `calc-language` is restored after BODY has been processed."
 ;;; lean
 
 (defun czm-set-lean4-local-variables ()
-  (setq preview-tailor-local-multiplier 0.7)
-  (setq TeX-master my-preview-master))
+  (setq-local preview-tailor-local-multiplier 0.7)
+  (setq-local TeX-master my-preview-master))
 
 (use-package lean4-mode
   :repo-scan

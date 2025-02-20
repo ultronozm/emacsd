@@ -86,7 +86,7 @@
    ("s-e" . end-of-list)
    ("s-E" . kill-to-end-of-list)
    ;; s-f
-   ("s-g" . nil)
+   ("s-g" . maximize-window-with-clipboard)
    ("s-h" . nil)
    ("s-H" . nil)
    ("s-i" . find-init-file)
@@ -107,7 +107,7 @@
    ("s-v" . view-mode)
    ("s-w" . nil) ; delete frame
    ("s-x" . nil)
-   ;; "s-y"
+   ("s-y" . replace-buffer-with-clipboard)
    ("s-z" . nil))
   (:map
    emacs-lisp-mode-map
@@ -162,7 +162,8 @@
   (safe-local-variable-values
    '((cmake-build-project-root . "./cpp")
      (checkdoc-minor-mode . t)
-     (eval outline-hide-sublevels 5)))
+     (eval outline-hide-sublevels 5)
+     (eval TeX-run-style-hooks "nla-notes")))
   (diary-comment-start ";;")
   :config
   (put 'upcase-region 'disabled nil)
@@ -383,3 +384,38 @@ DIR must include a .project file to be considered a project."
  :package calendar
  :map calendar-mode-map
  ("<left>" nil) ("<right>" nil) ("<up>" nil) ("<down>" nil))
+
+(defvar maximize-window-mode-history nil
+  "History of major modes used in maximize-window function.")
+
+(defun maximize-window-with-clipboard ()
+  "Create a new tab, split window, paste clipboard, and run ediff.
+Creates a new tab, splits it vertically, creates a new buffer with
+clipboard contents, prompts for major mode, and runs ediff on both
+buffers."
+  (interactive)
+  (let ((original-buffer (current-buffer))
+        (clipboard-contents (current-kill 0))
+        right-window)
+    (delete-other-windows)
+    (setq right-window (split-window-right))
+    (with-selected-window right-window
+      (switch-to-buffer (get-buffer-create "new"))
+      (erase-buffer)
+      (insert clipboard-contents)
+      (let* ((modes (apropos-internal "-mode$" 'commandp))
+             (mode-name (completing-read "Select major mode: "
+                                         modes
+                                         nil t nil
+                                         'maximize-window-mode-history
+                                         (car maximize-window-mode-history)))
+             (mode-function (intern mode-name)))
+        (when (functionp mode-function)
+          (funcall mode-function))))
+    (ediff-buffers original-buffer "new")))
+
+(defun replace-buffer-with-clipboard ()
+  "Erase buffer and replace its contents with clipboard."
+  (interactive)
+  (erase-buffer)
+  (yank))
