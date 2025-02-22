@@ -391,10 +391,11 @@ DIR must include a .project file to be considered a project."
 (defun maximize-window-with-clipboard ()
   "Create a new tab, split window, paste clipboard, and run ediff.
 Creates a new tab, splits it vertically, creates a new buffer with
-clipboard contents, prompts for major mode, and runs ediff on both
-buffers."
+clipboard contents, uses the same major mode as the original buffer,
+and runs ediff on both buffers."
   (interactive)
   (let ((original-buffer (current-buffer))
+        (original-mode major-mode)
         (clipboard-contents (current-kill 0))
         right-window)
     (delete-other-windows)
@@ -403,19 +404,12 @@ buffers."
       (switch-to-buffer (get-buffer-create "new"))
       (erase-buffer)
       (insert clipboard-contents)
-      (let* ((modes (apropos-internal "-mode$" 'commandp))
-             (mode-name (completing-read "Select major mode: "
-                                         modes
-                                         nil t nil
-                                         'maximize-window-mode-history
-                                         (car maximize-window-mode-history)))
-             (mode-function (intern mode-name)))
-        (when (functionp mode-function)
-          (funcall mode-function))))
+      (funcall original-mode))
     (ediff-buffers original-buffer "new")))
 
 (defun replace-buffer-with-clipboard ()
   "Erase buffer and replace its contents with clipboard."
   (interactive)
   (erase-buffer)
-  (yank))
+  (yank)
+  (ediff-current-file))
