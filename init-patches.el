@@ -64,12 +64,13 @@ If not in a fold, acts like `widen'."
                           (if end (1- (marker-position end)) (point-max))))
     (widen)))
 
-(defun bind-key--make-continue-alias (cmd map)
-  "Make an alias for CMD that can continue MAP but not enter it."
-  (intern (concat (symbol-name cmd) "|" (symbol-name map))))
+(when nil ;; patch pending
+  (defun bind-key--make-continue-alias (cmd map)
+    "Make an alias for CMD that can continue MAP but not enter it."
+    (intern (concat (symbol-name cmd) "|" (symbol-name map))))
 
-(defun my-bind-keys-form (args keymap)
-  "Bind multiple keys at once.
+  (defun my-bind-keys-form (args keymap)
+    "Bind multiple keys at once.
 
 Accepts keyword arguments:
 :map MAP               - a keymap into which the keybindings should be
@@ -100,174 +101,174 @@ Accepts keyword arguments:
 
 The rest of the arguments are conses of keybinding string and a
 function symbol (unquoted)."
-  (let (map
-        prefix-doc
-        prefix-map
-        prefix
-        repeat-map
-        repeat-doc
-        repeat-type ;; Only used internally
-        filter
-        menu-name
-        pkg)
+    (let (map
+          prefix-doc
+          prefix-map
+          prefix
+          repeat-map
+          repeat-doc
+          repeat-type ;; Only used internally
+          filter
+          menu-name
+          pkg)
 
-    ;; Process any initial keyword arguments
-    (let ((cont t)
-          (arg-change-func 'cddr))
-      (while (and cont args)
-        (if (cond ((and (eq :map (car args))
-                        (not prefix-map))
-                   (setq map (cadr args)))
-                  ((eq :prefix-docstring (car args))
-                   (setq prefix-doc (cadr args)))
-                  ((and (eq :prefix-map (car args))
-                        (not (memq map '(global-map
-                                         override-global-map))))
-                   (setq prefix-map (cadr args)))
-                  ((eq :repeat-docstring (car args))
-                   (setq repeat-doc (cadr args)))
-                  ((and (eq :repeat-map (car args))
-                        (not (memq map '(global-map
-                                         override-global-map))))
-                   (setq repeat-map (cadr args))
-                   (setq map repeat-map))
-                  ((memq (car args) '(:continue :continue-only :exit))
-                   (setq repeat-type (car args)
-                         arg-change-func 'cdr))
-                  ((eq :prefix (car args))
-                   (setq prefix (cadr args)))
-                  ((eq :filter (car args))
-                   (setq filter (cadr args)) t)
-                  ((eq :menu-name (car args))
-                   (setq menu-name (cadr args)))
-                  ((eq :package (car args))
-                   (setq pkg (cadr args))))
-            (setq args (funcall arg-change-func args))
-          (setq cont nil))))
+      ;; Process any initial keyword arguments
+      (let ((cont t)
+            (arg-change-func 'cddr))
+        (while (and cont args)
+          (if (cond ((and (eq :map (car args))
+                          (not prefix-map))
+                     (setq map (cadr args)))
+                    ((eq :prefix-docstring (car args))
+                     (setq prefix-doc (cadr args)))
+                    ((and (eq :prefix-map (car args))
+                          (not (memq map '(global-map
+                                           override-global-map))))
+                     (setq prefix-map (cadr args)))
+                    ((eq :repeat-docstring (car args))
+                     (setq repeat-doc (cadr args)))
+                    ((and (eq :repeat-map (car args))
+                          (not (memq map '(global-map
+                                           override-global-map))))
+                     (setq repeat-map (cadr args))
+                     (setq map repeat-map))
+                    ((memq (car args) '(:continue :continue-only :exit))
+                     (setq repeat-type (car args)
+                           arg-change-func 'cdr))
+                    ((eq :prefix (car args))
+                     (setq prefix (cadr args)))
+                    ((eq :filter (car args))
+                     (setq filter (cadr args)) t)
+                    ((eq :menu-name (car args))
+                     (setq menu-name (cadr args)))
+                    ((eq :package (car args))
+                     (setq pkg (cadr args))))
+              (setq args (funcall arg-change-func args))
+            (setq cont nil))))
 
-    (when (or (and prefix-map (not prefix))
-              (and prefix (not prefix-map)))
-      (error "Both :prefix-map and :prefix must be supplied"))
+      (when (or (and prefix-map (not prefix))
+                (and prefix (not prefix-map)))
+        (error "Both :prefix-map and :prefix must be supplied"))
 
-    (when repeat-type
-      (unless repeat-map
-        (error ":continue(-only) and :exit require specifying :repeat-map")))
+      (when repeat-type
+        (unless repeat-map
+          (error ":continue(-only) and :exit require specifying :repeat-map")))
 
-    (when (and menu-name (not prefix))
-      (error "If :menu-name is supplied, :prefix must be too"))
+      (when (and menu-name (not prefix))
+        (error "If :menu-name is supplied, :prefix must be too"))
 
-    (unless map (setq map keymap))
+      (unless map (setq map keymap))
 
-    ;; Process key binding arguments
-    (let (first next)
-      (while args
-        (if (keywordp (car args))
-            (progn
-              (setq next args)
-              (setq args nil))
-          (if first
-              (nconc first (list (car args)))
-            (setq first (list (car args))))
-          (setq args (cdr args))))
+      ;; Process key binding arguments
+      (let (first next)
+        (while args
+          (if (keywordp (car args))
+              (progn
+                (setq next args)
+                (setq args nil))
+            (if first
+                (nconc first (list (car args)))
+              (setq first (list (car args))))
+            (setq args (cdr args))))
 
-      (cl-flet
-          ((wrap (map bindings)
-             (if (and map pkg (not (memq map '(global-map
-                                               override-global-map))))
-                 `((if (boundp ',map)
-                       ,(macroexp-progn bindings)
-                     (eval-after-load
-                         ,(if (symbolp pkg) `',pkg pkg)
-                       ',(macroexp-progn bindings))))
-               bindings)))
+        (cl-flet
+            ((wrap (map bindings)
+               (if (and map pkg (not (memq map '(global-map
+                                                 override-global-map))))
+                   `((if (boundp ',map)
+                         ,(macroexp-progn bindings)
+                       (eval-after-load
+                           ,(if (symbolp pkg) `',pkg pkg)
+                         ',(macroexp-progn bindings))))
+                 bindings)))
 
-        (append
-         (when prefix-map
-           `((defvar ,prefix-map)
-             ,@(when prefix-doc `((put ',prefix-map 'variable-documentation ,prefix-doc)))
-             ,@(if menu-name
-                   `((define-prefix-command ',prefix-map nil ,menu-name))
-                 `((define-prefix-command ',prefix-map)))
-             ,@(if (and map (not (eq map 'global-map)))
-                   (wrap map `((bind-key ,prefix ',prefix-map ,map ,filter)))
-                 `((bind-key ,prefix ',prefix-map nil ,filter)))))
-         (when repeat-map
-           `((defvar ,repeat-map (make-sparse-keymap)
-               ,@(when repeat-doc `(,repeat-doc)))))
-         (wrap map
-               (cl-mapcan
-                (lambda (form)
-                  (let ((fun (and (cdr form) (list 'function (cdr form)))))
-                    (if prefix-map
-                        `((bind-key ,(car form) ,fun ,prefix-map ,filter))
-                      (if (and map (not (eq map 'global-map)))
-                          ;; Only needed in this branch, since when
-                          ;; repeat-map is non-nil, map is always
-                          ;; non-nil
-                          (if (eq repeat-type :continue-only)
-                              (let ((alias (bind-key--make-continue-alias (cdr form) map)))
-                                `((defalias ',alias ,fun)
-                                  (put ',alias 'repeat-map ',map)
-                                  (bind-key ,(car form) ',alias ,map ,filter)))
-                            `(,@(when (and repeat-map (not (eq repeat-type :exit)))
-                                  `((put ,fun 'repeat-map ',repeat-map)))
-                              (bind-key ,(car form) ,fun ,map ,filter)))
-                        `((bind-key ,(car form) ,fun nil ,filter))))))
-                first))
-         (when next
-           (bind-keys-form `(,@(when repeat-map `(:repeat-map ,repeat-map))
-                             ,@(if pkg
-                                   (cons :package (cons pkg next))
-                                 next)) map)))))))
+          (append
+           (when prefix-map
+             `((defvar ,prefix-map)
+               ,@(when prefix-doc `((put ',prefix-map 'variable-documentation ,prefix-doc)))
+               ,@(if menu-name
+                     `((define-prefix-command ',prefix-map nil ,menu-name))
+                   `((define-prefix-command ',prefix-map)))
+               ,@(if (and map (not (eq map 'global-map)))
+                     (wrap map `((bind-key ,prefix ',prefix-map ,map ,filter)))
+                   `((bind-key ,prefix ',prefix-map nil ,filter)))))
+           (when repeat-map
+             `((defvar ,repeat-map (make-sparse-keymap)
+                 ,@(when repeat-doc `(,repeat-doc)))))
+           (wrap map
+                 (cl-mapcan
+                  (lambda (form)
+                    (let ((fun (and (cdr form) (list 'function (cdr form)))))
+                      (if prefix-map
+                          `((bind-key ,(car form) ,fun ,prefix-map ,filter))
+                        (if (and map (not (eq map 'global-map)))
+                            ;; Only needed in this branch, since when
+                            ;; repeat-map is non-nil, map is always
+                            ;; non-nil
+                            (if (eq repeat-type :continue-only)
+                                (let ((alias (bind-key--make-continue-alias (cdr form) map)))
+                                  `((defalias ',alias ,fun)
+                                    (put ',alias 'repeat-map ',map)
+                                    (bind-key ,(car form) ',alias ,map ,filter)))
+                              `(,@(when (and repeat-map (not (eq repeat-type :exit)))
+                                    `((put ,fun 'repeat-map ',repeat-map)))
+                                (bind-key ,(car form) ,fun ,map ,filter)))
+                          `((bind-key ,(car form) ,fun nil ,filter))))))
+                  first))
+           (when next
+             (bind-keys-form `(,@(when repeat-map `(:repeat-map ,repeat-map))
+                               ,@(if pkg
+                                     (cons :package (cons pkg next))
+                                   next)) map)))))))
 
-(advice-add #'bind-keys-form :override #'my-bind-keys-form)
+  (advice-add #'bind-keys-form :override #'my-bind-keys-form)
 
-(require 'use-package-bind-key)
+  (require 'use-package-bind-key)
 
-(defun use-package-normalize-binder (name keyword args)
-  (let ((arg args)
-        args*)
-    (while arg
-      (let ((x (car arg)))
-        (cond
-         ;; (KEY . COMMAND)
-         ((and (consp x)
-               (or (stringp (car x))
-                   (vectorp (car x)))
-               (or (use-package-recognize-function (cdr x) t #'stringp)))
-          (setq args* (nconc args* (list x)))
-          (setq arg (cdr arg)))
-         ;; KEYWORD
-         ;;   :map KEYMAP
-         ;;   :prefix-docstring STRING
-         ;;   :prefix-map SYMBOL
-         ;;   :prefix STRING
-	        ;;   :repeat-docstring STRING
-         ;;   :repeat-map SYMBOL
-         ;;   :filter SEXP
-         ;;   :menu-name STRING
-         ;;   :package SYMBOL
-	        ;;   :continue(-only) and :exit are used within :repeat-map
-         ((or (and (eq x :map) (symbolp (cadr arg)))
-              (and (eq x :prefix) (stringp (cadr arg)))
-              (and (eq x :prefix-map) (symbolp (cadr arg)))
-              (and (eq x :prefix-docstring) (stringp (cadr arg)))
-	             (and (eq x :repeat-map) (symbolp (cadr arg)))
-	             (memq x '(:continue :continue-only :exit))
-              (and (eq x :repeat-docstring) (stringp (cadr arg)))
-              (eq x :filter)
-              (and (eq x :menu-name) (stringp (cadr arg)))
-              (and (eq x :package) (symbolp (cadr arg))))
-          (setq args* (nconc args* (list x (cadr arg))))
-          (setq arg (cddr arg)))
-         ((listp x)
-          (setq args*
-                (nconc args* (use-package-normalize-binder name keyword x)))
-          (setq arg (cdr arg)))
-         (t
-          ;; Error!
-          (use-package-error
-           (concat (symbol-name name)
-                   " wants arguments acceptable to the `bind-keys' macro,"
-                   " or a list of such values"))))))
-    args*))
+  (defun use-package-normalize-binder (name keyword args)
+    (let ((arg args)
+          args*)
+      (while arg
+        (let ((x (car arg)))
+          (cond
+           ;; (KEY . COMMAND)
+           ((and (consp x)
+                 (or (stringp (car x))
+                     (vectorp (car x)))
+                 (or (use-package-recognize-function (cdr x) t #'stringp)))
+            (setq args* (nconc args* (list x)))
+            (setq arg (cdr arg)))
+           ;; KEYWORD
+           ;;   :map KEYMAP
+           ;;   :prefix-docstring STRING
+           ;;   :prefix-map SYMBOL
+           ;;   :prefix STRING
+	          ;;   :repeat-docstring STRING
+           ;;   :repeat-map SYMBOL
+           ;;   :filter SEXP
+           ;;   :menu-name STRING
+           ;;   :package SYMBOL
+	          ;;   :continue(-only) and :exit are used within :repeat-map
+           ((or (and (eq x :map) (symbolp (cadr arg)))
+                (and (eq x :prefix) (stringp (cadr arg)))
+                (and (eq x :prefix-map) (symbolp (cadr arg)))
+                (and (eq x :prefix-docstring) (stringp (cadr arg)))
+	               (and (eq x :repeat-map) (symbolp (cadr arg)))
+	               (memq x '(:continue :continue-only :exit))
+                (and (eq x :repeat-docstring) (stringp (cadr arg)))
+                (eq x :filter)
+                (and (eq x :menu-name) (stringp (cadr arg)))
+                (and (eq x :package) (symbolp (cadr arg))))
+            (setq args* (nconc args* (list x (cadr arg))))
+            (setq arg (cddr arg)))
+           ((listp x)
+            (setq args*
+                  (nconc args* (use-package-normalize-binder name keyword x)))
+            (setq arg (cdr arg)))
+           (t
+            ;; Error!
+            (use-package-error
+             (concat (symbol-name name)
+                     " wants arguments acceptable to the `bind-keys' macro,"
+                     " or a list of such values"))))))
+      args*)))

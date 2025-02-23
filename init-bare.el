@@ -14,6 +14,8 @@
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
+;(load '~/gnu-emacs/lisp/repeat.el')
+
 (use-package emacs
   :ensure nil
   :bind
@@ -103,7 +105,7 @@
    ("s-p" . outline-previous-heading)
    ("s-q" . bury-buffer)
    ("s-s" . save-buffer)
-   ("s-u" . nil)
+   ("s-u" . nil) ; content-quoter-dwim
    ("s-v" . view-mode)
    ("s-w" . nil) ; delete frame
    ("s-x" . nil)
@@ -390,22 +392,43 @@ DIR must include a .project file to be considered a project."
 
 (defun maximize-window-with-clipboard ()
   "Create a new tab, split window, paste clipboard, and run ediff.
-Creates a new tab, splits it vertically, creates a new buffer with
-clipboard contents, uses the same major mode as the original buffer,
-and runs ediff on both buffers."
+If region is active, narrows to the region in an indirect buffer first.
+Otherwise, uses the whole buffer.  Creates a new tab, splits it vertically,
+creates a new buffer with clipboard contents, uses the same major mode as
+the original buffer, and runs ediff on both buffers."
   (interactive)
-  (let ((original-buffer (current-buffer))
-        (original-mode major-mode)
-        (clipboard-contents (current-kill 0))
-        right-window)
+  (let* ((original-buffer (current-buffer))
+         (original-mode major-mode)
+         (clipboard-contents (current-kill 0))
+         (region-active (use-region-p))
+         (region-beginning (when region-active (region-beginning)))
+         (region-end (when region-active (region-end)))
+         (indirect-buffer (when region-active
+                            (deactivate-mark)
+                            (make-indirect-buffer original-buffer
+                                                  (generate-new-buffer-name
+                                                   (concat (buffer-name) "-region"))
+                                                  t)))
+         (source-buffer (or indirect-buffer original-buffer))
+         (new-buffer (generate-new-buffer "*clipboard-compare*")))
+    (tab-new)
+    (when indirect-buffer
+      (switch-to-buffer indirect-buffer)
+      (narrow-to-region region-beginning region-end))
     (delete-other-windows)
-    (setq right-window (split-window-right))
-    (with-selected-window right-window
-      (switch-to-buffer (get-buffer-create "new"))
-      (erase-buffer)
-      (insert clipboard-contents)
-      (funcall original-mode))
-    (ediff-buffers original-buffer "new")))
+    (let ((right-window (split-window-right)))
+      (with-selected-window right-window
+        (switch-to-buffer new-buffer)
+        (insert clipboard-contents)
+        (funcall original-mode))
+      (let ((ediff-buf (ediff-buffers source-buffer new-buffer))
+            (cleanup-function (lambda ()
+                                (when indirect-buffer
+                                  (kill-buffer indirect-buffer))
+                                (kill-buffer new-buffer)
+                                (tab-bar-close-tab))))
+        (with-current-buffer ediff-buf
+          (add-hook 'ediff-quit-hook cleanup-function nil t))))))
 
 (defun replace-buffer-with-clipboard ()
   "Erase buffer and replace its contents with clipboard."
@@ -413,3 +436,4 @@ and runs ediff on both buffers."
   (erase-buffer)
   (yank)
   (ediff-current-file))
+

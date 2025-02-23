@@ -495,40 +495,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
    emacs-lisp-mode-map
    (";" . czm-lispy-comment-maybe)
    ("M-1" . lispy-describe-inline)
-   ("M-2" . lispy-arglist-inline))
-  (:repeat-map
-   structural-edit-map
-   ("n" . forward-list)
-   ("p" . backward-list)
-   ("u" . backward-up-list)
-   ("M-u" . up-list)
-   ("g" . down-list)
-   :continue-only
-   ("M-g" . backward-down-list)
-   ("f" . forward-sexp)
-   ("b" . backward-sexp)
-   ("a" . beginning-of-defun)
-   ("e" . end-of-defun)
-   ("k" . kill-sexp)
-   ("x" . eval-last-sexp)
-   ("m" . lispy-multiline)
-   ("j" . lispy-split)
-   ("+" . lispy-join)
-   (">" . lispy-slurp-or-barf-right)
-   ("<" . lispy-slurp-or-barf-left)
-   ("C-/" . undo)
-   ("/" . lispy-splice)
-   (";" . lispy-comment)
-   ("t" . transpose-sexps)
-   ("w" . kill-region)
-   ("M-w" . kill-ring-save)
-   ("y" . yank)
-   ("c" . lispy-clone)
-   ("C-M-SPC" . mark-sexp)
-   ("RET" . newline-and-indent)
-   ("i" . lispy-tab)
-   ("<up>" . lispy-move-up)
-   ("<down>" . lispy-move-down)))
+   ("M-2" . lispy-arglist-inline)))
 
 (defun czm-edebug-eval-hook ()
   (dolist (cmd '(lispy-mode copilot-mode aggressive-indent-mode))
@@ -721,6 +688,35 @@ Optionally run SETUP-FN after creating the file."
   ;; :after latex
   :bind ("s-;" . czm-spell-then-abbrev))
 
+(use-package typescript-mode
+  :ensure t)
+
+(use-package julia-ts-mode
+  :ensure (:host github :repo "dhanak/julia-ts-mode"
+                 :depth nil)
+  :mode "\\.jl$")
+
+(use-package eglot-jl
+  :defer t
+  :config
+  (eglot-jl-init))
+
+(use-package nerd-icons
+  :ensure t)
+
+(use-package nerd-icons-completion
+  :ensure t
+  :after marginalia
+  :config
+  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+
+(use-package nerd-icons-dired
+  :ensure t
+  :hook
+  (dired-mode . nerd-icons-dired-mode))
+
+;;; pdf
+
 (use-package doc-view
   :ensure nil
   :bind (:map doc-view-mode-map ("C-c g" . doc-view-goto-page)))
@@ -777,32 +773,56 @@ Optionally run SETUP-FN after creating the file."
   :bind (:map pdf-view-mode-map
               ("C-c C-a e" . pdf-tools-org-extract-annotations)))
 
-(use-package typescript-mode
-  :ensure t)
+(define-minor-mode global-pdf-view-midnight-minor-mode
+  "Toggle PDF-View-Midnight mode in all PDF buffers.
+When enabled, automatically turns on `pdf-view-midnight-minor-mode'
+in all current and future PDF buffers."
+  :global t
+  :init-value nil
+  (cond
+   (global-pdf-view-midnight-minor-mode
+    (progn
+      (dolist (buf (buffer-list))
+        (with-current-buffer buf
+          (when (derived-mode-p 'pdf-view-mode)
+            (pdf-view-midnight-minor-mode 1))))
+      (add-hook 'pdf-view-mode-hook #'pdf-view-midnight-minor-mode)))
+   (t
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+        (when (derived-mode-p 'pdf-view-mode)
+          (pdf-view-midnight-minor-mode -1))))
+    (remove-hook 'pdf-view-mode-hook #'pdf-view-midnight-minor-mode))))
 
-(use-package julia-ts-mode
-  :ensure (:host github :repo "dhanak/julia-ts-mode"
-                 :depth nil)
-  :mode "\\.jl$")
+;;; themes
 
-(use-package eglot-jl
-  :defer t
+(use-package modus-themes
+  :demand t
+  :hook (modus-themes-post-load . czm-set-face-heights)
   :config
-  (eglot-jl-init))
+  (defvar czm--modus-vivendi-tinted-active nil)
+  (czm-set-face-heights)
+  :bind ("H-t" . czm-toggle-dark-mode))
 
-(use-package nerd-icons
-  :ensure t)
-
-(use-package nerd-icons-completion
-  :ensure t
-  :after marginalia
-  :config
-  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
-
-(use-package nerd-icons-dired
-  :ensure t
-  :hook
-  (dired-mode . nerd-icons-dired-mode))
+(defun czm-toggle-dark-mode ()
+  "Toggle between light and dark modes.
+In dark mode:
+- Uses modus-vivendi-tinted theme
+- Enables dark mode for PDF viewing
+In light mode:
+- Uses default Emacs theme
+- Disables dark mode for PDF viewing"
+  (interactive)
+  (if czm--modus-vivendi-tinted-active
+      (progn
+        (disable-theme 'modus-vivendi-tinted)
+        (global-pdf-view-midnight-minor-mode -1)
+        (setq czm--modus-vivendi-tinted-active nil))
+    (disable-theme 'modus-vivendi-tinted)
+    (load-theme 'modus-vivendi-tinted t)
+    (global-pdf-view-midnight-minor-mode 1)
+    (setq czm--modus-vivendi-tinted-active t))
+  (czm-set-face-heights))
 
 ;;; translation
 
@@ -964,7 +984,8 @@ Automatically clean up extra newlines at boundaries."
   (org-agenda-include-diary t)
   (org-babel-load-languages '((latex . t) (emacs-lisp . t)
                               (python . t) (R . t)
-                              (shell . t) (sql . t)))
+                              (shell . t) (sql . t)
+                              (sage . t)))
   (org-babel-python-command "python3")
   (org-confirm-babel-evaluate nil)
   (org-link-elisp-confirm-function nil)
@@ -1322,6 +1343,7 @@ Skips empty days and diary holidays."
   :repo-scan
   :ensure (:host github :repo "ultronozm/content-quoter.el"
                  :depth nil)
+  :bind ("s-u" . content-quoter-dwim)
   :defer t)
 
 (defun ai-org-chat-suggest-better-filename ()
@@ -2286,6 +2308,48 @@ The value of `calc-language` is restored after BODY has been processed."
 
 ;;; sage
 
+(defun project-sage ()
+  "Start a Sage REPL in the current project's root directory.
+If a buffer already exists for running Sage in the project's root,
+switch to it. Otherwise, create a new Sage buffer.
+With numeric prefix arg N, switch to session N or create it if it doesn't exist.
+With \\[universal-argument] prefix arg, create a new session."
+  (interactive)
+  (require 'sage-shell-mode)
+  (let* ((default-directory (project-root (project-current t)))
+         (num (and (numberp current-prefix-arg) current-prefix-arg))
+         (new (and current-prefix-arg (not num)))
+         (base-name (project-prefixed-buffer-name "sage"))
+         (default-project-sage-name 
+          (if num
+              (concat (substring base-name 0 -1) ;; remove last "*"
+                      (format "<%d>*" num))
+            base-name))
+         (sage-buffer (get-buffer default-project-sage-name)))
+    (if (and sage-buffer (not new))
+        (if (get-buffer-process sage-buffer)
+            (pop-to-buffer sage-buffer (append display-buffer--same-window-action
+                                               '((category . comint))))
+          ;; Run Sage in existing buffer
+          (sage-shell:run (sage-shell:read-command) 
+                          nil  ; not new
+                          :switch-function 'pop-to-buffer
+                          :buffer-name (buffer-name sage-buffer)))
+      ;; Create new buffer
+      (sage-shell:run (sage-shell:read-command)
+                      t    ; new buffer
+                      :switch-function 'pop-to-buffer
+                      :buffer-name (generate-new-buffer-name default-project-sage-name)))))
+
+(defun sage-shell:pop-to-or-create-session ()
+  "Pop to an existing Sage process buffer if it exists, otherwise create a new Sage session."
+  (interactive)
+  (if (and sage-shell:process-buffer 
+           (buffer-live-p sage-shell:process-buffer)
+           (get-buffer-process sage-shell:process-buffer))
+      (sage-shell-edit:pop-to-process-buffer)
+    (sage-shell:run-sage (sage-shell:read-command))))
+
 (use-package sage-shell-mode
   :defer t
   :custom
@@ -2295,8 +2359,13 @@ The value of `calc-language` is restored after BODY has been processed."
   (sage-shell:sage-executable my-sage-exe)
   (sage-shell:check-ipython-version-on-startup nil)
   :bind
+  (:map global-map
+        ("C-z s" . sage-shell:pop-to-or-create-session)
+        ("C-x p S" . project-sage))
   (:map sage-shell-mode-map ("C-c n" . czm-sage-worksheet))
-  (:map sage-shell:sage-mode-map ("C-c n" . czm-sage-worksheet))
+  (:map sage-shell:sage-mode-map
+        ("C-c n" . czm-sage-worksheet)
+        ("C-c C-a" . sage-shell-edit:attach-buffer))
   :hook
   ((sage-shell-mode sage-shell:sage-mode) . eldoc-mode)
   (sage-shell-after-prompt . sage-shell-view-mode))
