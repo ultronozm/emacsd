@@ -2308,47 +2308,27 @@ The value of `calc-language` is restored after BODY has been processed."
 
 ;;; sage
 
-(defun project-sage ()
-  "Start a Sage REPL in the current project's root directory.
-If a buffer already exists for running Sage in the project's root,
-switch to it. Otherwise, create a new Sage buffer.
-With numeric prefix arg N, switch to session N or create it if it doesn't exist.
-With \\[universal-argument] prefix arg, create a new session."
+(defun sage-shell-edit:attach-buffer ()
+  "Attach the contents of the current buffer to the Sage process."
   (interactive)
-  (require 'sage-shell-mode)
-  (let* ((default-directory (project-root (project-current t)))
-         (num (and (numberp current-prefix-arg) current-prefix-arg))
-         (new (and current-prefix-arg (not num)))
-         (base-name (project-prefixed-buffer-name "sage"))
-         (default-project-sage-name 
-          (if num
-              (concat (substring base-name 0 -1) ;; remove last "*"
-                      (format "<%d>*" num))
-            base-name))
-         (sage-buffer (get-buffer default-project-sage-name)))
-    (if (and sage-buffer (not new))
-        (if (get-buffer-process sage-buffer)
-            (pop-to-buffer sage-buffer (append display-buffer--same-window-action
-                                               '((category . comint))))
-          ;; Run Sage in existing buffer
-          (sage-shell:run (sage-shell:read-command) 
-                          nil  ; not new
-                          :switch-function 'pop-to-buffer
-                          :buffer-name (buffer-name sage-buffer)))
-      ;; Create new buffer
-      (sage-shell:run (sage-shell:read-command)
-                      t    ; new buffer
-                      :switch-function 'pop-to-buffer
-                      :buffer-name (generate-new-buffer-name default-project-sage-name)))))
+  (let ((bfn (buffer-file-name)))
+    (cond ((and bfn (not (buffer-modified-p)))
+           (sage-shell-edit:attach-file bfn))
+          (t (sage-shell-edit:send--buffer)))))
 
-(defun sage-shell:pop-to-or-create-session ()
-  "Pop to an existing Sage process buffer if it exists, otherwise create a new Sage session."
-  (interactive)
-  (if (and sage-shell:process-buffer 
-           (buffer-live-p sage-shell:process-buffer)
-           (get-buffer-process sage-shell:process-buffer))
-      (sage-shell-edit:pop-to-process-buffer)
-    (sage-shell:run-sage (sage-shell:read-command))))
+(defun sage-shell:pop-to-or-create-session (&optional arg)
+  "Pop to a Sage session or create one.
+With numeric prefix ARG, use a numbered buffer (e.g. C-1, C-2, etc).
+Without ARG, use or create the default Sage buffer."
+  (interactive "P")
+  (let* ((num (and (numberp arg) arg))
+         (buffer-name (sage-shell:-shell-buffer-name num))
+         (buffer (get-buffer buffer-name)))
+    (if (and buffer (get-buffer-process buffer))
+        (pop-to-buffer buffer)
+      (sage-shell:run (sage-shell:read-command) 
+                      num  ; new buffer if num non-nil
+                      :buffer-name buffer-name))))
 
 (use-package sage-shell-mode
   :defer t
@@ -2360,8 +2340,7 @@ With \\[universal-argument] prefix arg, create a new session."
   (sage-shell:check-ipython-version-on-startup nil)
   :bind
   (:map global-map
-        ("C-z s" . sage-shell:pop-to-or-create-session)
-        ("C-x p S" . project-sage))
+        ("C-z s" . sage-shell:pop-to-or-create-session))
   (:map sage-shell-mode-map ("C-c n" . czm-sage-worksheet))
   (:map sage-shell:sage-mode-map
         ("C-c n" . czm-sage-worksheet)
@@ -2519,3 +2498,5 @@ With \\[universal-argument] prefix arg, create a new session."
 (let ((file (locate-user-emacs-file "init-personal.el")))
   (when (file-exists-p file)
     (load file)))
+
+
