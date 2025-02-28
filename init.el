@@ -1914,6 +1914,16 @@ The value of `calc-language` is restored after BODY has been processed."
   (setq fill-column 999999)
   (czm-setup-and-activate-tex-fold))
 
+(defun my-TeX-view-master ()
+  "View the entire TeX document, ignoring any active region.
+Unlike `TeX-view', this command always views the master file,
+even if you've recently performed operations on a region.
+This is useful when you want to ensure you're viewing the
+complete document rather than just a previewed region."
+  (interactive)
+  (let ((TeX-current-process-region-p nil))
+    (call-interactively #'TeX-view)))
+
 (use-package latex
   :ensure (auctex
            :host nil :repo "https://git.savannah.gnu.org/git/auctex.git"
@@ -1961,7 +1971,8 @@ The value of `calc-language` is restored after BODY has been processed."
         ([remap next-error])
         ([remap previous-error])
         ("M-n" . next-error)
-        ("M-p" . previous-error))
+        ("M-p" . previous-error)
+        ("C-c C-v" . my-TeX-view-master))
   :custom
   (TeX-auto-save t)
   (TeX-parse-self t)
