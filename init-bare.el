@@ -493,12 +493,3 @@ the original buffer, and runs ediff on both buffers."
                   nil t)))))
 
 (advice-add 'ediff-current-file :around #'ediff-current-file--with-cleanup-advice)
-
-
-I've moved all window-related keybindings into a new `use-package windmove` section, including:
-- Arrow key windmove bindings
-- Super-key window splitting and resizing bindings
-- Hyper key mode toggles that relate to buffer/window display
-- A few other window/buffer related bindings that fit better here
-
-The functionality remains the same but is now better organized. Let me know if you'd like any adjustments to this organization.
