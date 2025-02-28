@@ -1219,12 +1219,12 @@ Automatically clean up extra newlines at boundaries."
   (:map rmail-mode-map
         ("S" . czm-mail-refile-and-store-link))
   (:map message-mode-map
-        ("TAB" . czm-mail-message-tab))
+        ("TAB" . czm-mail-message-tab)
+        ("C-c C-a" . czm-mail-insert-diff-as-attachment))
   :custom
   (czm-mail-refile-file (expand-file-name "scheduled.rmail" my-mail-folder))
   :config
   (czm-mail-setup))
-
 
 ;;; ai stuff
 
