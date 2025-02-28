@@ -1302,7 +1302,7 @@ Automatically clean up extra newlines at boundaries."
   (ai-org-chat-content-wrapper #'ai-org-chat--wrap-xml)
   :config
   (require 'exec-path-from-shell)
-  (ai-org-chat-select-model "sonnet 3.5"))
+  (ai-org-chat-select-model "sonnet 3.7"))
 
 ;; I use the following functions to provide context to ai-org-chat
 
