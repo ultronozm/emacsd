@@ -2359,7 +2359,7 @@ Without ARG, use or create the default Sage buffer."
          (buffer (get-buffer buffer-name)))
     (if (and buffer (get-buffer-process buffer))
         (pop-to-buffer buffer)
-      (sage-shell:run (sage-shell:read-command) 
+      (sage-shell:run (sage-shell:read-command)
                       num  ; new buffer if num non-nil
                       :buffer-name buffer-name))))
 
@@ -2529,7 +2529,9 @@ Without ARG, use or create the default Sage buffer."
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
 
 (let ((file (locate-user-emacs-file "init-personal.el")))
-  (when (file-exists-p file)
-    (load file)))
+(when (file-exists-p file)
+  (load file)))
 
 
+(use-package markdown-ts-mode)
+(add-to-list 'major-mode-remap-defaults '(markdown-mode))
