@@ -425,7 +425,7 @@ the original buffer, and runs ediff on both buffers."
             (cleanup-function (lambda ()
                                 (when indirect-buffer
                                   (kill-buffer indirect-buffer))
-                                (kill-buffer new-buffer)
+                                ;; (kill-buffer new-buffer)
                                 (tab-bar-close-tab))))
         (with-current-buffer ediff-buf
           (add-hook 'ediff-quit-hook cleanup-function nil t))))))
