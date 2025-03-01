@@ -14,8 +14,6 @@
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
-;(load '~/gnu-emacs/lisp/repeat.el')
-
 (use-package emacs
   :ensure nil
   :bind
