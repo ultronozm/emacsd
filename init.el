@@ -748,6 +748,26 @@ Optionally run SETUP-FN after creating the file."
   :hook
   (dired-mode . nerd-icons-dired-mode))
 
+;; (use-package markdown-ts-mode)
+(add-to-list 'major-mode-remap-defaults '(markdown-mode))
+
+(use-package vterm
+  :config
+  (defun project-claude-code ()
+    "Start vterm in the current project's root and run the 'claude' program."
+    (interactive)
+    (let* ((pr (project-current t))
+           (default-directory (project-root pr))
+           (default-project-shell-name (project-prefixed-buffer-name "claude")))
+      (if (get-buffer default-project-shell-name)
+          (pop-to-buffer default-project-shell-name (append display-buffer--same-window-action
+                                                            '((category . comint))))
+        (let ((vterm-buffer-name default-project-shell-name))
+          (vterm)
+          (vterm-send-string "claude\n")))))
+  :bind (:map project-prefix-map
+              ("l" . project-claude-code)))
+
 ;;; pdf
 
 (use-package doc-view
@@ -2540,9 +2560,5 @@ Without ARG, use or create the default Sage buffer."
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
 
 (let ((file (locate-user-emacs-file "init-personal.el")))
-(when (file-exists-p file)
-  (load file)))
-
-
-(use-package markdown-ts-mode)
-(add-to-list 'major-mode-remap-defaults '(markdown-mode))
+  (when (file-exists-p file)
+    (load file)))
