@@ -2335,6 +2335,8 @@ complete document rather than just a previewed region."
   (when TeX-fold-mode
     (save-excursion
       ;; Move to the beginning of the newly inserted macro
+      (when (looking-at "}")
+        (forward-char))
       (when (looking-back "[{}]" (- (point) 1))
         (backward-sexp))
       (let ((macro-start (point)))
