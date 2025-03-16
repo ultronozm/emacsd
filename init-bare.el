@@ -229,25 +229,12 @@ This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
         (backward-down-list))
     (error (message "No inner list found."))))
 
-(defun end-of-list ()
-  "Move to the end of the current list."
-  (interactive)
-  (let ((last (point))
-        (continue t))
-    (while continue
-      (condition-case nil
-          (progn
-            (forward-sexp)
-            (when (<= (point) last)
-              (setq continue nil)))
-        (scan-error
-         (setq continue nil)))
-      (setq last (point)))))
-
 (defun beginning-of-list ()
-  "Move to the beginning of the current list."
+  "Move to the beginning of the current list.
+Pushes a mark at the starting position."
   (interactive)
-  (let ((last (point))
+  (let ((origin (point))
+        (last (point))
         (continue t))
     (while continue
       (condition-case nil
@@ -257,7 +244,29 @@ This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
               (setq continue nil)))
         (scan-error
          (setq continue nil)))
-      (setq last (point)))))
+      (setq last (point)))
+    (unless (= origin (point))
+      (push-mark origin t))))
+
+(defun end-of-list ()
+  "Move to the end of the current list.
+Pushes a mark at the starting position."
+  (interactive)
+  (let ((origin (point))
+        (last (point))
+        (continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (forward-sexp)
+            (when (<= (point) last)
+              (setq continue nil)))
+        (scan-error
+         (setq continue nil)))
+      (setq last (point)))
+    (unless (= origin (point))
+      (push-mark origin t))))
+
 
 (defun kill-to-end-of-list ()
   "Kill text between point and end of current list."
