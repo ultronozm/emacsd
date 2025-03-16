@@ -2628,3 +2628,10 @@ Without ARG, use or create the default Sage buffer."
 (let ((file (locate-user-emacs-file "init-personal.el")))
   (when (file-exists-p file)
     (load file)))
+
+(use-package codel
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/codel.el" :depth nil)
+  :config
+  (with-eval-after-load 'ai-org-chat
+    (codel-setup-ai-org-chat)))
