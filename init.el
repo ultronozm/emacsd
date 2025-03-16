@@ -1889,9 +1889,8 @@ The value of `calc-language` is restored after BODY has been processed."
      ("{\\oe}" . ?œ)
      ("{\\OE}" . ?Œ)
      
-     ;; New entries from the second list
-     ("``" . ?")
-     ("''" . ?")
+     ("``" . ?“)
+     ("''" . ?”)
      ("\\begin{equation*}" . ?↴)
      ("\\begin{equation}" . ?↴)
      ("\\end{equation*}" . ?↲)
