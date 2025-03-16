@@ -430,6 +430,7 @@ the original buffer, and runs ediff on both buffers."
         (funcall original-mode))
       (let ((ediff-buf (ediff-buffers source-buffer new-buffer))
             (cleanup-function (lambda ()
+                                (ediff-cleanup-mess)
                                 (when indirect-buffer
                                   (kill-buffer indirect-buffer))
                                 ;; (kill-buffer new-buffer)
