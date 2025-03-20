@@ -2385,7 +2385,13 @@ complete document rather than just a previewed region."
    ("s-e" . tex-parens-end-of-list)
    ("s-a" . tex-parens-beginning-of-list)
    ("s-E" . tex-parens-kill-to-end-of-list)
-   ("s-A" . tex-parens-kill-to-beginning-of-list))
+   ("s-A" . tex-parens-kill-to-beginning-of-list)
+   ("C-c p =" . tex-parens-increase-delimiter-size)
+   ("C-c p -" . tex-parens-decrease-delimiter-size))
+  (:repeat-map
+   tex-parens-delimiter-size-repeat-map
+   ("=" . tex-parens-increase-delimiter-size)
+   ("-" . tex-parens-decrease-delimiter-size))
   (:repeat-map
    tex-parens-structural-edit-repeat-map
    ("n" . tex-parens-forward-list)
