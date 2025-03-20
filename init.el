@@ -1128,6 +1128,7 @@ Automatically clean up extra newlines at boundaries."
   (add-to-list 'org-src-lang-modes '("tex" . latex))
   (add-to-list 'org-src-lang-modes '("cmake" . cmake-ts))
   (add-to-list 'org-src-lang-modes '("yaml" . yaml-ts))
+  (add-to-list 'org-src-lang-modes '("sage" . sage-shell-mode))
   )
 
 (defun my/org-archive-done-tasks ()
