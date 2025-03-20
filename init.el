@@ -1327,6 +1327,9 @@ Automatically clean up extra newlines at boundaries."
   :config
   (require 'exec-path-from-shell)
   (ai-org-chat-select-model "sonnet 3.7")
+  (add-hook 'ai-org-chat-response-finished-functions
+            #'ai-org-chat-auto-format-response
+            t)
   (add-to-list 'display-buffer-alist
                '("\\*ai-chat\\.org\\*\\|--ai-chat\\.org"
                  (display-buffer-same-window)
