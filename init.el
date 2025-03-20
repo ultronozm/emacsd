@@ -766,7 +766,10 @@ Optionally run SETUP-FN after creating the file."
 
 (use-package vterm
   :bind (:map project-prefix-map
-              ("l" . project-claude-code)))
+              ("l" . project-claude-code))
+  :config
+  (add-to-list 'project-switch-commands
+               '(project-claude-code "Claude Code" nil)))
 
 ;;; pdf
 
