@@ -2636,3 +2636,6 @@ Without ARG, use or create the default Sage buffer."
   :config
   (with-eval-after-load 'ai-org-chat
     (codel-setup-ai-org-chat)))
+
+(use-package llm-tool-collection
+  :ensure (:host github :repo "skissue/llm-tool-collection" :depth nil))
