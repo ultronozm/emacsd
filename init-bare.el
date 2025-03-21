@@ -160,7 +160,8 @@
   (calc-kill-line-numbering nil)
   (eglot-connect-timeout 120)
   (safe-local-variable-values
-   '((cmake-build-project-root . "./cpp")
+   '((aggressive-indent-mode)
+     (cmake-build-project-root . "./cpp")
      (checkdoc-minor-mode . t)
      (eval outline-hide-sublevels 5)
      (eval TeX-run-style-hooks "nla-notes")))
