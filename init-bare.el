@@ -304,7 +304,6 @@ Pushes a mark at the starting position."
 
 (use-package outline
   :ensure nil
-  :defer t
   :config
   (require 'foldout)
   :bind
