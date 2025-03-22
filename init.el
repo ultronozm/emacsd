@@ -1834,6 +1834,22 @@ The value of `calc-language` is restored after BODY has been processed."
   (:map git-commit-mode-map
         ("C-c C-l" . magit-generate-changelog)))
 
+(use-package llm-vc-commit
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/llm-vc-commit.el" :depth nil)
+  :after log-edit
+  :bind (:map log-edit-mode-map
+              ("C-c C-r" . llm-vc-commit-generate-message))
+  :config
+  (setq llm-vc-commit-contribute-file
+        (expand-file-name "CONTRIBUTE" "~/gnu-emacs/"))
+  (require 'llm-claude)
+  (require 'content-quoter)
+  (setq llm-vc-commit-model
+        (make-llm-claude
+         :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")
+         :chat-model "claude-3-7-sonnet-20250219")))
+
 (use-package diff-hl
   :defer t)
 
