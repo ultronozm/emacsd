@@ -1322,6 +1322,10 @@ The content is escaped to prevent org syntax interpretation."
   :config
   (add-to-list 'warning-suppress-types '(llm)))
 
+(use-package llm-tool-collection
+  :after llm
+  :ensure (:host github :repo "skissue/llm-tool-collection" :depth nil))
+
 (use-package ai-org-chat
   :repo-scan
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
@@ -1340,6 +1344,8 @@ The content is escaped to prevent org syntax interpretation."
   (ai-org-chat-user-name my-first-name)
   (ai-org-chat-dir my-scratch-gpt-dir)
   (ai-org-chat-content-wrapper #'ai-org-chat--wrap-xml)
+  :hook
+  (llm-tool-collection-after-tool-define . ai-org-chat-register-tool-spec)
   :config
   (require 'exec-path-from-shell)
   (ai-org-chat-select-model "sonnet 3.7")
@@ -2673,13 +2679,3 @@ Without ARG, use or create the default Sage buffer."
 (let ((file (locate-user-emacs-file "init-personal.el")))
   (when (file-exists-p file)
     (load file)))
-
-(use-package codel
-  :repo-scan
-  :ensure (:host github :repo "ultronozm/codel.el" :depth nil)
-  :config
-  (with-eval-after-load 'ai-org-chat
-    (codel-setup-ai-org-chat)))
-
-(use-package llm-tool-collection
-  :ensure (:host github :repo "skissue/llm-tool-collection" :depth nil))
