@@ -953,33 +953,49 @@ In light mode:
 (defvar my/last-src-language "elisp"
   "The most recently used language in source blocks.")
 
+(defun my/org-escape-org-elements (text)
+  "Escape org syntax elements in TEXT.
+Prevents asterisks at the beginning of a line from becoming headings
+and protects #+begin/#+end blocks from being interpreted as org syntax."
+  (let ((processed-text text))
+    ;; Escape headings (lines starting with asterisks)
+    (setq processed-text (replace-regexp-in-string "^\\(\\*+\\)" ",\\1" processed-text))
+    ;; Escape #+begin_ and #+end_ blocks
+    (setq processed-text (replace-regexp-in-string "^\\(#\\+begin_\\)" ",\\1" processed-text))
+    (setq processed-text (replace-regexp-in-string "^\\(#\\+end_\\)" ",\\1" processed-text))
+    processed-text))
+
 (defun my/org-insert-block-with-yank (block-type &optional language)
   "Insert an org block of BLOCK-TYPE with yanked content.
 If LANGUAGE is provided, use it for source blocks.
-Automatically clean up extra newlines at boundaries."
+Automatically clean up extra newlines at boundaries and escape org syntax."
   (push-mark)
-  (let ((content (string-trim (current-kill 0))))
+  (let* ((raw-content (string-trim (current-kill 0)))
+         (escaped-content (my/org-escape-org-elements raw-content)))
     (if (equal block-type "src")
         (progn
           (setq my/last-src-language language)
-          (insert (format "#+begin_src %s\n%s\n#+end_src" language content)))
-      (insert (format "#+begin_%s\n%s\n#+end_%s" block-type content block-type)))
+          (insert (format "#+begin_src %s\n%s\n#+end_src" language escaped-content)))
+      (insert (format "#+begin_%s\n%s\n#+end_%s" block-type escaped-content block-type)))
     (org-edit-special)
     (org-edit-src-exit)
     (forward-line 2)
     (newline)))
 
 (defun my/org-insert-example-with-yank ()
-  "Insert an example block with yanked content."
+  "Insert an example block with yanked content.
+The content is escaped to prevent org syntax interpretation."
   (interactive)
   (my/org-insert-block-with-yank "example"))
 
 (defun my/org-insert-src-with-yank (language)
-  "Insert a source block with yanked content and specified LANGUAGE."
+  "Insert a source block with yanked content and specified LANGUAGE.
+The content is escaped to prevent org syntax interpretation."
   (interactive
    (list (read-string (format "Language (%s): " my/last-src-language)
                       nil nil my/last-src-language)))
   (my/org-insert-block-with-yank "src" language))
+
 
 (defun czm-org-preview-setup ()
   "Set up org-mode buffer for use with preview-auto-mode."
