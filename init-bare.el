@@ -501,3 +501,8 @@ the original buffer, and runs ediff on both buffers."
                   nil t)))))
 
 (advice-add 'ediff-current-file :around #'ediff-current-file--with-cleanup-advice)
+
+(advice-add 'describe-char :around
+            (lambda (orig-fun &rest args)
+              (let ((help-window-select nil))
+                (apply orig-fun args))))
