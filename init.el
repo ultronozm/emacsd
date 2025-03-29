@@ -615,7 +615,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                ("f" . attrap-flymake)
                ("M-n" . flymake-goto-next-error)
                ("M-p" . flymake-goto-prev-error)
-               ("l" . flymake-show-diagnostics-buffer))
+               ("l" . flymake-show-buffer-diagnostics))
   :config
   (with-eval-after-load 'preview
     (dolist (cmd '(flymake-goto-next-error flymake-goto-prev-error))
