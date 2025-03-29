@@ -445,64 +445,31 @@ the original buffer, and runs ediff on both buffers."
   (yank)
   (ediff-current-file))
 
-(defun ediff-current-file--with-cleanup-advice (orig-fun &rest _args)
-  "Replace `ediff-current-file' with a version that cleans up properly."
-  (interactive)
-  (unless (or (not (eq revert-buffer-function 'revert-buffer--default))
-              (not (eq revert-buffer-insert-file-contents-function
-                       'revert-buffer-insert-file-contents--default-function))
-              (and buffer-file-number
-                   (or (buffer-modified-p)
-                       (not (verify-visited-file-modtime
-                             (current-buffer))))))
-    (error "Nothing to revert"))
-  
-  (let* ((cwc (current-window-configuration))
-         (auto-save-p (and (recent-auto-save-p)
-                           buffer-auto-save-file-name
-                           (file-readable-p buffer-auto-save-file-name)
-                           (y-or-n-p
-                            "Buffer has been auto-saved recently.  Compare with auto-save file? ")))
-         (file-name (if auto-save-p
-                        buffer-auto-save-file-name
-                      buffer-file-name))
-         (revert-buf-name (concat "FILE=" file-name))
-         (revert-buf (get-buffer revert-buf-name))
-         (current-major major-mode))
-    
-    (unless file-name
-      (error "Buffer does not seem to be associated with any file"))
-    
-    (when revert-buf
-      (kill-buffer revert-buf)
-      (setq revert-buf nil))
-    
-    (setq revert-buf (get-buffer-create revert-buf-name))
-    (with-current-buffer revert-buf
-      (insert-file-contents file-name)
-      ;; Assume same modes:
-      (funcall current-major))
-    
-    ;; Start ediff with our cleanly captured revert-buf
-    (let ((ediff-buf (ediff-buffers revert-buf (current-buffer))))
-      (with-current-buffer ediff-buf
-        (add-hook 'ediff-quit-hook
-                  (lambda ()
-                    ;; First cleanup the ediff buffers
-                    (ediff-cleanup-mess)
-                    
-                    ;; Now kill our revert buffer
-                    (when (buffer-live-p revert-buf)
-                      (kill-buffer revert-buf))
-                    
-                    ;; Finally restore the window configuration
-                    (when (window-configuration-p cwc)
-                      (set-window-configuration cwc)))
-                  nil t)))))
-
-(advice-add 'ediff-current-file :around #'ediff-current-file--with-cleanup-advice)
-
 (advice-add 'describe-char :around
             (lambda (orig-fun &rest args)
               (let ((help-window-select nil))
                 (apply orig-fun args))))
+
+(defvar ediff-saved-window-configuration nil
+  "Window configuration saved before Ediff was started.")
+
+(defun ediff-save-window-configuration ()
+  "Save the current window configuration for later restoration."
+  (setq ediff-saved-window-configuration (current-window-configuration)))
+
+(defun ediff-restore-window-configuration ()
+  "Restore the window configuration saved before Ediff started."
+  (when (window-configuration-p ediff-saved-window-configuration)
+    (run-with-timer
+     0.01 nil (lambda ()
+                (set-window-configuration ediff-saved-window-configuration)
+                (setq ediff-saved-window-configuration nil)))))
+
+(defun ediff-kill-temporary-file-buffer ()
+  (when (and (buffer-live-p ediff-buffer-A)
+             (string-prefix-p "FILE=" (buffer-name ediff-buffer-A)))
+    (kill-buffer ediff-buffer-A)))
+
+(add-hook 'ediff-before-setup-hook #'ediff-save-window-configuration)
+(add-hook 'ediff-quit-hook #'ediff-restore-window-configuration)
+(add-hook 'ediff-cleanup-hook #'ediff-kill-temporary-file-buffer)
