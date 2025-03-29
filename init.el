@@ -792,7 +792,9 @@ Optionally run SETUP-FN after creating the file."
         ("<up>" . nil)
         ("<remap> <scroll-up-command>" . pdf-view-scroll-up-or-next-page)
         ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)
-        ("C-c g" . pdf-view-goto-page))
+        ("C-c g" . pdf-view-goto-page)
+        ("s-t" . pdf-view-jump-to-register)
+        ("s-T" . pdf-view-position-to-register))
   :config
   (pdf-tools-install :no-query)
   (require 'pdf-occur)
