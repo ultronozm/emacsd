@@ -735,15 +735,18 @@ Optionally run SETUP-FN after creating the file."
   (eglot-jl-init))
 
 (use-package nerd-icons
+  :defer t
   :ensure t)
 
 (use-package nerd-icons-completion
+  :defer t
   :ensure t
   :after marginalia
   :config
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
 (use-package nerd-icons-dired
+  :defer t
   :ensure t
   :hook
   (dired-mode . nerd-icons-dired-mode))
