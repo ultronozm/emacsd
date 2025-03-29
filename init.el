@@ -1344,9 +1344,9 @@ The content is escaped to prevent org syntax interpretation."
   (ai-org-chat-user-name my-first-name)
   (ai-org-chat-dir my-scratch-gpt-dir)
   (ai-org-chat-content-wrapper #'ai-org-chat--wrap-xml)
-  :hook
-  (llm-tool-collection-post-define-functions . ai-org-chat-register-tool-spec)
   :config
+  (add-hook 'llm-tool-collection-post-define-functions #'ai-org-chat-register-tool-spec)
+  (mapcar #'ai-org-chat-register-tool-spec (llm-tool-collection-get-all))
   (require 'exec-path-from-shell)
   (ai-org-chat-select-model "sonnet 3.7")
   (add-hook 'ai-org-chat-response-finished-functions
