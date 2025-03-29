@@ -1600,8 +1600,8 @@ Skips empty days and diary holidays."
     ;; (inline-close . 0)                   ; Guessed value
     (statement . 0)        ; Guessed value
     (statement-block-intro . ++) ; Guessed value
-    (statement-cont . llvm-lineup-statement) ; Guessed value
-    ;; (statement-cont . ++)                ; Guessed value
+    ;; (statement-cont . llvm-lineup-statement) ; Guessed value
+    (statement-cont . ++)                ; Guessed value
     (substatement . ++)        ; Guessed value
     (topmost-intro . nil)      ; Guessed value
     (topmost-intro-cont . +) ; Guessed value
@@ -1646,7 +1646,7 @@ Skips empty days and diary holidays."
     (inlambda . 0)
     (inline-open . 0)
     (inmodule . +)
-    (innamespace . +)
+    (innamespace . 0)
     (knr-argdecl . 0)
     (knr-argdecl-intro . 5)
     (label . 0)
