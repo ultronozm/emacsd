@@ -37,6 +37,7 @@
    ("C-s-o" . other-frame)
    ("C-x C-M-t" . transpose-regions)
    ("C-x C-b" . ibuffer)
+   ("C-x v e" . vc-ediff)
    ("C-z" . nil)
    ("C-z c" . calendar)
    ("C-z C-c" . restart-emacs)
