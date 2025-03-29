@@ -186,6 +186,7 @@
   (setcdr buffer-navigation-repeat-map nil)
   (repeat-mode)
   (recentf-mode)
+  (savehist-mode)
   :hook
   (prog-mode . outline-minor-mode)
   (dired-mode . dired-hide-details-mode)
