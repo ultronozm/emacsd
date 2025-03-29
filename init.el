@@ -570,6 +570,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
       (advice-add 'xref-find-references :around #'czm-xref-restrict-to-project-advice)
     (advice-remove 'xref-find-references #'czm-xref-restrict-to-project-advice)))
 
+(czm-xref-project-only-mode)
+
 (use-package flycheck
   :defer t
   :bind
