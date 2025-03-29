@@ -537,6 +537,13 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 (add-hook 'edebug-eval-mode-hook #'czm-edebug-eval-hook)
 
+(use-package emacs-src-redirect
+  :repo-scan
+  :defer 1
+  :ensure (:host github :repo "ultronozm/emacs-src-redirect.el" :depth nil)
+  :config
+  (emacs-src-redirect-mode))
+
 (defun isearch-forward-enclosing-defun ()
   "Start an incremental search for the name of the enclosing defun."
   (interactive)
