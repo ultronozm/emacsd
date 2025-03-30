@@ -2476,14 +2476,6 @@ complete document rather than just a previewed region."
 
 ;;; sage
 
-(defun sage-shell-edit:attach-buffer ()
-  "Attach the contents of the current buffer to the Sage process."
-  (interactive)
-  (let ((bfn (buffer-file-name)))
-    (cond ((and bfn (not (buffer-modified-p)))
-           (sage-shell-edit:attach-file bfn))
-          (t (sage-shell-edit:send--buffer)))))
-
 (defun sage-shell:pop-to-or-create-session (&optional arg)
   "Pop to a Sage session or create one.
 With numeric prefix ARG, use a numbered buffer (e.g. C-1, C-2, etc).
