@@ -2044,7 +2044,8 @@ complete document rather than just a previewed region."
 
 (use-package latex
   :ensure (auctex
-           :host nil :repo "https://git.savannah.gnu.org/git/auctex.git"
+           :host nil
+           :repo "git@git.savannah.gnu.org:/srv/git/auctex.git"
            :depth nil
            :pre-build (("./autogen.sh")
                        ("./configure"
