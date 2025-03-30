@@ -365,7 +365,11 @@ If the predicate is true, add NAME to `repo-scan-repos'."
           (apply (if (bound-and-true-p vertico-mode)
                      #'consult-completion-in-region
                    #'completion--in-region)
-                 args))))
+                 args)))
+  (add-to-list 'project-switch-commands '(consult-ripgrep "Ripgrep"))
+  (setq project-switch-commands
+        (cl-remove 'project-find-regexp project-switch-commands :key #'car)))
+
 
 (defun czm-search-log ()
   "Search your log files with `rg'."
