@@ -58,6 +58,7 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/pdf-tools-org-extract.el][pdf-tools-org-extract.el]] :: extract PDF annotations to org-mode
 - [[https://github.com/ultronozm/doc-dual-view.el][doc-dual-view.el]] :: sync two windows showing the same document
 - [[https://github.com/ultronozm/outline-skip.el][outline-skip.el]] :: skip certain outline headings
+- [[https://github.com/ultronozm/emacs-src-redirect.el][emacs-src-redirect.el]] :: redirect lookups from installed Emacs to local source
 
 * Building Emacs on MacOS
 I'm using this config with Emacs "31.5", built from source, on MacOS.  To set this up on a fresh machine, I've done something like the following steps:
