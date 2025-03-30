@@ -2119,6 +2119,19 @@ complete document rather than just a previewed region."
   :custom-face
   (preview-face ((t (:background unspecified)))))
 
+(defun czm-copy-standard-tex-files ()
+  "Copy standard TeX files to the current directory."
+  (interactive)
+  ;; ask the user if he really wants to copy files into the current directory
+  (if (y-or-n-p (format "Copy standard TeX files to %s? " default-directory))
+      (let ((files (list my-common-tex-file my-master-bib-file)))
+        (dolist (file files)
+          (let ((source (expand-file-name file))
+                (dest (expand-file-name (file-name-nondirectory file)
+                                        default-directory)))
+            (copy-file source dest t))))
+    (message "Aborted.")))
+
 (use-package preview-tailor
   :repo-scan
   :ensure (:host github :repo "ultronozm/preview-tailor.el" :depth nil)
