@@ -9,22 +9,6 @@
 (setq custom-file (locate-user-emacs-file "init-custom.el"))
 
 (load (locate-user-emacs-file "init-bare.el"))
-(load (locate-user-emacs-file "init-settings.el"))
-
-(defun czm-dired-downloads ()
-  "Open the downloads directory in Dired mode."
-  (interactive)
-  (dired my-downloads-folder))
-
-(keymap-global-set "C-c d" #'czm-dired-downloads)
-
-(defun czm-find-math-document ()
-  "Find a file in the math documents folder."
-  (interactive)
-  (require 'project)
-  (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
-
-(keymap-global-set "s-d" #'czm-find-math-document)
 
 ;; use-package keyword :repo-scan, for packages that I develop
 

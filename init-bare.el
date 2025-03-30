@@ -4,6 +4,8 @@
   (when (file-exists-p file)
     (load file)))
 
+(load (locate-user-emacs-file "init-settings.el"))
+
 (when (string-equal system-type "darwin")
   (setq ns-command-modifier 'meta)
   (setq ns-alternate-modifier 'super)
@@ -206,6 +208,21 @@ With prefix argument ARG, opens `user-init-file' directly."
                                  "Select elisp file: " elisp-files
                                  nil t nil nil default-elisp-file)))
       (when selected-elisp-file (find-file selected-elisp-file)))))
+
+(defun czm-dired-downloads ()
+  "Open the downloads directory in Dired mode."
+  (interactive)
+  (dired my-downloads-folder))
+
+(keymap-global-set "C-c d" #'czm-dired-downloads)
+
+(defun czm-find-math-document ()
+  "Find a file in the math documents folder."
+  (interactive)
+  (require 'project)
+  (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
+
+(keymap-global-set "s-d" #'czm-find-math-document)
 
 (defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
 (defun edebug-compute-previous-result (previous-value)
