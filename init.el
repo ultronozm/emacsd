@@ -703,6 +703,7 @@ Optionally run SETUP-FN after creating the file."
 
 (use-package czm-spell
   :repo-scan
+  :defer 10
   :ensure (:host github :repo "ultronozm/czm-spell.el" :depth nil)
   ;; :after latex
   :bind ("s-;" . czm-spell-then-abbrev))
