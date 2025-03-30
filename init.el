@@ -71,8 +71,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (when (eq window-system 'w32)
   (elpaca-no-symlink-mode))
 
-(push 'notmuch elpaca-ignored-dependencies)
-
 (elpaca elpaca-use-package
   (elpaca-use-package-mode)
   (setq use-package-always-ensure t))
@@ -162,42 +160,43 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (defun avy-action-easy-kill (pt)
   (unless (require 'easy-kill nil t)
     (user-error "Easy Kill not found, please install."))
-  (cl-letf* ((bounds (if (use-region-p)
-                         (prog1 (cons (region-beginning) (region-end))
-                           (deactivate-mark))
-                       (bounds-of-thing-at-point 'sexp)))
-             (transpose-map
-              (define-keymap
-                "M-t" (lambda () (interactive "*")
-                        (pcase-let ((`(,beg . ,end) (easy-kill--bounds)))
-                          (transpose-regions (car bounds) (cdr bounds) beg end
-                                             'leave-markers)))))
-             ((symbol-function 'easy-kill-activate-keymap)
-              (lambda ()
-                (let ((map (easy-kill-map)))
-                  (set-transient-map
-                   (make-composed-keymap transpose-map map)
-                   (lambda ()
-                     ;; Prevent any error from activating the keymap forever.
-                     (condition-case err
-                         (or (and (not (easy-kill-exit-p this-command))
-                                  (or (eq this-command
-                                          (lookup-key map (this-single-command-keys)))
-                                      (let ((cmd (key-binding
-                                                  (this-single-command-keys) nil t)))
-                                        (command-remapping cmd nil (list map)))))
-                             (ignore
-                              (easy-kill-destroy-candidate)
-                              (unless (or (easy-kill-get mark) (easy-kill-exit-p this-command))
-                                (easy-kill-save-candidate))))
-                       (error (message "%s:%s" this-command (error-message-string err))
-                              nil)))
-                   (lambda ()
-                     (let ((dat (ring-ref avy-ring 0)))
-                       (select-frame-set-input-focus
-                        (window-frame (cdr dat)))
-                       (select-window (cdr dat))
-                       (goto-char (car dat)))))))))
+  (cl-letf*
+      ((bounds (if (use-region-p)
+                   (prog1 (cons (region-beginning) (region-end))
+                     (deactivate-mark))
+                 (bounds-of-thing-at-point 'sexp)))
+       (transpose-map
+        (define-keymap
+          "M-t" (lambda () (interactive "*")
+                  (pcase-let ((`(,beg . ,end) (easy-kill--bounds)))
+                    (transpose-regions (car bounds) (cdr bounds) beg end
+                                       'leave-markers)))))
+       ((symbol-function 'easy-kill-activate-keymap)
+        (lambda ()
+          (let ((map (easy-kill-map)))
+            (set-transient-map
+             (make-composed-keymap transpose-map map)
+             (lambda ()
+               ;; Prevent any error from activating the keymap forever.
+               (condition-case err
+                   (or (and (not (easy-kill-exit-p this-command))
+                            (or (eq this-command
+                                    (lookup-key map (this-single-command-keys)))
+                                (let ((cmd (key-binding
+                                            (this-single-command-keys) nil t)))
+                                  (command-remapping cmd nil (list map)))))
+                       (ignore
+                        (easy-kill-destroy-candidate)
+                        (unless (or (easy-kill-get mark) (easy-kill-exit-p this-command))
+                          (easy-kill-save-candidate))))
+                 (error (message "%s:%s" this-command (error-message-string err))
+                        nil)))
+             (lambda ()
+               (let ((dat (ring-ref avy-ring 0)))
+                 (select-frame-set-input-focus
+                  (window-frame (cdr dat)))
+                 (select-window (cdr dat))
+                 (goto-char (car dat)))))))))
     (goto-char pt)
     (easy-kill)))
 
@@ -269,7 +268,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
          ("s-5" . czm-misc-double-split-window-right-and-delete)
          ("s-6" . czm-misc-delete-indentation-nil)
          ("s-7" . czm-misc-delete-indentation-t)
-         ("s-8" . czm-misc-show-overlays-at-pt)
          ("C-w" . czm-misc-kill-or-delete-region)
          ("C-x c" . czm-misc-clone-indirect-buffer-same-window)
          ("M-o" . czm-misc-split-line-below)
@@ -308,41 +306,44 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (completion-styles '(orderless basic)))
 
 (use-package consult
-  :bind (("C-c M-x" . consult-mode-command)
-         ("C-c i" . consult-info)
-         ([remap repeat-complex-command] . consult-complex-command)
-         ([remap switch-to-buffer] . consult-buffer)
-         ([remap bookmark-jump] . consult-bookmark)
-         ([remap project-switch-to-buffer] . consult-project-buffer)
-         ("s-t" . consult-register-load)
-         ("s-T" . consult-register-store)
-         ("C-s-t" . consult-register)
-         ([remap yank-pop] . consult-yank-pop)
-         ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flymake)
-         ([remap goto-line] . consult-goto-line)
-         ("M-g o" . consult-outline)
-         ("M-g m" . consult-mark)
-         ("M-g k" . consult-global-mark)
-         ("M-g i" . consult-imenu)
-         ("M-g I" . consult-imenu-multi)
-         ("M-s d" . consult-find)
-         ("M-s D" . consult-locate)
-         ("M-s g" . consult-grep)
-         ("M-s G" . consult-git-grep)
-         ("M-s r" . consult-ripgrep)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi)
-         ("M-s k" . consult-keep-lines)
-         ("M-s u" . consult-focus-lines)
-         ("M-s e" . consult-isearch-history)
-         :map isearch-mode-map
-         ([remap isearch-edit-string] . consult-isearch-history)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi)
-         :map minibuffer-local-map
-         ("M-s" . consult-history)
-         ("M-r" . consult-history))
+  :bind
+  (("C-c M-x" . consult-mode-command)
+   ("C-c i" . consult-info)
+   ([remap repeat-complex-command] . consult-complex-command)
+   ([remap switch-to-buffer] . consult-buffer)
+   ([remap bookmark-jump] . consult-bookmark)
+   ([remap project-switch-to-buffer] . consult-project-buffer)
+   ("s-t" . consult-register-load)
+   ("s-T" . consult-register-store)
+   ("C-s-t" . consult-register)
+   ([remap yank-pop] . consult-yank-pop)
+   ("M-g e" . consult-compile-error)
+   ("M-g f" . consult-flymake)
+   ([remap goto-line] . consult-goto-line)
+   ("M-g o" . consult-outline)
+   ("M-g m" . consult-mark)
+   ("M-g k" . consult-global-mark)
+   ("M-g i" . consult-imenu)
+   ("M-g I" . consult-imenu-multi)
+   ("M-s d" . consult-find)
+   ("M-s D" . consult-locate)
+   ("M-s g" . consult-grep)
+   ("M-s G" . consult-git-grep)
+   ("M-s r" . consult-ripgrep)
+   ("M-s l" . consult-line)
+   ("M-s L" . consult-line-multi)
+   ("M-s k" . consult-keep-lines)
+   ("M-s u" . consult-focus-lines)
+   ("M-s e" . consult-isearch-history)
+   :map isearch-mode-map
+   ([remap isearch-edit-string] . consult-isearch-history)
+   ("M-s l" . consult-line)
+   ("M-s L" . consult-line-multi)
+   :map minibuffer-local-map
+   ("M-s" . consult-history)
+   ("M-r" . consult-history))
+  (:map project-prefix-map
+        ("g" . consult-ripgrep))
   :hook (completion-list-mode . consult-preview-at-point-mode)
   :init
   (setq register-preview-delay 0.5
@@ -463,9 +464,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (use-package xr
   :defer t)
 
-(use-package elpy
-  :defer t)
-
 (defun czm-lispy-comment-maybe ()
   "Comment the list at point, or self-insert."
   (interactive)
@@ -538,15 +536,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (isearch-forward-symbol-at-point))
 
 (keymap-global-set "M-s q" #'isearch-forward-enclosing-defun)
-
-(use-package symbol-overlay
-  :bind
-  (("M-s ," . symbol-overlay-put)
-   ("M-s n" . symbol-overlay-switch-forward)
-   ("M-s p" . symbol-overlay-switch-backward)
-   ;; ("M-s m" . symbol-overlay-mode)
-   ;; ("M-s n" . symbol-overlay-remove-all)
-   ))
 
 (defun czm-xref-restrict-to-project-advice (orig-fun &rest args)
   "Advice to restrict xref searches to the current project root."

@@ -287,7 +287,6 @@ Pushes a mark at the starting position."
     (unless (= origin (point))
       (push-mark origin t))))
 
-
 (defun kill-to-end-of-list ()
   "Kill text between point and end of current list."
   (interactive)
