@@ -385,7 +385,8 @@ DIR must include a .project file to be considered a project."
     (and root (cons 'local root))))
 
 (with-eval-after-load 'project
-  (add-to-list 'project-find-functions 'czm/project-try-local))
+  (add-to-list 'project-find-functions 'czm/project-try-local)
+  (add-to-list 'project-switch-commands '(project-shell "Shell")))
 
 (bind-keys
  :package foldout
