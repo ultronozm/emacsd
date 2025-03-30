@@ -610,6 +610,27 @@ If the predicate is true, add NAME to `repo-scan-repos'."
     (dolist (cmd '(flymake-goto-next-error flymake-goto-prev-error))
       (add-to-list 'TeX-fold-auto-reveal-commands cmd))))
 
+(defun flymake-preserve-multiline--fix-entries (orig-fun diags project-root)
+  "Show complete diagnostic messages in Flymake's diagnostic buffer.
+Advice for `flymake--tabulated-entries-1' that prevents truncation
+of multiline diagnostic messages."
+  (cl-letf (((symbol-function 'flymake-diagnostic-oneliner)
+             (lambda (diag &optional _) (flymake-diagnostic-text diag))))
+    (funcall orig-fun diags project-root)))
+
+(define-minor-mode flymake-preserve-multiline-mode
+  "Show full multiline messages in Flymake diagnostics buffer.
+When enabled, the Flymake diagnostics buffer will show complete
+diagnostic messages, including line breaks, instead of truncating
+them at the first newline."
+  :global t
+  :group 'flymake
+  (if flymake-preserve-multiline-mode
+      (advice-add 'flymake--tabulated-entries-1 :around
+                  #'flymake-preserve-multiline--fix-entries)
+    (advice-remove 'flymake--tabulated-entries-1
+                   #'flymake-preserve-multiline--fix-entries)))
+
 (use-package attrap
   :defer t
   :after flycheck
