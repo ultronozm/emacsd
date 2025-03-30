@@ -1847,7 +1847,8 @@ The value of `calc-language` is restored after BODY has been processed."
          :chat-model "claude-3-7-sonnet-20250219")))
 
 (use-package diff-hl
-  :defer t)
+  :defer t
+  :bind ("H-d" . diff-hl-mode))
 
 (use-package repo-scan
   :repo-scan
