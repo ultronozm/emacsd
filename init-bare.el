@@ -540,3 +540,32 @@ For non–file buffers, FILENAME is prompted for and used as the suggested name.
       (mml-attach-buffer buffer type description disposition filename))))
 
 (keymap-set message-mode-map "C-c RET a" #'mml-attach-buffer-or-file)
+
+(defun project-format-patch-last-commit ()
+  "Create a patch file from the last commit in the current project.
+  The patch is saved in the project root directory and opened in a buffer."
+  (interactive)
+  (let* ((pr (project-current t))
+         (root (project-root pr))
+         (default-directory root)
+         (git-output nil))
+    
+    ;; Make sure there's something to create a patch from
+    (when (vc-git--empty-db-p)
+      (user-error "No commits exist in this Git repository"))
+    
+    ;; Run format-patch to generate the patch
+    (message "Generating patch...")
+    (setq git-output 
+          (with-temp-buffer
+            (if (zerop (vc-git--call t "format-patch" "-1" "HEAD"))
+                (buffer-string)
+              (user-error "Failed to generate patch"))))
+    
+    ;; Extract filename from git output and open the file
+    (let ((filename (string-trim git-output)))
+      (find-file (expand-file-name filename root))
+      (diff-mode)
+      (message "Patch saved as %s" filename))))
+
+(keymap-set project-prefix-map "P" #'project-format-patch-last-commit)
