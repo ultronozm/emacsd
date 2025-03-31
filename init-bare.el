@@ -112,9 +112,6 @@
    ("s-x" . nil)
    ("s-y" . replace-buffer-with-clipboard)
    ("s-z" . nil))
-  (:map
-   emacs-lisp-mode-map
-   )
   :custom
   (ediff-split-window-function 'split-window-horizontally)
   (use-dialog-box nil)
