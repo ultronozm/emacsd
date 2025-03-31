@@ -495,3 +495,48 @@ the original buffer, and runs ediff on both buffers."
 (add-hook 'ediff-before-setup-hook #'ediff-save-window-configuration)
 (add-hook 'ediff-quit-hook #'ediff-restore-window-configuration)
 (add-hook 'ediff-cleanup-hook #'ediff-kill-temporary-file-buffer)
+
+(defun mml-attach-buffer-or-file (buffer &optional type description disposition filename)
+  "Attach BUFFER's underlying file if it has one. Otherwise attach BUFFER's contents.
+TYPE, DESCRIPTION, and DISPOSITION are optional MIME properties.
+If BUFFER is visiting a file and is modified, the user is prompted to save it.
+For non–file buffers, FILENAME is prompted for and used as the suggested name."
+  (interactive
+   (let* ((buf (read-buffer "Attach from buffer: " (buffer-name (current-buffer)) t))
+          (bufobj (get-buffer buf))
+          (has-file (buffer-file-name bufobj))
+          (no-prompt current-prefix-arg)
+          (type (if no-prompt
+                    (or (and has-file (mm-default-file-type has-file))
+                        "application/octet-stream")
+                  (mml-minibuffer-read-type
+                   (or (and has-file (file-name-nondirectory has-file))
+                       buf))))
+          (desc (unless no-prompt
+                  (mml-minibuffer-read-description)))
+          (disp (if no-prompt
+                    (if has-file
+                        (mml-content-disposition type (file-name-nondirectory has-file))
+                      "attachment")
+                  (mml-minibuffer-read-disposition
+                   type
+                   nil
+                   (and has-file (file-name-nondirectory has-file)))))
+          (fname (unless has-file
+                   (read-string "Filename for attachment: "
+                                (concat buf ".txt")))))
+     (if has-file
+         (list buf type desc disp)
+       (list buf type desc disp fname))))
+  (let ((has-file (buffer-file-name (get-buffer buffer))))
+    (if has-file
+        (progn
+          (with-current-buffer buffer
+            (when (and (buffer-modified-p)
+                       (y-or-n-p (format "Buffer `%s' is modified. Save before attaching? "
+                                         buffer)))
+              (save-buffer)))
+          (mml-attach-file has-file type description disposition))
+      (mml-attach-buffer buffer type description disposition filename))))
+
+(keymap-set message-mode-map "C-c RET a" #'mml-attach-buffer-or-file)
