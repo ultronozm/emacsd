@@ -166,6 +166,12 @@
      (eval outline-hide-sublevels 5)
      (eval TeX-run-style-hooks "nla-notes")))
   (diary-comment-start ";;")
+  (mml-content-disposition-alist
+   '((text (rtf . "attachment")
+           (x-patch . "attachment")
+           (x-diff . "attachment")
+           (t . "inline"))
+     (t . "attachment")))
   :config
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
