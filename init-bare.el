@@ -479,6 +479,15 @@ the original buffer, and runs ediff on both buffers."
   "Save the current window configuration for later restoration."
   (setq ediff-saved-window-configuration (current-window-configuration)))
 
+(defun ediff-make-configuration-local ()
+  "Make saved window configuration local to this Ediff control buffer.
+This allows multiple Ediff sessions to each restore their own window configuration."
+  (when (and ediff-control-buffer
+             (buffer-live-p ediff-control-buffer)
+             ediff-saved-window-configuration)
+    (with-current-buffer ediff-control-buffer
+      (make-local-variable 'ediff-saved-window-configuration))))
+
 (defun ediff-restore-window-configuration ()
   "Restore the window configuration saved before Ediff started."
   (when (window-configuration-p ediff-saved-window-configuration)
@@ -493,6 +502,7 @@ the original buffer, and runs ediff on both buffers."
     (kill-buffer ediff-buffer-A)))
 
 (add-hook 'ediff-before-setup-hook #'ediff-save-window-configuration)
+(add-hook 'ediff-startup-hook #'ediff-make-configuration-local)
 (add-hook 'ediff-quit-hook #'ediff-restore-window-configuration)
 (add-hook 'ediff-cleanup-hook #'ediff-kill-temporary-file-buffer)
 
@@ -539,7 +549,10 @@ For non–file buffers, FILENAME is prompted for and used as the suggested name.
           (mml-attach-file has-file type description disposition))
       (mml-attach-buffer buffer type description disposition filename))))
 
-(keymap-set message-mode-map "C-c RET a" #'mml-attach-buffer-or-file)
+(bind-keys
+ :package message
+ :map message-mode-map
+ ("C-c RET a" . mml-attach-buffer-or-file))
 
 (defun project-format-patch-last-commit ()
   "Create a patch file from the last commit in the current project.
@@ -568,4 +581,193 @@ For non–file buffers, FILENAME is prompted for and used as the suggested name.
       (diff-mode)
       (message "Patch saved as %s" filename))))
 
-(keymap-set project-prefix-map "P" #'project-format-patch-last-commit)
+(bind-keys
+ :package project
+ :map project-prefix-map
+ ("P" . project-format-patch-last-commit))
+
+(with-eval-after-load 'smerge-mode
+  (map-keymap
+   (lambda (_key cmd)
+     (when (symbolp cmd)
+       (put cmd 'repeat-map 'smerge-basic-map)))
+   smerge-basic-map))
+
+(bind-keys
+ :package doc-view
+ :map doc-view-mode-map
+ ("C-c g" . doc-view-goto-page))
+
+(defun my-rmail-mode-hook ()
+  (setq-local preview-tailor-local-multiplier 0.6)
+  (setq-local TeX-master my-preview-master))
+
+(use-package rmail
+  :ensure nil
+  :defer t
+  :bind
+  ("C-z r" . (lambda ()
+               (interactive)
+               (let ((current-prefix-arg '(4)))
+                 (call-interactively #'rmail))))
+  ("C-z R" . rmail)
+  (:map rmail-mode-map
+        ("S" . czm-mail-refile-and-store-link))
+  :hook (rmail-mode . my-rmail-mode-hook)
+  :custom
+  (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
+  (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
+  (rmail-movemail-program "movemail")
+  (rmail-primary-inbox-list (list my-mail-inbox))
+  (rmail-automatic-folder-directives
+   `((,(expand-file-name "bug-gnu-emacs.rmail" my-mail-folder)
+      "sender" "bug-gnu-emacs-bounces")
+     (,(expand-file-name "emacs-devel.rmail" my-mail-folder)
+      "sender" "emacs-devel-bounces")
+     (,(expand-file-name "arxiv.rmail" my-mail-folder)
+      "subject" "math daily Subj-class mailing"
+      "from" "arXiv\\.org")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "noreply@github.com"
+      "subject" "Payment Receipt")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "invoice+statements@mail.anthropic.com"
+      "subject" "Your receipt from Anthropic")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "googleplay-noreply@google.com"
+      "subject" "Your Google Play Order Receipt")))
+  (rmail-secondary-file-directory (file-name-as-directory my-mail-folder))
+  (rmail-secondary-file-regexp "^.*\\.rmail$")
+  (rmail-default-file (expand-file-name "scheduled.rmail" my-mail-folder))
+  (rmail-remote-password-required t)
+  (rmail-remote-password
+   (let ((auth-info (car (auth-source-search
+                          :host my-mail-host-imap
+                          :port my-mail-port
+                          :user my-mail-user
+                          :max 1))))
+     (when auth-info
+       (let ((secret (plist-get auth-info :secret)))
+         (if (functionp secret)
+             (funcall secret)
+           secret)))))
+  (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
+  (rmail-delete-after-output t)
+  :config
+  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode)))
+
+(use-package sendmail
+  :ensure nil
+  :defer t
+  :config
+  (setq
+   mail-host-address my-mail-host
+   sendmail-program "msmtp"
+   message-send-mail-function 'message-send-mail-with-sendmail
+   message-default-mail-headers
+   (let ((file (abbreviate-file-name
+                (expand-file-name "sent.rmail" my-mail-folder))))
+     (format "Fcc: %s\n" file))))
+
+(use-package message
+  :ensure nil
+  :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
+  :custom
+  (message-make-forward-subject-function #'message-forward-subject-fwd))
+
+(with-eval-after-load 'tex-mode
+  (mapc
+   (lambda (sym) (add-to-list 'tex--prettify-symbols-alist sym))
+   '(
+     ;; Accented characters
+     ("{\\'a}" . ?á)
+     ("{\\'e}" . ?é)
+     ("{\\'i}" . ?í)
+     ("{\\'o}" . ?ó)
+     ("{\\'u}" . ?ú)
+     ("{\\'A}" . ?Á)
+     ("{\\'E}" . ?É)
+     ("{\\'I}" . ?Í)
+     ("{\\'O}" . ?Ó)
+     ("{\\'U}" . ?Ú)
+     ("{\\`a}" . ?à)
+     ("{\\`e}" . ?è)
+     ("{\\`i}" . ?ì)
+     ("{\\`o}" . ?ò)
+     ("{\\`u}" . ?ù)
+     ("{\\`A}" . ?À)
+     ("{\\`E}" . ?È)
+     ("{\\`I}" . ?Ì)
+     ("{\\`O}" . ?Ò)
+     ("{\\`U}" . ?Ù)
+     ("{\\^a}" . ?â)
+     ("{\\^e}" . ?ê)
+     ("{\\^i}" . ?î)
+     ("{\\^o}" . ?ô)
+     ("{\\^u}" . ?û)
+     ("{\\^A}" . ?Â)
+     ("{\\^E}" . ?Ê)
+     ("{\\^I}" . ?Î)
+     ("{\\^O}" . ?Ô)
+     ("{\\^U}" . ?Û)
+     ("{\\\"a}" . ?ä)
+     ("{\\\"e}" . ?ë)
+     ("{\\\"i}" . ?ï)
+     ("{\\\"o}" . ?ö)
+     ("{\\\"u}" . ?ü)
+     ("{\\\"A}" . ?Ä)
+     ("{\\\"E}" . ?Ë)
+     ("{\\\"I}" . ?Ï)
+     ("{\\\"O}" . ?Ö)
+     ("{\\\"U}" . ?Ü)
+     ("{\\~a}" . ?ã)
+     ("{\\~n}" . ?ñ)
+     ("{\\~o}" . ?õ)
+     ("{\\~A}" . ?Ã)
+     ("{\\~N}" . ?Ñ)
+     ("{\\~O}" . ?Õ)
+     ("{\\c{c}}" . ?ç)
+     ("{\\c{C}}" . ?Ç)
+     ("{\\o}" . ?ø)
+     ("{\\O}" . ?Ø)
+     ("{\\aa}" . ?å)
+     ("{\\AA}" . ?Å)
+     ("{\\ae}" . ?æ)
+     ("{\\AE}" . ?Æ)
+     ("{\\ss}" . ?ß)
+     ("{\\l}" . ?ł)
+     ("{\\L}" . ?Ł)
+     ("{\\i}" . ?ı)
+     ("{\\j}" . ?ȷ)
+     ("{\\oe}" . ?œ)
+     ("{\\OE}" . ?Œ)
+
+     ("\\eps" . ?ε)
+     ("\\begin{equation*}" . ?↴)
+     ("\\begin{equation}" . ?↴)
+     ("\\end{equation*}" . ?↲)
+     ("\\end{equation}" . ?↲)
+     ("\\begin{align*}" . ?⌈)
+     ("\\begin{align}" . ?⌈)
+     ("\\end{align*}" . ?⌋)
+     ("\\end{align}" . ?⌋)
+     ("\\begin{multline*}" . ?⎧)
+     ("\\begin{multline}" . ?⎧)
+     ("\\end{multline*}" . ?⎭)
+     ("\\end{multline}" . ?⎭))))
+
+(defun vc-git-amend ()
+  (interactive)
+  (vc-checkin nil 'git)
+  (vc-git-log-edit-toggle-amend))
+
+(defun my/vc-deduce-backend-advice (orig-fun)
+  "Advice for `vc-deduce-backend` to handle indirect buffers."
+  (or (funcall orig-fun) 'Git))
+
+(advice-add 'vc-deduce-backend :around #'my/vc-deduce-backend-advice)
+
+(bind-keys
+ :repeat-map python-indent-repeat-map
+ ("<" . python-indent-shift-left)
+ (">" . python-indent-shift-right))

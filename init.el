@@ -425,16 +425,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                  :depth nil)
   :hook (LaTeX-mode . outline-skip-mode))
 
-(use-package smerge-mode
-  :ensure nil
-  :defer
-  :config
-  (map-keymap
-   (lambda (_key cmd)
-     (when (symbolp cmd)
-       (put cmd 'repeat-map 'smerge-basic-map)))
-   smerge-basic-map))
-
 (use-package perfect-margin
   :defer t
   :diminish
@@ -556,7 +546,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (define-minor-mode czm-xref-project-only-mode
   "Toggle xref searches between project-only and including external roots."
   :global t
-  :lighter " XPO"
+  :lighter nil
   (if czm-xref-project-only-mode
       (advice-add 'xref-find-references :around #'czm-xref-restrict-to-project-advice)
     (advice-remove 'xref-find-references #'czm-xref-restrict-to-project-advice)))
@@ -790,10 +780,6 @@ Optionally run SETUP-FN after creating the file."
                '(project-claude-code "Claude Code" nil)))
 
 ;;; pdf
-
-(use-package doc-view
-  :ensure nil
-  :bind (:map doc-view-mode-map ("C-c g" . doc-view-goto-page)))
 
 (use-package pdf-tools
   :mode ("\\.pdf\\'" . pdf-view-mode)
@@ -1189,83 +1175,6 @@ The content is escaped to prevent org syntax interpretation."
   (org-mode . org-appear-mode))
 
 ;;; mail
-
-(defun my-rmail-mode-hook ()
-  (setq-local preview-tailor-local-multiplier 0.6)
-  (setq-local TeX-master my-preview-master))
-
-(use-package rmail
-  :ensure nil
-  :defer t
-  :bind
-  ("C-z r" . (lambda ()
-               (interactive)
-               (let ((current-prefix-arg '(4)))
-                 (call-interactively #'rmail))))
-  ("C-z R" . rmail)
-  (:map rmail-mode-map
-        ("S" . czm-mail-refile-and-store-link))
-  :hook (rmail-mode . my-rmail-mode-hook)
-  :custom
-  (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
-  (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
-  (rmail-movemail-program "movemail")
-  (rmail-primary-inbox-list (list my-mail-inbox))
-  (rmail-automatic-folder-directives
-   `((,(expand-file-name "bug-gnu-emacs.rmail" my-mail-folder)
-      "sender" "bug-gnu-emacs-bounces")
-     (,(expand-file-name "emacs-devel.rmail" my-mail-folder)
-      "sender" "emacs-devel-bounces")
-     (,(expand-file-name "arxiv.rmail" my-mail-folder)
-      "subject" "math daily Subj-class mailing"
-      "from" "arXiv\\.org")
-     (,(expand-file-name "receipts.rmail" my-mail-folder)
-      "from" "noreply@github.com"
-      "subject" "Payment Receipt")
-     (,(expand-file-name "receipts.rmail" my-mail-folder)
-      "from" "invoice+statements@mail.anthropic.com"
-      "subject" "Your receipt from Anthropic")
-     (,(expand-file-name "receipts.rmail" my-mail-folder)
-      "from" "googleplay-noreply@google.com"
-      "subject" "Your Google Play Order Receipt")))
-  (rmail-secondary-file-directory (file-name-as-directory my-mail-folder))
-  (rmail-secondary-file-regexp "^.*\\.rmail$")
-  (rmail-default-file (expand-file-name "scheduled.rmail" my-mail-folder))
-  (rmail-remote-password-required t)
-  (rmail-remote-password
-   (let ((auth-info (car (auth-source-search
-                          :host my-mail-host-imap
-                          :port my-mail-port
-                          :user my-mail-user
-                          :max 1))))
-     (when auth-info
-       (let ((secret (plist-get auth-info :secret)))
-         (if (functionp secret)
-             (funcall secret)
-           secret)))))
-  (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
-  (rmail-delete-after-output t)
-  :config
-  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode)))
-
-(use-package sendmail
-  :ensure nil
-  :defer t
-  :config
-  (setq
-   mail-host-address my-mail-host
-   sendmail-program "msmtp"
-   message-send-mail-function 'message-send-mail-with-sendmail
-   message-default-mail-headers
-   (let ((file (abbreviate-file-name
-                (expand-file-name "sent.rmail" my-mail-folder))))
-     (format "Fcc: %s\n" file))))
-
-(use-package message
-  :ensure nil
-  :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
-  :custom
-  (message-make-forward-subject-function #'message-forward-subject-fwd))
 
 (use-package czm-mail
   :repo-scan
@@ -1884,166 +1793,6 @@ The value of `calc-language` is restored after BODY has been processed."
   :defer t)
 
 ;;; latex
-
-(use-package tex-mode
-  :ensure nil
-  :defer t
-  :config
-  (mapc
-   (lambda (sym) (add-to-list 'tex--prettify-symbols-alist sym))
-   '(("{\\'a}" . ?á)
-     ("{\\'e}" . ?é)
-     ("{\\'i}" . ?í)
-     ("{\\'o}" . ?ó)
-     ("{\\'u}" . ?ú)
-     ("{\\'A}" . ?Á)
-     ("{\\'E}" . ?É)
-     ("{\\'I}" . ?Í)
-     ("{\\'O}" . ?Ó)
-     ("{\\'U}" . ?Ú)
-     ("{\\`a}" . ?à)
-     ("{\\`e}" . ?è)
-     ("{\\`i}" . ?ì)
-     ("{\\`o}" . ?ò)
-     ("{\\`u}" . ?ù)
-     ("{\\`A}" . ?À)
-     ("{\\`E}" . ?È)
-     ("{\\`I}" . ?Ì)
-     ("{\\`O}" . ?Ò)
-     ("{\\`U}" . ?Ù)
-     ("{\\^a}" . ?â)
-     ("{\\^e}" . ?ê)
-     ("{\\^i}" . ?î)
-     ("{\\^o}" . ?ô)
-     ("{\\^u}" . ?û)
-     ("{\\^A}" . ?Â)
-     ("{\\^E}" . ?Ê)
-     ("{\\^I}" . ?Î)
-     ("{\\^O}" . ?Ô)
-     ("{\\^U}" . ?Û)
-     ("{\\\"a}" . ?ä)
-     ("{\\\"e}" . ?ë)
-     ("{\\\"i}" . ?ï)
-     ("{\\\"o}" . ?ö)
-     ("{\\\"u}" . ?ü)
-     ("{\\\"A}" . ?Ä)
-     ("{\\\"E}" . ?Ë)
-     ("{\\\"I}" . ?Ï)
-     ("{\\\"O}" . ?Ö)
-     ("{\\\"U}" . ?Ü)
-     ("{\\~a}" . ?ã)
-     ("{\\~n}" . ?ñ)
-     ("{\\~o}" . ?õ)
-     ("{\\~A}" . ?Ã)
-     ("{\\~N}" . ?Ñ)
-     ("{\\~O}" . ?Õ)
-     ("{\\c{c}}" . ?ç)
-     ("{\\c{C}}" . ?Ç)
-     ("{\\o}" . ?ø)
-     ("{\\O}" . ?Ø)
-     ("{\\aa}" . ?å)
-     ("{\\AA}" . ?Å)
-     ("{\\ae}" . ?æ)
-     ("{\\AE}" . ?Æ)
-     ("{\\ss}" . ?ß)
-     ("{\\l}" . ?ł)
-     ("{\\L}" . ?Ł)
-     ("{\\i}" . ?ı)
-     ("{\\j}" . ?ȷ)
-     ("{\\oe}" . ?œ)
-     ("{\\OE}" . ?Œ)
-     ("``" . ?“)
-     ("''" . ?”)
-     ("\\S" . ?§)
-     ("\\mathbb{A}" . ?𝔸)
-     ("\\mathbb{B}" . ?𝔹)
-     ("\\mathbb{C}" . ?ℂ)
-     ("\\mathbb{D}" . ?𝔻)
-     ("\\mathbb{E}" . ?𝔼)
-     ("\\mathbb{F}" . ?𝔽)
-     ("\\mathbb{G}" . ?𝔾)
-     ("\\mathbb{H}" . ?ℍ)
-     ("\\mathbb{I}" . ?𝕀)
-     ("\\mathbb{J}" . ?𝕁)
-     ("\\mathbb{K}" . ?𝕂)
-     ("\\mathbb{L}" . ?𝕃)
-     ("\\mathbb{M}" . ?𝕄)
-     ("\\mathbb{N}" . ?ℕ)
-     ("\\mathbb{O}" . ?𝕆)
-     ("\\mathbb{P}" . ?ℙ)
-     ("\\mathbb{Q}" . ?ℚ)
-     ("\\mathbb{R}" . ?ℝ)
-     ("\\mathbb{S}" . ?𝕊)
-     ("\\mathbb{T}" . ?𝕋)
-     ("\\mathbb{U}" . ?𝕌)
-     ("\\mathbb{V}" . ?𝕍)
-     ("\\mathbb{W}" . ?𝕎)
-     ("\\mathbb{X}" . ?𝕏)
-     ("\\mathbb{Y}" . ?𝕐)
-     ("\\mathbb{Z}" . ?ℤ)
-     ("\\Bbb{A}" . ?𝔸)
-     ("\\Bbb{B}" . ?𝔹)
-     ("\\Bbb{C}" . ?ℂ)
-     ("\\Bbb{D}" . ?𝔻)
-     ("\\Bbb{E}" . ?𝔼)
-     ("\\Bbb{F}" . ?𝔽)
-     ("\\Bbb{G}" . ?𝔾)
-     ("\\Bbb{H}" . ?ℍ)
-     ("\\Bbb{I}" . ?𝕀)
-     ("\\Bbb{J}" . ?𝕁)
-     ("\\Bbb{K}" . ?𝕂)
-     ("\\Bbb{L}" . ?𝕃)
-     ("\\Bbb{M}" . ?𝕄)
-     ("\\Bbb{N}" . ?ℕ)
-     ("\\Bbb{O}" . ?𝕆)
-     ("\\Bbb{P}" . ?ℙ)
-     ("\\Bbb{Q}" . ?ℚ)
-     ("\\Bbb{R}" . ?ℝ)
-     ("\\Bbb{S}" . ?𝕊)
-     ("\\Bbb{T}" . ?𝕋)
-     ("\\Bbb{U}" . ?𝕌)
-     ("\\Bbb{V}" . ?𝕍)
-     ("\\Bbb{W}" . ?𝕎)
-     ("\\Bbb{X}" . ?𝕏)
-     ("\\Bbb{Y}" . ?𝕐)
-     ("\\Bbb{Z}" . ?ℤ)
-     ("\\lvert" . ?|)
-     ("\\rvert" . ?|)
-     ("\\lVert" . ?‖)
-     ("\\rVert" . ?‖)
-     ("\\frac{1}{2}" . "½") ("\\tfrac{1}{2}" . "½")
-     ("\\frac{1}{3}" . "⅓") ("\\tfrac{1}{3}" . "⅓")
-     ("\\frac{2}{3}" . "⅔") ("\\tfrac{2}{3}" . "⅔")
-     ("\\frac{1}{4}" . "¼") ("\\tfrac{1}{4}" . "¼")
-     ("\\frac{3}{4}" . "¾") ("\\tfrac{3}{4}" . "¾")
-     ("\\frac{1}{5}" . "⅕") ("\\tfrac{1}{5}" . "⅕")
-     ("\\frac{2}{5}" . "⅖") ("\\tfrac{2}{5}" . "⅖")
-     ("\\frac{3}{5}" . "⅗") ("\\tfrac{3}{5}" . "⅗")
-     ("\\frac{4}{5}" . "⅘") ("\\tfrac{4}{5}" . "⅘")
-     ("\\frac{1}{6}" . "⅙") ("\\tfrac{1}{6}" . "⅙")
-     ("\\frac{5}{6}" . "⅚") ("\\tfrac{5}{6}" . "⅚")
-     ("\\frac{1}{7}" . "⅐") ("\\tfrac{1}{7}" . "⅐")
-     ("\\frac{1}{8}" . "⅛") ("\\tfrac{1}{8}" . "⅛")
-     ("\\frac{3}{8}" . "⅜") ("\\tfrac{3}{8}" . "⅜")
-     ("\\frac{5}{8}" . "⅝") ("\\tfrac{5}{8}" . "⅝")
-     ("\\frac{7}{8}" . "⅞") ("\\tfrac{7}{8}" . "⅞")
-     ("\\frac{1}{9}" . "⅑") ("\\tfrac{1}{9}" . "⅑")
-     ("\\frac{1}{10}" . "⅒") ("\\tfrac{1}{10}" . "⅒")
-     ("\\eps" . ?ε)
-     ("\\begin{equation*}" . ?↴)
-     ("\\begin{equation}" . ?↴)
-     ("\\end{equation*}" . ?↲)
-     ("\\end{equation}" . ?↲)
-     ("\\begin{align*}" . ?⌈)
-     ("\\begin{align}" . ?⌈)
-     ("\\end{align*}" . ?⌋)
-     ("\\end{align}" . ?⌋)
-     ("\\begin{multline*}" . ?⎧)
-     ("\\begin{multline}" . ?⎧)
-     ("\\end{multline*}" . ?⎭)
-     ("\\end{multline}" . ?⎭)
-     ("\\ " . 9141) ; Literal ?⎵ breaks indentation
-)))
 
 (defun my-LaTeX-mode-setup ()
   (turn-on-reftex)
