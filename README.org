@@ -44,7 +44,7 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/czm-lean4.el][czm-lean4.el]] :: embellishments for lean4-mode
 - [[https://github.com/ultronozm/czm-spell.el][czm-spell.el]] :: spell-check that saves corrections in abbrevs
 - [[https://github.com/ultronozm/czm-misc.el][czm-misc.el]] :: miscellaneous elisp functions
-- [[https://github.com/ultronozm/doc-dual-view.el][doc-dual-view.el]] :: sync two windows showing the same document
+- [[https://github.com/ultronozm/doc-follow.el][doc-follow.el]] :: sync windows showing the same document
 - [[https://github.com/ultronozm/eldoc-icebox.el][eldoc-icebox.el]] :: pop-up buffer with frozen copy of eldoc
 - [[https://github.com/ultronozm/library.el][library.el]] :: helper functions for managing downloaded papers
 - [[https://github.com/ultronozm/magit-fill-column.el][magit-fill-column.el]] :: set magit commit message fill-column based on project
@@ -56,7 +56,6 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/czm-mail.el][czm-mail.el]] :: mail helper functions and tweaks
 - [[https://github.com/ultronozm/pdf-extract.el][pdf-extract.el]] :: extract page ranges from PDF files
 - [[https://github.com/ultronozm/pdf-tools-org-extract.el][pdf-tools-org-extract.el]] :: extract PDF annotations to org-mode
-- [[https://github.com/ultronozm/doc-dual-view.el][doc-dual-view.el]] :: sync two windows showing the same document
 - [[https://github.com/ultronozm/outline-skip.el][outline-skip.el]] :: skip certain outline headings
 - [[https://github.com/ultronozm/emacs-src-redirect.el][emacs-src-redirect.el]] :: redirect lookups from installed Emacs to local source
 
