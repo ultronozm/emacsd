@@ -832,10 +832,10 @@ Optionally run SETUP-FN after creating the file."
 
 (setq pdf-annot-edit-contents-setup-function #'my/pdf-annot-setup)
 
-(use-package doc-dual-view
+(use-package doc-follow
   :repo-scan
   :defer t
-  :ensure (:host github :repo "ultronozm/doc-dual-view.el" :depth nil))
+  :ensure (:host github :repo "ultronozm/doc-follow.el" :depth nil))
 
 (use-package pdf-extract
   :repo-scan
