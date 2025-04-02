@@ -2536,6 +2536,7 @@ Without ARG, use or create the default Sage buffer."
                       :buffer-name buffer-name))))
 
 (use-package sage-shell-mode
+  :disabled
   :defer t
   :custom
   (sage-shell:use-prompt-toolkit nil)
@@ -2555,6 +2556,7 @@ Without ARG, use or create the default Sage buffer."
   (sage-shell-after-prompt . sage-shell-view-mode))
 
 (use-package ob-sagemath
+  :disabled
   :defer t
   :config
   (setq org-babel-default-header-args:sage '((:session . t)
