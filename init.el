@@ -127,10 +127,17 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   :demand t
   :config
   (diminish 'abbrev-mode "Ab")
-  (dolist (mode '(visual-line-mode outline-minor-mode
-                                   eldoc-mode reftex-mode whitespace-mode))
+  (diminish 'visual-line-mode)
+  (dolist (mode '(reftex-mode
+                  whitespace-mode))
     (with-eval-after-load 'mode
-      (diminish mode))))
+      (diminish mode)))
+  (with-eval-after-load 'eldoc
+    (diminish 'eldoc-mode))
+  (with-eval-after-load 'outline
+    (diminish 'outline-minor-mode))
+  (with-eval-after-load 'follow
+    (diminish 'follow-mode)))
 
 (use-package aggressive-indent
   :defer t
