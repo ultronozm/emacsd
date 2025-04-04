@@ -683,33 +683,6 @@ them at the first newline."
         ("C-c C-q" . eglot-code-action-quickfix)
         ("C-c C-a" . eglot-code-actions)))
 
-(defun czm-create-scratch-file (dir extension &optional setup-fn)
-  "Create a new temporary file in DIR with EXTENSION.
-Optionally run SETUP-FN after creating the file."
-  (let* ((dir (file-name-as-directory dir))
-         (filename (format-time-string (concat "%Y%m%dT%H%M%S--scratch." extension)))
-         (filepath (expand-file-name filename dir)))
-    (unless (file-directory-p dir)
-      (make-directory dir t))
-    (find-file filepath)
-    (save-buffer)
-    (when setup-fn (funcall setup-fn))))
-
-(defun czm-create-scratch-org ()
-  "Create new scratch org buffer."
-  (interactive)
-  (czm-create-scratch-file my-scratch-org-dir "org"))
-
-(defun czm-create-scratch-tex ()
-  "Create new scratch LaTeX buffer."
-  (interactive)
-  (czm-create-scratch-file my-scratch-tex-dir "tex" #'czm-setup-tex-file))
-
-(defun czm-create-scratch-sage ()
-  "Create new scratch sage file."
-  (interactive)
-  (czm-create-scratch-file my-scratch-sage-dir "sage"))
-
 (use-package consult-abbrev
   :repo-scan
   :defer t
