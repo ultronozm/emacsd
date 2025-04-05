@@ -377,6 +377,13 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (setq project-switch-commands
         (cl-remove 'project-find-regexp project-switch-commands :key #'car)))
 
+(with-eval-after-load 'consult-imenu
+  (require 'cl-lib)
+  (when-let ((config (alist-get 'emacs-lisp-mode consult-imenu-config)))
+    (let ((types (plist-get config :types)))
+      (cl-pushnew '(?l "LLM Tools" font-lock-function-name-face) types
+                  :test (lambda (a b) (eq (car a) (car b))))
+      (setf (plist-get config :types) types))))
 
 (defun czm-search-log ()
   "Search your log files with `rg'."
