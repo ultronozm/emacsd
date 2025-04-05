@@ -636,6 +636,8 @@ them at the first newline."
                    #'flymake-preserve-multiline--fix-entries)))
 
 (use-package attrap
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/attrap.el" :depth nil)
   :defer t
   :after flycheck
   :config
@@ -2000,65 +2002,6 @@ complete document rather than just a previewed region."
   (:map LaTeX-mode-map
         ("C-c 9" . czm-tex-ref-label)
         ("C-c 0" . czm-tex-ref-bib)))
-
-(defun czm-attrap-LaTeX-fixer-flymake (msg pos end)
-  (cond
-   ((s-matches? (rx "Use either `` or '' as an alternative to `\"'.") msg)
-    (list (attrap-option 'fix-open-dquote
-                         (delete-region pos (1+ pos))
-                         (insert "``"))
-          (attrap-option 'fix-close-dquote
-                         (delete-region pos (1+ pos))
-                         (insert "''"))))
-   ((s-matches? (rx "Non-breaking space (`~') should have been used.") msg)
-    (attrap-one-option 'non-breaking-space
-                       (if (looking-at (rx space))
-                           (delete-region pos (1+ pos))
-                         (delete-region (save-excursion (skip-chars-backward "\n\t ")
-                                                        (point))
-                                        (point)))
-                       (insert "~")))
-   ((s-matches? (rx "Interword spacing (`\\ ') should perhaps be used.")
-                msg)
-    (attrap-one-option 'use-interword-spacing
-                       (delete-region (point)
-                                      (1+ (point)))
-                       (insert "\\ ")))
-   ((s-matches? (rx "Intersentence spacing (`\\@') should perhaps be used.")
-                msg)
-    (attrap-one-option 'use-intersentence-spacing
-                       (insert "\\@")))
-   ((s-matches? (rx "Delete this space to maintain correct pagereferences.")
-                msg)
-    ;; not yet fixed
-    (attrap-one-option 'fix-space-pageref
-                       (if (looking-back (rx bol (* space)))
-                           (progn (skip-chars-backward "\n\t ")
-                                  (insert "%"))
-                         (delete-region (point)
-                                        (save-excursion (skip-chars-forward " \t")
-                                                        (point)))
-                         )))
-   ((s-matches? (rx "You should enclose the previous parenthesis with `{}'.")
-                msg)
-    (attrap-one-option 'enclose-with-braces
-                       (forward-char)
-                       (insert "}")
-                       (save-excursion
-                         (backward-char)
-                         (backward-sexp)
-                         (re-search-backward "[^[:alnum:]\\_\\/]")
-                         (forward-char)
-                         (insert "{")
-                         )))
-   ((s-matches? (rx "You should not use punctuation in front of quotes.")
-                msg)
-    (attrap-one-option 'swap-punctuation-with-quotes
-                       (progn
-                         (forward-char)
-                         (delete-char 2)
-                         (backward-char)
-                         (insert "''"))))))
 
 (with-eval-after-load 'latex
   (require 'latex-flymake)
