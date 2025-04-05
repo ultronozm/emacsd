@@ -734,3 +734,7 @@ Optionally run SETUP-FN after creating the file."
   "Create new scratch sage file."
   (interactive)
   (czm-create-scratch-file my-scratch-sage-dir "sage"))
+
+(tool-bar-mode 0)
+(scroll-bar-mode 0)
+(add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
