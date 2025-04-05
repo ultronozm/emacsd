@@ -800,10 +800,10 @@ them at the first newline."
 
 (setq pdf-annot-edit-contents-setup-function #'my/pdf-annot-setup)
 
-(use-package doc-follow
+(use-package doc-view-follow
   :repo-scan
   :defer t
-  :ensure (:host github :repo "ultronozm/doc-follow.el" :depth nil))
+  :ensure (:host github :repo "ultronozm/doc-view-follow.el" :depth nil))
 
 (use-package pdf-extract
   :repo-scan
