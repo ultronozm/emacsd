@@ -29,12 +29,12 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 ;;; elpaca
 
-(defvar elpaca-installer-version 0.8)
+(defvar elpaca-installer-version 0.10)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1
+                              :ref nil :depth 1 :inherit ignore
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
                               :build (:not elpaca--activate-package)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
@@ -44,7 +44,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (add-to-list 'load-path (if (file-exists-p build) build repo))
   (unless (file-exists-p repo)
     (make-directory repo t)
-    (when (< emacs-major-version 28) (require 'subr-x))
+    (when (<= emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
         (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
                   ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
@@ -67,7 +67,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
     (load "./elpaca-autoloads")))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
-
 (when (eq window-system 'w32)
   (elpaca-no-symlink-mode))
 
@@ -78,6 +77,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (keymap-global-set "s-r" #'elpaca-rebuild)
 
 (elpaca-wait)
+
+;; (error)
 
 ;;; exec-path-from-shell
 
@@ -836,35 +837,12 @@ in all current and future PDF buffers."
       (funcall process-pdf-buffers nil)
       (remove-hook 'pdf-view-mode-hook #'pdf-view-midnight-minor-mode))))
 
-;;; themes
+(define-globalized-minor-mode global-pdf-view-midnight-minor-mode
+  pdf-view-midnight-minor-mode
+  (lambda ()
+    (when (derived-mode-p 'pdf-view-mode)
+      (pdf-view-midnight-minor-mode 1))))
 
-(use-package modus-themes
-  :demand t
-  :hook (modus-themes-post-load . czm-set-face-heights)
-  :config
-  (defvar czm--modus-vivendi-tinted-active nil)
-  (czm-set-face-heights)
-  :bind ("H-t" . czm-toggle-dark-mode))
-
-(defun czm-toggle-dark-mode ()
-  "Toggle between light and dark modes.
-In dark mode:
-- Uses modus-vivendi-tinted theme
-- Enables dark mode for PDF viewing
-In light mode:
-- Uses default Emacs theme
-- Disables dark mode for PDF viewing"
-  (interactive)
-  (if czm--modus-vivendi-tinted-active
-      (progn
-        (disable-theme 'modus-vivendi-tinted)
-        (global-pdf-view-midnight-minor-mode -1)
-        (setq czm--modus-vivendi-tinted-active nil))
-    (disable-theme 'modus-vivendi-tinted)
-    (load-theme 'modus-vivendi-tinted t)
-    (global-pdf-view-midnight-minor-mode 1)
-    (setq czm--modus-vivendi-tinted-active t))
-  (czm-set-face-heights))
 
 ;;; translation
 
@@ -872,7 +850,15 @@ In light mode:
   :defer t
   :config
   (setq gt-langs '(da en fr de))
-  (setq gt-default-translator (gt-translator :engines (gt-google-engine))))
+  ;; (setq gt-default-translator (gt-translator :engines (gt-google-engine)))
+  (setq gt-default-translator 
+        (gt-translator :engines (gt-google-engine)))
+  (setq gt-default-translator 
+        (gt-translator 
+         :taker (gt-taker :langs '(en da) :text 'paragraph)  ;; Set up for paragraph translation
+         :engines (gt-google-engine)                         ;; Google engine has good TTS support
+         :render (gt-buffer-render)))
+  )
 
 (defun gt-eldoc-documentation-function (callback)
   "Return translation at point via eldoc's callback mechanism."
@@ -1242,7 +1228,8 @@ The content is escaped to prevent org syntax interpretation."
   :defer t
   :bind
   (:map global-map
-        ("s-/" . ai-org-chat-new))
+        ("s-/" . ai-org-chat-new)
+        ("s-<return>" . ai-org-chat-simple-respond))
   (:map project-prefix-map
         ("a" . ai-org-chat-project))
   (:map ai-org-chat-minor-mode-map
@@ -1841,8 +1828,6 @@ complete document rather than just a previewed region."
   (prog-mode . (lambda () (setq-local TeX-master my-preview-master)))
   :bind
   (:map LaTeX-mode-map
-        ("s-c" . preview-clearout-at-point)
-        ("s-q" . LaTeX-fill-buffer)
         ("C-c m" . latex-math-from-calc)
         ("C-c C-g" . czm-latex-calc-grab)
         ("C-c C-n" . nil) ; TeX-normal-mode

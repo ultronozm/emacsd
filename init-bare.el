@@ -498,7 +498,8 @@ This allows multiple Ediff sessions to each restore their own window configurati
 
 (defun ediff-kill-temporary-file-buffer ()
   (when (and (buffer-live-p ediff-buffer-A)
-             (string-prefix-p "FILE=" (buffer-name ediff-buffer-A)))
+             (or (string-prefix-p "FILE=" (buffer-name ediff-buffer-A))
+                 (string-prefix-p "UNDO=" (buffer-name ediff-buffer-A))))
     (kill-buffer ediff-buffer-A)))
 
 (add-hook 'ediff-before-setup-hook #'ediff-save-window-configuration)
@@ -738,3 +739,31 @@ Optionally run SETUP-FN after creating the file."
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
 (add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
+
+(add-hook 'modus-themes-post-load-hook #'czm-set-face-heights)
+
+(defvar czm--modus-vivendi-tinted-active nil)
+
+(defun czm-toggle-dark-mode ()
+  "Toggle between light and dark modes.
+In dark mode:
+- Uses modus-vivendi-tinted theme
+- Enables dark mode for PDF viewing
+In light mode:
+- Uses default Emacs theme
+- Disables dark mode for PDF viewing"
+  (interactive)
+  (if czm--modus-vivendi-tinted-active
+      (progn
+        (disable-theme 'modus-vivendi-tinted)
+        (when (fboundp #'global-pdf-view-midnight-minor-mode)
+          (global-pdf-view-midnight-minor-mode -1))
+        (setq czm--modus-vivendi-tinted-active nil))
+    (disable-theme 'modus-vivendi-tinted)
+    (load-theme 'modus-vivendi-tinted t)
+    (when (fboundp #'global-pdf-view-midnight-minor-mode)
+          (global-pdf-view-midnight-minor-mode 1))
+    (setq czm--modus-vivendi-tinted-active t))
+  (czm-set-face-heights))
+
+(keymap-global-set "H-t" #'czm-toggle-dark-mode)
