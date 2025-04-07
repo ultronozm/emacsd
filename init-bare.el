@@ -766,3 +766,20 @@ In light mode:
   (czm-set-face-heights))
 
 (keymap-global-set "H-t" #'czm-toggle-dark-mode)
+
+(defun czm-mail-message-tab ()
+  "Use `mail-abbrev-insert-alias' in headers, otherwise `message-tab'."
+  (interactive)
+  (if (message-point-in-header-p)
+      (call-interactively #'mail-abbrev-insert-alias)
+    (message-tab)))
+
+(use-package message
+  :defer t
+  :ensure nil
+  :bind
+  (:map message-mode-map
+        ("TAB" . czm-mail-message-tab)))
+
+(setopt use-package-verbose t
+        use-package-minimum-reported-time 0.1)
