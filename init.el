@@ -267,7 +267,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (use-package czm-misc
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-misc.el"
-                 :depth nil)
+                 :depth nil
+                 :inherit nil :pin t)
   :bind (("s-@" . czm-misc-split-window-below-variant)
          ("s-#" . czm-misc-split-window-right-variant)
          ("s-4" . czm-misc-double-split-window-below-and-delete)
@@ -409,7 +410,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package info-colors
-  :ensure (:host github :repo "ubolonton/info-colors")
+  :ensure (:host github :repo "ubolonton/info-colors" :inherit nil)
   :hook (Info-selection . info-colors-fontify-node))
 
 (use-package ace-window
@@ -426,9 +427,11 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (my-outline-set-global-ellipsis " ▼ ")
 
 (use-package outline-skip
+  :repo-scan
   :after latex
   :ensure (:host github :repo "ultronozm/outline-skip.el"
-                 :depth nil)
+                 :depth nil
+                 :inherit nil :pin t)
   :hook (LaTeX-mode . outline-skip-mode))
 
 (use-package perfect-margin
@@ -529,7 +532,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (use-package emacs-src-redirect
   :repo-scan
   :defer 1
-  :ensure (:host github :repo "ultronozm/emacs-src-redirect.el" :depth nil)
+  :ensure (:host github :repo "ultronozm/emacs-src-redirect.el" :depth nil
+                 :inherit nil :pin t)
   :config
   (emacs-src-redirect-mode))
 
@@ -636,7 +640,12 @@ them at the first newline."
 
 (use-package attrap
   :repo-scan
-  :ensure (:host github :repo "ultronozm/attrap.el" :depth nil)
+  :ensure (:host github
+                 :repo "ultronozm/attrap.el"
+                 :remotes (("upstream" :repo "jyp/attrap"))
+                 :depth nil
+                 :inherit nil
+                 :pin t)
   :defer t
   :after flycheck
   :config
@@ -694,7 +703,8 @@ them at the first newline."
 (use-package consult-abbrev
   :repo-scan
   :defer t
-  :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil))
+  :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil
+                 :inherit nil :pin t))
 
 (defun foldout-exit-fold-without-hiding ()
   (interactive)
@@ -703,7 +713,8 @@ them at the first newline."
 (use-package czm-spell
   :repo-scan
   :defer 10
-  :ensure (:host github :repo "ultronozm/czm-spell.el" :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-spell.el" :depth nil
+                 :inherit nil :pin t)
   ;; :after latex
   :bind ("s-;" . czm-spell-then-abbrev))
 
@@ -712,7 +723,8 @@ them at the first newline."
 
 (use-package julia-ts-mode
   :ensure (:host github :repo "dhanak/julia-ts-mode"
-                 :depth nil)
+                 :depth nil
+                 :inherit nil)
   :mode "\\.jl$")
 
 (use-package eglot-jl
@@ -764,6 +776,10 @@ them at the first newline."
 
 (use-package pdf-tools
   :mode ("\\.pdf\\'" . pdf-view-mode)
+  :ensure (:host github :repo "vedang/pdf-tools"
+                 :depth nil
+                 :remotes (("orgtre" :repo "orgtre/pdf-tools"))
+                 :inherit nil :pin t)
   :custom
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
   (global-auto-revert-ignore-modes '(pdf-view-mode))
@@ -792,6 +808,9 @@ them at the first newline."
                  (window-width . 0.5)
                  (reusable-frames . visible))))
 
+(with-eval-after-load 'pdf-view
+  (require 'doc-view-follow-pdf-tools))
+
 (defun my/pdf-annot-setup (_a)
   (LaTeX-mode)
   (setq TeX-master my-preview-master)
@@ -802,17 +821,20 @@ them at the first newline."
 (use-package doc-view-follow
   :repo-scan
   :defer t
-  :ensure (:host github :repo "ultronozm/doc-view-follow.el" :depth nil))
+  :ensure (:host github :repo "ultronozm/doc-view-follow.el" :depth nil
+                 :inherit nil :pin t))
 
 (use-package pdf-extract
   :repo-scan
-  :ensure (:host github :repo "ultronozm/pdf-extract.el"))
+  :ensure (:host github :repo "ultronozm/pdf-extract.el"
+                 :inherit nil :pin t))
 
 (use-package pdf-tools-org-extract
   :repo-scan
   :after pdf-annot
   :demand
-  :ensure (:host github :repo "ultronozm/pdf-tools-org-extract.el")
+  :ensure (:host github :repo "ultronozm/pdf-tools-org-extract.el"
+                 :inherit nil :pin t)
   :bind (:map pdf-view-mode-map
               ("C-c C-a e" . pdf-tools-org-extract-annotations)))
 
@@ -1131,7 +1153,8 @@ The content is escaped to prevent org syntax interpretation."
   :repo-scan
   :after rmail
   :demand
-  :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil
+                 :inherit nil :pin t)
   :bind
   ("C-c C-@" . czm-mail-mailrc-add-entry)
   (:map rmail-mode-map
@@ -1149,9 +1172,11 @@ The content is escaped to prevent org syntax interpretation."
 (use-package copilot
   :ensure (:host github
                  :repo "zerolfx/copilot.el"
-                 ;; :repo "ultronozm/copilot.el"
                  :files ("*.el" "dist")
-                 :depth nil)
+                 :depth nil
+                 :remotes (("ultronozm" :repo "ultronozm/copilot.el"))
+                 :inherit nil
+                 :pin t)
   :diminish " Co"
   :hook
   ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
@@ -1184,12 +1209,25 @@ The content is escaped to prevent org syntax interpretation."
         ("C-M-<down>" . copilot-next-completion)
         ("C-M-<up>" . copilot-previous-completion)))
 
-(use-package plz-event-source)
+(use-package plz
+  :ensure (:host github :repo "alphapapa/plz.el"
+                 :depth nil
+                 :inherit nil))
+
+(use-package plz-event-source
+  :ensure (:host github :repo "r0man/plz-event-source"
+                 :depth nil
+                 :inherit nil))
+
 
 (use-package llm
   :defer t
-  :ensure (:host github :repo "ahyatt/llm"
-                 :depth nil)
+  :ensure (:host github
+                 :repo "ahyatt/llm"
+                 :depth nil
+                 :remotes (("ultronozm" :repo "ultronozm/llm"))
+                 :inherit nil
+                 :pin t)
   ;; :init
   ;; (require 'llm-openai)
   ;; (require 'llm-gemini)
@@ -1202,11 +1240,18 @@ The content is escaped to prevent org syntax interpretation."
 
 (use-package llm-tool-collection
   :after llm
-  :ensure (:host github :repo "skissue/llm-tool-collection" :depth nil))
+  :ensure (:host github
+                 :repo "skissue/llm-tool-collection"
+                 :depth nil
+                 :remotes (("ultronozm" :repo "ultronozm/llm-tool-collection"))
+                 :inherit nil
+                 :pin t))
 
 (use-package ai-org-chat
   :repo-scan
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
+                 :inherit nil
+                 :pin t
                  :depth nil)
   :defer t
   :bind
@@ -1307,7 +1352,8 @@ Skips empty days and diary holidays."
 (use-package content-quoter
   :repo-scan
   :ensure (:host github :repo "ultronozm/content-quoter.el"
-                 :depth nil)
+                 :depth nil
+                 :inherit nil :pin t)
   :bind ("s-u" . content-quoter-dwim)
   :defer t)
 
@@ -1581,7 +1627,8 @@ Skips empty days and diary holidays."
 
 (use-package czm-cpp
   :repo-scan
-  :ensure (:host github :repo "ultronozm/czm-cpp.el" :files ("*.el" "template") :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-cpp.el" :files ("*.el" "template") :depth nil
+                 :inherit nil :pin t)
   :defer t
   :custom
   (czm-cpp-scratch-directory my-scratch-cpp-dir))
@@ -1777,6 +1824,8 @@ complete document rather than just a previewed region."
            :host nil
            :repo "git@git.savannah.gnu.org:/srv/git/auctex.git"
            :depth nil
+           :inherit nil
+           :pin t
            :pre-build (("./autogen.sh")
                        ("./configure"
                         "--without-texmf-dir"
@@ -1947,7 +1996,8 @@ complete document rather than just a previewed region."
 
 (use-package czm-tex-jump
   :repo-scan
-  :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git" :depth nil)
+  :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git" :depth nil
+                 :inherit nil :pin t)
   ;; :after avy
   :after latex
   :bind
@@ -2008,7 +2058,8 @@ complete document rather than just a previewed region."
 
 (use-package czm-tex-edit
   :repo-scan
-  :ensure (:host github :repo "ultronozm/czm-tex-edit.el" :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-tex-edit.el" :depth nil
+                 :inherit nil :pin t)
   :after latex dynexp
   ;; :demand ; should come after latex and dynexp
   :bind
@@ -2176,8 +2227,13 @@ Without ARG, use or create the default Sage buffer."
                       :buffer-name buffer-name))))
 
 (use-package sage-shell-mode
-  :disabled
   :defer t
+  :disabled
+  :ensure (:host github
+                 :repo "sagemath/sage-shell-mode"
+                 :remotes (("ultronozm" :repo "ultronozm/sage-shell-mode"))
+                 :inherit nil
+                 :pin t)
   :custom
   (sage-shell:use-prompt-toolkit nil)
   (sage-shell:use-simple-prompt t)
@@ -2196,8 +2252,8 @@ Without ARG, use or create the default Sage buffer."
   (sage-shell-after-prompt . sage-shell-view-mode))
 
 (use-package ob-sagemath
-  :disabled
   :defer t
+  :disabled
   :config
   (setq org-babel-default-header-args:sage '((:session . t)
                                              (:results . "output")))
@@ -2259,7 +2315,13 @@ Without ARG, use or create the default Sage buffer."
 
 (use-package lean4-mode
   :repo-scan
-  :ensure (:host github :repo "ultronozm/lean4-mode" :files ("*.el" "data"))
+  :ensure (:host github
+                 :repo "ultronozm/lean4-mode"
+                 :files ("*.el" "data")
+                 :remotes (("bustercopley" :repo "bustercopley/lean4-mode")
+                           ("leanprover-community" :repo "leanprover-community/lean4-mode"))
+                 :inherit nil
+                 :pin t)
   :diminish
   :hook
   (lean4-mode . czm-set-lean4-local-variables)
@@ -2278,7 +2340,8 @@ Without ARG, use or create the default Sage buffer."
 
 (use-package czm-lean4
   :repo-scan
-  :ensure (:host github :repo "ultronozm/czm-lean4.el" :depth nil)
+  :ensure (:host github :repo "ultronozm/czm-lean4.el" :depth nil
+                 :inherit nil :pin t)
   :after lean4-mode
   :hook
   (lean4-mode . czm-lean4-mode-hook)
