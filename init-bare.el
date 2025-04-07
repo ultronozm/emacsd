@@ -89,7 +89,7 @@
    ("s-e" . end-of-list)
    ("s-E" . kill-to-end-of-list)
    ;; s-f
-   ("s-g" . maximize-window-with-clipboard)
+   ("s-g" . ediff-with-clipboard)
    ("s-h" . nil)
    ("s-H" . nil)
    ("s-i" . find-init-file)
@@ -419,8 +419,8 @@ DIR must include a .project file to be considered a project."
 (defvar maximize-window-mode-history nil
   "History of major modes used in maximize-window function.")
 
-(defun maximize-window-with-clipboard ()
-  "Create a new tab, split window, paste clipboard, and run ediff.
+(defun ediff-with-clipboard ()
+  "Create a new tab, split window, paste clipboard, and run Ediff.
 If region is active, narrows to the region in an indirect buffer first.
 Otherwise, uses the whole buffer.  Creates a new tab, splits it vertically,
 creates a new buffer with clipboard contents, uses the same major mode as
@@ -455,7 +455,6 @@ the original buffer, and runs ediff on both buffers."
                                 (ediff-cleanup-mess)
                                 (when indirect-buffer
                                   (kill-buffer indirect-buffer))
-                                ;; (kill-buffer new-buffer)
                                 (tab-bar-close-tab))))
         (with-current-buffer ediff-buf
           (add-hook 'ediff-quit-hook cleanup-function nil t))))))
