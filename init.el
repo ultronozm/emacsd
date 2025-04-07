@@ -882,14 +882,6 @@ in all current and future PDF buffers."
       (add-hook 'eldoc-documentation-functions #'gt-eldoc-documentation-function nil t)
     (remove-hook 'eldoc-documentation-functions #'gt-eldoc-documentation-function t)))
 
-;;;###autoload
-(define-minor-mode gt-eldoc-mode
-  "Minor mode to show translations via eldoc."
-  :lighter " GT-ElDoc"
-  (if gt-eldoc-mode
-      (add-hook 'eldoc-documentation-functions #'gt-eldoc-documentation-function nil t)
-    (remove-hook 'eldoc-documentation-functions #'gt-eldoc-documentation-function t)))
-
 ;;; org
 
 ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2024-06/msg01858.html
