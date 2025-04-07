@@ -835,13 +835,6 @@ in all current and future PDF buffers."
       (funcall process-pdf-buffers nil)
       (remove-hook 'pdf-view-mode-hook #'pdf-view-midnight-minor-mode))))
 
-(define-globalized-minor-mode global-pdf-view-midnight-minor-mode
-  pdf-view-midnight-minor-mode
-  (lambda ()
-    (when (derived-mode-p 'pdf-view-mode)
-      (pdf-view-midnight-minor-mode 1))))
-
-
 ;;; translation
 
 (use-package go-translate
