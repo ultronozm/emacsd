@@ -1,8 +1,6 @@
 ;;; -*- lexical-binding: t; -*-
 
 ;;; basics
-(setopt use-package-verbose t
-        use-package-minimum-reported-time 0.1)
 ;; (setq use-package-compute-statistics t)
 
 ;; disable customization interface
