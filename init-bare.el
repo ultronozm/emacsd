@@ -325,8 +325,11 @@ Pushes a mark at the starting position."
 
 (use-package outline
   :ensure nil
+  :demand t
   :config
   (require 'foldout)
+  (setcdr outline-navigation-repeat-map nil)
+  (setcdr outline-editing-repeat-map nil)
   :bind
   (:map
    outline-minor-mode-map
