@@ -787,3 +787,29 @@ In light mode:
 
 (setopt use-package-verbose t
         use-package-minimum-reported-time 0.1)
+
+(defun fill-previous-paragraph ()
+  "Fill the previous paragraph."
+  (interactive)
+  (save-excursion
+    (previous-line)
+    (fill-paragraph)))
+
+(bind-keys
+ :repeat-map paragraph-repeat-map
+ ("]" . forward-paragraph)
+ ("}" . forward-paragraph)
+ ("[" . backward-paragraph)
+ ("{" . backward-paragraph)
+ :exit
+ ("C-/" . undo)
+ :continue-only
+ ("M-h" . mark-paragraph)
+ ("h" . mark-paragraph)
+ ("k" . kill-paragraph)
+ ("w" . kill-region)
+ ("M-w" . kill-ring-save)
+ ("y" . yank)
+ ("t" . transpose-paragraphs)
+ ("q" . fill-previous-paragraph)
+ ("C-l" . recenter-top-bottom))
