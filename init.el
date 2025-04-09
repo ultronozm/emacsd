@@ -2408,3 +2408,5 @@ Without ARG, use or create the default Sage buffer."
 (let ((file (locate-user-emacs-file "init-personal.el")))
   (when (file-exists-p file)
     (load file)))
+
+(setopt python-indent-guess-indent-offset nil)
