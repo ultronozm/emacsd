@@ -2082,7 +2082,7 @@ complete document rather than just a previewed region."
         ("C-c i" . czm-tex-edit-make-equation-inline)
         ("C-c w" . czm-tex-edit-make-equation-align)
         ("C-c q" . czm-tex-edit-make-equation-multline)
-        ("s-<return>" . czm-tex-edit-return)
+        ("C-<return>" . czm-tex-edit-return)
         ;; ("$" . czm-tex-edit-insert-dollar-or-wrap-region) ; not necessary w/ electric-pair-mode?
         ("\"" . czm-tex-edit-insert-quote-or-wrap-region))
   :config
