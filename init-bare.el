@@ -813,3 +813,18 @@ In light mode:
  ("t" . transpose-paragraphs)
  ("q" . fill-previous-paragraph)
  ("C-l" . recenter-top-bottom))
+
+(bind-keys
+ :repeat-map sentence-repeat-map
+ ("e" . forward-sentence)
+ ("a" . backward-sentence)
+ :continue-only
+ ("M-h" . mark-end-of-sentence)
+ ("h" . mark-end-of-sentence)
+ ("k" . kill-sentence)
+ ("w" . kill-region)
+ ("M-w" . kill-ring-save)
+ ("y" . yank)
+ ("t" . transpose-sentences)
+ ("C-l" . recenter-top-bottom))
+
