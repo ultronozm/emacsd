@@ -1,7 +1,7 @@
 ;;; -*- lexical-binding: t; -*-
 
 ;;; basics
-;; (setq use-package-compute-statistics t)
+(setq use-package-compute-statistics t)
 
 ;; disable customization interface
 (setq custom-file (locate-user-emacs-file "init-custom.el"))
