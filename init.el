@@ -208,7 +208,8 @@
 With prefix argument ARG, opens `user-init-file' directly."
   (interactive "P")
   (if arg
-      (find-file user-init-file)
+      (find-file (or user-init-file
+                     (expand-file-name "init.el" user-emacs-directory)))
     (let* ((elisp-dir1 (expand-file-name user-emacs-directory))
            (elisp-files (append
                          (directory-files elisp-dir1 t "\\.el$")))
