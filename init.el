@@ -782,9 +782,6 @@ them at the first newline."
                  (window-width . 0.5)
                  (reusable-frames . visible))))
 
-(with-eval-after-load 'pdf-view
-  (require 'doc-view-follow-pdf-tools))
-
 (defun my/pdf-annot-setup (_a)
   (LaTeX-mode)
   (setq TeX-master my-preview-master)
@@ -796,7 +793,8 @@ them at the first newline."
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/doc-view-follow.el" :depth nil
-                 :inherit nil :pin t))
+                 :inherit nil :pin t)
+  :custom (doc-view-follow-hijack t))
 
 (use-package pdf-extract
   :repo-scan
