@@ -446,7 +446,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (rust-mode . eglot-ensure))
 
 (use-package xr
-  :defer t)
+  :ensure (:host github :repo "mattiase/xr"))
 
 (defun czm-lispy-comment-maybe ()
   "Comment the list at point, or self-insert."
