@@ -369,7 +369,7 @@ Pushes a mark at the starting position."
    ("<backtab>" . outline-cycle-buffer)
    ("k" . outline-show-branches)
    ("l" . outline-hide-leaves)
-   ("RET" . outline-insert-heading)
+   ;; ("RET" . outline-insert-heading)
    ("o" . outline-hide-other)
    ("q" . outline-hide-sublevels)
    ("s" . outline-show-subtree)
