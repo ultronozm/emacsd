@@ -3022,6 +3022,26 @@ complete document rather than just a previewed region."
 
 ;;; sage
 
+(defun my/setup-sage-completion ()
+  "Set up completion for Sage mode."
+  (setq-local completion-styles '(basic))
+  (setq-local corfu-sort-function 'nil)
+  (corfu-mode))
+
+(use-package sage
+  ;; :disabled
+  :ensure (:host nil :repo "https://codeberg.org/rahguzar/sage-mode"
+                 :depth nil
+                 :main "sage.el"
+                 :inherit nil)
+  :demand t
+  :config
+  (add-hook 'sage-mode-hook #'my/setup-sage-completion)
+  (add-hook 'sage-shell-mode-hook #'my/setup-sage-completion)
+  (add-to-list 'org-src-lang-modes '("sage" . sage))
+  :custom
+  (sage-rich-output t))
+
 (defun sage-shell:pop-to-or-create-session (&optional arg)
   "Pop to a Sage session or create one.
 With numeric prefix ARG, use a numbered buffer (e.g. C-1, C-2, etc).
