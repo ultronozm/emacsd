@@ -141,6 +141,7 @@
   (vc-follow-symlinks t)
   (view-read-only t)
   (delete-pair-blink-delay 0)
+  (delete-pair-push-mark t)
   (delete-by-moving-to-trash t)
   (help-window-select t)
   (isearch-allow-scroll t)
