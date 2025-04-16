@@ -1935,7 +1935,6 @@ The content is escaped to prevent org syntax interpretation."
   (add-to-list 'org-src-lang-modes '("tex" . latex))
   (add-to-list 'org-src-lang-modes '("cmake" . cmake-ts))
   (add-to-list 'org-src-lang-modes '("yaml" . yaml-ts))
-  (add-to-list 'org-src-lang-modes '("sage" . sage-shell-mode))
   )
 
 (defun my/org-archive-done-tasks ()
@@ -3060,7 +3059,9 @@ Without ARG, use or create the default Sage buffer."
         ("C-c C-a" . sage-shell-edit:attach-buffer))
   :hook
   ((sage-shell-mode sage-shell:sage-mode) . eldoc-mode)
-  (sage-shell-after-prompt . sage-shell-view-mode))
+  (sage-shell-after-prompt . sage-shell-view-mode)
+  :config
+  (add-to-list 'org-src-lang-modes '("sage" . sage-shell-mode)))
 
 (use-package ob-sagemath
   :defer t
