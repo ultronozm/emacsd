@@ -3068,6 +3068,7 @@ complete document rather than just a previewed region."
                  'face-defface-spec))
 
 (use-package czm-tex-mint
+  :disabled
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-mint.el" :depth nil)
   :after latex mmm-mode
@@ -3083,6 +3084,7 @@ complete document rather than just a previewed region."
   (mmm-sage-shell:sage-mode-exit . czm-tex-mint-disable))
 
 (use-package symtex
+  :disabled
   :repo-scan
   :ensure (:host github :repo "ultronozm/symtex.el" :depth nil)
   :after latex
