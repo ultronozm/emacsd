@@ -840,6 +840,9 @@ In light mode:
  ("t" . transpose-sentences)
  ("C-l" . recenter-top-bottom))
 
+(font-lock-add-keywords 'Info-mode '((" -- \\([^:]+\\): \\_<\\(.+\\)\\_>" . 2)))
+(font-lock-add-keywords 'Info-mode '(("‘\\<\\([^’]+\\)\\>’" . 1)))
+
 (unless user-init-file
   (message "Running bare init (emacs -q/-Q detected), skipping rest of init.el")
   (throw 'quit-init nil))
