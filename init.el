@@ -747,6 +747,10 @@ Optionally run SETUP-FN after creating the file."
   (interactive)
   (czm-create-scratch-file my-scratch-sage-dir "sage"))
 
+(auto-insert-mode)
+(add-to-list 'auto-insert-alist
+             '("\\.tex\\'" . czm-setup-tex-file))
+
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
 (add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
