@@ -3042,55 +3042,6 @@ complete document rather than just a previewed region."
   :custom
   (sage-rich-output t))
 
-(defun sage-shell:pop-to-or-create-session (&optional arg)
-  "Pop to a Sage session or create one.
-With numeric prefix ARG, use a numbered buffer (e.g. C-1, C-2, etc).
-Without ARG, use or create the default Sage buffer."
-  (interactive "P")
-  (let* ((num (and (numberp arg) arg))
-         (buffer-name (sage-shell:-shell-buffer-name num))
-         (buffer (get-buffer buffer-name)))
-    (if (and buffer (get-buffer-process buffer))
-        (pop-to-buffer buffer)
-      (sage-shell:run (sage-shell:read-command)
-                      num  ; new buffer if num non-nil
-                      :buffer-name buffer-name))))
-
-(use-package sage-shell-mode
-  :defer t
-  :disabled
-  :ensure (:host github
-                 :repo "sagemath/sage-shell-mode"
-                 :remotes (("ultronozm" :repo "ultronozm/sage-shell-mode"))
-                 :inherit nil
-                 :pin t)
-  :custom
-  (sage-shell:use-prompt-toolkit nil)
-  (sage-shell:use-simple-prompt t)
-  (sage-shell:set-ipython-version-on-startup nil)
-  (sage-shell:sage-executable my-sage-exe)
-  (sage-shell:check-ipython-version-on-startup nil)
-  :bind
-  (:map global-map
-        ("C-z s" . sage-shell:pop-to-or-create-session))
-  (:map sage-shell-mode-map ("C-c n" . czm-sage-worksheet))
-  (:map sage-shell:sage-mode-map
-        ("C-c n" . czm-sage-worksheet)
-        ("C-c C-a" . sage-shell-edit:attach-buffer))
-  :hook
-  ((sage-shell-mode sage-shell:sage-mode) . eldoc-mode)
-  (sage-shell-after-prompt . sage-shell-view-mode)
-  :config
-  (add-to-list 'org-src-lang-modes '("sage" . sage-shell-mode)))
-
-(use-package ob-sagemath
-  :defer t
-  :disabled
-  :config
-  (setq org-babel-default-header-args:sage '((:session . t)
-                                             (:results . "output")))
-  (add-hook 'org-babel-after-execute-hook 'org-display-inline-images))
-
 (defun calcFunc-sage-factor ()
   "Use SAGE to factor the top element of the stack in Emacs Calc."
   (interactive)
