@@ -1997,7 +1997,8 @@ The content is escaped to prevent org syntax interpretation."
   (lean4-mode . (lambda () (setq tab-width 2)))
   (c++-mode . (lambda () (setq tab-width 4)))
   (rust-mode . (lambda () (setq tab-width 4)))
-  (sage-shell:sage-mode . (lambda () (setq tab-width 4)))
+  ;; (sage-shell:sage-mode . (lambda () (setq tab-width 4)))
+  (sage-mode . (lambda () (setq tab-width 4)))
   :config
   (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
   (copilot--define-accept-completion-by-action
