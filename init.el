@@ -48,6 +48,7 @@
    ("C-x v e" . vc-ediff)
    ("C-z" . nil)
    ("C-z c" . calendar)
+   ("C-z d" . eldoc-doc-buffer)
    ("C-z C-c" . restart-emacs)
    ("C-z C-e" . pp-macroexpand-last-sexp)
    ("C-z C-s" . desktop-save-in-desktop-dir)
