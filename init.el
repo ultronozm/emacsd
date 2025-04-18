@@ -179,6 +179,9 @@
            (x-diff . "attachment")
            (t . "inline"))
      (t . "attachment")))
+  ;; (outline-minor-mode-use-buttons 'in-margins)
+  (outline-minor-mode-use-buttons nil)
+  (outline-minor-mode-cycle nil)
   :config
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
