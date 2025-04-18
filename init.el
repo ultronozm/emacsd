@@ -3285,3 +3285,8 @@ complete document rather than just a previewed region."
     (load file)))
 
 (setopt python-indent-guess-indent-offset nil)
+
+(use-package clipdiff
+  :repo-scan
+  :defer t
+  :ensure (:host github :repo "ultronozm/clipdiff.el" :depth nil))
