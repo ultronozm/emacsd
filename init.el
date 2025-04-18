@@ -96,7 +96,7 @@
    ("s-e" . end-of-list)
    ("s-E" . kill-to-end-of-list)
    ;; s-f
-   ("s-g" . ediff-with-clipboard)
+   ("s-g" . clipboard-compare)
    ("s-h" . nil)
    ("s-H" . nil)
    ("s-i" . find-init-file)
@@ -435,45 +435,129 @@ DIR must include a .project file to be considered a project."
 (defvar maximize-window-mode-history nil
   "History of major modes used in maximize-window function.")
 
-(defun ediff-with-clipboard ()
-  "Create a new tab, split window, paste clipboard, and run Ediff.
-If region is active, narrows to the region in an indirect buffer first.
-Otherwise, uses the whole buffer.  Creates a new tab, splits it vertically,
-creates a new buffer with clipboard contents, uses the same major mode as
-the original buffer, and runs ediff on both buffers."
+(defun ediff-overwrite ()
+  "Run Ediff between the current buffer (or its active region) and the clipboard.
+
+If a region is active, the command first creates an indirect buffer that is
+narrowed to that region; otherwise the whole buffer is used.  A new tab is then
+opened, its frame is split vertically, and the clipboard contents are inserted
+into a temporary buffer in the right window.  Both buffers share the same major
+mode as the original.
+
+Ediff is started on the two buffers and, when the Ediff session ends, all
+temporary artifacts—the indirect buffer (if any), the clipboard buffer, and the
+tab—are cleaned up automatically."
   (interactive)
   (let* ((original-buffer (current-buffer))
-         (original-mode major-mode)
+         (original-mode   major-mode)
          (clipboard-contents (current-kill 0))
-         (region-active (use-region-p))
-         (region-beginning (when region-active (region-beginning)))
-         (region-end (when region-active (region-end)))
+         (region-active  (use-region-p))
+         (region-beg     (when region-active (region-beginning)))
+         (region-end     (when region-active (region-end)))
          (indirect-buffer (when region-active
                             (deactivate-mark)
-                            (make-indirect-buffer original-buffer
-                                                  (generate-new-buffer-name
-                                                   (concat (buffer-name) "-region"))
-                                                  t)))
-         (source-buffer (or indirect-buffer original-buffer))
-         (new-buffer (generate-new-buffer "*clipboard-compare*")))
+                            (make-indirect-buffer
+                             original-buffer
+                             (generate-new-buffer-name
+                              (concat (buffer-name) "-region"))
+                             t)))
+         (source-buffer  (or indirect-buffer original-buffer))
+         (clip-buffer    (generate-new-buffer "*clipboard-compare*")))
     (tab-new)
     (when indirect-buffer
       (switch-to-buffer indirect-buffer)
-      (narrow-to-region region-beginning region-end))
+      (narrow-to-region region-beg region-end))
     (delete-other-windows)
     (let ((right-window (split-window-right)))
       (with-selected-window right-window
-        (switch-to-buffer new-buffer)
+        (switch-to-buffer clip-buffer)
         (insert clipboard-contents)
         (funcall original-mode))
-      (let ((ediff-buf (ediff-buffers source-buffer new-buffer))
-            (cleanup-function (lambda ()
-                                (ediff-cleanup-mess)
-                                (when indirect-buffer
-                                  (kill-buffer indirect-buffer))
-                                (tab-bar-close-tab))))
+      (let ((ediff-buf
+             (ediff-buffers source-buffer clip-buffer))
+            (cleanup
+             (lambda ()
+               (ediff-cleanup-mess)
+               (when indirect-buffer (kill-buffer indirect-buffer))
+               (tab-bar-close-tab))))
         (with-current-buffer ediff-buf
-          (add-hook 'ediff-quit-hook cleanup-function nil t))))))
+          (add-hook 'ediff-quit-hook cleanup nil t))))))
+
+(defun diff-overwrite (&optional switches arg)
+  "Unified diff between the current buffer/region and the clipboard.
+
+• No prefix → run silently with \"-u\".  
+• One C-u   → choose diff‑mode (still silent).  
+• Two C-u   → additionally prompt for extra switches.
+
+The patch shows the *current buffer’s file* as the OLD side (---) and
+the clipboard as the NEW side (+++) so that
+`diff-apply-hunk` (C‑c C‑a) can apply the change directly."
+  (interactive
+   (let ((arg current-prefix-arg))
+     (list (and (>= (prefix-numeric-value (or arg 0)) 16)
+                (read-from-minibuffer "Extra diff switches: "
+                                      nil nil nil 'diff-switches-history))
+           arg)))
+  ;; ───────────────────────────────── gather input ─────────────────────────
+  (let* ((orig-buf   (current-buffer))
+         (file-name  (or (buffer-file-name orig-buf)
+                         (user-error "Buffer isn’t visiting a file")))
+         (regionp    (use-region-p))
+         (src-buf    (if regionp
+                         (let ((ib (make-indirect-buffer
+                                    orig-buf
+                                    (generate-new-buffer-name
+                                     (concat (buffer-name) "-region"))
+                                    t)))
+                           (deactivate-mark)
+                           (with-current-buffer ib
+                             (narrow-to-region (region-beginning)
+                                               (region-end)))
+                           ib)
+                       orig-buf))
+         (clip-file  (make-temp-file "diff-overwrite-clip-"))
+         (src-file   (make-temp-file "diff-overwrite-src-"))
+         ;; first label = first file (old)   second label = second file (new)
+         (labels     (list "--label" file-name "--label" "clipboard"))
+         (switches   (append '("-u") labels (when switches (list switches)))))
+    (unwind-protect
+        (progn
+          ;; write temp files ------------------------------------------------
+          (with-temp-file clip-file (insert (current-kill 0)))
+          (with-current-buffer src-buf
+            (write-region (point-min) (point-max) src-file nil 'silent))
+          ;; run diff --------------------------------------------------------
+          (let* ((ret (diff src-file clip-file switches 'noasync))
+                 (diff-buf (if (windowp ret) (window-buffer ret) ret)))
+            ;; `diff` already enabled diff-mode; just add mapping so C‑c C‑a
+            ;; knows where to patch without asking.
+            (with-current-buffer diff-buf
+              (setq-local diff-remembered-files-alist
+                          (list (cons (list file-name "clipboard")
+                                      file-name))))
+            (pop-to-buffer diff-buf)))
+      ;; cleanup ------------------------------------------------------------
+      (delete-file clip-file) (delete-file src-file)
+      (when (and regionp (buffer-live-p src-buf))
+        (kill-buffer src-buf)))))
+
+(defun clipboard-compare (&optional arg)
+  "Comp4re the clipboard with the current buffer (or its active region).
+
+No prefix ARG  →  call `ediff-overwrite` (side‑by‑side Ediff).
+
+Any prefix ARG →  call `diff-overwrite`.
+                  *One* C‑u shows the diff with default switches;
+                  *two* C‑u’s lets `diff-overwrite` prompt for extra switches,
+                  because the raw prefix it receives is (16)."
+  (interactive "P")
+  (if arg
+      (let ((current-prefix-arg arg))      ; forward the exact prefix
+        (call-interactively #'diff-overwrite))
+    (ediff-overwrite)))
+
+
 
 (defun replace-buffer-with-clipboard ()
   "Erase buffer and replace its contents with clipboard."
