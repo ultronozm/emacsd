@@ -3111,11 +3111,12 @@ complete document rather than just a previewed region."
 
 ;;; sage
 
-(defun my/setup-sage-completion ()
+(defun my/setup-sage ()
   "Set up completion for Sage mode."
   (setq-local completion-styles '(basic))
   (setq-local corfu-sort-function 'nil)
-  (corfu-mode))
+  (corfu-mode)
+  (setq-local gud-pdb-command-name "sage -python -m pdb"))
 
 (use-package sage
   ;; :disabled
@@ -3125,8 +3126,8 @@ complete document rather than just a previewed region."
                  :inherit nil)
   :demand t
   :config
-  (add-hook 'sage-mode-hook #'my/setup-sage-completion)
-  (add-hook 'sage-shell-mode-hook #'my/setup-sage-completion)
+  (add-hook 'sage-mode-hook #'my/setup-sage)
+  (add-hook 'sage-shell-mode-hook #'my/setup-sage)
   (add-to-list 'org-src-lang-modes '("sage" . sage))
   :custom
   (sage-rich-output t))
