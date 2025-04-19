@@ -3119,6 +3119,10 @@ complete document rather than just a previewed region."
   (corfu-mode)
   (setq-local gud-pdb-command-name "sage -python -m pdb"))
 
+(defun my/setup-sage-shell ()
+  "Set up for Sage shell mode."
+  (setq-local compilation-error-regexp-alist '("^File \\([^:]+\\):\\([0-9]+\\)" 1 2)))
+
 (use-package sage
   ;; :disabled
   :ensure (:host nil :repo "https://codeberg.org/rahguzar/sage-mode"
@@ -3129,9 +3133,23 @@ complete document rather than just a previewed region."
   :config
   (add-hook 'sage-mode-hook #'my/setup-sage)
   (add-hook 'sage-shell-mode-hook #'my/setup-sage)
+  (add-hook 'sage-shell-mode-hook #'my/setup-sage-shell)
   (add-to-list 'org-src-lang-modes '("sage" . sage))
   :custom
   (sage-rich-output t))
+
+(with-eval-after-load 'eglot
+  (add-to-list
+   'eglot-server-programs
+   '((python-mode) . ("sage" "-python" "-m" "pylsp"))))
+
+(defun my/sage-debug-current-file ()
+  (interactive)
+  (let ((gud-pdb-command-name
+         (concat "sage -python -m pdb "
+                 (shell-quote-argument
+                  (file-relative-name (buffer-file-name))))))
+    (call-interactively #'pdb)))
 
 (defun calcFunc-sage-factor ()
   "Use SAGE to factor the top element of the stack in Emacs Calc."
