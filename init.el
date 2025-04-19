@@ -1294,6 +1294,19 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                   :test (lambda (a b) (eq (car a) (car b))))
       (setf (plist-get config :types) types))))
 
+(defun my-consult-ripgrep--advice-around (orig-fun &rest args)
+  "Around advice for `consult-ripgrep'.
+If interactively called with C-0 (which results in the DIR
+argument being the integer 0), change DIR to `default-directory`.
+Otherwise, call ORIG-FUN with the original ARGS."
+  (let ((dir (car args))
+        (initial (cadr args)))
+    (if (equal dir 0)
+        (apply orig-fun default-directory initial nil)
+      (apply orig-fun args))))
+
+(advice-add 'consult-ripgrep :around #'my-consult-ripgrep--advice-around)
+
 (defun czm-search-log ()
   "Search your log files with `rg'."
   (interactive)
