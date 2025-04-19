@@ -756,6 +756,14 @@ For non–file buffers, FILENAME is prompted for and used as the suggested name.
   :config
   (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode)))
 
+(defun my-always-enable-rmail-font-lock (&rest _)
+  "Ensure font-lock-mode is enabled after rmail runs."
+  ;; Check we're actually in rmail-mode, in case rmail errored out.
+  (when (derived-mode-p 'rmail-mode)
+    (font-lock-mode 1)))
+
+(advice-add 'rmail :after #'my-always-enable-rmail-font-lock)
+
 (use-package sendmail
   :ensure nil
   :defer t
