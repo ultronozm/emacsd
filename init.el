@@ -239,6 +239,13 @@ With prefix argument ARG, opens `user-init-file' directly."
 
 (keymap-global-set "s-d" #'czm-find-math-document)
 
+(defun czm-dired-drafts ()
+  "Open drafts folder in Dired."
+  (interactive)
+  (dired message-auto-save-directory))
+
+(keymap-global-set "C-z u" #'czm-dired-drafts)
+
 (defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
 (defun edebug-compute-previous-result (previous-value)
   "Redefinition of built-in function `edebug-compute-previous-result'.
