@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (setq package-enable-at-startup nil)
 (setq use-package-enable-imenu-support t)
 (tool-bar-mode 0)

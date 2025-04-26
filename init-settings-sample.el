@@ -1,4 +1,6 @@
-;; rename this file to "init-settings.el" and edit the following:
+;; -*- lexical-binding: t; -*-
+
+;; rename this file to "init-settings.el" and edit the following: 
 
 (setq my-first-name "Paul"
       my-master-bib-file "~/doit/refs.bib"
