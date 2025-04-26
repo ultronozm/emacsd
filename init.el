@@ -1032,7 +1032,13 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   ;; .zshenv rather than .zshrc.
   (setq exec-path-from-shell-arguments nil)
   :config
-  (exec-path-from-shell-initialize))
+  (exec-path-from-shell-initialize)
+  (setopt elpaca-makeinfo-executable (executable-find "makeinfo"))
+  (setopt elpaca-install-info-executable (executable-find "install-info"))
+  (unless elpaca-makeinfo-executable
+    (warn "makeinfo executable not found even after exec-path-from-shell"))
+  (unless elpaca-install-info-executable
+    (warn "install-info executable not found even after exec-path-from-shell")))
 
 (elpaca-wait)
 
