@@ -1707,6 +1707,31 @@ them at the first newline."
   (add-to-list 'project-switch-commands
                '(project-claude-code "Claude Code" nil)))
 
+(use-package debbugs
+  :ensure (debbugs
+           :host github :repo "emacs-mirror/debbugs"
+           :branch "externals/debbugs"
+           :source "GNU ELPA"
+           :files (:defaults (:exclude ".git" "dir") "Debbugs.wsdl")
+           :inherit nil)
+  :custom
+  (debbugs-gnu-mail-backend 'rmail)
+  (debbugs-cache-expiry nil))
+
+(defun my/disable-vertico-for-debbugs-search (orig-fun &rest args)
+  "Temporarily disable Vertico while executing `debbugs-gnu-search'."
+  (let ((old-completing-read-function completing-read-function)
+        (old-completion-in-region-function completion-in-region-function))
+    (unwind-protect
+        (progn
+          (setq completing-read-function #'completing-read-default
+                completion-in-region-function #'completion--in-region)
+          (apply orig-fun args))
+      (setq completing-read-function old-completing-read-function
+            completion-in-region-function old-completion-in-region-function))))
+
+(advice-add 'debbugs-gnu-search :around #'my/disable-vertico-for-debbugs-search)
+
 ;;; pdf
 
 (use-package pdf-tools
