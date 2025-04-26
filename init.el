@@ -114,7 +114,7 @@
    ("s-q" . bury-buffer)
    ("s-s" . save-buffer)
    ("s-u" . nil) ; content-quoter-dwim
-   ("s-v" . view-mode)
+   ("s-v" . nil)
    ("s-w" . nil) ; delete frame
    ("s-x" . nil)
    ("s-y" . replace-buffer-with-clipboard)
