@@ -1585,7 +1585,9 @@ them at the first newline."
   :after flycheck
   :config
   (setq saved-match-data nil)
-  (define-key flycheck-command-map "f" 'attrap-flycheck))
+  (define-key flycheck-command-map "f" 'attrap-flycheck)
+  (add-to-list 'attrap-flymake-backends-alist
+               '(eglot-flymake-backend . attrap-python-fixer)))
 
 (use-package treesit-auto
   :defer t
