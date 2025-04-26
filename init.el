@@ -3151,15 +3151,13 @@ complete document rather than just a previewed region."
   (setq-local completion-styles '(basic))
   (setq-local corfu-sort-function 'nil)
   (corfu-mode)
+  (setq-local orderless-component-separator (rx (or "_" ".")))
   (setq-local gud-pdb-command-name "sage -python -m pdb"))
 
-(defun my/setup-sage-shell ()
-  "Set up for Sage shell mode."
-  (setq-local compilation-error-regexp-alist '("^File \\([^:]+\\):\\([0-9]+\\)" 1 2)))
-
 (use-package sage
-  ;; :disabled
-  :ensure (:host nil :repo "https://codeberg.org/rahguzar/sage-mode"
+  :ensure (:host nil :repo "https://codeberg.org/ultronozm/sage-mode"
+                 :remotes
+                 (("upstream" :repo "https://codeberg.org/rahguzar/sage-mode"))
                  :depth nil
                  :main "sage.el"
                  :inherit nil)
@@ -3167,8 +3165,8 @@ complete document rather than just a previewed region."
   :config
   (add-hook 'sage-mode-hook #'my/setup-sage)
   (add-hook 'sage-shell-mode-hook #'my/setup-sage)
-  (add-hook 'sage-shell-mode-hook #'my/setup-sage-shell)
   (add-to-list 'org-src-lang-modes '("sage" . sage))
+  (sage-extend-semantic-python-filepatterns)
   :custom
   (sage-rich-output t))
 
