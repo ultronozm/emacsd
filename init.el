@@ -439,6 +439,11 @@ DIR must include a .project file to be considered a project."
  :map calendar-mode-map
  ("<left>" . nil) ("<right>" . nil) ("<up>" . nil) ("<down>" . nil))
 
+(bind-keys
+ :package eshell
+ :map eshell-hist-mode-map
+ ("<up>" . nil) ("<down>" . nil))
+
 (defvar maximize-window-mode-history nil
   "History of major modes used in maximize-window function.")
 
