@@ -3257,7 +3257,6 @@ complete document rather than just a previewed region."
   (mmm-sage-shell:sage-mode-exit . czm-tex-mint-disable))
 
 (use-package symtex
-  :disabled
   :repo-scan
   :ensure (:host github :repo "ultronozm/symtex.el" :depth nil)
   :after latex
