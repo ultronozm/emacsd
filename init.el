@@ -843,7 +843,7 @@ Optionally run SETUP-FN after creating the file."
 (defun czm-create-scratch-tex ()
   "Create new scratch LaTeX buffer."
   (interactive)
-  (czm-create-scratch-file my-scratch-tex-dir "tex" #'czm-setup-tex-file))
+  (czm-create-scratch-file my-scratch-tex-dir "tex"))
 
 (defun czm-create-scratch-sage ()
   "Create new scratch sage file."
