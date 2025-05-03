@@ -437,7 +437,7 @@ DIR must include a .project file to be considered a project."
 (bind-keys
  :package calendar
  :map calendar-mode-map
- ("<left>" nil) ("<right>" nil) ("<up>" nil) ("<down>" nil))
+ ("<left>" . nil) ("<right>" . nil) ("<up>" . nil) ("<down>" . nil))
 
 (defvar maximize-window-mode-history nil
   "History of major modes used in maximize-window function.")
