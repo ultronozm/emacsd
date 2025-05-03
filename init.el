@@ -3372,3 +3372,5 @@ complete document rather than just a previewed region."
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/clipdiff.el" :depth nil))
+
+(use-package cython-mode :ensure t)
