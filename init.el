@@ -662,6 +662,22 @@ For non–file buffers, FILENAME is prompted for and used as the suggested name.
           (mml-attach-file has-file type description disposition))
       (mml-attach-buffer buffer type description disposition filename))))
 
+(defun my-compose-mail-with-attachments (&optional arg)
+  "Prepare a message with current buffer as an attachment.
+With prefix ARG, attach all visible buffers instead."
+  (interactive "P")
+  (let* ((buffers (if arg
+                      (seq-uniq (mapcar #'window-buffer (window-list)))
+                    (list (current-buffer))))
+         (count (length buffers)))
+    (compose-mail)
+    (save-excursion
+      (rfc822-goto-eoh)
+      (forward-line)
+      (open-line 2)
+      (dolist (buffer buffers)
+        (mml-attach-buffer-or-file buffer)))))
+
 (bind-keys
  :package message
  :map message-mode-map
