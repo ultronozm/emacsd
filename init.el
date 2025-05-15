@@ -64,6 +64,7 @@
    ("H-i" . overwrite-mode)
    ("H-k" . flycheck-mode)
    ("H-l" . flymake-mode)
+   ("H-p" . prettify-symbols-mode)
    ("H-s" . whitespace-mode)
    ("H-v" . visual-line-mode)
    ("H-w" . which-function-mode)
