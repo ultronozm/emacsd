@@ -440,7 +440,7 @@ DIR must include a .project file to be considered a project."
  ("<left>" . nil) ("<right>" . nil) ("<up>" . nil) ("<down>" . nil))
 
 (bind-keys
- :package eshell
+ :package em-hist
  :map eshell-hist-mode-map
  ("<up>" . nil) ("<down>" . nil))
 
