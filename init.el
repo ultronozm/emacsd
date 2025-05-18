@@ -2125,6 +2125,62 @@ With prefix ARG, attach all visible buffers instead."
   (:map message-mode-map
         ("TAB" . czm-mail-message-tab)))
 
+(use-package mairix
+  :ensure nil
+  :defer t
+  :bind
+  ("C-z m" . mairix-transient-menu)
+  :config
+  (defun mairix-display-syntax-help ()
+    "Display mairix search syntax help in a buffer."
+    (interactive)
+    (with-help-window "*Mairix Syntax Help*"
+      (princ "Mairix Search Syntax:\n\n")
+      (princ "word          : match word in message body and major headers\n")
+      (princ "t:word        : match word in To: header\n")
+      (princ "c:word        : match word in Cc: header\n")
+      (princ "f:word        : match word in From: header\n")
+      (princ "a:word        : match word in To:, Cc: or From: headers (address)\n")
+      (princ "s:word        : match word in Subject: header\n")
+      (princ "b:word        : match word in message body\n")
+      (princ "m:word        : match word in Message-ID: header\n")
+      (princ "n:word        : match word in name of attachment\n")
+      (princ "F:flags       : match message flags (s=seen,r=replied,f=flagged,-=negate)\n")
+      (princ "p:substring   : match substring of path\n")
+      (princ "d:start-end   : match date range\n")
+      (princ "z:low-high    : match messages in size range\n")
+      (princ "\nAdvanced syntax:\n")
+      (princ "bs:word       : match word in Subject: header or body\n")
+      (princ "s:word1,word2 : match both words in Subject:\n")
+      (princ "s:word1/word2 : match either word or both words in Subject:\n")
+      (princ "s:~word       : match messages not containing word in Subject:\n")
+      (princ "s:substring=  : match substring in any word in Subject:\n")
+      (princ "s:^substring= : match left-anchored substring in any word in Subject:\n")
+      (princ "s:substring=2 : match substring with <=2 errors in any word in Subject:\n")))
+
+  (require 'transient)
+  (transient-define-prefix
+   mairix-transient-menu ()
+   "Mairix search commands."
+   :info-manual "(mairix-el)Top"
+   ["Search"
+    ("RET" "Search" mairix-search)
+    ("w" "Widget search" mairix-widget-search)
+    ("f" "Search by sender" mairix-search-from-this-article)
+    ("t" "Search thread" mairix-search-thread-this-article)
+    ("b" "Search based on article" mairix-widget-search-based-on-article)]
+   ["Saved Searches"
+    ("s" "Use saved search" mairix-use-saved-search)
+    ("S" "Save last search" mairix-save-search)
+    ("e" "Edit saved searches" mairix-edit-saved-searches)]
+   ["Database"
+    ("u" "Update database" mairix-update-database)]
+   ["Help"
+    ("?" "Show syntax help" mairix-display-syntax-help)
+    ("i" "Info docs" (lambda ()
+                       (interactive)
+                       (info "(mairix-el)")))]))
+
 (use-package czm-mail
   :repo-scan
   :after rmail
