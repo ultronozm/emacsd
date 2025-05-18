@@ -1174,6 +1174,28 @@ Otherwise, call ORIG-FUN with the original ARGS."
 
 (advice-add 'consult-ripgrep :around #'my-consult-ripgrep--advice-around)
 
+(defun consult-ripgrep-org-notes ()
+  "Search through org note files with ripgrep."
+  (interactive)
+  (let ((consult-ripgrep-args (concat consult-ripgrep-args " -C3")))
+    (consult--grep "Ripgrep files"
+                   #'consult--ripgrep-make-builder
+                   (directory-files "~/doit/" 'full "^log.*\\.org$")
+                   nil)))
+
+(defun consult-ripgrep-todo-notes ()
+  "Search through org note files with ripgrep."
+  (interactive)
+  (consult--grep "Ripgrep files"
+                 #'consult--ripgrep-make-builder
+                 '("~/doit/todo.org" "~/doit/projects.org" "~/.emacs.d/diary")
+                 nil))
+
+(defun consult-ripgrep-config-files ()
+  "Search through configuration files with ripgrep."
+  (interactive)
+  (consult-ripgrep-files '("~/.emacs.d/init.el" "~/.emacs.d/init-personal.el")))
+
 (defun czm-search-log ()
   "Search your log files with `rg'."
   (interactive)
