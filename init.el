@@ -570,8 +570,6 @@ Any prefix ARG →  call `diff-overwrite`.
         (call-interactively #'diff-overwrite))
     (ediff-overwrite)))
 
-
-
 (defun replace-buffer-with-clipboard ()
   "Erase buffer and replace its contents with clipboard."
   (interactive)
@@ -619,70 +617,6 @@ This allows multiple Ediff sessions to each restore their own window configurati
 (add-hook 'ediff-quit-hook #'ediff-restore-window-configuration)
 (add-hook 'ediff-cleanup-hook #'ediff-kill-temporary-file-buffer)
 
-(defun mml-attach-buffer-or-file (buffer &optional type description disposition filename)
-  "Attach BUFFER's underlying file if it has one. Otherwise attach BUFFER's contents.
-TYPE, DESCRIPTION, and DISPOSITION are optional MIME properties.
-If BUFFER is visiting a file and is modified, the user is prompted to save it.
-For non–file buffers, FILENAME is prompted for and used as the suggested name."
-  (interactive
-   (let* ((buf (read-buffer "Attach from buffer: " (buffer-name (current-buffer)) t))
-          (bufobj (get-buffer buf))
-          (has-file (buffer-file-name bufobj))
-          (no-prompt current-prefix-arg)
-          (type (if no-prompt
-                    (or (and has-file (mm-default-file-type has-file))
-                        "application/octet-stream")
-                  (mml-minibuffer-read-type
-                   (or (and has-file (file-name-nondirectory has-file))
-                       buf))))
-          (desc (unless no-prompt
-                  (mml-minibuffer-read-description)))
-          (disp (if no-prompt
-                    (if has-file
-                        (mml-content-disposition type (file-name-nondirectory has-file))
-                      "attachment")
-                  (mml-minibuffer-read-disposition
-                   type
-                   nil
-                   (and has-file (file-name-nondirectory has-file)))))
-          (fname (unless has-file
-                   (read-string "Filename for attachment: "
-                                (concat buf ".txt")))))
-     (if has-file
-         (list buf type desc disp)
-       (list buf type desc disp fname))))
-  (let ((has-file (buffer-file-name (get-buffer buffer))))
-    (if has-file
-        (progn
-          (with-current-buffer buffer
-            (when (and (buffer-modified-p)
-                       (y-or-n-p (format "Buffer `%s' is modified. Save before attaching? "
-                                         buffer)))
-              (save-buffer)))
-          (mml-attach-file has-file type description disposition))
-      (mml-attach-buffer buffer type description disposition filename))))
-
-(defun my-compose-mail-with-attachments (&optional arg)
-  "Prepare a message with current buffer as an attachment.
-With prefix ARG, attach all visible buffers instead."
-  (interactive "P")
-  (let* ((buffers (if arg
-                      (seq-uniq (mapcar #'window-buffer (window-list)))
-                    (list (current-buffer))))
-         (count (length buffers)))
-    (compose-mail)
-    (save-excursion
-      (rfc822-goto-eoh)
-      (forward-line)
-      (open-line 2)
-      (dolist (buffer buffers)
-        (mml-attach-buffer-or-file buffer)))))
-
-(bind-keys
- :package message
- :map message-mode-map
- ("C-c RET a" . mml-attach-buffer-or-file))
-
 (defun project-format-patch-last-commit ()
   "Create a patch file from the last commit in the current project.
   The patch is saved in the project root directory and opened in a buffer."
@@ -692,11 +626,9 @@ With prefix ARG, attach all visible buffers instead."
          (default-directory root)
          (git-output nil))
     
-    ;; Make sure there's something to create a patch from
     (when (vc-git--empty-db-p)
       (user-error "No commits exist in this Git repository"))
     
-    ;; Run format-patch to generate the patch
     (message "Generating patch...")
     (setq git-output 
           (with-temp-buffer
@@ -704,7 +636,6 @@ With prefix ARG, attach all visible buffers instead."
                 (buffer-string)
               (user-error "Failed to generate patch"))))
     
-    ;; Extract filename from git output and open the file
     (let ((filename (string-trim git-output)))
       (find-file (expand-file-name filename root))
       (diff-mode)
@@ -726,91 +657,6 @@ With prefix ARG, attach all visible buffers instead."
  :package doc-view
  :map doc-view-mode-map
  ("C-c g" . doc-view-goto-page))
-
-(defun my-rmail-mode-hook ()
-  (setq-local preview-tailor-local-multiplier 0.6)
-  (setq-local TeX-master my-preview-master))
-
-(use-package rmail
-  :ensure nil
-  :defer t
-  :bind
-  ("C-z r" . (lambda ()
-               (interactive)
-               (let ((current-prefix-arg '(4)))
-                 (call-interactively #'rmail))))
-  ("C-z R" . rmail)
-  (:map rmail-mode-map
-        ("S" . czm-mail-refile-and-store-link))
-  :hook (rmail-mode . my-rmail-mode-hook)
-  :custom
-  (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
-  (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
-  (rmail-movemail-program "movemail")
-  (rmail-primary-inbox-list (list my-mail-inbox))
-  (rmail-automatic-folder-directives
-   `((,(expand-file-name "bug-gnu-emacs.rmail" my-mail-folder)
-      "sender" "bug-gnu-emacs-bounces")
-     (,(expand-file-name "emacs-devel.rmail" my-mail-folder)
-      "sender" "emacs-devel-bounces")
-     (,(expand-file-name "arxiv.rmail" my-mail-folder)
-      "subject" "math daily Subj-class mailing"
-      "from" "arXiv\\.org")
-     (,(expand-file-name "receipts.rmail" my-mail-folder)
-      "from" "noreply@github.com"
-      "subject" "Payment Receipt")
-     (,(expand-file-name "receipts.rmail" my-mail-folder)
-      "from" "invoice+statements@mail.anthropic.com"
-      "subject" "Your receipt from Anthropic")
-     (,(expand-file-name "receipts.rmail" my-mail-folder)
-      "from" "googleplay-noreply@google.com"
-      "subject" "Your Google Play Order Receipt")))
-  (rmail-secondary-file-directory (file-name-as-directory my-mail-folder))
-  (rmail-secondary-file-regexp "^.*\\.rmail$")
-  (rmail-default-file (expand-file-name "scheduled.rmail" my-mail-folder))
-  (rmail-remote-password-required t)
-  (rmail-remote-password
-   (let ((auth-info (car (auth-source-search
-                          :host my-mail-host-imap
-                          :port my-mail-port
-                          :user my-mail-user
-                          :max 1))))
-     (when auth-info
-       (let ((secret (plist-get auth-info :secret)))
-         (if (functionp secret)
-             (funcall secret)
-           secret)))))
-  (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
-  (rmail-delete-after-output t)
-  :config
-  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode)))
-
-(defun my-always-enable-rmail-font-lock (&rest _)
-  "Ensure font-lock-mode is enabled after rmail runs."
-  ;; Check we're actually in rmail-mode, in case rmail errored out.
-  (when (derived-mode-p 'rmail-mode)
-    (font-lock-mode 1)))
-
-(advice-add 'rmail :after #'my-always-enable-rmail-font-lock)
-
-(use-package sendmail
-  :ensure nil
-  :defer t
-  :config
-  (setq
-   mail-host-address my-mail-host
-   sendmail-program "msmtp"
-   message-send-mail-function 'message-send-mail-with-sendmail
-   message-default-mail-headers
-   (let ((file (abbreviate-file-name
-                (expand-file-name "sent.rmail" my-mail-folder))))
-     (format "Fcc: %s\n" file))))
-
-(use-package message
-  :ensure nil
-  :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
-  :custom
-  (message-make-forward-subject-function #'message-forward-subject-fwd))
 
 (with-eval-after-load 'tex-mode
   (mapc
@@ -907,20 +753,6 @@ In light mode:
   (czm-set-face-heights))
 
 (keymap-global-set "H-t" #'czm-toggle-dark-mode)
-
-(defun czm-mail-message-tab ()
-  "Use `mail-abbrev-insert-alias' in headers, otherwise `message-tab'."
-  (interactive)
-  (if (message-point-in-header-p)
-      (call-interactively #'mail-abbrev-insert-alias)
-    (message-tab)))
-
-(use-package message
-  :defer t
-  :ensure nil
-  :bind
-  (:map message-mode-map
-        ("TAB" . czm-mail-message-tab)))
 
 (setopt use-package-verbose t
         use-package-minimum-reported-time 0.1)
@@ -2129,6 +1961,169 @@ The content is escaped to prevent org syntax interpretation."
   (org-mode . org-appear-mode))
 
 ;;; mail
+
+(defun mml-attach-buffer-or-file (buffer &optional type description disposition filename)
+  "Attach BUFFER's underlying file if it has one. Otherwise attach BUFFER's contents.
+TYPE, DESCRIPTION, and DISPOSITION are optional MIME properties.
+If BUFFER is visiting a file and is modified, the user is prompted to save it.
+For non–file buffers, FILENAME is prompted for and used as the suggested name."
+  (interactive
+   (let* ((buf (read-buffer "Attach from buffer: " (buffer-name (current-buffer)) t))
+          (bufobj (get-buffer buf))
+          (has-file (buffer-file-name bufobj))
+          (no-prompt current-prefix-arg)
+          (type (if no-prompt
+                    (or (and has-file (mm-default-file-type has-file))
+                        "application/octet-stream")
+                  (mml-minibuffer-read-type
+                   (or (and has-file (file-name-nondirectory has-file))
+                       buf))))
+          (desc (unless no-prompt
+                  (mml-minibuffer-read-description)))
+          (disp (if no-prompt
+                    (if has-file
+                        (mml-content-disposition type (file-name-nondirectory has-file))
+                      "attachment")
+                  (mml-minibuffer-read-disposition
+                   type
+                   nil
+                   (and has-file (file-name-nondirectory has-file)))))
+          (fname (unless has-file
+                   (read-string "Filename for attachment: "
+                                (concat buf ".txt")))))
+     (if has-file
+         (list buf type desc disp)
+       (list buf type desc disp fname))))
+  (let ((has-file (buffer-file-name (get-buffer buffer))))
+    (if has-file
+        (progn
+          (with-current-buffer buffer
+            (when (and (buffer-modified-p)
+                       (y-or-n-p (format "Buffer `%s' is modified. Save before attaching? "
+                                         buffer)))
+              (save-buffer)))
+          (mml-attach-file has-file type description disposition))
+      (mml-attach-buffer buffer type description disposition filename))))
+
+(defun my-compose-mail-with-attachments (&optional arg)
+  "Prepare a message with current buffer as an attachment.
+With prefix ARG, attach all visible buffers instead."
+  (interactive "P")
+  (let* ((buffers (if arg
+                      (seq-uniq (mapcar #'window-buffer (window-list)))
+                    (list (current-buffer))))
+         (count (length buffers)))
+    (compose-mail)
+    (save-excursion
+      (rfc822-goto-eoh)
+      (forward-line)
+      (open-line 2)
+      (dolist (buffer buffers)
+        (mml-attach-buffer-or-file buffer)))))
+
+(bind-keys
+ :package message
+ :map message-mode-map
+ ("C-c RET a" . mml-attach-buffer-or-file))
+
+(defun my-rmail-mode-hook ()
+  (setq-local preview-tailor-local-multiplier 0.6)
+  (setq-local TeX-master my-preview-master))
+
+(use-package rmail
+  :ensure nil
+  :defer t
+  :bind
+  ("C-z r" . (lambda ()
+               (interactive)
+               (let ((current-prefix-arg '(4)))
+                 (call-interactively #'rmail))))
+  ("C-z R" . rmail)
+  (:map rmail-mode-map
+        ("S" . czm-mail-refile-and-store-link))
+  :hook (rmail-mode . my-rmail-mode-hook)
+  :custom
+  (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
+  (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
+  (rmail-movemail-program "movemail")
+  (rmail-primary-inbox-list (list my-mail-inbox))
+  (rmail-automatic-folder-directives
+   `((,(expand-file-name "bug-gnu-emacs.rmail" my-mail-folder)
+      "sender" "bug-gnu-emacs-bounces")
+     (,(expand-file-name "emacs-devel.rmail" my-mail-folder)
+      "sender" "emacs-devel-bounces")
+     (,(expand-file-name "arxiv.rmail" my-mail-folder)
+      "subject" "math daily Subj-class mailing"
+      "from" "arXiv\\.org")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "noreply@github.com"
+      "subject" "Payment Receipt")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "invoice+statements@mail.anthropic.com"
+      "subject" "Your receipt from Anthropic")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "googleplay-noreply@google.com"
+      "subject" "Your Google Play Order Receipt")))
+  (rmail-secondary-file-directory (file-name-as-directory my-mail-folder))
+  (rmail-secondary-file-regexp "^.*\\.rmail$")
+  (rmail-default-file (expand-file-name "scheduled.rmail" my-mail-folder))
+  (rmail-remote-password-required t)
+  (rmail-remote-password
+   (let ((auth-info (car (auth-source-search
+                          :host my-mail-host-imap
+                          :port my-mail-port
+                          :user my-mail-user
+                          :max 1))))
+     (when auth-info
+       (let ((secret (plist-get auth-info :secret)))
+         (if (functionp secret)
+             (funcall secret)
+           secret)))))
+  (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
+  (rmail-delete-after-output t)
+  :config
+  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode)))
+
+(defun my-always-enable-rmail-font-lock (&rest _)
+  "Ensure font-lock-mode is enabled after rmail runs."
+  ;; Check we're actually in rmail-mode, in case rmail errored out.
+  (when (derived-mode-p 'rmail-mode)
+    (font-lock-mode 1)))
+
+(advice-add 'rmail :after #'my-always-enable-rmail-font-lock)
+
+(use-package sendmail
+  :ensure nil
+  :defer t
+  :config
+  (setq
+   mail-host-address my-mail-host
+   sendmail-program "msmtp"
+   message-send-mail-function 'message-send-mail-with-sendmail
+   message-default-mail-headers
+   (let ((file (abbreviate-file-name
+                (expand-file-name "sent.rmail" my-mail-folder))))
+     (format "Fcc: %s\n" file))))
+
+(use-package message
+  :ensure nil
+  :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
+  :custom
+  (message-make-forward-subject-function #'message-forward-subject-fwd))
+
+(defun czm-mail-message-tab ()
+  "Use `mail-abbrev-insert-alias' in headers, otherwise `message-tab'."
+  (interactive)
+  (if (message-point-in-header-p)
+      (call-interactively #'mail-abbrev-insert-alias)
+    (message-tab)))
+
+(use-package message
+  :defer t
+  :ensure nil
+  :bind
+  (:map message-mode-map
+        ("TAB" . czm-mail-message-tab)))
 
 (use-package czm-mail
   :repo-scan
