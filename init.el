@@ -2329,7 +2329,7 @@ With prefix ARG, attach all visible buffers instead."
   (add-hook 'llm-tool-collection-post-define-functions #'ai-org-chat-register-tool-spec)
   (mapcar #'ai-org-chat-register-tool-spec (llm-tool-collection-get-all))
   (require 'exec-path-from-shell)
-  (ai-org-chat-select-model "sonnet 3.7")
+  (ai-org-chat-select-model "sonnet 4")
   (add-hook 'ai-org-chat-response-finished-functions
             #'ai-org-chat-auto-format-response
             t)
@@ -2837,7 +2837,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (setq llm-vc-commit-model
         (make-llm-claude
          :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")
-         :chat-model "claude-3-7-sonnet-20250219")))
+         :chat-model "claude-sonnet-4-20250514")))
 
 (use-package diff-hl
   :defer t
