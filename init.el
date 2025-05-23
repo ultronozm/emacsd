@@ -53,6 +53,7 @@
    ("C-z C-e" . pp-macroexpand-last-sexp)
    ("C-z C-s" . desktop-save-in-desktop-dir)
    ("C-z C-f" . desktop-read)
+   ("C-z s" . whitespace-cleanup)
    ("H-0" . tab-close)
    ("H-1" . tab-close-other)
    ("H-2" . tab-bar-new-tab)
