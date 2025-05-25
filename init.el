@@ -122,6 +122,7 @@
    ("s-y" . replace-buffer-with-clipboard)
    ("s-z" . nil))
   :custom
+  (diff-entire-buffers nil)
   (ediff-split-window-function 'split-window-horizontally)
   (use-dialog-box nil)
   (show-paren-delay 0)
