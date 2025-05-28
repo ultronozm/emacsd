@@ -2075,14 +2075,17 @@ With prefix ARG, attach all visible buffers instead."
   (setq-local preview-tailor-local-multiplier 0.6)
   (setq-local TeX-master my-preview-master))
 
+(defun my-rmail-with-prefix ()
+  "Call rmail with a prefix argument of 4."
+  (interactive)
+  (let ((current-prefix-arg '(4)))
+    (call-interactively #'rmail)))
+
 (use-package rmail
   :ensure nil
   :defer t
   :bind
-  ("C-z r" . (lambda ()
-               (interactive)
-               (let ((current-prefix-arg '(4)))
-                 (call-interactively #'rmail))))
+  ("C-z r" . my-rmail-with-prefix)
   ("C-z R" . rmail)
   (:map rmail-mode-map
         ("S" . czm-mail-refile-and-store-link))
