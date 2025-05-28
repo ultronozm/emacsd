@@ -1130,7 +1130,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
    ("M-s D" . consult-locate)
    ("M-s g" . consult-grep)
    ("M-s G" . consult-git-grep)
-   ("M-s r" . consult-ripgrep)
    ("M-s l" . consult-line)
    ("M-s L" . consult-line-multi)
    ("M-s k" . consult-keep-lines)
@@ -1179,46 +1178,69 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                   :test (lambda (a b) (eq (car a) (car b))))
       (setf (plist-get config :types) types))))
 
-(defun my-consult-ripgrep--advice-around (orig-fun &rest args)
-  "Around advice for `consult-ripgrep'.
-If interactively called with C-0 (which results in the DIR
-argument being the integer 0), change DIR to `default-directory`.
-Otherwise, call ORIG-FUN with the original ARGS."
-  (let ((dir (car args))
-        (initial (cadr args)))
-    (if (equal dir 0)
-        (apply orig-fun default-directory initial nil)
-      (apply orig-fun args))))
+(defun consult-ripgrep--maybe-prompt-for-args (default-args)
+  "Return args, prompting if prefix arg is set."
+  (if current-prefix-arg
+      (read-string "Ripgrep command: " default-args)
+    default-args))
 
-(advice-add 'consult-ripgrep :around #'my-consult-ripgrep--advice-around)
+(defun consult-ripgrep+ ()
+  "Run consult-ripgrep for current project.
+With C-u, prompt for ripgrep arguments."
+  (interactive)
+  (let ((consult-ripgrep-args
+         (consult-ripgrep--maybe-prompt-for-args consult-ripgrep-args)))
+    (consult-ripgrep)))
+
+(defun consult-ripgrep-current-directory ()
+  "Run consult-ripgrep in current directory.
+With C-u, prompt for ripgrep arguments."
+  (interactive)
+  (let ((consult-ripgrep-args
+         (consult-ripgrep--maybe-prompt-for-args consult-ripgrep-args)))
+    (consult-ripgrep default-directory)))
+
+(defun consult-ripgrep--files (prompt files default-extra-args)
+  "Search FILES with PROMPT. With C-u, prompt for args."
+  (let* ((base-args (if default-extra-args
+                        (concat consult-ripgrep-args " " default-extra-args)
+                      consult-ripgrep-args))
+         (consult-ripgrep-args (consult-ripgrep--maybe-prompt-for-args base-args)))
+    (consult--grep prompt #'consult--ripgrep-make-builder files nil)))
 
 (defun consult-ripgrep-org-notes ()
-  "Search through org note files with ripgrep."
+  "Search org note files. With C-u, prompt for args."
   (interactive)
-  (let ((consult-ripgrep-args (concat consult-ripgrep-args " -C3")))
-    (consult--grep "Ripgrep files"
-                   #'consult--ripgrep-make-builder
-                   (directory-files "~/doit/" 'full "^log.*\\.org$")
-                   nil)))
+  (consult-ripgrep--files
+   "Ripgrep org notes"
+   (directory-files "~/doit/" 'full "^log.*\\.org$")
+   "-C3"))
 
 (defun consult-ripgrep-todo-notes ()
-  "Search through org note files with ripgrep."
+  "Search todo note files. With C-u, prompt for args."
   (interactive)
-  (consult--grep "Ripgrep files"
-                 #'consult--ripgrep-make-builder
-                 '("~/doit/todo.org" "~/doit/projects.org" "~/.emacs.d/diary")
-                 nil))
+  (consult-ripgrep--files
+   "Ripgrep todo notes"
+   '("~/doit/todo.org" "~/doit/projects.org" "~/.emacs.d/diary")
+   nil))
 
 (defun consult-ripgrep-config-files ()
-  "Search through configuration files with ripgrep."
+  "Search config files. With C-u, prompt for args."
   (interactive)
-  (consult-ripgrep-files '("~/.emacs.d/init.el" "~/.emacs.d/init-personal.el")))
+  (consult-ripgrep--files
+   "Ripgrep config files"
+   '("~/.emacs.d/init.el" "~/.emacs.d/init-personal.el")
+   nil))
 
-(defun czm-search-log ()
-  "Search your log files with `rg'."
-  (interactive)
-  (let ((log-files `(,my-log-file ,my-old-log-file ,my-todo-file)))
-    (consult--grep "Ripgrep" #'consult--ripgrep-make-builder log-files nil)))
+(defvar-keymap my-ripgrep-map
+  :doc "Keymap for enhanced consult-ripgrep commands."
+  "r" #'consult-ripgrep+
+  "d" #'consult-ripgrep-current-directory
+  "n" #'consult-ripgrep-org-notes
+  "t" #'consult-ripgrep-todo-notes
+  "c" #'consult-ripgrep-config-files)
+
+(keymap-global-set "M-s r" my-ripgrep-map)
 
 (use-package embark
   :bind
