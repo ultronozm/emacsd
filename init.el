@@ -3410,6 +3410,7 @@ complete document rather than just a previewed region."
               ("C-c C-k" . quail-show-key))
   :config
   (add-to-list 'lean4-workspace-roots "~/.elan/toolchains/leanprover--lean4---v4.15.0-rc1/src/lean/")
+  (font-lock-add-keywords 'lean4-mode '(("`\\<\\([^`]+\\)\\>`" 1 'font-lock-constant-face prepend)))
   :defer t)
 
 (use-package czm-lean4
