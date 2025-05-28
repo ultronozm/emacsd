@@ -1297,6 +1297,7 @@ Otherwise, call ORIG-FUN with the original ARGS."
   (rust-mode . eglot-ensure))
 
 (use-package xr
+  :defer t
   :ensure (:host github :repo "mattiase/xr"))
 
 (defun czm-lispy-comment-maybe ()
@@ -1546,7 +1547,8 @@ them at the first newline."
   :bind ("s-;" . czm-spell-then-abbrev))
 
 (use-package typescript-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package julia-ts-mode
   :ensure (:host github :repo "dhanak/julia-ts-mode"
@@ -1600,6 +1602,7 @@ them at the first newline."
                '(project-claude-code "Claude Code" nil)))
 
 (use-package debbugs
+  :defer t
   :ensure (debbugs
            :host github :repo "emacs-mirror/debbugs"
            :branch "externals/debbugs"
@@ -1675,6 +1678,7 @@ them at the first newline."
   :custom (doc-view-follow-hijack t))
 
 (use-package pdf-extract
+  :defer t
   :repo-scan
   :ensure (:host github :repo "ultronozm/pdf-extract.el"
                  :inherit nil :pin t))
@@ -1987,6 +1991,7 @@ The content is escaped to prevent org syntax interpretation."
        (regexp-opt '("DONE" "CANCELED")))))))
 
 (use-package org-modern
+  :defer t
   :ensure t
   :config
   (global-org-modern-mode 1))
@@ -2280,11 +2285,13 @@ With prefix ARG, attach all visible buffers instead."
         ("C-M-<up>" . copilot-previous-completion)))
 
 (use-package plz
+  :defer t
   :ensure (:host github :repo "alphapapa/plz.el"
                  :depth nil
                  :inherit nil))
 
 (use-package plz-event-source
+  :defer t
   :ensure (:host github :repo "r0man/plz-event-source"
                  :depth nil
                  :inherit nil))
@@ -2309,6 +2316,7 @@ With prefix ARG, attach all visible buffers instead."
   (add-to-list 'warning-suppress-types '(llm)))
 
 (use-package llm-tool-collection
+  :defer t
   :after llm
   :ensure (:host github
                  :repo "skissue/llm-tool-collection"
@@ -3261,6 +3269,7 @@ complete document rather than just a previewed region."
   (repeat-mode 1))
 
 (use-package tex-item
+  :defer t
   :repo-scan
   :ensure (:host github :repo "ultronozm/tex-item.el" :depth nil)
   :after latex
@@ -3297,7 +3306,7 @@ complete document rather than just a previewed region."
                  :depth nil
                  :main "sage.el"
                  :inherit nil)
-  :demand t
+  ;; :demand t
   :config
   (add-hook 'sage-mode-hook #'my/setup-sage)
   (add-hook 'sage-shell-mode-hook #'my/setup-sage)
@@ -3477,4 +3486,7 @@ complete document rather than just a previewed region."
   :defer t
   :ensure (:host github :repo "ultronozm/clipdiff.el" :depth nil))
 
-(use-package cython-mode :ensure t)
+(use-package cython-mode
+  :ensure t
+  :defer t)
+
