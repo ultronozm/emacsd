@@ -619,24 +619,28 @@ This allows multiple Ediff sessions to each restore their own window configurati
 (add-hook 'ediff-quit-hook #'ediff-restore-window-configuration)
 (add-hook 'ediff-cleanup-hook #'ediff-kill-temporary-file-buffer)
 
-(defun project-format-patch-last-commit ()
+(defun project-format-patch-last-commit (&optional arg)
   "Create a patch file from the last commit in the current project.
-  The patch is saved in the project root directory and opened in a buffer."
-  (interactive)
+With a prefix argument ARG, prompt for a specific commit.
+The patch is saved in the project root directory and opened in a buffer."
+  (interactive "P")
   (let* ((pr (project-current t))
          (root (project-root pr))
          (default-directory root)
+         (commit (if arg
+                     (vc-read-revision "Format patch from commit: " nil 'Git "HEAD")
+                   "HEAD"))
          (git-output nil))
     
     (when (vc-git--empty-db-p)
       (user-error "No commits exist in this Git repository"))
     
-    (message "Generating patch...")
+    (message "Generating patch from %s..." commit)
     (setq git-output 
           (with-temp-buffer
-            (if (zerop (vc-git--call t "format-patch" "-1" "HEAD"))
+            (if (zerop (vc-git--call t "format-patch" "-1" commit))
                 (buffer-string)
-              (user-error "Failed to generate patch"))))
+              (user-error "Failed to generate patch from %s" commit))))
     
     (let ((filename (string-trim git-output)))
       (find-file (expand-file-name filename root))
