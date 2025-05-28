@@ -1594,7 +1594,7 @@ them at the first newline."
     (if (get-buffer default-project-shell-name)
         (pop-to-buffer default-project-shell-name (append display-buffer--same-window-action
                                                           '((category . comint))))
-      (let ((vterm-buffer-name default-project-shell-name))
+      (dlet ((vterm-buffer-name default-project-shell-name))
         (vterm)
         (vterm-send-string "claude\n")))))
 
