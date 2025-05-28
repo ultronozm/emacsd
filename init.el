@@ -643,6 +643,18 @@ This allows multiple Ediff sessions to each restore their own window configurati
       (diff-mode)
       (message "Patch saved as %s" filename))))
 
+(defun create-directory-with-git-repo (dir)
+  "Create directory DIR, initialize a Git repository, and open in Dired.
+Interactively prompts for the directory to create."
+  (interactive
+   (list (read-file-name "Create directory with Git repo: "
+                         default-directory default-directory
+                         nil nil)))
+  (make-directory dir t)
+  (let ((default-directory (file-name-as-directory (expand-file-name dir))))
+    (vc-create-repo 'Git)
+    (dired default-directory)))
+
 (bind-keys
  :package project
  :map project-prefix-map
