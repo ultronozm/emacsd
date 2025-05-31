@@ -3532,3 +3532,6 @@ complete document rather than just a previewed region."
   :ensure t
   :defer t)
 
+(use-package vundo
+  :ensure t
+  :defer t)
