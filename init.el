@@ -726,6 +726,11 @@ Optionally run SETUP-FN after creating the file."
   (interactive)
   (czm-create-scratch-file my-scratch-org-dir "org"))
 
+(defun czm-create-scratch-markdown ()
+  "Create new scratch markdown buffer."
+  (interactive)
+  (czm-create-scratch-file my-scratch-markdown-dir "md"))
+
 (defun czm-create-scratch-tex ()
   "Create new scratch LaTeX buffer."
   (interactive)
