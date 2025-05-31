@@ -2983,6 +2983,8 @@ complete document rather than just a previewed region."
         ("C-c C-g" . czm-latex-calc-grab)
         ("C-c C-n" . nil) ; TeX-normal-mode
         ("C-c #" . nil)
+        ("C-c i" . LaTeX-make-inline)
+        ("C-c p e" . LaTeX-repeat-recent-math-environment)
         ([remap next-error])
         ([remap previous-error])
         ("M-n" . next-error)
@@ -3015,6 +3017,52 @@ complete document rather than just a previewed region."
   (LaTeX-insert-into-comments nil)
   :custom-face
   (preview-face ((t (:background unspecified)))))
+
+(defun my-LaTeX-toggle-numbered ()
+  "Convert math construct at point to \"equation*\".
+If the math construct is already \"equation*\", then toggle with the
+numbered variant \"equation\"."
+  (interactive)
+  (unless (texmathp) (user-error "Not inside math"))
+  (let ((current (car texmathp-why)))
+    (LaTeX-modify-math
+     (pcase current
+       ("equation*" "equation")
+       ("equation" "equation*")
+       (_ "equation*")))))
+
+(defun my-LaTeX-toggle-align ()
+  "Toggle math environment at point between \"equation\" and \"align\"."
+  (interactive)
+  (unless (texmathp) (user-error "Not inside math"))
+  (let ((current (car texmathp-why)))
+    (LaTeX-modify-math
+     (pcase current
+       ("align*" "equation*")
+       ("equation*" "align*")
+       ("align" "equation")
+       ("equation" "align")
+       (_ "align*")))))
+
+(defun my-LaTeX-toggle-multline ()
+  "Toggle math environment at point between \"equation\" and \"multline\"."
+  (interactive)
+  (unless (texmathp) (user-error "Not inside math"))
+  (let ((current (car texmathp-why)))
+    (LaTeX-modify-math
+     (pcase current
+       ("multline*" "equation*")
+       ("equation*" "multline*")
+       ("multline" "equation")
+       ("equation" "multline")
+       (_ "multline*")))))
+
+(with-eval-after-load 'latex
+  (bind-keys
+   :map LaTeX-mode-map
+   ("C-c e" . my-LaTeX-toggle-numbered)
+   ("C-c w" . my-LaTeX-toggle-align)
+   ("C-c q" . my-LaTeX-toggle-multline)))
 
 (defun czm-copy-standard-tex-files ()
   "Copy standard TeX files to the current directory."
@@ -3189,18 +3237,14 @@ complete document rather than just a previewed region."
         ;; ("C-c t l" . czm-tex-edit-underline)
         ;; ("C-c t u" . czm-tex-edit-unemphasize)
         ("C-c t e" . czm-tex-edit-external-document-link)
-        ("C-c p e" . czm-tex-edit-repeat-most-recent-equation)
-        ("C-c p d" . czm-tex-edit-repeat-line-contents)
-        ("C-c p r" . czm-tex-edit-repeat-region)
+        ;; ("C-c p e" . czm-tex-edit-repeat-most-recent-equation)
+        ;; ("C-c p d" . czm-tex-edit-repeat-line-contents)
+        ;; ("C-c p r" . czm-tex-edit-repeat-region)
         ("C-c p s" . czm-tex-edit-substackify)
-        ("C-c p i" . czm-tex-edit-yank-interior-delete-delim)
+        ;; ("C-c p i" . czm-tex-edit-yank-interior-delete-delim)
         ("C-c p f" . czm-tex-edit-fractionify-region)
-        ("C-c p b" . czm-tex-edit-enlarge-parentheses)
+        ;; ("C-c p b" . czm-tex-edit-enlarge-parentheses)
         ("C-c p h" . czm-tex-edit-split-equation)
-        ("C-c e" . czm-tex-edit-make-equation-numbered)
-        ("C-c i" . czm-tex-edit-make-equation-inline)
-        ("C-c w" . czm-tex-edit-make-equation-align)
-        ("C-c q" . czm-tex-edit-make-equation-multline)
         ("C-<return>" . czm-tex-edit-return)
         ;; ("$" . czm-tex-edit-insert-dollar-or-wrap-region) ; not necessary w/ electric-pair-mode?
         ("\"" . czm-tex-edit-insert-quote-or-wrap-region))
