@@ -3310,7 +3310,6 @@ complete document rather than just a previewed region."
   (repeat-mode 1))
 
 (use-package tex-item
-  :defer t
   :repo-scan
   :ensure (:host github :repo "ultronozm/tex-item.el" :depth nil)
   :after latex
