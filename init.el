@@ -3390,7 +3390,7 @@ numbered variant \"equation\"."
                  :depth nil
                  :main "sage.el"
                  :inherit nil)
-  ;; :demand t
+  :defer t
   :config
   (add-hook 'sage-mode-hook #'my/setup-sage)
   (add-hook 'sage-shell-mode-hook #'my/setup-sage)
