@@ -3123,13 +3123,12 @@ numbered variant \"equation\"."
 (defun czm-setup-and-activate-tex-fold ()
   (require 'czm-tex-jump)
   (require 'czm-tex-ref)
-  ;; (czm-tex-fold-set-defaults)
   (setq TeX-fold-macro-spec-list
         (seq-remove (lambda (item)
                       (and (numberp (car item))
                            (= (car item) 1)))
                     TeX-fold-macro-spec-list))
-  (dolist (item '(("[{2}]||[href]" ("href"))
+  (dolist (item `(("[{2}]||[href]" ("href"))
                   ("🌱" ("documentclass"))
                   ("🌌" ("input"))
                   ("📚" ("bibliography"))
@@ -3142,8 +3141,10 @@ numbered variant \"equation\"."
                   ("§§§ {1}" ("subsubsection" "subsubsection*"))
                   ("¶ {1}" ("paragraph" "paragraph*"))
                   ("¶¶ {1}" ("subparagraph" "subparagraph*"))
-                  (1 ("emph" "textit" "textsl" "textmd" "textrm" "textsf" "texttt"
-                      "textbf" "textsc" "textup"))))
+                  (1 ("emph" "textit" "textsl" "textmd" "textrm" "textsf"
+                      "texttt" "textbf" "textsc" "textup"))
+                  (,(lambda (text) (propertize text 'face '(underline)))
+                   ("underline"))))
     (add-to-list 'TeX-fold-macro-spec-list item))
   (dolist (item '((("🌅" . "🌇") ("document"))
                   (("⚡" . "⚡") ("minted" "minted*"))
