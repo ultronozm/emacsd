@@ -680,6 +680,7 @@ Interactively prompts for the directory to create."
   (mapc
    (lambda (sym) (add-to-list 'tex--prettify-symbols-alist sym))
    '(("\\eps" . ?ε)
+     ("\\ " . 9141) ; Literal ?⎵ breaks indentation
      ("\\begin{equation*}" . ?↴)
      ("\\begin{equation}" . ?↴)
      ("\\end{equation*}" . ?↲)
