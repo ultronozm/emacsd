@@ -704,11 +704,6 @@ Interactively prompts for the directory to create."
 
 (advice-add 'vc-deduce-backend :around #'my/vc-deduce-backend-advice)
 
-(bind-keys
- :repeat-map python-indent-repeat-map
- ("<" . python-indent-shift-left)
- (">" . python-indent-shift-right))
-
 (defun czm-create-scratch-file (dir extension &optional setup-fn)
   "Create a new temporary file in DIR with EXTENSION.
 Optionally run SETUP-FN after creating the file."
