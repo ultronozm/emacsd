@@ -2269,7 +2269,7 @@ s:substring=2 : match substring with <=2 errors in any word in Subject:"
   :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil
                  :inherit nil :pin t)
   :bind
-  ("C-c C-@" . czm-mail-mailrc-add-entry)
+  ("C-z C-@" . czm-mail-mailrc-add-entry)
   (:map rmail-mode-map
         ("S" . czm-mail-refile-and-store-link))
   (:map message-mode-map
