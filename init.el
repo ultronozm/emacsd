@@ -3578,3 +3578,9 @@ numbered variant \"equation\"."
 (use-package vundo
   :ensure t
   :defer t)
+
+(with-eval-after-load 'mailcap
+  (dolist (item
+           '((".docx" .
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document")))
+    (add-to-list 'mailcap-mime-extensions item)))
