@@ -2126,11 +2126,7 @@ With prefix ARG, attach all visible buffers instead."
   (rmail-movemail-program "movemail")
   (rmail-primary-inbox-list (list my-mail-inbox))
   (rmail-automatic-folder-directives
-   `((,(expand-file-name "bug-gnu-emacs.rmail" my-mail-folder)
-      "sender" "bug-gnu-emacs-bounces")
-     (,(expand-file-name "emacs-devel.rmail" my-mail-folder)
-      "sender" "emacs-devel-bounces")
-     (,(expand-file-name "arxiv.rmail" my-mail-folder)
+   `((,(expand-file-name "arxiv.rmail" my-mail-folder)
       "subject" "math daily Subj-class mailing"
       "from" "arXiv\\.org")
      (,(expand-file-name "receipts.rmail" my-mail-folder)
