@@ -2983,7 +2983,7 @@ complete document rather than just a previewed region."
         ("C-c C-n" . nil) ; TeX-normal-mode
         ("C-c #" . nil)
         ("C-c i" . LaTeX-make-inline)
-        ("C-c p e" . LaTeX-repeat-recent-math-environment)
+        ("C-c p e" . LaTeX-repeat-recent-math)
         ([remap next-error])
         ([remap previous-error])
         ("M-n" . next-error)
