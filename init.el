@@ -1656,6 +1656,13 @@ them at the first newline."
 
 ;;; pdf
 
+(use-package doc-view
+  :ensure nil
+  :bind
+  (:map doc-view-mode-map
+        ("<down>" . nil)
+        ("<up>" . nil)))
+
 (use-package pdf-tools
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :ensure (:host github :repo "vedang/pdf-tools"
