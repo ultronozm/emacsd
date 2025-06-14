@@ -408,7 +408,7 @@ Pushes a mark at the starting position."
 (use-package abbrev
   :ensure nil
   :defer
-  :hook ((prog-mode text-mode) . abbrev-mode)
+  :hook ((prog-mode text-mode erc-mode) . abbrev-mode)
   :custom
   (abbrev-file-name (concat user-emacs-directory "abbrev_defs.el"))
   (save-abbrevs 'silently)
