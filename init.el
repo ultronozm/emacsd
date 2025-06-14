@@ -2250,8 +2250,7 @@ The content is escaped to prevent org syntax interpretation."
   (add-to-list 'org-src-lang-modes '("lean" . lean4))
   (add-to-list 'org-src-lang-modes '("tex" . latex))
   (add-to-list 'org-src-lang-modes '("cmake" . cmake-ts))
-  (add-to-list 'org-src-lang-modes '("yaml" . yaml-ts))
-  )
+  (add-to-list 'org-src-lang-modes '("yaml" . yaml-ts)))
 
 (defun my/org-archive-done-tasks ()
   "Archive all done tasks in the current buffer."
