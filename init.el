@@ -819,6 +819,252 @@ In light mode:
 (font-lock-add-keywords 'Info-mode '((" -- \\([^:]+\\): \\_<\\(.+\\)\\_>" . 2)))
 (font-lock-add-keywords 'Info-mode '(("‘\\<\\([^’]+\\)\\>’" . 1)))
 
+(use-package doc-view
+  :ensure nil
+  :bind
+  (:map doc-view-mode-map
+        ("<down>" . nil)
+        ("<up>" . nil)))
+
+;;; mail
+
+(defun mml-attach-buffer-or-file (buffer &optional type description disposition filename)
+  "Attach BUFFER's underlying file if it has one. Otherwise attach BUFFER's contents.
+TYPE, DESCRIPTION, and DISPOSITION are optional MIME properties.
+If BUFFER is visiting a file and is modified, the user is prompted to save it.
+For non–file buffers, FILENAME is prompted for and used as the suggested name."
+  (interactive
+   (let* ((buf (read-buffer "Attach from buffer: " (buffer-name (current-buffer)) t))
+          (bufobj (get-buffer buf))
+          (has-file (buffer-file-name bufobj))
+          (no-prompt current-prefix-arg)
+          (type (if no-prompt
+                    (or (and has-file (mm-default-file-type has-file))
+                        "application/octet-stream")
+                  (mml-minibuffer-read-type
+                   (or (and has-file (file-name-nondirectory has-file))
+                       buf))))
+          (desc (unless no-prompt
+                  (mml-minibuffer-read-description)))
+          (disp (if no-prompt
+                    (if has-file
+                        (mml-content-disposition type (file-name-nondirectory has-file))
+                      "attachment")
+                  (mml-minibuffer-read-disposition
+                   type
+                   nil
+                   (and has-file (file-name-nondirectory has-file)))))
+          (fname (unless has-file
+                   (read-string "Filename for attachment: "
+                                (concat buf ".txt")))))
+     (if has-file
+         (list buf type desc disp)
+       (list buf type desc disp fname))))
+  (let ((has-file (buffer-file-name (get-buffer buffer))))
+    (if has-file
+        (progn
+          (with-current-buffer buffer
+            (when (and (buffer-modified-p)
+                       (y-or-n-p (format "Buffer `%s' is modified. Save before attaching? "
+                                         buffer)))
+              (save-buffer)))
+          (mml-attach-file has-file type description disposition))
+      (mml-attach-buffer buffer type description disposition filename))))
+
+(defun my-compose-mail-with-attachments (&optional arg)
+  "Prepare a message with current buffer as an attachment.
+With prefix ARG, attach all visible buffers instead."
+  (interactive "P")
+  (let* ((buffers (if arg
+                      (seq-uniq (mapcar #'window-buffer (window-list)))
+                    (list (current-buffer))))
+         (count (length buffers)))
+    (compose-mail)
+    (save-excursion
+      (rfc822-goto-eoh)
+      (forward-line)
+      (open-line 2)
+      (dolist (buffer buffers)
+        (mml-attach-buffer-or-file buffer)))))
+
+(bind-keys
+ :package message
+ :map message-mode-map
+ ("C-c RET a" . mml-attach-buffer-or-file))
+
+(defun my-rmail-mode-hook ()
+  (setq-local preview-tailor-local-multiplier 0.6)
+  (setq-local TeX-master my-preview-master))
+
+(defun my-rmail-with-prefix ()
+  "Call rmail with a prefix argument of 4."
+  (interactive)
+  (let ((current-prefix-arg '(4)))
+    (call-interactively #'rmail)))
+
+(defun my-rmail-refile-and-store-link ()
+  "Refile current message and store an org link to it."
+  (interactive)
+  (rmail-output rmail-default-file)
+  (let ((buffer (find-file-noselect rmail-default-file)))
+    (with-current-buffer buffer
+      (rmail-last-message)
+      (require 'org)
+      (org-store-link nil t))))
+
+(use-package rmail
+  :ensure nil
+  :defer t
+  :bind
+  ("C-z r" . my-rmail-with-prefix)
+  ("C-z R" . rmail)
+  (:map rmail-mode-map
+        ("S" . my-rmail-refile-and-store-link))
+  :hook (rmail-mode . my-rmail-mode-hook)
+  :custom
+  (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
+  (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
+  (rmail-movemail-program "movemail")
+  (rmail-primary-inbox-list (list my-mail-inbox))
+  (rmail-automatic-folder-directives
+   `((,(expand-file-name "arxiv.rmail" my-mail-folder)
+      "subject" "math daily Subj-class mailing"
+      "from" "arXiv\\.org")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "noreply@github.com"
+      "subject" "Payment Receipt")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "invoice+statements@mail.anthropic.com"
+      "subject" "Your receipt from Anthropic")
+     (,(expand-file-name "receipts.rmail" my-mail-folder)
+      "from" "googleplay-noreply@google.com"
+      "subject" "Your Google Play Order Receipt")))
+  (rmail-secondary-file-directory (file-name-as-directory my-mail-folder))
+  (rmail-secondary-file-regexp "^.*\\.rmail$")
+  (rmail-default-file (expand-file-name "scheduled.rmail" my-mail-folder))
+  (rmail-remote-password-required t)
+  (rmail-remote-password
+   (let ((auth-info (car (auth-source-search
+                          :host my-mail-host-imap
+                          :port my-mail-port
+                          :user my-mail-user
+                          :max 1))))
+     (when auth-info
+       (let ((secret (plist-get auth-info :secret)))
+         (if (functionp secret)
+             (funcall secret)
+           secret)))))
+  (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
+  (rmail-delete-after-output t)
+  :config
+  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode)))
+
+(defun my-always-enable-rmail-font-lock (&rest _)
+  "Ensure font-lock-mode is enabled after rmail runs."
+  ;; Check we're actually in rmail-mode, in case rmail errored out.
+  (when (derived-mode-p 'rmail-mode)
+    (font-lock-mode 1)))
+
+(advice-add 'rmail :after #'my-always-enable-rmail-font-lock)
+
+(use-package sendmail
+  :ensure nil
+  :defer t
+  :config
+  (setq
+   mail-host-address my-mail-host
+   sendmail-program "msmtp"
+   message-send-mail-function 'message-send-mail-with-sendmail
+   message-default-mail-headers
+   (let ((file (abbreviate-file-name
+                (expand-file-name "sent.rmail" my-mail-folder))))
+     (format "Fcc: %s\n" file))))
+
+(use-package message
+  :ensure nil
+  :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
+  :custom
+  (message-make-forward-subject-function #'message-forward-subject-fwd))
+
+(use-package mairix
+  :ensure nil
+  :defer t
+  :bind
+  ("C-z m" . mairix-transient-menu)
+  :config
+  (defconst mairix-syntax-help-text
+    "Mairix Search Syntax:
+
+word          : match word in message body and major headers
+t:word        : match word in To: header
+c:word        : match word in Cc: header
+f:word        : match word in From: header
+a:word        : match word in To:, Cc: or From: headers (address)
+s:word        : match word in Subject: header
+b:word        : match word in message body
+m:word        : match word in Message-ID: header
+n:word        : match word in name of attachment
+F:flags       : match message flags (s=seen,r=replied,f=flagged,-=negate)
+p:substring   : match substring of path
+d:start-end   : match date range
+z:low-high    : match messages in size range
+
+Advanced syntax:
+bs:word       : match word in Subject: header or body
+s:word1,word2 : match both words in Subject:
+s:word1/word2 : match either word or both words in Subject:
+s:~word       : match messages not containing word in Subject:
+s:substring=  : match substring in any word in Subject:
+s:^substring= : match left-anchored substring in any word in Subject:
+s:substring=2 : match substring with <=2 errors in any word in Subject:"
+    "Help text for mairix search syntax.")
+
+  (defun mairix-display-syntax-help ()
+    "Display mairix search syntax help in a buffer."
+    (interactive)
+    (with-help-window "*Mairix Syntax Help*"
+      (princ mairix-syntax-help-text)))
+
+  (require 'transient)
+  (transient-define-prefix
+    mairix-transient-menu ()
+    "Mairix search commands."
+    :info-manual "(mairix-el)Top"
+    [["Search"
+      ("RET" "Prompted search" mairix-search)
+      ("f"   "Search by sender" mairix-search-from-this-article)
+      ("t"   "Search thread" mairix-search-thread-this-article)]
+     ["Widget search"
+      ("w" "Widget search" mairix-widget-search)
+      ("b" "Widget based on article" mairix-widget-search-based-on-article)]
+     ["Saved searches"
+      ("s" "Use saved search" mairix-use-saved-search)
+      ("S" "Save last search" mairix-save-search)
+      ("e" "Edit saved searches" mairix-edit-saved-searches)]]
+    [:class transient-row
+            ("u" "Update database" mairix-update-database)
+            ("?" "Show syntax help" mairix-display-syntax-help)
+            ("i" "Info docs" (lambda ()
+                               (interactive)
+                               (info "(mairix-el)")))]))
+
+
+(defun my-mail-message-tab ()
+  "Use `mail-abbrev-insert-alias' in headers, otherwise `message-tab'."
+  (interactive)
+  (if (message-point-in-header-p)
+      (call-interactively #'mail-abbrev-insert-alias)
+    (message-tab)))
+
+(use-package message
+  :defer t
+  :ensure nil
+  :bind
+  (:map message-mode-map
+        ("TAB" . my-mail-message-tab)))
+
+;;; quit
+
 (unless user-init-file
   (message "Running bare init (emacs -q/-Q detected), skipping rest of init.el")
   (throw 'quit-init nil))
@@ -1656,13 +1902,6 @@ them at the first newline."
 
 ;;; pdf
 
-(use-package doc-view
-  :ensure nil
-  :bind
-  (:map doc-view-mode-map
-        ("<down>" . nil)
-        ("<up>" . nil)))
-
 (use-package pdf-tools
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :ensure (:host github :repo "vedang/pdf-tools"
@@ -2035,232 +2274,7 @@ The content is escaped to prevent org syntax interpretation."
   :hook
   (org-mode . org-appear-mode))
 
-;;; mail
-
-(defun mml-attach-buffer-or-file (buffer &optional type description disposition filename)
-  "Attach BUFFER's underlying file if it has one. Otherwise attach BUFFER's contents.
-TYPE, DESCRIPTION, and DISPOSITION are optional MIME properties.
-If BUFFER is visiting a file and is modified, the user is prompted to save it.
-For non–file buffers, FILENAME is prompted for and used as the suggested name."
-  (interactive
-   (let* ((buf (read-buffer "Attach from buffer: " (buffer-name (current-buffer)) t))
-          (bufobj (get-buffer buf))
-          (has-file (buffer-file-name bufobj))
-          (no-prompt current-prefix-arg)
-          (type (if no-prompt
-                    (or (and has-file (mm-default-file-type has-file))
-                        "application/octet-stream")
-                  (mml-minibuffer-read-type
-                   (or (and has-file (file-name-nondirectory has-file))
-                       buf))))
-          (desc (unless no-prompt
-                  (mml-minibuffer-read-description)))
-          (disp (if no-prompt
-                    (if has-file
-                        (mml-content-disposition type (file-name-nondirectory has-file))
-                      "attachment")
-                  (mml-minibuffer-read-disposition
-                   type
-                   nil
-                   (and has-file (file-name-nondirectory has-file)))))
-          (fname (unless has-file
-                   (read-string "Filename for attachment: "
-                                (concat buf ".txt")))))
-     (if has-file
-         (list buf type desc disp)
-       (list buf type desc disp fname))))
-  (let ((has-file (buffer-file-name (get-buffer buffer))))
-    (if has-file
-        (progn
-          (with-current-buffer buffer
-            (when (and (buffer-modified-p)
-                       (y-or-n-p (format "Buffer `%s' is modified. Save before attaching? "
-                                         buffer)))
-              (save-buffer)))
-          (mml-attach-file has-file type description disposition))
-      (mml-attach-buffer buffer type description disposition filename))))
-
-(defun my-compose-mail-with-attachments (&optional arg)
-  "Prepare a message with current buffer as an attachment.
-With prefix ARG, attach all visible buffers instead."
-  (interactive "P")
-  (let* ((buffers (if arg
-                      (seq-uniq (mapcar #'window-buffer (window-list)))
-                    (list (current-buffer))))
-         (count (length buffers)))
-    (compose-mail)
-    (save-excursion
-      (rfc822-goto-eoh)
-      (forward-line)
-      (open-line 2)
-      (dolist (buffer buffers)
-        (mml-attach-buffer-or-file buffer)))))
-
-(bind-keys
- :package message
- :map message-mode-map
- ("C-c RET a" . mml-attach-buffer-or-file))
-
-(defun my-rmail-mode-hook ()
-  (setq-local preview-tailor-local-multiplier 0.6)
-  (setq-local TeX-master my-preview-master))
-
-(defun my-rmail-with-prefix ()
-  "Call rmail with a prefix argument of 4."
-  (interactive)
-  (let ((current-prefix-arg '(4)))
-    (call-interactively #'rmail)))
-
-(use-package rmail
-  :ensure nil
-  :defer t
-  :bind
-  ("C-z r" . my-rmail-with-prefix)
-  ("C-z R" . rmail)
-  (:map rmail-mode-map
-        ("S" . czm-mail-refile-and-store-link))
-  :hook (rmail-mode . my-rmail-mode-hook)
-  :custom
-  (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
-  (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
-  (rmail-movemail-program "movemail")
-  (rmail-primary-inbox-list (list my-mail-inbox))
-  (rmail-automatic-folder-directives
-   `((,(expand-file-name "arxiv.rmail" my-mail-folder)
-      "subject" "math daily Subj-class mailing"
-      "from" "arXiv\\.org")
-     (,(expand-file-name "receipts.rmail" my-mail-folder)
-      "from" "noreply@github.com"
-      "subject" "Payment Receipt")
-     (,(expand-file-name "receipts.rmail" my-mail-folder)
-      "from" "invoice+statements@mail.anthropic.com"
-      "subject" "Your receipt from Anthropic")
-     (,(expand-file-name "receipts.rmail" my-mail-folder)
-      "from" "googleplay-noreply@google.com"
-      "subject" "Your Google Play Order Receipt")))
-  (rmail-secondary-file-directory (file-name-as-directory my-mail-folder))
-  (rmail-secondary-file-regexp "^.*\\.rmail$")
-  (rmail-default-file (expand-file-name "scheduled.rmail" my-mail-folder))
-  (rmail-remote-password-required t)
-  (rmail-remote-password
-   (let ((auth-info (car (auth-source-search
-                          :host my-mail-host-imap
-                          :port my-mail-port
-                          :user my-mail-user
-                          :max 1))))
-     (when auth-info
-       (let ((secret (plist-get auth-info :secret)))
-         (if (functionp secret)
-             (funcall secret)
-           secret)))))
-  (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
-  (rmail-delete-after-output t)
-  :config
-  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode)))
-
-(defun my-always-enable-rmail-font-lock (&rest _)
-  "Ensure font-lock-mode is enabled after rmail runs."
-  ;; Check we're actually in rmail-mode, in case rmail errored out.
-  (when (derived-mode-p 'rmail-mode)
-    (font-lock-mode 1)))
-
-(advice-add 'rmail :after #'my-always-enable-rmail-font-lock)
-
-(use-package sendmail
-  :ensure nil
-  :defer t
-  :config
-  (setq
-   mail-host-address my-mail-host
-   sendmail-program "msmtp"
-   message-send-mail-function 'message-send-mail-with-sendmail
-   message-default-mail-headers
-   (let ((file (abbreviate-file-name
-                (expand-file-name "sent.rmail" my-mail-folder))))
-     (format "Fcc: %s\n" file))))
-
-(use-package message
-  :ensure nil
-  :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
-  :custom
-  (message-make-forward-subject-function #'message-forward-subject-fwd))
-
-(defun czm-mail-message-tab ()
-  "Use `mail-abbrev-insert-alias' in headers, otherwise `message-tab'."
-  (interactive)
-  (if (message-point-in-header-p)
-      (call-interactively #'mail-abbrev-insert-alias)
-    (message-tab)))
-
-(use-package message
-  :defer t
-  :ensure nil
-  :bind
-  (:map message-mode-map
-        ("TAB" . czm-mail-message-tab)))
-
-(use-package mairix
-  :ensure nil
-  :defer t
-  :bind
-  ("C-z m" . mairix-transient-menu)
-  :config
-  (defconst mairix-syntax-help-text
-    "Mairix Search Syntax:
-
-word          : match word in message body and major headers
-t:word        : match word in To: header
-c:word        : match word in Cc: header
-f:word        : match word in From: header
-a:word        : match word in To:, Cc: or From: headers (address)
-s:word        : match word in Subject: header
-b:word        : match word in message body
-m:word        : match word in Message-ID: header
-n:word        : match word in name of attachment
-F:flags       : match message flags (s=seen,r=replied,f=flagged,-=negate)
-p:substring   : match substring of path
-d:start-end   : match date range
-z:low-high    : match messages in size range
-
-Advanced syntax:
-bs:word       : match word in Subject: header or body
-s:word1,word2 : match both words in Subject:
-s:word1/word2 : match either word or both words in Subject:
-s:~word       : match messages not containing word in Subject:
-s:substring=  : match substring in any word in Subject:
-s:^substring= : match left-anchored substring in any word in Subject:
-s:substring=2 : match substring with <=2 errors in any word in Subject:"
-    "Help text for mairix search syntax.")
-
-  (defun mairix-display-syntax-help ()
-    "Display mairix search syntax help in a buffer."
-    (interactive)
-    (with-help-window "*Mairix Syntax Help*"
-      (princ mairix-syntax-help-text)))
-
-  (require 'transient)
-  (transient-define-prefix
-    mairix-transient-menu ()
-    "Mairix search commands."
-    :info-manual "(mairix-el)Top"
-    [["Search"
-      ("RET" "Prompted search" mairix-search)
-      ("f"   "Search by sender" mairix-search-from-this-article)
-      ("t"   "Search thread" mairix-search-thread-this-article)]
-     ["Widget search"
-      ("w" "Widget search" mairix-widget-search)
-      ("b" "Widget based on article" mairix-widget-search-based-on-article)]
-     ["Saved searches"
-      ("s" "Use saved search" mairix-use-saved-search)
-      ("S" "Save last search" mairix-save-search)
-      ("e" "Edit saved searches" mairix-edit-saved-searches)]]
-    [:class transient-row
-            ("u" "Update database" mairix-update-database)
-            ("?" "Show syntax help" mairix-display-syntax-help)
-            ("i" "Info docs" (lambda ()
-                               (interactive)
-                               (info "(mairix-el)")))]))
-
+;;; more mail
 
 (use-package czm-mail
   :repo-scan
