@@ -1456,8 +1456,8 @@ With C-u, prompt for ripgrep arguments."
          (consult-ripgrep-args (consult-ripgrep--maybe-prompt-for-args base-args)))
     (consult--grep prompt #'consult--ripgrep-make-builder files nil)))
 
-(defun consult-ripgrep-org-notes ()
-  "Search org note files. With C-u, prompt for args."
+(defun consult-ripgrep-org-logs ()
+  "Search log-*.org files. With C-u, prompt for args."
   (interactive)
   (consult-ripgrep--files
    "Ripgrep org notes"
@@ -1484,7 +1484,7 @@ With C-u, prompt for ripgrep arguments."
   :doc "Keymap for enhanced consult-ripgrep commands."
   "r" #'consult-ripgrep+
   "d" #'consult-ripgrep-current-directory
-  "n" #'consult-ripgrep-org-notes
+  "l" #'consult-ripgrep-org-logs
   "t" #'consult-ripgrep-todo-notes
   "c" #'consult-ripgrep-config-files)
 
