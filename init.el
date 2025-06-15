@@ -3296,11 +3296,20 @@ numbered variant \"equation\"."
   :ensure (:host github :repo "ultronozm/auctex-label-numbers.el" :depth nil)
   :after latex)
 
+(defun my-downloads-or-newest-pdf (arg)
+  "Find Downloads directory or, with prefix ARG, newest PDF therein."
+  (interactive "P")
+  (if arg
+      (library-find-newest-downloaded-pdf)
+    (dired my-downloads-folder)))
+
 (use-package library
   :repo-scan
   :after latex czm-tex-util
   :defer t
   :ensure (:host github :repo "ultronozm/library.el" :depth nil)
+  :bind
+  ("C-c d" . my-downloads-or-newest-pdf)  
   :custom
   (library-pdf-directory my-pdf-folder)
   (library-bibtex-file my-master-bib-file)
