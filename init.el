@@ -957,7 +957,8 @@ With prefix ARG, attach all visible buffers instead."
   (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
   (rmail-delete-after-output t)
   :config
-  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode)))
+  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode))
+  (add-to-list 'auto-mode-alist '("\\.mbox$" . rmail-mode)))
 
 (defun my-always-enable-rmail-font-lock (&rest _)
   "Ensure font-lock-mode is enabled after rmail runs."
