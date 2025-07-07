@@ -57,7 +57,10 @@
    ("H-0" . tab-close)
    ("H-1" . tab-close-other)
    ("H-2" . tab-bar-new-tab)
-   ("H-SPC" . ediff-buffers)
+   ("H-SPC H-SPC" . ediff-buffers)
+   ("H-SPC SPC" . ediff-buffers)
+   ("H-SPC d" . diff-current-file)
+   ("H-SPC e" . ediff-current-file)
    ;; H-ACFNHMD -- macOS annoyance
    ("H-b" . abbrev-mode)
    ("H-e" . toggle-debug-on-error)
@@ -84,6 +87,7 @@
    ("s-3" . split-window-right)
    ("s-6" . (lambda () (interactive) (delete-indentation nil)))
    ("s-7" . (lambda () (interactive) (delete-indentation t)))
+   ("s-<backspace>" . backward-kill-sentence)
    ("s-<up>" . (lambda () (interactive) (enlarge-window 5)))
    ("s-<down>" . (lambda () (interactive) (shrink-window 5)))
    ("s-<left>" . previous-buffer)
@@ -122,6 +126,7 @@
    ("s-y" . replace-buffer-with-clipboard)
    ("s-z" . nil))
   :custom
+  (mailcap-user-mime-data '((text-mode "text/plain" nil)))
   (diff-entire-buffers nil)
   (ediff-split-window-function 'split-window-horizontally)
   (use-dialog-box nil)
@@ -210,6 +215,10 @@
   (prog-mode . outline-minor-mode)
   (dired-mode . dired-hide-details-mode)
   (dired-mode . hl-line-mode))
+
+(defun diff-current-file ()
+  (interactive)
+  (diff-buffer-with-file (current-buffer)))
 
 (defun find-init-file (&optional arg)
   "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory.
@@ -450,7 +459,7 @@ DIR must include a .project file to be considered a project."
 (defvar maximize-window-mode-history nil
   "History of major modes used in maximize-window function.")
 
-(defun ediff-overwrite ()
+(defun ediff-current-kill ()
   "Run Ediff between the current buffer (or its active region) and the clipboard.
 
 If a region is active, the command first creates an indirect buffer that is
@@ -498,7 +507,7 @@ tab—are cleaned up automatically."
         (with-current-buffer ediff-buf
           (add-hook 'ediff-quit-hook cleanup nil t))))))
 
-(defun diff-overwrite (&optional switches arg)
+(defun diff-current-kill (&optional switches arg)
   "Unified diff between the current buffer/region and the clipboard.
 
 • No prefix → run silently with \"-u\".  
@@ -531,8 +540,8 @@ the clipboard as the NEW side (+++) so that
                                                (region-end)))
                            ib)
                        orig-buf))
-         (clip-file  (make-temp-file "diff-overwrite-clip-"))
-         (src-file   (make-temp-file "diff-overwrite-src-"))
+         (clip-file  (make-temp-file "diff-current-kill-clip-"))
+         (src-file   (make-temp-file "diff-current-kill-src-"))
          ;; first label = first file (old)   second label = second file (new)
          (labels     (list "--label" file-name "--label" "clipboard"))
          (switches   (append '("-u") labels (when switches (list switches)))))
@@ -560,17 +569,17 @@ the clipboard as the NEW side (+++) so that
 (defun clipboard-compare (&optional arg)
   "Comp4re the clipboard with the current buffer (or its active region).
 
-No prefix ARG  →  call `ediff-overwrite` (side‑by‑side Ediff).
+No prefix ARG  →  call `ediff-current-kill` (side‑by‑side Ediff).
 
-Any prefix ARG →  call `diff-overwrite`.
+Any prefix ARG →  call `diff-current-kill`.
                   *One* C‑u shows the diff with default switches;
-                  *two* C‑u’s lets `diff-overwrite` prompt for extra switches,
+                  *two* C‑u’s lets `diff-current-kill` prompt for extra switches,
                   because the raw prefix it receives is (16)."
   (interactive "P")
   (if arg
       (let ((current-prefix-arg arg))      ; forward the exact prefix
-        (call-interactively #'diff-overwrite))
-    (ediff-overwrite)))
+        (call-interactively #'diff-current-kill))
+    (ediff-current-kill)))
 
 (defun replace-buffer-with-clipboard ()
   "Erase buffer and replace its contents with clipboard."
@@ -783,6 +792,8 @@ In light mode:
     (previous-line)
     (fill-paragraph)))
 
+(put 'recenter-top-bottom 'repeat-continue t)
+
 (bind-keys
  :repeat-map paragraph-repeat-map
  ("]" . forward-paragraph)
@@ -799,8 +810,7 @@ In light mode:
  ("M-w" . kill-ring-save)
  ("y" . yank)
  ("t" . transpose-paragraphs)
- ("q" . fill-previous-paragraph)
- ("C-l" . recenter-top-bottom))
+ ("q" . fill-previous-paragraph))
 
 (bind-keys
  :repeat-map sentence-repeat-map
@@ -813,8 +823,7 @@ In light mode:
  ("w" . kill-region)
  ("M-w" . kill-ring-save)
  ("y" . yank)
- ("t" . transpose-sentences)
- ("C-l" . recenter-top-bottom))
+ ("t" . transpose-sentences))
 
 (font-lock-add-keywords 'Info-mode '((" -- \\([^:]+\\): \\_<\\(.+\\)\\_>" . 2)))
 (font-lock-add-keywords 'Info-mode '(("‘\\<\\([^’]+\\)\\>’" . 1)))
@@ -1900,10 +1909,12 @@ them at the first newline."
             completion-in-region-function old-completion-in-region-function))))
 
 (advice-add 'debbugs-gnu-search :around #'my/disable-vertico-for-debbugs-search)
+(advice-add 'debbugs-gnu-bugs :around #'my/disable-vertico-for-debbugs-search)
 
 ;;; pdf
 
 (use-package pdf-tools
+  ;; :disabled
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :ensure (:host github :repo "vedang/pdf-tools"
                  :depth nil
@@ -1991,15 +2002,17 @@ in all current and future PDF buffers."
   :defer t
   :config
   (setq gt-langs '(da en fr de))
-  ;; (setq gt-default-translator (gt-translator :engines (gt-google-engine)))
-  (setq gt-default-translator 
-        (gt-translator :engines (gt-google-engine)))
   (setq gt-default-translator 
         (gt-translator 
-         :taker (gt-taker :langs '(en da) :text 'paragraph)  ;; Set up for paragraph translation
-         :engines (gt-google-engine)                         ;; Google engine has good TTS support
-         :render (gt-buffer-render)))
-  )
+         :taker (gt-taker :langs '(da en fr de) :text 'paragraph)  ; Match your gt-langs
+         :engines (gt-google-engine)
+         :render (gt-buffer-render))))
+
+;; (gt-start
+;;  (gt-translator
+;;   :taker (gt-taker :langs '(fr en) :text 'buffer)
+;;   :engines (gt-google-engine)
+;;   :render (gt-buffer-render)))
 
 (defun gt-eldoc-documentation-function (callback)
   "Return translation at point via eldoc's callback mechanism."
@@ -2119,10 +2132,8 @@ The content is escaped to prevent org syntax interpretation."
   :lighter " LaTeXAbbrev"
   :keymap my/org-tex-mode-map
   (if my/org-tex-mode
-      ;; When enabling the mode
       (when (boundp 'LaTeX-mode-abbrev-table)
         (setq local-abbrev-table LaTeX-mode-abbrev-table))
-    ;; When disabling the mode
     (setq local-abbrev-table
           (symbol-value (derived-mode-abbrev-table-name major-mode)))))
 
@@ -2217,6 +2228,8 @@ The content is escaped to prevent org syntax interpretation."
    ("[" . org-backward-paragraph)
    ("{" . org-backward-paragraph)
    :continue-only
+   ("M-h" . mark-paragraph)
+   ("h" . mark-paragraph)
    ("w" . kill-region)
    ("M-w" . kill-ring-save)
    ("y" . yank)
@@ -2314,6 +2327,7 @@ The content is escaped to prevent org syntax interpretation."
   ;; (sage-shell:sage-mode . (lambda () (setq tab-width 4)))
   (python-mode . (lambda () (setq tab-width 4)))
   (sage-mode . (lambda () (setq tab-width 4)))
+  (LaTeX-mode . (lambda () (setq tab-width 2)))
   :config
   (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
   (copilot--define-accept-completion-by-action
@@ -3221,17 +3235,13 @@ numbered variant \"equation\"."
   "Advice to fold macros after `TeX-font' is called."
   (when TeX-fold-mode
     (save-excursion
-      ;; Move to the beginning of the newly inserted macro
       (when (looking-at "}")
         (forward-char))
       (when (looking-back "[{}]" (- (point) 1))
         (backward-sexp))
       (let ((macro-start (point)))
-        ;; Move to the end of the macro
         (forward-sexp)
-        ;; Ensure proper fontification
         (font-lock-ensure macro-start (point))
-        ;; Move back and fold
         (goto-char macro-start)
         (TeX-fold-macro)))))
 
@@ -3245,9 +3255,7 @@ numbered variant \"equation\"."
   ;; :demand ; should come after latex and dynexp
   :bind
   (:map LaTeX-mode-map
-        ;; ("C-c t i" . czm-tex-edit-emphasize)
-        ;; ("C-c t a" . czm-tex-edit-alertify)
-        ;; ("C-c t b" . czm-tex-edit-bold)
+        ;; ("C-c t a" . czm-tex-edit-alertify) ;; add to TeX-font?
         ;; ("C-c t l" . czm-tex-edit-underline)
         ;; ("C-c t u" . czm-tex-edit-unemphasize)
         ("C-c t e" . czm-tex-edit-external-document-link)
