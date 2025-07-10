@@ -1478,7 +1478,9 @@ With C-u, prompt for ripgrep arguments."
   (interactive)
   (consult-ripgrep--files
    "Ripgrep todo notes"
-   '("~/doit/todo.org" "~/doit/projects.org" "~/.emacs.d/diary")
+   '(my-todo-file
+     my-projects-file
+     (expand-file-name "diary" user-emacs-directory))
    nil))
 
 (defun consult-ripgrep-config-files ()
@@ -1486,7 +1488,9 @@ With C-u, prompt for ripgrep arguments."
   (interactive)
   (consult-ripgrep--files
    "Ripgrep config files"
-   '("~/.emacs.d/init.el" "~/.emacs.d/init-personal.el")
+   (mapcar (lambda (file)
+             (expand-file-name file user-emacs-directory))
+           '("~/.emacs.d/init.el" "~/.emacs.d/init-personal.el"))
    nil))
 
 (defvar-keymap my-ripgrep-map
