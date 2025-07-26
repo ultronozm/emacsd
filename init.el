@@ -2983,8 +2983,7 @@ complete document rather than just a previewed region."
                         "--with-lispdir=.")
                        ("make"))
            :build (:not elpaca--compile-info) ;; Make will take care of this step
-           :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
-           :version (lambda (_) (require 'tex-site) AUCTeX-version))
+           :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
   ;; :demand                             ; otherwise, madness ensues.
   :config
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
