@@ -19,6 +19,7 @@
 
 (when (string-equal system-type "windows-nt")
   (setq w32-lwindow-modifier 'super)
+  (setq w32-apps-modifier 'hyper)
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
