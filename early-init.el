@@ -1,9 +1,10 @@
 ;; -*- lexical-binding: t; -*-
 
 (setq package-enable-at-startup nil)
-(eval-after-load 'lisp-mode
-  `(add-to-list 'lisp-imenu-generic-expression
-                    (list nil ,use-package-form-regexp-eval 2)))
+(with-eval-after-load 'use-package-core
+  (eval-after-load 'lisp-mode
+    `(add-to-list 'lisp-imenu-generic-expression
+                  (list nil ,use-package-form-regexp-eval 2))))
 (setq use-package-enable-imenu-support t)
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
