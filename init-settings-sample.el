@@ -30,7 +30,9 @@
                         (mode-line . 96)
                         (mode-line-inactive . 96)
                         (tab-bar . 96))
-      my-auctex-git-permissions nil)
+      my-auctex-git-permissions nil
+      my-latex-buffer-face '(:height 216 :width normal
+                                     :family "Andale Mono"))
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")

@@ -2947,9 +2947,9 @@ The value of `calc-language` is restored after BODY has been processed."
                  '("lemma" "exercise" "example" "proposition"
                    "corollary" "remark" "definition" "theorem"
                    "proof")))
-  (setq buffer-face-mode-face
-        '(:height 216 :width normal :family "Andale Mono"))
-  (buffer-face-mode)
+  (when my-latex-buffer-face
+    (setq buffer-face-mode-face my-latex-buffer-face)
+    (buffer-face-mode))
   (outline-minor-mode)
   (abbrev-mode)
   (visual-line-mode)
