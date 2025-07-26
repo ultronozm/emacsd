@@ -2969,7 +2969,9 @@ complete document rather than just a previewed region."
 (use-package latex
   :ensure (auctex
            :host nil
-           :repo "git@git.savannah.gnu.org:/srv/git/auctex.git"
+           :repo (if my-auctex-git-permissions
+                     "git@git.savannah.gnu.org:/srv/git/auctex.git"
+                   "https://git.savannah.gnu.org/git/auctex.git")
            :depth nil
            :inherit nil
            :pin t

@@ -29,7 +29,8 @@
       my-face-heights '((default . 120)
                         (mode-line . 96)
                         (mode-line-inactive . 96)
-                        (tab-bar . 96)))
+                        (tab-bar . 96))
+      my-auctex-git-permissions nil)
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")
