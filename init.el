@@ -19,6 +19,7 @@
 
 (when (string-equal system-type "windows-nt")
   (setq w32-lwindow-modifier 'super)
+  (setq w32-apps-modifier 'hyper)
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
@@ -81,6 +82,8 @@
    ([remap dabbrev-expand] . hippie-expand)
    ("s-'" . expand-abbrev)
    ("s-." . repeat)
+   ("s-=" . text-scale-adjust)
+   ("s--" . text-scale-adjust)
    ("s-0" . delete-window)
    ("s-1" . delete-other-windows)
    ("s-2" . split-window-below)
@@ -342,10 +345,7 @@ Pushes a mark at the starting position."
   "Set the heights of various faces."
   (pcase-dolist
       (`(,face . ,height)
-       '((default . 150)
-         (mode-line . 120)
-         (mode-line-inactive . 120)
-         (tab-bar . 120)))
+       my-face-heights)
     (set-face-attribute face nil :height height)))
 
 (czm-set-face-heights)
@@ -1098,7 +1098,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 ;;; elpaca
 
-(defvar elpaca-installer-version 0.10)
+(defvar elpaca-installer-version 0.11)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -1133,9 +1133,10 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (unless (require 'elpaca-autoloads nil t)
     (require 'elpaca)
     (elpaca-generate-autoloads "elpaca" repo)
-    (load "./elpaca-autoloads")))
+    (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
+
 (when (eq window-system 'w32)
   (elpaca-no-symlink-mode))
 
@@ -2950,9 +2951,9 @@ The value of `calc-language` is restored after BODY has been processed."
                  '("lemma" "exercise" "example" "proposition"
                    "corollary" "remark" "definition" "theorem"
                    "proof")))
-  (setq buffer-face-mode-face
-        '(:height 216 :width normal :family "Andale Mono"))
-  (buffer-face-mode)
+  (when my-latex-buffer-face
+    (setq buffer-face-mode-face my-latex-buffer-face)
+    (buffer-face-mode))
   (outline-minor-mode)
   (abbrev-mode)
   (visual-line-mode)
@@ -2970,22 +2971,23 @@ complete document rather than just a previewed region."
     (call-interactively #'TeX-view)))
 
 (use-package latex
-  :ensure (auctex
-           :host nil
-           :repo "git@git.savannah.gnu.org:/srv/git/auctex.git"
-           :depth nil
-           :inherit nil
-           :pin t
-           :pre-build (("./autogen.sh")
-                       ("./configure"
-                        "--without-texmf-dir"
-                        "--with-packagelispdir=./"
-                        "--with-packagedatadir=./"
-                        "--with-lispdir=.")
-                       ("make"))
-           :build (:not elpaca--compile-info) ;; Make will take care of this step
-           :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
-           :version (lambda (_) (require 'tex-site) AUCTeX-version))
+  :ensure `(auctex
+            :host nil
+            :repo ,(if my-auctex-git-permissions
+                       "git@git.savannah.gnu.org:/srv/git/auctex.git"
+                     "https://git.savannah.gnu.org/git/auctex.git")
+            :depth nil
+            :inherit nil
+            :pin t
+            :pre-build (("./autogen.sh")
+                        ("./configure"
+                         "--without-texmf-dir"
+                         "--with-packagelispdir=./"
+                         "--with-packagedatadir=./"
+                         "--with-lispdir=.")
+                        ("make"))
+            :build (:not elpaca--compile-info) ;; Make will take care of this step
+            :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
   ;; :demand                             ; otherwise, madness ensues.
   :config
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))

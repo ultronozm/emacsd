@@ -25,7 +25,14 @@
       my-scratch-tex-dir "~/scratch/tex"
       my-scratch-org-dir "~/scratch/org"
       my-scratch-cpp-dir "~/scratch/cpp"
-      my-scratch-gpt-dir "~/scratch/gpt")
+      my-scratch-gpt-dir "~/scratch/gpt"
+      my-face-heights '((default . 150)
+                        (mode-line . 120)
+                        (mode-line-inactive . 120)
+                        (tab-bar . 120))
+      my-auctex-git-permissions nil
+      my-latex-buffer-face '(:height 216 :width normal
+                                     :family "Andale Mono"))
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")
