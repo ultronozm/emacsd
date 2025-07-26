@@ -25,7 +25,11 @@
       my-scratch-tex-dir "~/scratch/tex"
       my-scratch-org-dir "~/scratch/org"
       my-scratch-cpp-dir "~/scratch/cpp"
-      my-scratch-gpt-dir "~/scratch/gpt")
+      my-scratch-gpt-dir "~/scratch/gpt"
+      my-face-heights '((default . 120)
+                        (mode-line . 96)
+                        (mode-line-inactive . 96)
+                        (tab-bar . 96)))
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")

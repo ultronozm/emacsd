@@ -345,10 +345,7 @@ Pushes a mark at the starting position."
   "Set the heights of various faces."
   (pcase-dolist
       (`(,face . ,height)
-       '((default . 150)
-         (mode-line . 120)
-         (mode-line-inactive . 120)
-         (tab-bar . 120)))
+       my-face-heights)
     (set-face-attribute face nil :height height)))
 
 (czm-set-face-heights)
