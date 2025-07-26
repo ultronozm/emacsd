@@ -82,6 +82,8 @@
    ([remap dabbrev-expand] . hippie-expand)
    ("s-'" . expand-abbrev)
    ("s-." . repeat)
+   ("s-=" . text-scale-adjust)
+   ("s--" . text-scale-adjust)
    ("s-0" . delete-window)
    ("s-1" . delete-other-windows)
    ("s-2" . split-window-below)
