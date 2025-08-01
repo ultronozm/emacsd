@@ -43,6 +43,7 @@
    ("C-h C-l" . find-library)
    ("C-h C-v" . find-variable)
    ("C-s-O" . (lambda () (interactive) (other-frame -1)))
+   ("C-S-s-o" . (lambda () (interactive) (other-frame -1)))
    ("C-s-o" . other-frame)
    ("C-x C-M-t" . transpose-regions)
    ("C-x C-b" . ibuffer)
@@ -129,7 +130,6 @@
    ("s-y" . replace-buffer-with-clipboard)
    ("s-z" . nil))
   :custom
-  (mailcap-user-mime-data '((text-mode "text/plain" nil)))
   (diff-entire-buffers nil)
   (ediff-split-window-function 'split-window-horizontally)
   (use-dialog-box nil)
@@ -194,11 +194,16 @@
   ;; (outline-minor-mode-use-buttons 'in-margins)
   (outline-minor-mode-use-buttons nil)
   (outline-minor-mode-cycle nil)
+  (revert-without-query '("\\.pdf$"))
   :config
+  (setopt mailcap-user-mime-data
+          '((text-mode "text/plain" nil)
+            (diff-mode "text/x-patch" nil)))
+  (add-hook 'diff-mode-hook #'read-only-mode)
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
   (put 'erase-buffer 'disabled nil)
-  (fset 'yes-or-no-p 'y-or-n-p)
+  ;; (fset 'yes-or-no-p 'y-or-n-p)
   (setq-default indent-tabs-mode nil)
   (setq desktop-dirname user-emacs-directory)
   (electric-pair-mode)
@@ -932,6 +937,7 @@ With prefix ARG, attach all visible buffers instead."
   :hook (rmail-mode . my-rmail-mode-hook)
   :custom
   (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
+  (rmail-mime-save-action (lambda (file) (dired-jump nil file)))
   (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
   (rmail-movemail-program "movemail")
   (rmail-primary-inbox-list (list my-mail-inbox))
@@ -1901,6 +1907,13 @@ them at the first newline."
   (debbugs-gnu-mail-backend 'rmail)
   (debbugs-cache-expiry nil))
 
+(use-package bug-reference
+  :ensure nil
+  :config
+  (add-hook 'vc-git-region-history-mode-hook #'bug-reference-mode)
+  (add-hook 'vc-git-log-view-mode-hook #'bug-reference-mode)
+  (keymap-set bug-reference-map "C-c C-o" #'bug-reference-push-button))
+
 (defun my/disable-vertico-for-debbugs-search (orig-fun &rest args)
   "Temporarily disable Vertico while executing `debbugs-gnu-search'."
   (let ((old-completing-read-function completing-read-function)
@@ -1929,7 +1942,7 @@ them at the first newline."
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
   (global-auto-revert-ignore-modes '(pdf-view-mode))
   (pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
-  (pdf-annot-tweak-tooltips nil)
+  ;; (pdf-annot-tweak-tooltips nil)
   :bind
   (:map pdf-view-mode-map
         ("j" . pdf-view-jump-to-register)
