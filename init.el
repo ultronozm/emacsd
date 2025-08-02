@@ -713,6 +713,21 @@ Interactively prompts for the directory to create."
   (vc-checkin nil 'git)
   (vc-git-log-edit-toggle-amend))
 
+(keymap-set vc-prefix-map "k" #'vc-git-amend)
+
+(defun vc-root-shortlog-all (&optional limit)
+  "Show a one-line, graph-style Git log across all branches.
+With numeric prefix argument LIMIT, show that many commits
+(the default is `vc-log-show-limit' if > 0)."
+  (interactive
+   (list (when current-prefix-arg
+           (prefix-numeric-value current-prefix-arg))))
+  (let ((vc-git-shortlog-switches '("--all")))
+    ;; For a repo root this automatically gives the short view.
+    (vc-print-root-log limit)))
+
+(keymap-set vc-prefix-map "K" #'vc-root-shortlog-all)
+
 (defun my/vc-deduce-backend-advice (orig-fun)
   "Advice for `vc-deduce-backend` to handle indirect buffers."
   (or (funcall orig-fun) 'Git))
@@ -2894,7 +2909,12 @@ The value of `calc-language` is restored after BODY has been processed."
    ("RET" . magit-smerge-keep-current)
    ("b" . magit-smerge-keep-base)
    ("l" . magit-smerge-keep-lower)
-   ("u" . magit-smerge-keep-upper)))
+   ("u" . magit-smerge-keep-upper))
+  (:map
+   vc-prefix-map
+   ("b d" . magit-branch-delete)
+   ("b r" . magit-rebase-branch)
+   ("b h" . magit-reset-hard)))
 
 (setq auth-sources '("~/.authinfo.gpg"))
 
