@@ -2153,6 +2153,12 @@ The content is escaped to prevent org syntax interpretation."
   (setq-local TeX-master my-preview-master)
   (setq-local preview-tailor-local-multiplier 0.7))
 
+(defun my-markdown-hook ()
+  (setq-local TeX-master my-preview-master)
+  (setq-local preview-tailor-local-multiplier 0.7))
+
+(add-hook 'markdown-mode-hook #'my-markdown-hook)
+
 (defvar my/org-tex-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "SPC") 'dynexp-space)
