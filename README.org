@@ -80,3 +80,27 @@ make install
 - Clone this repository and set up my config, as indicated above.
 
 Most recently, it seems necessary to first run Emacs from the command line like =./Emacs -nw=, so that native compilation starts in the right way.  This idea came from the discussion of [[https://github.com/d12frosted/homebrew-emacs-plus/issues/554]].
+
+* Other fun tips
+Here I'll collect miscellaneous things that I need to recreate my computing environment.
+
+** Making git use color in eshell
+#+begin_src sh
+git config --global color.ui always
+#+end_src
+
+** Using Emacs as your EDITOR
+In ~.zshrc~, add
+
+#+begin_src sh
+export EDITOR="emacsclient -a '' -r"
+#+end_src
+
+Do ~M-x server-start~ before using this.  And use ~C-x #~ (~server-edit~) when done editing.
+
+** Path variable
+
+#+begin_src sh
+export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.roswell/bin:$HOME/Library/Python/3.11/bin:/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH:$HOME/gnu-emacs/src:$HOME/gnu-emacs/lib-src"
+#+end_src
+
