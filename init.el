@@ -1500,9 +1500,9 @@ With C-u, prompt for ripgrep arguments."
   (interactive)
   (consult-ripgrep--files
    "Ripgrep todo notes"
-   '(my-todo-file
-     my-projects-file
-     (expand-file-name "diary" user-emacs-directory))
+   (list my-todo-file
+         my-projects-file
+         (expand-file-name "diary" user-emacs-directory))
    nil))
 
 (defun consult-ripgrep-config-files ()
