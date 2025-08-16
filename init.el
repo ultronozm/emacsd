@@ -729,7 +729,7 @@ With numeric prefix argument LIMIT, show that many commits
 (keymap-set vc-prefix-map "K" #'vc-root-shortlog-all)
 
 (defun my/vc-deduce-backend-advice (orig-fun)
-  "Advice for `vc-deduce-backend` to handle indirect buffers."
+  "Advice for `vc-deduce-backend' to handle indirect buffers."
   (or (funcall orig-fun) 'Git))
 
 (advice-add 'vc-deduce-backend :around #'my/vc-deduce-backend-advice)
@@ -1358,7 +1358,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (:map minibuffer-local-map
         ("C-c d" . czm-misc-insert-date)))
 
-
 (use-package pulsar
   :bind (("s-l" . pulsar-pulse-line))
   :config
@@ -1451,7 +1450,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 (with-eval-after-load 'consult-imenu
   (require 'cl-lib)
-  (when-let ((config (alist-get 'emacs-lisp-mode consult-imenu-config)))
+  (when-let* ((config (alist-get 'emacs-lisp-mode consult-imenu-config)))
     (let ((types (plist-get config :types)))
       (cl-pushnew '(?l "LLM Tools" font-lock-function-name-face) types
                   :test (lambda (a b) (eq (car a) (car b))))
