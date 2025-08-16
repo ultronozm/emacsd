@@ -196,6 +196,7 @@
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt set-mark-command-repeat-pop t)
   (setopt mailcap-user-mime-data
           '((text-mode "text/plain" nil)
             (diff-mode "text/x-patch" nil)))
