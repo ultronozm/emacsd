@@ -196,6 +196,7 @@
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt dired-deletion-confirmer #'y-or-n-p)
   (setopt set-mark-command-repeat-pop t)
   (setopt mailcap-user-mime-data
           '((text-mode "text/plain" nil)
@@ -220,6 +221,7 @@
   (repeat-mode)
   (recentf-mode)
   (savehist-mode)
+  (vc-auto-revert-mode)
   :hook
   (prog-mode . outline-minor-mode)
   (dired-mode . dired-hide-details-mode)
@@ -729,6 +731,27 @@ With numeric prefix argument LIMIT, show that many commits
 
 (keymap-set vc-prefix-map "K" #'vc-root-shortlog-all)
 
+;; https://git.sr.ht/~sebasmonia/stubvex/tree/main/item/stubvex.el
+(defun stubvex-cherry-pick ()
+  "Cherry pick the commits selected in a log view.
+Workflow:
+  1. Use `vc-print-branch-log' (C-x v b l) to open a log view of other branch.
+  2. Mark some commits using `log-view-toggle-mark-entry' (m).
+  3. Invoke this command to cherry pick those commits into the current branch.
+This command doesn't validate (yet?) that you are doing The Right Thing.
+Use with care."
+  (interactive)
+  (unless (derived-mode-p 'vc-git-log-view-mode)
+    (error "Not in a git log view"))
+  (let ((selected-commits (log-view-get-marked))
+        (buf-name "*git cherry-pick*"))
+    (if (= 0 (apply #'vc-git-command buf-name t nil
+                    "cherry-pick" "--no-commit" selected-commits))
+        (message "Cherry pick successful.")
+      (pop-to-buffer buf-name)
+      (when (y-or-n-p "Cherry pick failed - abort?")
+        (vc-git-command buf-name 0 nil "cherry-pick" "--abort")))))
+
 (defun my/vc-deduce-backend-advice (orig-fun)
   "Advice for `vc-deduce-backend' to handle indirect buffers."
   (or (funcall orig-fun) 'Git))
@@ -989,7 +1012,12 @@ With prefix ARG, attach all visible buffers instead."
   (rmail-delete-after-output t)
   :config
   (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode))
-  (add-to-list 'auto-mode-alist '("\\.mbox$" . rmail-mode)))
+  (add-to-list 'auto-mode-alist '("\\.mbox$" . rmail-mode))
+  (add-to-list 'display-buffer-alist
+               '((lambda (buffer-name action)
+                   (with-current-buffer buffer-name
+                     (eq major-mode 'rmail-mode)))
+                 (display-buffer-reuse-window display-buffer-below-selected))))
 
 (defun my-always-enable-rmail-font-lock (&rest _)
   "Ensure font-lock-mode is enabled after rmail runs."
@@ -2158,6 +2186,13 @@ The content is escaped to prevent org syntax interpretation."
   (setq-local preview-tailor-local-multiplier 0.7))
 
 (add-hook 'markdown-mode-hook #'my-markdown-hook)
+
+(defun czm-diff-preview-setup ()
+  "Set up diff buffer for use with preview-auto-mode."
+  (setq-local TeX-master my-preview-master)
+  (setq-local preview-tailor-local-multiplier 0.7))
+
+(add-hook 'diff-mode-hook #'czm-diff-preview-setup)
 
 (defvar my/org-tex-mode-map
   (let ((map (make-sparse-keymap)))
@@ -3617,7 +3652,8 @@ numbered variant \"equation\"."
   :bind (:map flymake-mode-map
               ;; ("C-c t" . flymake-overlays-smart-toggle)
               )
-  :hook (flymake-mode . flymake-overlays-mode))
+  ;; :hook (flymake-mode . flymake-overlays-mode)
+  )
 
 (defun czm-add-lean4-eldoc ()
   (when (with-current-buffer eldoc-icebox-parent-buffer
