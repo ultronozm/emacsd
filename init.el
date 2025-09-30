@@ -1235,6 +1235,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
       (diminish mode)))
   (with-eval-after-load 'eldoc
     (diminish 'eldoc-mode))
+  (with-eval-after-load 'buffer-face-mode
+    (diminish 'buffer-face-mode))
   (with-eval-after-load 'outline
     (diminish 'outline-minor-mode))
   (with-eval-after-load 'follow
