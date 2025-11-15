@@ -3710,3 +3710,6 @@ numbered variant \"equation\"."
            '((".docx" .
               "application/vnd.openxmlformats-officedocument.wordprocessingml.document")))
     (add-to-list 'mailcap-mime-extensions item)))
+
+(use-package osx-dictionary
+  :bind (("C-z w" . osx-dictionary-search-word-at-point)))
