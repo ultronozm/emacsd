@@ -218,6 +218,7 @@
   (add-to-list 'auto-mode-alist '("\\.info\\'" . Info-on-current-buffer))
   (setcdr other-window-repeat-map nil)
   (setcdr buffer-navigation-repeat-map nil)
+  (setcdr dired-jump-map nil)
   (repeat-mode)
   (recentf-mode)
   (savehist-mode)
