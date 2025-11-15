@@ -2062,7 +2062,7 @@ in all current and future PDF buffers."
 
 ;;; translation
 
-(use-package go-translate
+(use-package gt
   :defer t
   :config
   (setq gt-langs '(da en fr de))
