@@ -3261,7 +3261,9 @@ numbered variant \"equation\"."
                   (1 ("emph" "textit" "textsl" "textmd" "textrm" "textsf"
                       "texttt" "textbf" "textsc" "textup"))
                   (,(lambda (text) (propertize text 'face '(underline)))
-                   ("underline"))))
+                   ("underline"))
+                  (,(lambda (text) (propertize text 'face '(:strike-through t)))
+                   ("sout"))))
     (add-to-list 'TeX-fold-macro-spec-list item))
   (dolist (item `((1 ("mathrm"))))
     (add-to-list 'TeX-fold-macro-spec-list item))
