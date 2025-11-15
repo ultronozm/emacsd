@@ -3128,6 +3128,13 @@ complete document rather than just a previewed region."
   :custom-face
   (preview-face ((t (:background unspecified)))))
 
+(defvar-keymap tex-error-repeat-map
+  :doc "Keymap to repeat TeX error navigation commands.
+Used in `repeat-mode'."
+  :repeat t
+  "`" #'TeX-next-error
+  "~" #'TeX-previous-error)
+
 (defun my-LaTeX-toggle-numbered ()
   "Convert math construct at point to \"equation*\".
 If the math construct is already \"equation*\", then toggle with the
