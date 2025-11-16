@@ -183,7 +183,33 @@
      (cmake-build-project-root . "./cpp")
      (checkdoc-minor-mode . t)
      (eval outline-hide-sublevels 5)
-     (eval TeX-run-style-hooks "nla-notes")))
+     (eval TeX-run-style-hooks "nla-notes")
+     (elisp-lint-indent-specs (if-let* . 1) (if-let . 1)
+                              (mcp-server-lib-test--with-server . 0)
+                              (mcp-server-lib-test--with-servers . 1)
+                              (mcp-server-lib-test--with-tools . 1)
+                              (mcp-server-lib-test--register-tool . 1)
+                              (mcp-server-lib-test--with-resources . 1)
+                              (mcp-server-lib-test--with-resource . 2)
+                              (mcp-server-lib-test--with-resource-template
+                               . 2)
+                              (mcp-server-lib-test--with-resource-templates
+                               . 1)
+                              (mcp-server-lib-test--with-undefined-function
+                               . 1)
+                              (mcp-server-lib-test--with-request
+                               . defun)
+                              (mcp-server-lib-test--with-error-tracking
+                               . 1)
+                              (mcp-server-lib-test--check-resource-read-error
+                               . 0)
+                              (mcp-server-lib-ert-with-metrics-tracking
+                               . 1)
+                              (mcp-server-lib-ert-verify-req-success
+                               . defun)
+                              (mcp-server-lib--with-hash-table-entries
+                               . 2)
+                              (cl-defstruct))))
   (diary-comment-start ";;")
   (mml-content-disposition-alist
    '((text (rtf . "attachment")
