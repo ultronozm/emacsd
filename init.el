@@ -1,5 +1,8 @@
 ;;; -*- lexical-binding: t; -*-
 
+;; (load (locate-user-emacs-file "init2.el"))
+;; (throw 'quit-init nil)
+
 ;;; basics
 (setq use-package-compute-statistics t)
 
@@ -272,6 +275,13 @@ With prefix argument ARG, opens `user-init-file' directly."
                                  "Select elisp file: " elisp-files
                                  nil t nil nil default-elisp-file)))
       (when selected-elisp-file (find-file selected-elisp-file)))))
+
+
+;;; temporary
+
+;; (load (locate-user-emacs-file "init-temp.el"))
+
+;;; end temporary
 
 (defun czm-dired-downloads ()
   "Open the downloads directory in Dired mode."
