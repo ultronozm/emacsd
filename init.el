@@ -244,7 +244,6 @@
   (add-to-list 'auto-mode-alist '("\\.info\\'" . Info-on-current-buffer))
   (setcdr other-window-repeat-map nil)
   (setcdr buffer-navigation-repeat-map nil)
-  (setcdr dired-jump-map nil)
   (repeat-mode)
   (recentf-mode)
   (savehist-mode)
@@ -472,6 +471,9 @@ Pushes a mark at the starting position."
 DIR must include a .project file to be considered a project."
   (let ((root (locate-dominating-file dir ".project")))
     (and root (cons 'local root))))
+
+(with-eval-after-load 'dired
+  (setcdr dired-jump-map nil))
 
 (with-eval-after-load 'project
   (add-to-list 'project-find-functions 'czm/project-try-local)
