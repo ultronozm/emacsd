@@ -295,6 +295,15 @@ With prefix argument ARG, opens `user-init-file' directly."
 
 (keymap-global-set "C-z u" #'czm-dired-drafts)
 
+(defun my/save-clipboard-to-kill-ring ()
+  "Save current system clipboard to kill ring without yanking."
+  (interactive)
+  (when-let ((text (gui-get-selection 'CLIPBOARD)))
+    (kill-new text)
+    (message "Clipboard saved to kill ring")))
+
+(keymap-global-set "C-z y" #'my/save-clipboard-to-kill-ring)
+
 (defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
 (defun edebug-compute-previous-result (previous-value)
   "Redefinition of built-in function `edebug-compute-previous-result'.
