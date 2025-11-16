@@ -1874,10 +1874,6 @@ them at the first newline."
   :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil
                  :inherit nil :pin t))
 
-(defun foldout-exit-fold-without-hiding ()
-  (interactive)
-  (foldout-exit-fold -1))
-
 (use-package czm-spell
   :repo-scan
   :defer 10

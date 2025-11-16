@@ -275,98 +275,99 @@ function symbol (unquoted)."
                      " or a list of such values"))))))
       args*)))
 
-(defun czm-foldout-exit-fold-override (&optional num-folds)
-  "Return to the ARG'th enclosing fold view.  With ARG = 0 exit all folds.
+(when nil
+  (defun czm-foldout-exit-fold-override (&optional num-folds)
+    "Return to the ARG'th enclosing fold view.  With ARG = 0 exit all folds.
 
 Normally causes exited folds to be hidden, but with ARG < 0, -ARG folds are
 exited and text is left visible."
-  (interactive "p")
-  (let ((hide-fold t) start-marker end-marker
-        beginning-of-heading end-of-subtree
-        (original-point (point)))
+    (interactive "p")
+    (let ((hide-fold t) start-marker end-marker
+          beginning-of-heading end-of-subtree
+          (original-point (point)))
 
-    ;; check there are some folds to leave
-    (if (null foldout-fold-list)
-	       (error "Not in a fold!"))
+      ;; check there are some folds to leave
+      (if (null foldout-fold-list)
+	         (error "Not in a fold!"))
 
-    (cond
-     ;; catch a request to leave all folds
-     ((zerop num-folds)
-      (setq num-folds (length foldout-fold-list)))
+      (cond
+       ;; catch a request to leave all folds
+       ((zerop num-folds)
+        (setq num-folds (length foldout-fold-list)))
 
-     ;; have we been told not to hide the fold?
-     ((< num-folds 0)
-      (setq hide-fold nil
-            num-folds (- num-folds))))
+       ;; have we been told not to hide the fold?
+       ((< num-folds 0)
+        (setq hide-fold nil
+              num-folds (- num-folds))))
 
-    ;; limit the number of folds if we've been told to exit too many
-    (setq num-folds (min num-folds (length foldout-fold-list)))
+      ;; limit the number of folds if we've been told to exit too many
+      (setq num-folds (min num-folds (length foldout-fold-list)))
 
-    ;; exit the folds
-    (widen)
-    (while (not (zerop num-folds))
-      ;; get the fold at the top of the stack
-      (setq start-marker (car (car foldout-fold-list))
-	           end-marker (cdr (car foldout-fold-list))
-	           foldout-fold-list (cdr foldout-fold-list)
-	           num-folds (1- num-folds))
+      ;; exit the folds
+      (widen)
+      (while (not (zerop num-folds))
+        ;; get the fold at the top of the stack
+        (setq start-marker (car (car foldout-fold-list))
+	             end-marker (cdr (car foldout-fold-list))
+	             foldout-fold-list (cdr foldout-fold-list)
+	             num-folds (1- num-folds))
 
-      ;; Make sure there is a newline at the end of this fold,
-      ;; otherwise the following heading will get joined to the body
-      ;; text.
-      (if end-marker
+        ;; Make sure there is a newline at the end of this fold,
+        ;; otherwise the following heading will get joined to the body
+        ;; text.
+        (if end-marker
+	           (progn
+	             (goto-char end-marker)
+	             (forward-char -1)
+	             (or (memq (preceding-char) '(?\n ?\^M))
+		                (insert ?\n))))
+
+        ;; If this is the last fold to exit, hide the text unless we've
+        ;; been told not to.  Note that at the moment point is at the
+        ;; beginning of the following heading if there is one.
+
+        ;; Also, make sure that the newline before the following heading
+        ;; is \n otherwise it will be hidden.  If there is a newline
+        ;; before this one, make it visible too so we do the same as
+        ;; outline.el and leave a blank line before the heading.
+        (when (zerop num-folds)
+	         (if end-marker
+	             (setq beginning-of-heading (point)
+		                  end-of-subtree (progn (forward-char -1)
+					                                     (if (memq (preceding-char)
+						                                              '(?\n ?\^M))
+					                                         (forward-char -1))
+					                                     (point))))
+	         ;; hide the subtree
+	         (when hide-fold
+	           (goto-char start-marker)
+	           (outline-hide-subtree))
+
+	         ;; make sure the next heading is exposed
+	         (if end-marker
+              (outline-flag-region end-of-subtree beginning-of-heading nil)))
+
+        ;; zap the markers so they don't slow down editing
+        (set-marker start-marker nil)
+        (if end-marker (set-marker end-marker nil)))
+
+      ;; narrow to the enclosing fold if there is one
+      (if foldout-fold-list
 	         (progn
-	           (goto-char end-marker)
-	           (forward-char -1)
-	           (or (memq (preceding-char) '(?\n ?\^M))
-		              (insert ?\n))))
+	           (setq start-marker (car (car foldout-fold-list))
+		                end-marker (cdr (car foldout-fold-list)))
+	           (narrow-to-region start-marker
+			                           (if end-marker
+				                              (1- (marker-position end-marker))
+			                             (point-max)))))
 
-      ;; If this is the last fold to exit, hide the text unless we've
-      ;; been told not to.  Note that at the moment point is at the
-      ;; beginning of the following heading if there is one.
+      ;; if we do not hide the region, then keep the point where it was
+      (unless hide-fold
+        (goto-char original-point))
 
-      ;; Also, make sure that the newline before the following heading
-      ;; is \n otherwise it will be hidden.  If there is a newline
-      ;; before this one, make it visible too so we do the same as
-      ;; outline.el and leave a blank line before the heading.
-      (when (zerop num-folds)
-	       (if end-marker
-	           (setq beginning-of-heading (point)
-		                end-of-subtree (progn (forward-char -1)
-					                                   (if (memq (preceding-char)
-						                                            '(?\n ?\^M))
-					                                       (forward-char -1))
-					                                   (point))))
-	       ;; hide the subtree
-	       (when hide-fold
-	         (goto-char start-marker)
-	         (outline-hide-subtree))
+      (recenter)
 
-	       ;; make sure the next heading is exposed
-	       (if end-marker
-            (outline-flag-region end-of-subtree beginning-of-heading nil)))
+      ;; update the mode line
+      (foldout-update-mode-line)))
 
-      ;; zap the markers so they don't slow down editing
-      (set-marker start-marker nil)
-      (if end-marker (set-marker end-marker nil)))
-
-    ;; narrow to the enclosing fold if there is one
-    (if foldout-fold-list
-	       (progn
-	         (setq start-marker (car (car foldout-fold-list))
-		              end-marker (cdr (car foldout-fold-list)))
-	         (narrow-to-region start-marker
-			                         (if end-marker
-				                            (1- (marker-position end-marker))
-			                           (point-max)))))
-
-    ;; if we do not hide the region, then keep the point where it was
-    (unless hide-fold
-      (goto-char original-point))
-
-    (recenter)
-
-    ;; update the mode line
-    (foldout-update-mode-line)))
-
-(advice-add 'foldout-exit-fold :override #'czm-foldout-exit-fold-override)
+  (advice-add 'foldout-exit-fold :override #'czm-foldout-exit-fold-override))
