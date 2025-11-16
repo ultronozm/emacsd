@@ -1440,6 +1440,44 @@ If the predicate is true, add NAME to `repo-scan-repos'."
     (add-to-list 'pulsar-pulse-functions fn))
   (pulsar-global-mode))
 
+(use-package corfu
+  :ensure t
+  :hook
+  (lean4-mode . corfu-mode)
+  (emacs-lisp-mode . corfu-mode)
+  (eval-expression-minibuffer-setup . corfu-mode)
+  :config
+  (setq
+   corfu-auto-delay 0.05
+   corfu-auto t
+   )
+  :bind
+  (:map
+   corfu-map
+   ("`" . corfu-next)
+   ("~" . corfu-previous)
+   ([remap next-line] . nil)
+   ([remap move-beginning-of-line] . nil)
+   ([remap move-end-of-line] . nil)
+   ([remap beginning-of-buffer] . nil)
+   ([remap end-of-buffer] . nil)
+   ([remap scroll-up-command] . nil)
+   ([remap scroll-down-command] . nil)
+   ("<tab>" . nil)
+   ("TAB" . nil)
+   ("C-a" . nil)
+   ("RET" . nil)
+   ("C-M-i" . corfu-complete)
+   ("C-M-RET" . corfu-insert)
+   ("M-RET" . nil)
+   ;; ("M-." . corfu-show-location)
+   ;; ("M-h" . nil)
+   ([remap next-line] . nil)
+   ([remap previous-line] . nil)
+   ;; ("M-." . corfu-info-location)
+   ;; ("C-h" . corfu-info-documentation)
+   ))
+
 (use-package vertico
   :config (vertico-mode))
 
