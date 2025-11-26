@@ -1013,7 +1013,8 @@ With prefix ARG, attach all visible buffers instead."
   ("C-z r" . my-rmail-with-prefix)
   ("C-z R" . rmail)
   (:map rmail-mode-map
-        ("S" . my-rmail-refile-and-store-link))
+        ("S" . my-rmail-refile-and-store-link)
+        ("q" . rmail-bury))
   :hook (rmail-mode . my-rmail-mode-hook)
   :custom
   (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
