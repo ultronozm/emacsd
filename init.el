@@ -2700,6 +2700,104 @@ Skips empty days and diary holidays."
                     error-cb)))
 
 
+;;;; mcp
+
+(use-package mcp-server-lib)
+
+(use-package life-mail-mcp
+  :load-path "~/repos/life-mail-mcp"
+  :after mcp-server-lib
+  :config
+  (setopt life-mail-mcp-default-mail-file
+          (expand-file-name "~/mail/inbox.rmail"))
+  (life-mail-mcp-init))
+
+(use-package mcp
+  :ensure t
+  :custom (mcp-hub-servers
+           `(("filesystem" . (:command "npx"
+                                       :args ("-y" "@modelcontextprotocol/server-filesystem")
+                                       :roots ("/home/lizqwer/MyProject/")))
+             ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+             ("qdrant" . (:url "http://localhost:8000/sse"))
+             ("graphlit" . (
+                            :command "npx"
+                            :args ("-y" "graphlit-mcp-server")
+                            :env (
+                                  :GRAPHLIT_ORGANIZATION_ID "your-organization-id"
+                                  :GRAPHLIT_ENVIRONMENT_ID "your-environment-id"
+                                  :GRAPHLIT_JWT_SECRET "your-jwt-secret")))
+             ("life-mail"
+              . (:command "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh"
+                          :args ("--init-function=life-mail-mcp-init"
+                                 "--stop-function=life-mail-mcp-stop")
+                          :env (:EMACS_MCP_DEBUG_LOG "/tmp/life-mail.log")))))
+  :config (require 'mcp-hub)
+  :hook (after-init . mcp-hub-start-all-server))
+
+;;;; agent-shell and related packages
+
+(use-package shell-maker
+  :ensure (:host github :repo "xenodium/shell-maker"
+                 :depth nil
+                 :inherit nil
+                 :pin t)
+  :config
+  (setopt shell-maker-transcript-default-path
+          (expand-file-name "~/agent-transcripts/"))
+  (setopt shell-maker-transcript-default-filename
+          (lambda ()
+            (format "%s--transcript.txt"
+                    (format-time-string "%Y%m%dT%H%M%S")))))
+
+(use-package acp
+  :ensure (:host github :repo "xenodium/acp.el"
+                 :depth nil
+                 :inherit nil
+                 :pin t))
+
+(use-package agent-shell
+  :ensure (:host github :repo "xenodium/agent-shell"
+                 :depth nil
+                 :inherit nil)
+  :bind (:map agent-shell-mode-map
+              ("s-n" . agent-shell-ui-forward-block)
+              ("s-p" . agent-shell-ui-backward-block))
+  :hook
+  ((agent-shell-mode . abbrev-mode)
+   (agent-shell-mode . my/agent-shell--configure-mcp-servers))
+  :config
+  (setq agent-shell-openai-authentication
+        (agent-shell-openai-make-authentication :login t))
+  (setq agent-shell--transcript-file-path-function
+        (lambda ()
+          (expand-file-name
+           (format "%s--transcript.txt"
+                   (format-time-string "%Y%m%dT%H%M%S"))
+           "~/agent-transcripts/")))
+  (setopt agent-shell-file-completion-enabled nil)
+  (setopt agent-shell-openai-codex-environment
+          (agent-shell-make-environment-variables
+           "GITHUB_MCP_PAT" (exec-path-from-shell-getenv "GITHUB_MCP_PAT")))
+  (setopt agent-shell-mcp-servers
+          '(((name . "life-mail")
+             (command . "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh")
+             (args . ("--init-function=life-mail-mcp-init"
+                      "--stop-function=life-mail-mcp-stop"))
+             (env . (((name . "EMACS_MCP_DEBUG_LOG")
+                      (value . "/tmp/life-mail.log"))))))))
+
+(use-package agent-shell-attention
+  :load-path "~/repos/agent-shell-attention"
+  :after agent-shell
+  :demand
+  :init
+  (setopt agent-shell-attention-message-prefix "[agent-shell]")
+  (setopt agent-shell-attention-use-desktop-notifications t)
+  :config
+  (agent-shell-attention-mode +1)
+  :bind (:map agent-shell-attention-mode-map
+              ("C-z a" . agent-shell-attention-jump-oldest)))
 
 
 ;;; erc
