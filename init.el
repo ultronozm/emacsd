@@ -1612,6 +1612,7 @@ With C-u, prompt for ripgrep arguments."
    "Ripgrep todo notes"
    (list my-todo-file
          my-projects-file
+         "~/doit/reference.org"
          (expand-file-name "diary" user-emacs-directory))
    nil))
 
