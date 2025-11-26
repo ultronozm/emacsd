@@ -2415,7 +2415,8 @@ The content is escaped to prevent org syntax interpretation."
        (regexp-opt '("DONE" "CANCELED")))))))
 
 (use-package org-modern
-  :defer t
+  :after org
+  :demand
   :ensure t
   :config
   (global-org-modern-mode 1))
