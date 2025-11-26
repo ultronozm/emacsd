@@ -3758,6 +3758,13 @@ numbered variant \"equation\"."
   (when (file-exists-p file)
     (load file)))
 
+(run-with-idle-timer
+ 5 nil
+ (lambda ()
+   (require 'server)
+   (unless (server-running-p)
+     (server-start))))
+
 (setopt python-indent-guess-indent-offset nil)
 
 (use-package clipdiff
