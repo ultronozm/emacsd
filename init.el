@@ -276,13 +276,6 @@ With prefix argument ARG, opens `user-init-file' directly."
                                  nil t nil nil default-elisp-file)))
       (when selected-elisp-file (find-file selected-elisp-file)))))
 
-
-;;; temporary
-
-;; (load (locate-user-emacs-file "init-temp.el"))
-
-;;; end temporary
-
 (defun czm-dired-downloads ()
   "Open the downloads directory in Dired mode."
   (interactive)
