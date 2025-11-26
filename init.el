@@ -3794,3 +3794,6 @@ numbered variant \"equation\"."
 
 (use-package osx-dictionary
   :bind (("C-z w" . osx-dictionary-search-word-at-point)))
+
+(with-eval-after-load 'image-mode
+  (keymap-unset image-mode-map "W"))
