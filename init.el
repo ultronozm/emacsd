@@ -3474,6 +3474,8 @@ numbered variant \"equation\"."
   (preview-LaTeX-command-replacements
    '(preview-LaTeX-disable-pdfoutput)))
 
+(use-package buframe)
+
 (use-package auctex-label-numbers
   :repo-scan
   :ensure (:host github :repo "ultronozm/auctex-label-numbers.el" :depth nil)
