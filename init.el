@@ -1685,7 +1685,9 @@ With C-u, prompt for ripgrep arguments."
   :bind ("H-m" . perfect-margin-mode))
 
 (use-package easy-kill
-  :bind ([remap kill-ring-save] . easy-kill))
+  :bind
+  (([remap kill-ring-save] . easy-kill)
+   ([remap mark-sexp] . easy-mark)))
 
 (use-package wgrep ;; use C-c C-p in embark export following ripgrep
   :defer t)
