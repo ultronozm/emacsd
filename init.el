@@ -3028,6 +3028,8 @@ The value of `calc-language` is restored after BODY has been processed."
   :defer t
   :hook
   (magit-status-mode . visual-line-mode)
+  :init
+  (add-to-list 'project-switch-commands '(magit-project-status "Magit"))
   :bind
   (:repeat-map
    magit-smerge-repeat-map
@@ -3039,7 +3041,9 @@ The value of `calc-language` is restored after BODY has been processed."
    vc-prefix-map
    ("b d" . magit-branch-delete)
    ("b r" . magit-rebase-branch)
-   ("b h" . magit-reset-hard)))
+   ("b h" . magit-reset-hard))
+  (:map project-prefix-map
+        ("m" . magit-project-status)))
 
 (setq auth-sources '("~/.authinfo.gpg"))
 
