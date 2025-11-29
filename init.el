@@ -314,7 +314,7 @@ for the agent configuration."
                               (mcp-server-lib-ert-verify-req-success
                                . defun)
                               (mcp-server-lib--with-hash-table-entries
-                               . 2)
+                                  . 2)
                               (cl-defstruct))))
   (diary-comment-start ";;")
   (mml-content-disposition-alist
@@ -1322,7 +1322,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                                         "--eval" "(byte-recompile-directory \".\" 0 'force)")))
                   ((require 'elpaca))
                   ((elpaca-generate-autoloads "elpaca" repo)))
-            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+          (progn (message "%s" (buffer-string)) (kill-buffer buffer))
           (error "%s" (with-current-buffer buffer (buffer-string))))
       ((error) (warn "%s" err) (delete-directory repo 'recursive))))
   (unless (require 'elpaca-autoloads nil t)
