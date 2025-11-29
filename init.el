@@ -1567,38 +1567,22 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                   :test (lambda (a b) (eq (car a) (car b))))
       (setf (plist-get config :types) types))))
 
-(defun consult-ripgrep--maybe-prompt-for-args (default-args)
-  "Return args, prompting if prefix arg is set."
-  (if current-prefix-arg
-      (read-string "Ripgrep command: " default-args)
-    default-args))
-
-(defun consult-ripgrep+ ()
-  "Run consult-ripgrep for current project.
-With C-u, prompt for ripgrep arguments."
-  (interactive)
-  (let ((consult-ripgrep-args
-         (consult-ripgrep--maybe-prompt-for-args consult-ripgrep-args)))
-    (consult-ripgrep)))
-
 (defun consult-ripgrep-current-directory ()
   "Run consult-ripgrep in current directory.
-With C-u, prompt for ripgrep arguments."
+Use \" -- ...\" in the minibuffer to append ripgrep flags."
   (interactive)
-  (let ((consult-ripgrep-args
-         (consult-ripgrep--maybe-prompt-for-args consult-ripgrep-args)))
-    (consult-ripgrep default-directory)))
+  (consult-ripgrep default-directory))
 
-(defun consult-ripgrep--files (prompt files default-extra-args)
-  "Search FILES with PROMPT. With C-u, prompt for args."
-  (let* ((base-args (if default-extra-args
-                        (concat consult-ripgrep-args " " default-extra-args)
-                      consult-ripgrep-args))
-         (consult-ripgrep-args (consult-ripgrep--maybe-prompt-for-args base-args)))
+(defun consult-ripgrep--files (prompt files &optional default-extra-args)
+  "Search FILES with PROMPT.
+If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
+  (let ((consult-ripgrep-args (if default-extra-args
+                                  (concat consult-ripgrep-args " " default-extra-args)
+                                consult-ripgrep-args)))
     (consult--grep prompt #'consult--ripgrep-make-builder files nil)))
 
 (defun consult-ripgrep-org-logs ()
-  "Search log-*.org files. With C-u, prompt for args."
+  "Search log-*.org files."
   (interactive)
   (consult-ripgrep--files
    "Ripgrep org notes"
@@ -1606,7 +1590,7 @@ With C-u, prompt for ripgrep arguments."
    "-C3"))
 
 (defun consult-ripgrep-todo-notes ()
-  "Search todo note files. With C-u, prompt for args."
+  "Search todo note files."
   (interactive)
   (consult-ripgrep--files
    "Ripgrep todo notes"
@@ -1617,7 +1601,7 @@ With C-u, prompt for ripgrep arguments."
    nil))
 
 (defun consult-ripgrep-config-files ()
-  "Search config files. With C-u, prompt for args."
+  "Search config files."
   (interactive)
   (consult-ripgrep--files
    "Ripgrep config files"
@@ -1628,7 +1612,7 @@ With C-u, prompt for ripgrep arguments."
 
 (defvar-keymap my-ripgrep-map
   :doc "Keymap for enhanced consult-ripgrep commands."
-  "r" #'consult-ripgrep+
+  "r" #'consult-ripgrep
   "d" #'consult-ripgrep-current-directory
   "l" #'consult-ripgrep-org-logs
   "t" #'consult-ripgrep-todo-notes
@@ -2676,18 +2660,18 @@ Skips empty days and diary holidays."
                         (suggested-name (and (equal (car suggestion-pair)
                                                     "suggest_filename")
                                              (cdr suggestion-pair))))
-                  (let* ((current-dir (file-name-directory (buffer-file-name)))
-                         (new-path (read-file-name "Rename file to: "
-                                                   current-dir
-                                                   nil
-                                                   nil
-                                                   suggested-name)))
-                    (when (y-or-n-p (format "Rename '%s' to '%s'? "
-                                            (buffer-file-name)
-                                            new-path))
-                      (require 'dired-aux)
-                      (dired-rename-file (buffer-file-name) new-path 1)
-                      (message "File renamed to '%s'" (file-name-nondirectory new-path))))
+                (let* ((current-dir (file-name-directory (buffer-file-name)))
+                       (new-path (read-file-name "Rename file to: "
+                                                 current-dir
+                                                 nil
+                                                 nil
+                                                 suggested-name)))
+                  (when (y-or-n-p (format "Rename '%s' to '%s'? "
+                                          (buffer-file-name)
+                                          new-path))
+                    (require 'dired-aux)
+                    (dired-rename-file (buffer-file-name) new-path 1)
+                    (message "File renamed to '%s'" (file-name-nondirectory new-path))))
                 (user-error "Failed to get a valid filename suggestion from LLM")))))
          (error-cb
           (lambda (err msg)
