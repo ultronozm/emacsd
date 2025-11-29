@@ -26,6 +26,74 @@
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
+(defcustom reader-discuss-default-agent-config nil
+  "Default agent configuration for `reader-discuss-excerpt'.
+If nil, prompt for an agent.  When set, use that agent unless the
+command is invoked with a prefix argument."
+  :type '(choice (const nil)
+                 (alist :key-type symbol :value-type sexp))
+  :group 'reader)
+
+(defun reader-discuss--current-excerpt ()
+  "Return the excerpt at point or signal an error if none is available."
+  (cond
+   ((use-region-p)
+    (buffer-substring-no-properties (region-beginning) (region-end)))
+   ((and (derived-mode-p 'pdf-view-mode)
+         (fboundp 'pdf-view-active-region-p)
+         (pdf-view-active-region-p))
+    (mapconcat #'identity (pdf-view-active-region-text) "\n\n"))
+   (t (or (thing-at-point 'sexp t)
+          (user-error "No excerpt selected or at point")))))
+
+(defun reader-discuss-excerpt (excerpt &optional prefix)
+  "Discuss EXCERPT with an agent-shell backend.
+
+With no prefix, use `reader-discuss-default-agent-config' (or
+prompt if it is nil).  With \[universal-argument], always prompt
+for the agent configuration."
+  (interactive
+   (list (reader-discuss--current-excerpt)
+         current-prefix-arg))
+  (setq excerpt
+        (or excerpt
+            (reader-discuss--current-excerpt)))
+  (let* ((force-select (equal prefix '(4)))
+         (agent-config
+          (if (or force-select (null reader-discuss-default-agent-config))
+              (agent-shell-select-config :prompt "Select agent for discussion: ")
+            reader-discuss-default-agent-config))
+         (reading-window (selected-window))
+         (file-link
+          (if-let ((file (buffer-file-name)))
+            (let ((line (line-number-at-pos))
+                  (abbr (abbreviate-file-name file)))
+              (format "[[file:%s::%d][Full context: %s]]"
+                      abbr line (file-name-nondirectory abbr)))
+            ""))
+         (initial-prompt
+          (format "Let's discuss this excerpt:\n\n<excerpt>\n%s\n</excerpt>\n\n%s"
+                  excerpt file-link)))
+    (kill-new initial-prompt)
+    (agent-shell-start :config agent-config)
+    (select-window reading-window)
+    (message "Excerpt copied to kill ring. Paste into the shell with C-y.")))
+
+(defun reader-discuss-excerpt-from-embark (target)
+  "Start a discussion for TARGET text coming from Embark."
+  (reader-discuss-excerpt target current-prefix-arg))
+
+(defun reader-discuss--embark-target-pdf-region ()
+  "Provide Embark with the current PDF region text, if any."
+  (when (and (derived-mode-p 'pdf-view-mode)
+             (fboundp 'pdf-view-active-region-p)
+             (pdf-view-active-region-p))
+    `(reader-pdf-excerpt ,(mapconcat #'identity (pdf-view-active-region-text) "\n\n"))))
+
+(with-eval-after-load 'embark
+  (add-to-list 'embark-target-finders #'reader-discuss--embark-target-pdf-region t)
+  (keymap-set embark-general-map "z" #'reader-discuss-excerpt-from-embark))
+
 (use-package emacs
   :ensure nil
   :bind
