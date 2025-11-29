@@ -2761,9 +2761,22 @@ Skips empty days and diary holidays."
   :ensure (:host github :repo "xenodium/agent-shell"
                  :depth nil
                  :inherit nil)
-  :bind (:map agent-shell-mode-map
-              ("s-n" . agent-shell-ui-forward-block)
-              ("s-p" . agent-shell-ui-backward-block))
+  :bind
+  (:map agent-shell-mode-map
+        ("s-n" . agent-shell-ui-forward-block)
+        ("s-p" . agent-shell-ui-backward-block)
+        ("n" . agent-shell-ui-forward-block-or-self-insert)
+        ("p" . agent-shell-ui-backward-block-or-self-insert))
+  (:map project-prefix-map
+        ("z x" . agent-shell-openai-start-codex)
+        ("z c" . agent-shell-anthropic-start-claude-code))
+  :init
+  (add-to-list 'project-switch-commands
+               '(agent-shell-openai-start-codex "Codex"))
+  (add-to-list 'project-switch-commands
+               '(agent-shell-anthropic-start-claude-code "Claude"))
+  :commands (agent-shell-openai-start-codex
+             agent-shell-anthropic-start-claude-code)
   :hook
   ((agent-shell-mode . abbrev-mode)
    (agent-shell-mode . my/agent-shell--configure-mcp-servers))
@@ -2781,12 +2794,39 @@ Skips empty days and diary holidays."
           (agent-shell-make-environment-variables
            "GITHUB_MCP_PAT" (exec-path-from-shell-getenv "GITHUB_MCP_PAT")))
   (setopt agent-shell-mcp-servers
-          '(((name . "life-mail")
-             (command . "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh")
-             (args . ("--init-function=life-mail-mcp-init"
-                      "--stop-function=life-mail-mcp-stop"))
-             (env . (((name . "EMACS_MCP_DEBUG_LOG")
-                      (value . "/tmp/life-mail.log"))))))))
+          (list my/mcp-server-life-mail
+                (my/mcp-server-github)))
+  (setopt agent-shell-ui-action-button-extra-bindings
+          '(("n" . agent-shell-ui-forward-block)
+            ("p" . agent-shell-ui-backward-block))))
+
+(defun agent-shell-ui-forward-block-or-self-insert ()
+  "Jump to the next block or insert typed character at the prompt.
+
+Behaves like `agent-shell-ui-forward-block', but if point is at the
+input prompt and a character key was pressed, insert the character
+instead of navigating."
+  (interactive)
+  (unless (derived-mode-p 'agent-shell-mode)
+    (error "Not in a shell"))
+  (if (and (shell-maker-point-at-last-prompt-p)
+           (integerp last-command-event))
+      (self-insert-command 1)
+    (agent-shell-ui-forward-block)))
+
+(defun agent-shell-ui-backward-block-or-self-insert ()
+  "Jump to the previous block or insert typed character at the prompt.
+
+Behaves like `agent-shell-ui-backward-block', but if point is at the
+input prompt and a character key was pressed, insert the character
+instead of navigating."
+  (interactive)
+  (unless (derived-mode-p 'agent-shell-mode)
+    (error "Not in a shell"))
+  (if (and (shell-maker-point-at-last-prompt-p)
+           (integerp last-command-event))
+      (self-insert-command 1)
+    (agent-shell-ui-backward-block)))
 
 (use-package agent-shell-attention
   :load-path "~/repos/agent-shell-attention"
