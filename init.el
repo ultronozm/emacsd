@@ -34,6 +34,9 @@ command is invoked with a prefix argument."
                  (alist :key-type symbol :value-type sexp))
   :group 'reader)
 
+(defvar agent-shell-highlight-blocks)
+(defvar markdown-overlays-highlight-blocks)
+
 (defun reader-discuss--current-excerpt ()
   "Return the excerpt at point or signal an error if none is available."
   (cond
@@ -45,6 +48,34 @@ command is invoked with a prefix argument."
     (mapconcat #'identity (pdf-view-active-region-text) "\n\n"))
    (t (or (thing-at-point 'sexp t)
           (user-error "No excerpt selected or at point")))))
+
+(defun reader-discuss--insert-into-shell (shell-buffer text &optional submit)
+  "Insert TEXT into SHELL-BUFFER and optionally SUBMIT it."
+  (unless (and (buffer-live-p shell-buffer)
+               (stringp text)
+               (string-match-p "\\S-" text))
+    (user-error "Shell buffer unavailable"))
+  (with-current-buffer shell-buffer
+    (when (shell-maker-busy)
+      (user-error "Shell is busy, try later"))
+    (let ((inhibit-read-only t)
+          (insert-start (point-max))
+          insert-end)
+      (goto-char insert-start)
+      (unless (bolp)
+        (insert "\n\n"))
+      (insert text)
+      (setq insert-end (point))
+      (save-restriction
+        (narrow-to-region insert-start insert-end)
+        (let ((markdown-overlays-highlight-blocks agent-shell-highlight-blocks))
+          (markdown-overlays-put)))
+      (goto-char insert-end)
+      (when submit
+        (shell-maker-submit)))
+    (setq-local shell-maker-transcript-default-path
+                (expand-file-name "~/agent-transcripts/excerpts")))
+  shell-buffer)
 
 (defun reader-discuss-excerpt (excerpt &optional prefix)
   "Discuss EXCERPT with an agent-shell backend.
@@ -74,10 +105,14 @@ for the agent configuration."
          (initial-prompt
           (format "Let's discuss this excerpt:\n\n<excerpt>\n%s\n</excerpt>\n\n%s"
                   excerpt file-link)))
-    (kill-new initial-prompt)
-    (agent-shell-start :config agent-config)
-    (select-window reading-window)
-    (message "Excerpt copied to kill ring. Paste into the shell with C-y.")))
+    (let ((shell-buffer (agent-shell-start :config agent-config)))
+      (condition-case err
+          (progn
+            (reader-discuss--insert-into-shell shell-buffer initial-prompt))
+        (error
+         (kill-new initial-prompt)
+         (message "Shell prefill failed (%s); excerpt copied to kill ring." (error-message-string err)))))
+    (select-window reading-window)))
 
 (defun reader-discuss-excerpt-from-embark (target)
   "Start a discussion for TARGET text coming from Embark."
