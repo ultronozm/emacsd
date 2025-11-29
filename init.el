@@ -2514,6 +2514,14 @@ The content is escaped to prevent org syntax interpretation."
   :hook
   (org-mode . org-appear-mode))
 
+(use-package org-remark
+  :after org
+  :demand
+  ;; (define-key (symbol-value map) (kbd "C-d") #'my-osx-dictionary-search)
+  :bind
+  (:map embark-region-map
+        ("C-m" . org-remark-mark)))
+
 ;;; more mail
 
 (use-package czm-mail
