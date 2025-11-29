@@ -2757,6 +2757,41 @@ Skips empty days and diary holidays."
                  :inherit nil
                  :pin t))
 
+(defconst my/mcp-server-life-mail
+  '((name . "life-mail")
+    (command . "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh")
+    (args . ("--init-function=life-mail-mcp-init"
+             "--stop-function=life-mail-mcp-stop"))
+    (env  . (((name . "EMACS_MCP_DEBUG_LOG")
+              (value . "/tmp/life-mail.log"))))))
+
+(defun my/mcp-server-github (&optional token)
+  (let ((pat (or token
+                 (exec-path-from-shell-getenv "GITHUB_MCP_PAT")
+                 (getenv "GITHUB_MCP_PAT"))))
+    `((name . "github")
+      (type . "http")
+      (url . "https://api.githubcopilot.com/mcp")
+      (headers . ,(when (and pat (not (string-empty-p pat)))
+                    `(((name . "Authorization")
+                       (value . ,(format "Bearer %s" pat)))))))))
+
+(defconst my/mcp-server-fetch
+  '((name . "fetch")
+    (command . "uvx")
+    (args . ("mcp-server-fetch"))))
+
+(defconst my/mcp-server-filesystem
+  '((name . "filesystem")
+    (command . "npx")
+    (args . ("-y" "@modelcontextprotocol/server-filesystem"
+             "/home/lizqwer/MyProject/"))))
+
+(defconst my/mcp-server-qdrant
+  '((name . "qdrant")
+    (type . "sse")
+    (url . "http://localhost:8000/sse")))
+
 (use-package agent-shell
   :ensure (:host github :repo "xenodium/agent-shell"
                  :depth nil
