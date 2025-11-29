@@ -4056,7 +4056,30 @@ numbered variant \"equation\"."
     (add-to-list 'mailcap-mime-extensions item)))
 
 (use-package osx-dictionary
-  :bind (("C-z w" . osx-dictionary-search-word-at-point)))
+  :bind (("C-z w" . osx-dictionary-search-word-at-point))
+  :config
+  (defun my-osx-dictionary--candidate ()
+    "Return the best lookup candidate for `osx-dictionary'."
+    (or (and (use-region-p)
+             (buffer-substring-no-properties (region-beginning)
+                                             (region-end)))
+        (thing-at-point 'symbol t)
+        (thing-at-point 'word t)
+        (osx-dictionary--region-or-word)))
+
+  (defun my-osx-dictionary-search (&optional word)
+    "Look up WORD (a string) using `osx-dictionary'.
+When used via Embark, WORD comes from the current target."
+    (interactive (list (my-osx-dictionary--candidate)))
+    (let* ((raw (or word (my-osx-dictionary--candidate)))
+           (clean (and raw (string-trim (substring-no-properties raw)))))
+      (unless (and clean (> (length clean) 0))
+        (user-error "No word at point or region"))
+      (osx-dictionary--view-result clean)))
+  (with-eval-after-load 'embark
+    (dolist (map '(embark-symbol-map embark-identifier-map embark-region-map))
+      (when (boundp map)
+        (define-key (symbol-value map) (kbd "C-d") #'my-osx-dictionary-search)))))
 
 (with-eval-after-load 'image-mode
   (keymap-unset image-mode-map "W"))
