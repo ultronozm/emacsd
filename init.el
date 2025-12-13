@@ -289,33 +289,7 @@ for the agent configuration."
      (cmake-build-project-root . "./cpp")
      (checkdoc-minor-mode . t)
      (eval outline-hide-sublevels 5)
-     (eval TeX-run-style-hooks "nla-notes")
-     (elisp-lint-indent-specs (if-let* . 1) (if-let . 1)
-                              (mcp-server-lib-test--with-server . 0)
-                              (mcp-server-lib-test--with-servers . 1)
-                              (mcp-server-lib-test--with-tools . 1)
-                              (mcp-server-lib-test--register-tool . 1)
-                              (mcp-server-lib-test--with-resources . 1)
-                              (mcp-server-lib-test--with-resource . 2)
-                              (mcp-server-lib-test--with-resource-template
-                               . 2)
-                              (mcp-server-lib-test--with-resource-templates
-                               . 1)
-                              (mcp-server-lib-test--with-undefined-function
-                               . 1)
-                              (mcp-server-lib-test--with-request
-                               . defun)
-                              (mcp-server-lib-test--with-error-tracking
-                               . 1)
-                              (mcp-server-lib-test--check-resource-read-error
-                               . 0)
-                              (mcp-server-lib-ert-with-metrics-tracking
-                               . 1)
-                              (mcp-server-lib-ert-verify-req-success
-                               . defun)
-                              (mcp-server-lib--with-hash-table-entries
-                                  . 2)
-                              (cl-defstruct))))
+     (eval TeX-run-style-hooks "nla-notes")))
   (diary-comment-start ";;")
   (mml-content-disposition-alist
    '((text (rtf . "attachment")
@@ -328,6 +302,12 @@ for the agent configuration."
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt version-control t)
+  (setopt kept-new-versions 100)
+  (setopt kept-old-versions 100)
+  (setopt newsticker-url-list
+          '(("r/emacs" "https://www.reddit.com/r/emacs.rss" nil nil nil)))
+  (setopt repeat-keep-prefix t)
   (setopt dired-deletion-confirmer #'yes-or-no-p)
   (setopt set-mark-command-repeat-pop t)
   (setopt mailcap-user-mime-data
@@ -357,6 +337,7 @@ for the agent configuration."
   :hook
   (prog-mode . outline-minor-mode)
   (dired-mode . dired-hide-details-mode)
+  (dired-mode . dired-omit-mode)
   (dired-mode . hl-line-mode))
 
 (defun diff-current-file ()
@@ -799,7 +780,7 @@ The patch is saved in the project root directory and opened in a buffer."
     (message "Generating patch from %s..." commit)
     (setq git-output 
           (with-temp-buffer
-            (if (zerop (vc-git--call t "format-patch" "-1" commit))
+            (if (zerop (vc-git--call nil t "format-patch" "-1" commit))
                 (buffer-string)
               (user-error "Failed to generate patch from %s" commit))))
     
@@ -807,6 +788,26 @@ The patch is saved in the project root directory and opened in a buffer."
       (find-file (expand-file-name filename root))
       (diff-mode)
       (message "Patch saved as %s" filename))))
+
+(defun vc-git-drop-whitespace-changes ()
+  "Revert whitespace-only edits in the current buffer's file."
+  (interactive)
+  (let ((file (buffer-file-name)))
+    (unless file (user-error "Buffer not visiting a file"))
+    (let ((patch (vc-git--run-command-string file "diff" "-w" "HEAD" "--" file))
+          (vc-revert-show-diff nil)
+          (vc-suppress-confirm t))
+      (if (string-empty-p patch)
+          (message "No non-whitespace edits to keep")
+        (vc-revert)
+        (let ((patch-file (make-nearby-temp-file "vc-drop-white-")))
+          (unwind-protect
+              (progn
+                (with-temp-file patch-file (insert patch))
+                (vc-git-command nil t file "apply" (file-local-name patch-file))
+                (vc-git-command nil t file "apply" "--cached"
+                                (file-local-name patch-file)))
+            (delete-file patch-file)))))))
 
 (defun create-directory-with-git-repo (dir)
   "Create directory DIR, initialize a Git repository, and open in Dired.
@@ -1197,6 +1198,8 @@ With prefix ARG, attach all visible buffers instead."
   :bind
   ("C-z m" . mairix-transient-menu)
   :config
+  (cl-pushnew '("Path" "p" "Path") mairix-widget-fields-list)
+
   (defconst mairix-syntax-help-text
     "Mairix Search Syntax:
 
@@ -2084,6 +2087,15 @@ them at the first newline."
   :hook
   (dired-mode . nerd-icons-dired-mode))
 
+(use-package dired-du
+  :defer t
+  ;; important to use `dired-omit-mode' to avoid performance issues
+  ;; with `..'
+  :custom
+  (dired-du-bind-count-sizes nil)
+  (dired-du-bind-human-toggle nil)
+  (dired-du-bind-mode t))
+
 (add-to-list 'major-mode-remap-defaults '(markdown-mode))
 
 (use-package debbugs
@@ -2218,7 +2230,9 @@ in all current and future PDF buffers."
          :render (gt-buffer-render)))
   :bind
   (("C-z t" . gt-translate)
-   ("C-z T" . gt-eldoc-mode)))
+   ("C-z T" . gt-eldoc-mode)
+   :map view-mode-map
+   ("t" . gt-translate)))
 
 ;; (gt-start
 ;;  (gt-translator
@@ -2397,8 +2411,7 @@ The content is escaped to prevent org syntax interpretation."
   (org-agenda-include-diary t)
   (org-babel-load-languages '((latex . t) (emacs-lisp . t)
                               (python . t) (R . t)
-                              (shell . t) (sql . t)
-                              (sage . t)))
+                              (shell . t) (sql . t)))
   (org-babel-python-command "python3")
   (org-confirm-babel-evaluate nil)
   (org-link-elisp-confirm-function nil)
@@ -2517,10 +2530,9 @@ The content is escaped to prevent org syntax interpretation."
 (use-package org-remark
   :after org
   :demand
-  ;; (define-key (symbol-value map) (kbd "C-d") #'my-osx-dictionary-search)
-  :bind
-  (:map embark-region-map
-        ("C-m" . org-remark-mark)))
+  :config
+  (with-eval-after-load 'embark
+    (keymap-set embark-region-map "C-m" #'org-remark-mark)))
 
 ;;; more mail
 
@@ -2565,8 +2577,6 @@ The content is escaped to prevent org syntax interpretation."
   (LaTeX-mode . (lambda () (setq tab-width 2)))
   :config
   (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
-  (copilot--define-accept-completion-by-action
-   copilot-accept-completion-by-sentence #'forward-sentence)
   :custom
   (copilot-indent-offset-warning-disable t)
   :bind
@@ -2583,9 +2593,14 @@ The content is escaped to prevent org syntax interpretation."
         ("M-`" . copilot-accept-completion-by-word)
         ("C-`" . copilot-accept-completion-by-line)
         ("s-`" . copilot-accept-completion-by-sentence)
+        ([remap zap-to-char] . copilot-accept-completion-to-char)
+        ([remap zap-up-to-char] . copilot-accept-completion-up-to-char)
         ("C-M-`" . copilot-accept-completion-by-paragraph)
         ("C-M-<down>" . copilot-next-completion)
         ("C-M-<up>" . copilot-previous-completion)))
+
+;; (keymap-set copilot-completion-map "<remap> <zap-to-char>" #'copilot-accept-completion-to-char)
+;; (keymap-set copilot-completion-map "<remap> <zap-up-to-char>" #'copilot-accept-completion-up-to-char)
 
 (use-package plz
   :defer t
@@ -2808,6 +2823,13 @@ Skips empty days and diary holidays."
           (expand-file-name "~/mail/inbox.rmail"))
   (life-mail-mcp-init))
 
+(use-package elisp-dev-mcp
+  :ensure (:host github :repo "laurynas-biveinis/elisp-dev-mcp"
+                 :depth nil)
+  :after mcp-server-lib
+  :config
+  (elisp-dev-mcp-enable))
+
 (use-package mcp
   :ensure t
   :custom (mcp-hub-servers
@@ -2860,6 +2882,14 @@ Skips empty days and diary holidays."
     (env  . (((name . "EMACS_MCP_DEBUG_LOG")
               (value . "/tmp/life-mail.log"))))))
 
+(defconst my/mcp-server-elisp-dev
+  '((name . "elisp-dev")
+    (command . "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh")
+    (args . ("--init-function=elisp-dev-mcp-enable"
+             "--stop-function=elisp-dev-mcp-disable"))
+    (env  . (((name . "EMACS_MCP_DEBUG_LOG")
+              (value . "/tmp/elisp-dev-mcp.log"))))))
+
 (defun my/mcp-server-github (&optional token)
   (let ((pat (or token
                  (exec-path-from-shell-getenv "GITHUB_MCP_PAT")
@@ -2895,8 +2925,9 @@ Skips empty days and diary holidays."
   (:map agent-shell-mode-map
         ("s-n" . agent-shell-ui-forward-block)
         ("s-p" . agent-shell-ui-backward-block)
-        ("n" . agent-shell-ui-forward-block-or-self-insert)
-        ("p" . agent-shell-ui-backward-block-or-self-insert))
+        ("n" . my/agent-shell-ui-forward-block-or-self-insert)
+        ("p" . my/agent-shell-ui-backward-block-or-self-insert)
+        ("o" . my/agent-shell-ui-toggle-fragment-at-point-or-self-insert))
   (:map project-prefix-map
         ("z x" . agent-shell-openai-start-codex)
         ("z c" . agent-shell-anthropic-start-claude-code))
@@ -2908,8 +2939,7 @@ Skips empty days and diary holidays."
   :commands (agent-shell-openai-start-codex
              agent-shell-anthropic-start-claude-code)
   :hook
-  ((agent-shell-mode . abbrev-mode)
-   (agent-shell-mode . my/agent-shell--configure-mcp-servers))
+  ((agent-shell-mode . abbrev-mode))
   :config
   (setq agent-shell-openai-authentication
         (agent-shell-openai-make-authentication :login t))
@@ -2924,39 +2954,57 @@ Skips empty days and diary holidays."
           (agent-shell-make-environment-variables
            "GITHUB_MCP_PAT" (exec-path-from-shell-getenv "GITHUB_MCP_PAT")))
   (setopt agent-shell-mcp-servers
-          (list my/mcp-server-life-mail
-                (my/mcp-server-github)))
-  (setopt agent-shell-ui-action-button-extra-bindings
-          '(("n" . agent-shell-ui-forward-block)
-            ("p" . agent-shell-ui-backward-block))))
+          (list
+           my/mcp-server-elisp-dev
+           ;; my/mcp-server-life-mail
+           (my/mcp-server-github))))
+  ;; (setopt agent-shell-anthropic-claude-environment
+  ;;         (agent-shell-make-environment-variables
+  ;;          "ANTHROPIC_MODEL" "claude-opus-4-5-20251101"))
 
-(defun agent-shell-ui-forward-block-or-self-insert ()
+  ;; (setopt agent-shell-anthropic-default-model-id "claude-opus-4-5-20251101"))
+
+(defun my/agent-shell--call-or-self-insert (command)
+  "Run COMMAND unless we should insert at the prompt instead.
+
+COMMAND is a function (typically an agent-shell motion) that is invoked
+with `funcall' when the user is not typing at the last prompt.  When
+the user is at the last prompt, not busy, and presses a character key,
+insert the character instead of invoking COMMAND."
+  (unless (derived-mode-p 'agent-shell-mode)
+    (error "Not in a shell"))
+  (if (and (not (shell-maker-busy))
+           (shell-maker-point-at-last-prompt-p)
+           (integerp last-command-event))
+      (self-insert-command 1)
+    (funcall command)))
+
+(defun my/agent-shell-ui-forward-block-or-self-insert ()
   "Jump to the next block or insert typed character at the prompt.
 
 Behaves like `agent-shell-ui-forward-block', but if point is at the
 input prompt and a character key was pressed, insert the character
 instead of navigating."
   (interactive)
-  (unless (derived-mode-p 'agent-shell-mode)
-    (error "Not in a shell"))
-  (if (and (shell-maker-point-at-last-prompt-p)
-           (integerp last-command-event))
-      (self-insert-command 1)
-    (agent-shell-ui-forward-block)))
+  (my/agent-shell--call-or-self-insert #'agent-shell-ui-forward-block))
 
-(defun agent-shell-ui-backward-block-or-self-insert ()
+(defun my/agent-shell-ui-backward-block-or-self-insert ()
   "Jump to the previous block or insert typed character at the prompt.
 
 Behaves like `agent-shell-ui-backward-block', but if point is at the
 input prompt and a character key was pressed, insert the character
 instead of navigating."
   (interactive)
-  (unless (derived-mode-p 'agent-shell-mode)
-    (error "Not in a shell"))
-  (if (and (shell-maker-point-at-last-prompt-p)
-           (integerp last-command-event))
-      (self-insert-command 1)
-    (agent-shell-ui-backward-block)))
+  (my/agent-shell--call-or-self-insert #'agent-shell-ui-backward-block))
+
+(defun my/agent-shell-ui-toggle-fragment-at-point-or-self-insert ()
+  "Toggle visibility of fragment body at point or insert at prompt.
+
+Behaves like `agent-shell-ui-toggle-fragment-at-point', but if point is
+at the input prompt and a character key was pressed, insert the
+character instead of toggling."
+  (interactive)
+  (my/agent-shell--call-or-self-insert #'agent-shell-ui-toggle-fragment-at-point))
 
 (use-package agent-shell-attention
   :load-path "~/repos/agent-shell-attention"
@@ -3291,7 +3339,8 @@ The value of `calc-language` is restored after BODY has been processed."
    vc-prefix-map
    ("b d" . magit-branch-delete)
    ("b r" . magit-rebase-branch)
-   ("b h" . magit-reset-hard))
+   ("b x h" . magit-reset-hard)
+   ("b x m" . magit-reset-mixed))
   (:map project-prefix-map
         ("m" . magit-project-status)))
 
@@ -3453,7 +3502,7 @@ complete document rather than just a previewed region."
                           (forward-line 1))))
 
   (preview-auto-cache-preamble t)
-  (preview-image-type 'dvipng)
+  (preview-image-type 'dvi*)
   ;; (TeX-fold-quotes-on-insert t)
   (TeX-fold-bib-files (list my-master-bib-file))
   (TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
