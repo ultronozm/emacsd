@@ -274,13 +274,6 @@ for the agent configuration."
       t)))
   (ediff-window-setup-function 'ediff-setup-windows-plain)
   (display-time-default-load-average nil)
-  (tab-bar-format
-   '(
-     ;; tab-bar-format-menu-bar
-     ;; tab-bar-format-history
-     tab-bar-format-tabs-groups
-     tab-bar-format-align-right
-     tab-bar-format-global))
   (recentf-max-saved-items 100)
   (calc-kill-line-numbering nil)
   (eglot-connect-timeout 120)
@@ -302,6 +295,13 @@ for the agent configuration."
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt tab-bar-format
+          '(
+            ;; tab-bar-format-menu-bar
+            ;; tab-bar-format-history
+            tab-bar-format-tabs-groups
+            tab-bar-format-align-right
+            tab-bar-format-global))
   (setopt version-control t)
   (setopt kept-new-versions 100)
   (setopt kept-old-versions 100)
@@ -2053,7 +2053,13 @@ them at the first newline."
   :ensure (:host github :repo "ultronozm/czm-spell.el" :depth nil
                  :inherit nil :pin t)
   ;; :after latex
-  :bind ("s-;" . czm-spell-then-abbrev))
+  ;; :bind ("s-;" . czm-spell-then-abbrev)
+  :bind ("s-;" . czm-spell-correct-backward-lines)
+  :config
+  (with-eval-after-load 'tex-ispell
+    (TeX-ispell-skip-setcar
+     '(("\\\\eqref"  ispell-tex-arg-end 1)
+       ("\\\\mathrm" ispell-tex-arg-end 1)))))
 
 (use-package typescript-mode
   :ensure t
@@ -3006,17 +3012,35 @@ character instead of toggling."
   (interactive)
   (my/agent-shell--call-or-self-insert #'agent-shell-ui-toggle-fragment-at-point))
 
+(use-package knockknock
+  :defer t
+  :ensure (:host github :repo "konrad1977/knockknock"
+                 :depth nil
+                 :inherit nil
+                 :pin t))
+
 (use-package agent-shell-attention
-  :load-path "~/repos/agent-shell-attention"
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/agent-shell-attention.el"
+                 :depth nil
+                 :inherit nil :pin t)
   :after agent-shell
   :demand
-  :init
-  (setopt agent-shell-attention-message-prefix "[agent-shell]")
-  (setopt agent-shell-attention-use-desktop-notifications t)
-  :config
-  (agent-shell-attention-mode +1)
   :bind (:map agent-shell-attention-mode-map
-              ("C-z a" . agent-shell-attention-jump-oldest)))
+              ("C-z a" . agent-shell-attention-jump))
+  :config
+  (require 'knockknock)
+  (setopt agent-shell-attention-notify-function
+          (lambda (_buffer title body)
+            (knockknock-notify
+             :title title
+             :message body
+             :icon "nf-cod-bot"
+             :duration 5)))
+  (setopt agent-shell-attention-render-function
+          #'agent-shell-attention-render-active)
+  (setopt agent-shell-attention-indicator-location 'global-mode-string)
+  (agent-shell-attention-mode))
 
 
 ;;; erc
