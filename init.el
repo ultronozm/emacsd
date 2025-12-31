@@ -4118,9 +4118,20 @@ numbered variant \"equation\"."
   :ensure t
   :defer t)
 
+(defun my/vundo (arg)
+  "With `C-u' prefix argument, call `vundo'.  Otherwise, call `undo'."
+  (interactive "P")
+  (if (equal arg '(4))
+      (vundo)
+    (undo arg)))
+
 (use-package vundo
   :ensure t
-  :defer t)
+  :defer t
+  :config
+  (setopt vundo-use-region-undo t)
+  :bind
+  (:map global-map ("C-/" . my/vundo)))
 
 (with-eval-after-load 'mailcap
   (dolist (item
