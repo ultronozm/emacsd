@@ -3420,7 +3420,20 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package diff-hl
   :defer t
-  :bind ("H-d" . diff-hl-mode))
+  :bind
+  ("H-d" . diff-hl-mode)
+  ("H-D" . diff-hl-set-reference-rev-in-project)
+  :config
+  (setopt diff-hl-goto-hunk-old-revisions t)
+  (set-face-attribute 'diff-hl-insert nil
+                      :background "#00ff00"
+                      :foreground "#00ff00")
+  (set-face-attribute 'diff-hl-delete nil
+                      :background "#ff0000"
+                      :foreground "#ff0000")
+  (set-face-attribute 'diff-hl-change nil
+                      :background "#ff00ff"
+                      :foreground "#ff00ff"))
 
 (use-package repo-scan
   :repo-scan
