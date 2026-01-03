@@ -3520,6 +3520,53 @@ The value of `calc-language` is restored after BODY has been processed."
   :ensure (:host github :repo "ultronozm/repo-scan.el" :depth nil)
   :defer t)
 
+;;; edit-indirect
+
+
+(defun my/edit-indirect-setup ()
+  (setq fill-column 999999)
+  (setq-local dynexp-math-delimiters 'paren)
+  (setq TeX-master my-preview-master))
+
+(defun my/maybe-edit-indirect-setup ()
+  (when (memq major-mode '(LaTeX-mode latex-mode))
+    (my/edit-indirect-setup)))
+
+(defun my/edit-indirect-region-elisp (beg end)
+  (interactive (progn
+                 (unless (use-region-p)
+                   (user-error "No active region"))
+                 (list (region-beginning) (region-end))))
+  (let ((edit-indirect-guess-mode-function
+         (lambda (_parent _beg _end)
+           (emacs-lisp-mode))))
+    (edit-indirect-region beg end t)))
+
+(defun my/edit-indirect-region-LaTeX (beg end)
+  (interactive (progn
+                 (unless (use-region-p)
+                   (user-error "No active region"))
+                 (list (region-beginning) (region-end))))
+  (let ((edit-indirect-guess-mode-function
+         (lambda (_parent _beg _end)
+           (if (fboundp 'LaTeX-mode)
+               (LaTeX-mode)
+             (latex-mode)))))
+    (edit-indirect-region beg end t)))
+
+(use-package edit-indirect
+  :ensure (:host github :repo "Fanael/edit-indirect"
+                 :depth nil
+                 :inherit nil
+                 :pin t)
+  :commands (edit-indirect-region
+             edit-indirect-commit
+             edit-indirect-abort edit-indirect-save)
+  :config
+  (add-hook 'edit-indirect-after-creation-hook #'my/maybe-edit-indirect-setup)
+  (with-eval-after-load 'embark
+    (keymap-set embark-region-map "L" #'my/edit-indirect-region-LaTeX)))
+
 ;;; latex
 
 (defun my-LaTeX-mode-setup ()
