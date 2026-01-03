@@ -165,6 +165,7 @@ for the agent configuration."
    ("H-0" . tab-close)
    ("H-1" . tab-close-other)
    ("H-2" . tab-bar-new-tab)
+   ("C-z A" . tab-recent)
    ("H-SPC H-SPC" . ediff-buffers)
    ("H-SPC SPC" . ediff-buffers)
    ("H-SPC d" . diff-current-file)
