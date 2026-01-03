@@ -386,7 +386,7 @@ With prefix argument ARG, opens `user-init-file' directly."
 (defun my/save-clipboard-to-kill-ring ()
   "Save current system clipboard to kill ring without yanking."
   (interactive)
-  (when-let ((text (gui-get-selection 'CLIPBOARD)))
+  (when-let* ((text (gui-get-selection 'CLIPBOARD)))
     (kill-new text)
     (message "Clipboard saved to kill ring")))
 
