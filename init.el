@@ -1113,11 +1113,26 @@ With prefix ARG, attach all visible buffers instead."
   "Refile current message and store an org link to it."
   (interactive)
   (rmail-output rmail-default-file)
-  (let ((buffer (find-file-noselect rmail-default-file)))
+  (my-rmail-store-link-to-last-message rmail-default-file))
+
+(defun my-rmail-store-link-to-last-message (file-name)
+  "Store an org link to the last message in FILE-NAME."
+  (let ((buffer (find-file-noselect file-name)))
     (with-current-buffer buffer
       (rmail-last-message)
       (require 'org)
       (org-store-link nil t))))
+
+(defun my-rmail-summary-output-and-store-link (&optional file-name n)
+  "Append message(s) to FILE-NAME and store an org link to the last one.
+This mirrors `rmail-summary-output' but also stores a link."
+  (interactive
+   (progn (require 'rmailout)
+          (list (rmail-output-read-file-name)
+                (prefix-numeric-value current-prefix-arg))))
+  (let ((target (or file-name rmail-default-file)))
+    (rmail-summary-output target n)
+    (my-rmail-store-link-to-last-message target)))
 
 (use-package rmail
   :ensure nil
@@ -1169,6 +1184,9 @@ With prefix ARG, attach all visible buffers instead."
   :config
   (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode))
   (add-to-list 'auto-mode-alist '("\\.mbox$" . rmail-mode))
+  (with-eval-after-load 'rmailsum
+    (define-key rmail-summary-mode-map "O"
+                #'my-rmail-summary-output-and-store-link))
   (add-to-list 'display-buffer-alist
                '((lambda (buffer-name action)
                    (with-current-buffer buffer-name
