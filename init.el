@@ -3617,7 +3617,7 @@ complete document rather than just a previewed region."
   :config
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
   (setq TeX-lisp-directory TeX-data-directory)
-  (add-to-list 'TeX-file-extensions "tex\\.~[0-9a-f]+~")
+  (add-to-list 'TeX-file-extensions "tex\\.~[^~]+~")
   (with-eval-after-load 'org-src
     (push '("latex" . LaTeX) org-src-lang-modes))
   (put 'LaTeX-narrow-to-environment 'disabled nil)
