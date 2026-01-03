@@ -2436,7 +2436,7 @@ The content is escaped to prevent org syntax interpretation."
 (defvar my/org-tex-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "SPC") 'dynexp-space)
-    (define-key map (kbd "TAB") 'dynexp-next)
+    (define-key map (kbd "<tab>") 'dynexp-next)
     map)
   "Keymap for my/org-tex-mode.")
 
