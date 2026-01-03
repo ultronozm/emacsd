@@ -2234,15 +2234,7 @@ them at the first newline."
         ("s-T" . pdf-view-position-to-register))
   :config
   (pdf-tools-install :no-query)
-  (require 'pdf-occur)
-  (add-to-list 'display-buffer-alist
-               '("\\*Edit Annotation .*\\.pdf\\*"
-                 (display-buffer-reuse-mode-window
-                  display-buffer-in-side-window)
-                 (side . right)
-                 (slot . 0)
-                 (window-width . 0.5)
-                 (reusable-frames . visible))))
+  (require 'pdf-occur))
 
 (defun my/pdf-annot-setup (_a)
   (LaTeX-mode)
