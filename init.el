@@ -936,6 +936,14 @@ Optionally run SETUP-FN after creating the file."
   (interactive)
   (czm-create-scratch-file my-scratch-sage-dir "sage"))
 
+(defun czm-tmp-buffer-tex ()
+  "Create new temporary LaTeX buffer."
+  (interactive)
+  (let ((buf (generate-new-buffer "*tmp-tex*")))
+    (switch-to-buffer buf)
+    (LaTeX-mode)
+    (setq-local TeX-master my-preview-master)))
+
 (auto-insert-mode)
 (add-to-list 'auto-insert-alist
              '("\\.tex\\'" . czm-setup-tex-file))
