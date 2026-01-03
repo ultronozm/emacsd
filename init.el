@@ -3582,7 +3582,9 @@ complete document rather than just a previewed region."
     (push '("latex" . LaTeX) org-src-lang-modes))
   (put 'LaTeX-narrow-to-environment 'disabled nil)
   (TeX-source-correlate-mode)
-  (let ((cmds '(other-window ace-window consult-register-load)))
+  (let ((cmds '(other-window ace-window consult-register-load
+                             next-line previous-line
+                             beginning-of-buffer end-of-buffer)))
     (with-eval-after-load 'preview
       (dolist (cmd cmds)
         (add-to-list 'preview-auto-reveal-commands cmd)))
