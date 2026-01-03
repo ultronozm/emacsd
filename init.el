@@ -2991,6 +2991,25 @@ Skips empty days and diary holidays."
     (type . "sse")
     (url . "http://localhost:8000/sse")))
 
+(defun my/agent-shell-transcript-file-path-function ()
+  "Generate a file path for saving agent shell transcripts."
+  (expand-file-name
+   (format "%s--transcript%s.txt"
+           (format-time-string "%Y%m%dT%H%M%S")
+           (concat
+            (when-let* ((proj (project-current))
+                        (name (project-name proj)))
+              (with-temp-buffer
+                (insert name)
+                (goto-char (point-min))
+                (when (re-search-forward "[a-z][a-z-]*$")
+                  (concat "-" (match-string 0)))))))
+   "~/agent-transcripts/"))
+
+(defun my/agent-shell-mode-hook ()
+  (my/set-TeX-master-preview)
+  (setq-local preview-tailor-local-multiplier 0.8))
+
 (use-package agent-shell
   :ensure (:host github :repo "xenodium/agent-shell"
                  :depth nil
@@ -3013,16 +3032,13 @@ Skips empty days and diary holidays."
   :commands (agent-shell-openai-start-codex
              agent-shell-anthropic-start-claude-code)
   :hook
-  ((agent-shell-mode . abbrev-mode))
+  ((agent-shell-mode . abbrev-mode)
+   (agent-shell-mode . my/agent-shell-mode-hook))
   :config
   (setq agent-shell-openai-authentication
         (agent-shell-openai-make-authentication :login t))
-  (setq agent-shell--transcript-file-path-function
-        (lambda ()
-          (expand-file-name
-           (format "%s--transcript.txt"
-                   (format-time-string "%Y%m%dT%H%M%S"))
-           "~/agent-transcripts/")))
+  (setopt agent-shell-anthropic-default-model-id "opus")
+
   (setopt agent-shell-file-completion-enabled nil)
   (setopt agent-shell-openai-codex-environment
           (agent-shell-make-environment-variables
@@ -3031,12 +3047,15 @@ Skips empty days and diary holidays."
           (list
            my/mcp-server-elisp-dev
            ;; my/mcp-server-life-mail
-           (my/mcp-server-github))))
-  ;; (setopt agent-shell-anthropic-claude-environment
-  ;;         (agent-shell-make-environment-variables
-  ;;          "ANTHROPIC_MODEL" "claude-opus-4-5-20251101"))
+           (my/mcp-server-github)))
+  (setopt agent-shell-transcript-file-path-function
+          #'my/agent-shell-transcript-file-path-function))
 
-  ;; (setopt agent-shell-anthropic-default-model-id "claude-opus-4-5-20251101"))
+;; (setopt agent-shell-anthropic-claude-environment
+;;         (agent-shell-make-environment-variables
+;;          "ANTHROPIC_MODEL" "claude-opus-4-5-20251101"))
+
+;; (setopt agent-shell-anthropic-default-model-id "claude-opus-4-5-20251101")
 
 (defun my/agent-shell--call-or-self-insert (command)
   "Run COMMAND unless we should insert at the prompt instead.
