@@ -1774,6 +1774,39 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
                  nil
                  (window-parameters (mode-line-format . none)))))
 
+(defun my-embark-vc-show-commit (commit)
+  "Show COMMIT via `vc-print-branch-log', constraining it to COMMIT^!."
+  (interactive (list (or (thing-at-point 'symbol t)
+                         (read-string "Commit: "))))
+  (let* ((trimmed (string-trim commit))
+         (range (if (string-suffix-p "^!" trimmed)
+                    trimmed
+                  (concat trimmed "^!"))))
+    (vc-print-branch-log range)))
+
+(defun my-embark-copy-commit (commit)
+  "Copy COMMIT to the kill ring."
+  (interactive (list (or (thing-at-point 'symbol t)
+                         (user-error "No commit at point"))))
+  (kill-new commit)
+  (message "Copied %s" (substring commit 0 (min 12 (length commit)))))
+
+(with-eval-after-load 'embark
+  (require 'subr-x)
+
+  ;; Treat 7–40 hex chars as Git commits wherever they appear.
+  (embark-define-regexp-target git-commit
+                               "\\b[0-9a-f]\\{7,40\\}\\b")
+  (add-to-list 'embark-target-finders #'embark-target-git-commit-at-point t)
+  (defvar-keymap my-embark-git-commit-map
+    :doc "Embark actions for Git commits."
+    "RET" #'my-embark-vc-show-commit   ; quick look at COMMIT^!
+    "l"   #'my-embark-vc-show-commit
+    "w"   #'my-embark-copy-commit)
+
+  (add-to-list 'embark-keymap-alist
+               '(git-commit . my-embark-git-commit-map)))
+
 (use-package embark-consult
   ;; only need to install it, embark loads it after consult if found
   :hook
