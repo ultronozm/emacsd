@@ -97,10 +97,10 @@ for the agent configuration."
          (reading-window (selected-window))
          (file-link
           (if-let ((file (buffer-file-name)))
-            (let ((line (line-number-at-pos))
-                  (abbr (abbreviate-file-name file)))
-              (format "[[file:%s::%d][Full context: %s]]"
-                      abbr line (file-name-nondirectory abbr)))
+              (let ((line (line-number-at-pos))
+                    (abbr (abbreviate-file-name file)))
+                (format "[[file:%s::%d][Full context: %s]]"
+                        abbr line (file-name-nondirectory abbr)))
             ""))
          (initial-prompt
           (format "Let's discuss this excerpt:\n\n<excerpt>\n%s\n</excerpt>\n\n%s"
