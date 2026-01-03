@@ -2860,18 +2860,18 @@ Skips empty days and diary holidays."
                         (suggested-name (and (equal (car suggestion-pair)
                                                     "suggest_filename")
                                              (cdr suggestion-pair))))
-                (let* ((current-dir (file-name-directory (buffer-file-name)))
-                       (new-path (read-file-name "Rename file to: "
-                                                 current-dir
-                                                 nil
-                                                 nil
-                                                 suggested-name)))
-                  (when (y-or-n-p (format "Rename '%s' to '%s'? "
-                                          (buffer-file-name)
-                                          new-path))
-                    (require 'dired-aux)
-                    (dired-rename-file (buffer-file-name) new-path 1)
-                    (message "File renamed to '%s'" (file-name-nondirectory new-path))))
+                  (let* ((current-dir (file-name-directory (buffer-file-name)))
+                         (new-path (read-file-name "Rename file to: "
+                                                   current-dir
+                                                   nil
+                                                   nil
+                                                   suggested-name)))
+                    (when (y-or-n-p (format "Rename '%s' to '%s'? "
+                                            (buffer-file-name)
+                                            new-path))
+                      (require 'dired-aux)
+                      (dired-rename-file (buffer-file-name) new-path 1)
+                      (message "File renamed to '%s'" (file-name-nondirectory new-path))))
                 (user-error "Failed to get a valid filename suggestion from LLM")))))
          (error-cb
           (lambda (err msg)
