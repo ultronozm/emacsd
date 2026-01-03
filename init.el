@@ -266,9 +266,6 @@ for the agent configuration."
   (isearch-allow-scroll t)
   (search-upper-case t)
   (doc-view-resolution 300)
-  (backup-directory-alist
-   `(("." . ,(expand-file-name
-              (concat user-emacs-directory "backups")))))
   (auto-save-file-name-transforms
    `((".*" ,(expand-file-name
              (concat user-emacs-directory "auto-save/"))
@@ -303,6 +300,9 @@ for the agent configuration."
             tab-bar-format-tabs-groups
             tab-bar-format-align-right
             tab-bar-format-global))
+  (setopt backup-directory-alist
+          `(("." . ,(expand-file-name
+                     (concat user-emacs-directory "backups")))))
   (setopt version-control t)
   (setopt kept-new-versions 100)
   (setopt kept-old-versions 100)
