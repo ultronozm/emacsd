@@ -334,6 +334,7 @@ for the agent configuration."
   (repeat-mode)
   (recentf-mode)
   (savehist-mode)
+  (add-to-list 'savehist-additional-variables 'register-alist)
   (vc-auto-revert-mode)
   :hook
   (prog-mode . outline-minor-mode)
