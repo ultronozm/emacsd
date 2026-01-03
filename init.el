@@ -1755,6 +1755,13 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
 (keymap-global-set "M-s r" my-ripgrep-map)
 
 (use-package embark
+  :repo-scan
+  :ensure (:host github
+                 :repo "ultronozm/embark"
+                 :remotes (("upstream" :repo "oantolin/embark"))
+                 :depth nil
+                 :inherit nil
+                 :pin t)
   :bind
   (("C-." . embark-act)
    ("M-." . embark-dwim)
