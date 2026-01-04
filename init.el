@@ -3624,7 +3624,16 @@ The value of `calc-language` is restored after BODY has been processed."
                       :foreground "#ff0000")
   (set-face-attribute 'diff-hl-change nil
                       :background "#ff00ff"
-                      :foreground "#ff00ff"))
+                      :foreground "#ff00ff")
+  (set-face-attribute 'diff-hl-reference-insert nil
+                      :background "#008800"
+                      :foreground "#008800")
+  (set-face-attribute 'diff-hl-reference-delete nil
+                      :background "#880000"
+                      :foreground "#880000")
+  (set-face-attribute 'diff-hl-reference-change nil
+                      :background "#880088"
+                      :foreground "#880088"))
 
 (use-package repo-scan
   :repo-scan
