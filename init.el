@@ -3124,6 +3124,29 @@ character instead of toggling."
   (agent-shell-attention-mode))
 
 
+;;;; codex CLI wrapper
+
+(defvar codex-exec-command-history nil
+  "Minibuffer history for `codex-exec-run' prompts.")
+
+(defun codex-exec-run (instruction)
+  (interactive
+   (list (read-string "Codex instruction: " nil 'codex-exec-command-history)))
+  (let* ((buffer (get-buffer-create (generate-new-buffer-name "*codex-exec*"))))
+    (with-current-buffer buffer
+      (compilation-mode)
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (insert (format "$ codex exec --sandbox workspace-write %S\n\n"
+                        instruction))
+        (set-marker (process-mark (get-buffer-process buffer)) (point))))
+    (apply #'start-process
+           "codex-exec" buffer
+           "codex" "exec"
+           "--sandbox" "workspace-write"
+           (list instruction))
+    (pop-to-buffer buffer)))
+
 ;;; erc
 
 (use-package erc
