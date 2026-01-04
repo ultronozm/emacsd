@@ -388,7 +388,7 @@ If HISTORIC is non-nil, compare against the historic revision.
   (setopt mailcap-user-mime-data
           '((text-mode "text/plain" nil)
             (diff-mode "text/x-patch" nil)))
-  (add-hook 'diff-mode-hook #'read-only-mode)
+  (setopt diff-default-read-only t)
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
   (put 'erase-buffer 'disabled nil)
