@@ -905,6 +905,59 @@ Use with care."
 
 (advice-add 'vc-deduce-backend :around #'my/vc-deduce-backend-advice)
 
+(defun my-vc-dir-dired-marked ()
+  "Open Dired with marked files in vc-dir (or file at point)."
+  (interactive)
+  (let ((files (or (vc-dir-marked-files) 
+                   (list (vc-dir-current-file)))))
+    (if (null files)
+        (user-error "No files marked or at point")
+      (dired (cons default-directory files)))))
+
+(with-eval-after-load 'vc-dir
+  (define-key vc-dir-mode-map (kbd "C-c d") #'my-vc-dir-dired-marked))
+
+(defun my/diff-dired-changed-files ()
+  "Open a dired buffer showing all files mentioned in the current diff."
+  (interactive)
+  (unless (derived-mode-p 'diff-mode)
+    (user-error "Not in a diff buffer"))
+  (let* ((files nil)
+         (root (or (vc-root-dir) default-directory)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^\\+\\+\\+ [ab]/\\(.*\\)" nil t)
+        (let ((file (match-string 1)))
+          (push file files))))
+    (if files
+        (dired (cons root (nreverse files)))
+      (user-error "No files found in diff"))))
+
+(defun my/eval-expression-and-copy (exp &optional insert-value no-truncate char-print-limit copy-to-kill-ring)
+  "Like `eval-expression', but with C-u C-u copies result to kill ring.
+When called with a prefix argument of 16 (interactively, C-u C-u),
+the result is copied to the kill ring in addition to being displayed.
+All other prefix arguments work as in `eval-expression'."
+  (interactive
+   (let* ((prefix-arg current-prefix-arg)
+          (copy-p (equal prefix-arg '(16)))
+          ;; If copying, pass nil as prefix to eval-expression logic
+          (current-prefix-arg (if copy-p nil prefix-arg))
+          (args (cons (read--expression "Eval: ")
+                      (eval-expression-get-print-arguments current-prefix-arg))))
+     (append args (list copy-p))))
+  
+  (let ((result (eval-expression exp insert-value no-truncate char-print-limit)))
+    (when copy-to-kill-ring
+      (let ((result-str (with-temp-buffer
+                          (prin1 result (current-buffer))
+                          (buffer-string))))
+        (kill-new result-str)
+        (message "Result copied to kill ring: %s" result-str)))
+    result))
+
+(global-set-key [remap eval-expression] #'my/eval-expression-and-copy)
+
 (defun czm-create-scratch-file (dir extension &optional setup-fn)
   "Create a new temporary file in DIR with EXTENSION.
 Optionally run SETUP-FN after creating the file."
