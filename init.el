@@ -745,12 +745,46 @@ This allows multiple Ediff sessions to each restore their own window configurati
       (make-local-variable 'ediff-saved-window-configuration))))
 
 (defun ediff-restore-window-configuration ()
-  "Restore the window configuration saved before Ediff started."
+  "Restore the window configuration saved before Ediff started.
+
+This restores the *layout*, but tries not to clobber the final point
+positions you navigated to during the Ediff session."
   (when (window-configuration-p ediff-saved-window-configuration)
-    (run-with-timer
-     0.01 nil (lambda ()
-                (set-window-configuration ediff-saved-window-configuration)
-                (setq ediff-saved-window-configuration nil)))))
+    (let* ((saved ediff-saved-window-configuration)
+           ;; Capture the user-visible state at the end of the Ediff session.
+           ;; This prevents `set-window-configuration' from resetting point
+           ;; back to where it was when the session started.
+           (states
+            (delq nil
+                  (mapcar
+                   (lambda (win)
+                     (when (window-live-p win)
+                       (list (window-buffer win)
+                             (window-point win)
+                             (window-start win))))
+                   (list (and (boundp 'ediff-window-A) ediff-window-A)
+                         (and (boundp 'ediff-window-B) ediff-window-B)
+                         (and (boundp 'ediff-window-C) ediff-window-C)
+                         (and (boundp 'ediff-window-Ancestor)
+                              ediff-window-Ancestor))))))
+      (run-with-timer
+       0.01 nil
+       (lambda ()
+         (set-window-configuration saved)
+         (dolist (st states)
+           (pcase-let ((`(,buf ,pt ,start) st))
+             (when (buffer-live-p buf)
+               (with-current-buffer buf
+                 (let ((p (and (integerp pt)
+                               (min (point-max) (max (point-min) pt))))
+                       (s (and (integerp start)
+                               (min (point-max) (max (point-min) start)))))
+                   (when p (goto-char p))
+                   (dolist (w (get-buffer-window-list buf nil t))
+                     (when (window-live-p w)
+                       (when s (set-window-start w s t))
+                       (when p (set-window-point w p)))))))))
+         (setq ediff-saved-window-configuration nil))))))
 
 (defun ediff-kill-temporary-file-buffer ()
   (when (and (buffer-live-p ediff-buffer-A)
