@@ -2283,8 +2283,8 @@ them at the first newline."
   :ensure (:host github :repo "ultronozm/czm-spell.el" :depth nil
                  :inherit nil :pin t)
   ;; :after latex
-  ;; :bind ("s-;" . czm-spell-then-abbrev)
-  :bind ("s-;" . czm-spell-correct-backward-lines)
+  :bind ("s-;" . czm-spell-then-abbrev)
+  ;; :bind ("s-;" . czm-spell-correct-backward-lines)
   :config
   (with-eval-after-load 'tex-ispell
     (TeX-ispell-skip-setcar
