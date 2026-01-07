@@ -3720,7 +3720,8 @@ The value of `calc-language` is restored after BODY has been processed."
 (defun my/edit-indirect-setup ()
   (setq fill-column 999999)
   (setq-local dynexp-math-delimiters 'paren)
-  (setq TeX-master my-preview-master))
+  (setq TeX-master my-preview-master)
+  (preview-auto-mode))
 
 (defun my/maybe-edit-indirect-setup ()
   (when (memq major-mode '(LaTeX-mode latex-mode))
