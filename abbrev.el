@@ -146,7 +146,6 @@ typedef vector<int> VI;
    ("analgoous" "analogous" nil)
    ("yhen" "then" nil)
    ("xeamples" "examples" nil)
-   ("wip" "progress" nil)
    ("whawtever" "whatever" nil)
    ("unesls" "unless" nil)
    ("undrstand" "understand" nil)
