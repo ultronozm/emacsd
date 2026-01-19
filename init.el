@@ -129,80 +129,6 @@ for the agent configuration."
   (add-to-list 'embark-target-finders #'reader-discuss--embark-target-pdf-region t)
   (keymap-set embark-general-map "z" #'reader-discuss-excerpt-from-embark))
 
-(defun my-vc-ediff-and-jump (historic &optional not-essential)
-  "Like `vc-ediff', but start Ediff at the diff nearest point.
-If HISTORIC is non-nil, compare against the historic revision.
-"
-  (interactive (list current-prefix-arg t))
-  (require 'vc)
-  (let* ((origin-buffer (current-buffer))
-         (origin-window (selected-window))
-         (origin-point (point))
-         (origin-frame (window-frame origin-window))
-         (base-buffer (or (buffer-base-buffer origin-buffer) origin-buffer))
-         (pos (with-current-buffer origin-buffer
-                (save-restriction
-                  (widen)
-                  (min (max (point-min) origin-point) (point-max)))))
-         (final-point nil)
-         (final-window-start nil)
-         (startup-hook nil))
-    (setq startup-hook
-          (lambda ()
-            (remove-hook 'ediff-startup-hook startup-hook)
-            (require 'ediff-util)
-            (when (and (boundp 'ediff-buffer-B)
-                       (buffer-live-p ediff-buffer-B)
-                       (eq (or (buffer-base-buffer ediff-buffer-B) ediff-buffer-B)
-                           base-buffer))
-              (add-hook
-               'ediff-quit-hook
-               (lambda ()
-                 ;; Capture the point/window-start as the user sees it at quit
-                 ;; time (i.e. from the B window, if available).
-                 (cond
-                  ((and (boundp 'ediff-window-B) (window-live-p ediff-window-B))
-                   (setq final-point (window-point ediff-window-B)
-                         final-window-start (window-start ediff-window-B)))
-                  ((buffer-live-p base-buffer)
-                   (with-current-buffer base-buffer
-                     (setq final-point (point))))))
-               nil t)
-              (add-hook
-               'ediff-after-quit-hook-internal
-               (lambda ()
-                 ;; Your `ediff-restore-window-configuration' runs via a
-                 ;; short timer, so defer point restoration until after it.
-                 (run-with-timer
-                  0.05 nil
-                  (lambda ()
-                    (when (and (integerp final-point) (buffer-live-p origin-buffer))
-                      (with-current-buffer origin-buffer
-                        (let ((p (min (point-max)
-                                      (max (point-min) final-point))))
-                          (goto-char p)
-                          (let ((win (or (and (frame-live-p origin-frame)
-                                              (get-buffer-window origin-buffer origin-frame))
-                                         (get-buffer-window origin-buffer t))))
-                            (when (window-live-p win)
-                              (when (integerp final-window-start)
-                                (set-window-start win final-window-start t))
-                              (set-window-point win p)))))))))
-               nil t)
-              (when (and (integerp ediff-number-of-differences)
-                         (> ediff-number-of-differences 0))
-                (let* ((diff (ediff-diff-at-point 'B pos))
-                       (diff (min ediff-number-of-differences (max 1 diff))))
-                  (ediff-jump-to-difference diff))))))
-    (add-hook 'ediff-startup-hook startup-hook t)
-    (unwind-protect
-        (if historic
-            (apply #'vc-version-ediff (vc-diff-build-argument-list-internal))
-          (let ((fileset (vc-deduce-fileset)))
-            (vc-buffer-sync-fileset fileset not-essential)
-            (vc-version-ediff (cadr fileset) nil nil)))
-      (remove-hook 'ediff-startup-hook startup-hook))))
-
 (use-package emacs
   :ensure nil
   :bind
@@ -965,13 +891,6 @@ Interactively prompts for the directory to create."
      ("\\begin{multline}" . ?⎧)
      ("\\end{multline*}" . ?⎭)
      ("\\end{multline}" . ?⎭))))
-
-(defun vc-git-amend ()
-  (interactive)
-  (vc-checkin nil 'git)
-  (vc-git-log-edit-toggle-amend))
-
-(keymap-set vc-prefix-map "k" #'vc-git-amend)
 
 (defun vc-root-shortlog-all (&optional limit)
   "Show a one-line, graph-style Git log across all branches.
