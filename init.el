@@ -3123,9 +3123,10 @@ Skips empty days and diary holidays."
            "GITHUB_MCP_PAT" (exec-path-from-shell-getenv "GITHUB_MCP_PAT")))
   (setopt agent-shell-mcp-servers
           (list
-           my/mcp-server-elisp-dev
+           ;; my/mcp-server-elisp-dev
            ;; my/mcp-server-life-mail
-           (my/mcp-server-github)))
+           ;; (my/mcp-server-github)
+           ))
   (setopt agent-shell-transcript-file-path-function
           #'my/agent-shell-transcript-file-path-function))
 
