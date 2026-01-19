@@ -3614,6 +3614,7 @@ The value of `calc-language` is restored after BODY has been processed."
   ("H-D" . diff-hl-set-reference-rev-in-project)
   :config
   (setopt diff-hl-goto-hunk-old-revisions t)
+  (setopt diff-hl-show-staged-changes nil)
   (set-face-attribute 'diff-hl-insert nil
                       :background "#00ff00"
                       :foreground "#00ff00")
