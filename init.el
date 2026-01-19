@@ -3682,6 +3682,7 @@ The value of `calc-language` is restored after BODY has been processed."
   :commands (edit-indirect-region
              edit-indirect-commit
              edit-indirect-abort edit-indirect-save)
+  :demand
   :config
   (add-hook 'edit-indirect-after-creation-hook #'my/maybe-edit-indirect-setup)
   (with-eval-after-load 'embark
