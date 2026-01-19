@@ -2524,6 +2524,8 @@ The content is escaped to prevent org syntax interpretation."
     (setq local-abbrev-table
           (symbol-value (derived-mode-abbrev-table-name major-mode)))))
 
+(keymap-global-set "H-o" #'my/org-tex-mode)
+
 (use-package org
   :ensure nil
   :hook
@@ -2606,8 +2608,7 @@ The content is escaped to prevent org syntax interpretation."
         ("M-{" . org-backward-paragraph)
         ("M-}" . org-forward-paragraph)
         ("C-c C-' e" . my/org-insert-example-with-yank)
-        ("C-c C-' s" . my/org-insert-src-with-yank)
-        ("H-o" . #'my/org-tex-mode))
+        ("C-c C-' s" . my/org-insert-src-with-yank))
   (:repeat-map
    org-paragraph-repeat-map
    ("]" . org-forward-paragraph)
