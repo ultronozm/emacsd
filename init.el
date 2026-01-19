@@ -293,6 +293,7 @@ for the agent configuration."
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt ispell-save-corrections-as-abbrevs t)
   (setopt tab-bar-format
           '(
             ;; tab-bar-format-menu-bar
