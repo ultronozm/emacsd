@@ -3942,7 +3942,7 @@ numbered variant \"equation\"."
                   (("⚡" . "⚡") ("minted" "minted*"))
                   (("♣" . "♣") ("results" "results*"))
                   ((TeX-fold-format-theorem-environment . "◼")
-                   ("idea" "solution"))))
+                   ("idea" "solution" "quote"))))
     (add-to-list 'TeX-fold-begin-end-spec-list item))
   ;; (dolist (item (list #'TeX-fold-quotes #'TeX-fold-dashes))
   ;;   (add-to-list 'TeX-fold-region-functions item))
