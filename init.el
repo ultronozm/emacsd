@@ -3111,6 +3111,8 @@ Skips empty days and diary holidays."
   ((agent-shell-mode . abbrev-mode)
    (agent-shell-mode . my/agent-shell-mode-hook))
   :config
+  (with-eval-after-load 'vc
+    (add-to-list 'vc-deduce-backend-nonvc-modes 'agent-shell-mode))
   (setq agent-shell-openai-authentication
         (agent-shell-openai-make-authentication :login t))
   (setopt agent-shell-anthropic-default-model-id "opus")
