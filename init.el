@@ -2310,7 +2310,9 @@ them at the first newline."
         ("s-T" . pdf-view-position-to-register))
   :config
   (pdf-tools-install :no-query)
-  (require 'pdf-occur))
+  (require 'pdf-occur)
+  ;; (add-hook 'pdf-view-mode-hook #'pdf-view-roll-minor-mode)
+  )
 
 (defun my/pdf-annot-setup (_a)
   (LaTeX-mode)
