@@ -293,6 +293,7 @@ for the agent configuration."
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt vc-deduce-backend-nonvc-modes t)
   (setopt ispell-save-corrections-as-abbrevs t)
   (setopt tab-bar-format
           '(
@@ -926,12 +927,6 @@ Use with care."
       (pop-to-buffer buf-name)
       (when (y-or-n-p "Cherry pick failed - abort?")
         (vc-git-command buf-name 0 nil "cherry-pick" "--abort")))))
-
-(defun my/vc-deduce-backend-advice (orig-fun)
-  "Advice for `vc-deduce-backend' to handle indirect buffers."
-  (or (funcall orig-fun) 'Git))
-
-(advice-add 'vc-deduce-backend :around #'my/vc-deduce-backend-advice)
 
 (defun my-vc-dir-dired-marked ()
   "Open Dired with marked files in vc-dir (or file at point)."
@@ -3111,8 +3106,6 @@ Skips empty days and diary holidays."
   ((agent-shell-mode . abbrev-mode)
    (agent-shell-mode . my/agent-shell-mode-hook))
   :config
-  (with-eval-after-load 'vc
-    (add-to-list 'vc-deduce-backend-nonvc-modes 'agent-shell-mode))
   (setq agent-shell-openai-authentication
         (agent-shell-openai-make-authentication :login t))
   (setopt agent-shell-anthropic-default-model-id "opus")
@@ -3542,8 +3535,6 @@ The value of `calc-language` is restored after BODY has been processed."
   :init
   (add-to-list 'project-switch-commands '(magit-project-status "Magit"))
   :config
-  (with-eval-after-load 'vc
-    (add-to-list 'vc-deduce-backend-nonvc-modes 'magit-mode))
   :bind
   (:repeat-map
    magit-smerge-repeat-map
