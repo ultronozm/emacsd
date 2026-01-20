@@ -3541,6 +3541,9 @@ The value of `calc-language` is restored after BODY has been processed."
   (magit-status-mode . visual-line-mode)
   :init
   (add-to-list 'project-switch-commands '(magit-project-status "Magit"))
+  :config
+  (with-eval-after-load 'vc
+    (add-to-list 'vc-deduce-backend-nonvc-modes 'magit-mode))
   :bind
   (:repeat-map
    magit-smerge-repeat-map
