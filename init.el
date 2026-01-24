@@ -4426,3 +4426,37 @@ When used via Embark, WORD comes from the current target."
 
 (with-eval-after-load 'image-mode
   (keymap-unset image-mode-map "W"))
+
+(use-package vterm
+  :bind (:map project-prefix-map
+              ("t" . project-vterm))
+  :init
+  (add-to-list 'project-switch-commands
+               '(project-vterm "Vterm" nil)))
+
+(defun project-vterm ()
+  "Start Vterm in the current project's root directory.
+If a buffer already exists for running Vterm in the project's root,
+switch to it.  Otherwise, create a new Vterm buffer.
+With \\[universal-argument] prefix arg, create a new Vterm buffer even
+if one already exists.
+With numeric prefix arg, switch to the session with that number, or
+create it if it doesn't already exist."
+  (interactive)
+  (unless (require 'vterm nil t)
+    (user-error "Package `vterm' is not available"))
+  (let* ((default-directory (project-root (project-current t)))
+         (base-name (project-prefixed-buffer-name "vterm"))
+         (vterm-buffer-name
+          (cond ((numberp current-prefix-arg)
+                 (format "%s<%d>" base-name current-prefix-arg))
+                (current-prefix-arg
+                 (generate-new-buffer-name base-name))
+                (t base-name))))
+    (let* ((buf (get-buffer vterm-buffer-name))
+           (proc (and buf (get-buffer-process buf))))
+      (if (and buf (not current-prefix-arg)
+               (with-current-buffer buf (derived-mode-p 'vterm-mode))
+               proc (process-live-p proc))
+          (pop-to-buffer buf)
+        (vterm vterm-buffer-name)))))
