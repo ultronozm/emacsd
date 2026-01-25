@@ -275,12 +275,6 @@ for the agent configuration."
   (recentf-max-saved-items 100)
   (calc-kill-line-numbering nil)
   (eglot-connect-timeout 120)
-  (safe-local-variable-values
-   '((aggressive-indent-mode)
-     (cmake-build-project-root . "./cpp")
-     (checkdoc-minor-mode . t)
-     (eval outline-hide-sublevels 5)
-     (eval TeX-run-style-hooks "nla-notes")))
   (diary-comment-start ";;")
   (mml-content-disposition-alist
    '((text (rtf . "attachment")
@@ -293,6 +287,27 @@ for the agent configuration."
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt safe-local-variable-directories
+          '("/Users/au710211/repos/nla-main/"
+            "/Users/au710211/repos/nla-prep/"))
+  (setopt safe-local-variable-values
+          '((aggressive-indent-mode)
+            (cmake-build-project-root . "./cpp")
+            (checkdoc-minor-mode . t)
+            (eval TeX-run-style-hooks "nla-notes")
+            (eval outline-hide-sublevels 5)
+            (eval defun agent-shell-run-all-tests nil
+                  "Run all agent-shell tests in batch mode." (interactive)
+                  (let
+                      ((test-dir
+                        (expand-file-name "tests/"
+                                          (project-root (project-current t)))))
+                    (dolist
+                        (file (directory-files-recursively test-dir "\\.el$"))
+                      (unless (string-match-p "/\\." file) (load file)))
+                    (if noninteractive
+                        (ert-run-tests-batch-and-exit "^agent-shell")
+                      (ert "^agent-shell"))))))
   (setopt vc-deduce-backend-nonvc-modes t)
   (setopt ispell-save-corrections-as-abbrevs t)
   (setopt tab-bar-format
