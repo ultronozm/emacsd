@@ -1461,9 +1461,17 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns x))
   :init
-  ;; With this next option, it's important that PATH is set up inside
-  ;; .zshenv rather than .zshrc.
-  (setq exec-path-from-shell-arguments nil)
+  ;; ;; With this next option, it's important that PATH is set up inside
+  ;; ;; .zshenv rather than .zshrc.
+  ;; (setq exec-path-from-shell-arguments nil)
+  (setopt exec-path-from-shell-variables
+          '("PATH" "MANPATH"
+            "OPENAI_KEY" "OPENAI_API_KEY"
+            "ANTHROPIC_KEY"
+            "GEMINI_KEY"
+            "DEEPSEEK_KEY"
+            "GITHUB_MCP_PAT"
+            "TWITCH_OAUTH_TOKEN"))
   :config
   (exec-path-from-shell-initialize)
   (setopt elpaca-makeinfo-executable (executable-find "makeinfo"))
