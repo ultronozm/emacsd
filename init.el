@@ -4564,3 +4564,12 @@ create it if it doesn't already exist."
   :after diff-mode
   :demand
   :hook (diff-mode . diff-vc-patch-mode))
+
+(use-package speedread
+  :ensure (:host github :repo "ultronozm/speedread.el"
+                 :depth nil
+                 :inherit nil)
+  :defer t
+  :config
+  (setopt speedread-display-style 'window)
+  (setopt iread-chars 20))
