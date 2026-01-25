@@ -2557,24 +2557,30 @@ The content is escaped to prevent org syntax interpretation."
 
 (add-hook 'diff-mode-hook #'czm-diff-preview-setup)
 
-(defvar my/org-tex-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "SPC") 'dynexp-space)
-    (define-key map (kbd "<tab>") 'dynexp-next)
-    map)
-  "Keymap for my/org-tex-mode.")
+(defvar-local my/texlike--saved-local-abbrev-table nil)
 
-(define-minor-mode my/org-tex-mode
-  "Minor mode for using LaTeX abbrevs in other major modes."
-  :lighter " LaTeXAbbrev"
-  :keymap my/org-tex-mode-map
-  (if my/org-tex-mode
-      (when (boundp 'LaTeX-mode-abbrev-table)
-        (setq local-abbrev-table LaTeX-mode-abbrev-table))
-    (setq local-abbrev-table
-          (symbol-value (derived-mode-abbrev-table-name major-mode)))))
+(define-minor-mode my/texlike-mode
+  "TeX-like abbrevs + navigation anywhere."
+  :lighter " TeXlike"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "SPC") #'dynexp-space)
+            (define-key map (kbd "TAB") #'dynexp-next)
+            map)
+  (if my/texlike-mode
+      (progn
+        (setq my/texlike--saved-local-abbrev-table local-abbrev-table)
+        (setq-local abbrev-mode t)
+        (when (boundp 'LaTeX-mode-abbrev-table)
+          (let ((table (make-abbrev-table)))
+            (abbrev-table-put table :parents (delq nil (list local-abbrev-table LaTeX-mode-abbrev-table)))
+            (setq-local local-abbrev-table table)))
+        (when (fboundp 'tex-parens-mode)
+          (tex-parens-mode 1)))
+    (when (fboundp 'tex-parens-mode)
+      (tex-parens-mode 0))
+    (setq-local local-abbrev-table my/texlike--saved-local-abbrev-table)))
 
-(keymap-global-set "H-o" #'my/org-tex-mode)
+(keymap-global-set "H-o" #'my/texlike-mode)
 
 (use-package org
   :ensure nil
