@@ -3963,13 +3963,16 @@ numbered variant \"equation\"."
 
 (advice-add 'LaTeX-environment :after #'my-latex-fold-current-environment)
 
-(defun czm-tex-fold-format-pythontex-environment (env _args)
-  "Format fold display for PythonTeX environments.
-Intended for use in `TeX-fold-begin-end-spec-list'.  ENV is the
-environment name, ARGS are ignored.  Returns a string like \"⚡pycode\"."
-  (concat "⚡" (downcase env)))
+(use-package czm-pythontex
+  :ensure (:host github :repo "ultronozm/czm-pythontex.el"
+                 :depth nil
+                 :inherit nil)
+  :after latex
+  :bind (:map LaTeX-mode-map
+              ("C-c '" . czm-tex-pythontex-edit-indirect)))
 
 (defun czm-setup-and-activate-tex-fold ()
+  (require 'czm-pythontex)
   (require 'czm-tex-jump)
   (require 'czm-tex-ref)
   (setq TeX-fold-macro-spec-list
@@ -3999,15 +4002,10 @@ environment name, ARGS are ignored.  Returns a string like \"⚡pycode\"."
     (add-to-list 'TeX-fold-macro-spec-list item))
   (dolist (item `((1 ("mathrm"))))
     (add-to-list 'TeX-fold-macro-spec-list item))
-  (dolist (item '((("🌅" . "🌇") ("document"))
+  (dolist (item `((("🌅" . "🌇") ("document"))
                   (("⚡" . "⚡") ("minted" "minted*"))
                   ((czm-tex-fold-format-pythontex-environment . "⚡")
-                   ("pycode" "pyconsole" "pyblock" "pyverbatim"
-                    "pysub" "pyconcode" "pyconverbatim"
-                    "sympycode" "sympyconsole" "sympyblock" "sympyverbatim"
-                    "sympysub" "sympyconcode" "sympyconverbatim"
-                    "pylabcode" "pylabconsole" "pylabblock" "pylabverbatim"
-                    "pylabsub" "pylabconcode" "pylabconverbatim"))
+                   ,czm-tex-pythontex-environments)
                   (("♣" . "♣") ("results" "results*"))
                   ((TeX-fold-format-theorem-environment . "◼")
                    ("idea" "solution" "quote"))))
