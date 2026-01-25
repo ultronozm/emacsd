@@ -153,7 +153,6 @@ for the agent configuration."
    ("C-s-o" . other-frame)
    ("C-x C-M-t" . transpose-regions)
    ("C-x C-b" . ibuffer)
-   ("C-x v e" . my-vc-ediff-and-jump)
    ("C-z" . nil)
    ("C-z c" . calendar)
    ("C-z d" . eldoc-doc-buffer)
