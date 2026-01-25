@@ -3730,6 +3730,7 @@ The value of `calc-language` is restored after BODY has been processed."
              edit-indirect-abort edit-indirect-save)
   :demand
   :config
+  (setopt edit-indirect-empty-region-indicator "|")
   (add-hook 'edit-indirect-after-creation-hook #'my/maybe-edit-indirect-setup)
   (with-eval-after-load 'embark
     (keymap-set embark-region-map "L" #'my/edit-indirect-region-LaTeX)))
