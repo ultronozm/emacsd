@@ -3143,7 +3143,11 @@ Skips empty days and diary holidays."
         ("s-p" . agent-shell-ui-backward-block)
         ("n" . my/agent-shell-ui-forward-block-or-self-insert)
         ("p" . my/agent-shell-ui-backward-block-or-self-insert)
-        ("o" . my/agent-shell-ui-toggle-fragment-at-point-or-self-insert))
+        ("o" . my/agent-shell-ui-toggle-fragment-at-point-or-self-insert)
+        ("C-c t" . (lambda () (interactive) (org-timestamp '(16))))
+        ("C-c m" . (lambda () (interactive)
+                     (unless (bolp) (newline))
+                     (insert "```\n") (yank) (insert "\n```\n"))))
   (:map project-prefix-map
         ("z x" . agent-shell-openai-start-codex)
         ("z c" . agent-shell-anthropic-start-claude-code))
