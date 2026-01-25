@@ -3963,6 +3963,12 @@ numbered variant \"equation\"."
 
 (advice-add 'LaTeX-environment :after #'my-latex-fold-current-environment)
 
+(defun czm-tex-fold-format-pythontex-environment (env _args)
+  "Format fold display for PythonTeX environments.
+Intended for use in `TeX-fold-begin-end-spec-list'.  ENV is the
+environment name, ARGS are ignored.  Returns a string like \"⚡pycode\"."
+  (concat "⚡" (downcase env)))
+
 (defun czm-setup-and-activate-tex-fold ()
   (require 'czm-tex-jump)
   (require 'czm-tex-ref)
@@ -3995,6 +4001,13 @@ numbered variant \"equation\"."
     (add-to-list 'TeX-fold-macro-spec-list item))
   (dolist (item '((("🌅" . "🌇") ("document"))
                   (("⚡" . "⚡") ("minted" "minted*"))
+                  ((czm-tex-fold-format-pythontex-environment . "⚡")
+                   ("pycode" "pyconsole" "pyblock" "pyverbatim"
+                    "pysub" "pyconcode" "pyconverbatim"
+                    "sympycode" "sympyconsole" "sympyblock" "sympyverbatim"
+                    "sympysub" "sympyconcode" "sympyconverbatim"
+                    "pylabcode" "pylabconsole" "pylabblock" "pylabverbatim"
+                    "pylabsub" "pylabconcode" "pylabconverbatim"))
                   (("♣" . "♣") ("results" "results*"))
                   ((TeX-fold-format-theorem-environment . "◼")
                    ("idea" "solution" "quote"))))
