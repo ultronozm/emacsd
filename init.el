@@ -2423,6 +2423,9 @@ in all current and future PDF buffers."
          :taker (gt-taker :langs '(da en fr de) :text 'paragraph)  ; Match your gt-langs
          :engines (gt-google-engine)
          :render (gt-buffer-render)))
+  (setopt gt-buffer-render-window-config
+          '((display-buffer-reuse-window display-buffer-below-selected)
+            (window-height . 0.25)))
   :bind
   (("C-z t" . gt-translate)
    ("C-z T" . gt-eldoc-mode)
