@@ -4573,3 +4573,5 @@ create it if it doesn't already exist."
   :config
   (setopt speedread-display-style 'window)
   (setopt iread-chars 20))
+
+(use-package code-cells)
