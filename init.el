@@ -813,71 +813,6 @@ positions you navigated to during the Ediff session."
 (add-hook 'ediff-quit-hook #'ediff-restore-window-configuration)
 (add-hook 'ediff-cleanup-hook #'ediff-kill-temporary-file-buffer)
 
-(defun project-format-patch-last-commit (&optional arg)
-  "Create a patch file from the last commit in the current project.
-With a prefix argument ARG, prompt for a specific commit.
-The patch is saved in the project root directory and opened in a buffer."
-  (interactive "P")
-  (let* ((pr (project-current t))
-         (root (project-root pr))
-         (default-directory root)
-         (commit (if arg
-                     (vc-read-revision "Format patch from commit: " nil 'Git "HEAD")
-                   "HEAD"))
-         (git-output nil))
-    
-    (when (vc-git--empty-db-p)
-      (user-error "No commits exist in this Git repository"))
-    
-    (message "Generating patch from %s..." commit)
-    (setq git-output 
-          (with-temp-buffer
-            (if (zerop (vc-git--call nil t "format-patch" "-1" commit))
-                (buffer-string)
-              (user-error "Failed to generate patch from %s" commit))))
-    
-    (let ((filename (string-trim git-output)))
-      (find-file (expand-file-name filename root))
-      (diff-mode)
-      (message "Patch saved as %s" filename))))
-
-(defun vc-git-drop-whitespace-changes ()
-  "Revert whitespace-only edits in the current buffer's file."
-  (interactive)
-  (let ((file (buffer-file-name)))
-    (unless file (user-error "Buffer not visiting a file"))
-    (let ((patch (vc-git--run-command-string file "diff" "-w" "HEAD" "--" file))
-          (vc-revert-show-diff nil)
-          (vc-suppress-confirm t))
-      (if (string-empty-p patch)
-          (message "No non-whitespace edits to keep")
-        (vc-revert)
-        (let ((patch-file (make-nearby-temp-file "vc-drop-white-")))
-          (unwind-protect
-              (progn
-                (with-temp-file patch-file (insert patch))
-                (vc-git-command nil t file "apply" (file-local-name patch-file))
-                (vc-git-command nil t file "apply" "--cached"
-                                (file-local-name patch-file)))
-            (delete-file patch-file)))))))
-
-(defun create-directory-with-git-repo (dir)
-  "Create directory DIR, initialize a Git repository, and open in Dired.
-Interactively prompts for the directory to create."
-  (interactive
-   (list (read-file-name "Create directory with Git repo: "
-                         default-directory default-directory
-                         nil nil)))
-  (make-directory dir t)
-  (let ((default-directory (file-name-as-directory (expand-file-name dir))))
-    (vc-create-repo 'Git)
-    (dired default-directory)))
-
-(bind-keys
- :package project
- :map project-prefix-map
- ("P" . project-format-patch-last-commit))
-
 (with-eval-after-load 'smerge-mode
   (map-keymap
    (lambda (_key cmd)
@@ -908,19 +843,6 @@ Interactively prompts for the directory to create."
      ("\\end{multline*}" . ?⎭)
      ("\\end{multline}" . ?⎭))))
 
-(defun vc-root-shortlog-all (&optional limit)
-  "Show a one-line, graph-style Git log across all branches.
-With numeric prefix argument LIMIT, show that many commits
-(the default is `vc-log-show-limit' if > 0)."
-  (interactive
-   (list (when current-prefix-arg
-           (prefix-numeric-value current-prefix-arg))))
-  (let ((vc-git-shortlog-switches '("--all")))
-    ;; For a repo root this automatically gives the short view.
-    (vc-print-root-log limit)))
-
-(keymap-set vc-prefix-map "K" #'vc-root-shortlog-all)
-
 ;; https://git.sr.ht/~sebasmonia/stubvex/tree/main/item/stubvex.el
 (defun stubvex-cherry-pick ()
   "Cherry pick the commits selected in a log view.
@@ -941,34 +863,6 @@ Use with care."
       (pop-to-buffer buf-name)
       (when (y-or-n-p "Cherry pick failed - abort?")
         (vc-git-command buf-name 0 nil "cherry-pick" "--abort")))))
-
-(defun my-vc-dir-dired-marked ()
-  "Open Dired with marked files in vc-dir (or file at point)."
-  (interactive)
-  (let ((files (or (vc-dir-marked-files) 
-                   (list (vc-dir-current-file)))))
-    (if (null files)
-        (user-error "No files marked or at point")
-      (dired (cons default-directory files)))))
-
-(with-eval-after-load 'vc-dir
-  (define-key vc-dir-mode-map (kbd "C-c d") #'my-vc-dir-dired-marked))
-
-(defun my/diff-dired-changed-files ()
-  "Open a dired buffer showing all files mentioned in the current diff."
-  (interactive)
-  (unless (derived-mode-p 'diff-mode)
-    (user-error "Not in a diff buffer"))
-  (let* ((files nil)
-         (root (or (vc-root-dir) default-directory)))
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward "^\\+\\+\\+ [ab]/\\(.*\\)" nil t)
-        (let ((file (match-string 1)))
-          (push file files))))
-    (if files
-        (dired (cons root (nreverse files)))
-      (user-error "No files found in diff"))))
 
 (defun my/eval-expression-and-copy (exp &optional insert-value no-truncate char-print-limit copy-to-kill-ring)
   "Like `eval-expression', but with C-u C-u copies result to kill ring.
@@ -1899,39 +1793,6 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
                  (window-parameters (mode-line-format . none)))))
-
-(defun my-embark-vc-show-commit (commit)
-  "Show COMMIT via `vc-print-branch-log', constraining it to COMMIT^!."
-  (interactive (list (or (thing-at-point 'symbol t)
-                         (read-string "Commit: "))))
-  (let* ((trimmed (string-trim commit))
-         (range (if (string-suffix-p "^!" trimmed)
-                    trimmed
-                  (concat trimmed "^!"))))
-    (vc-print-branch-log range)))
-
-(defun my-embark-copy-commit (commit)
-  "Copy COMMIT to the kill ring."
-  (interactive (list (or (thing-at-point 'symbol t)
-                         (user-error "No commit at point"))))
-  (kill-new commit)
-  (message "Copied %s" (substring commit 0 (min 12 (length commit)))))
-
-(with-eval-after-load 'embark
-  (require 'subr-x)
-
-  ;; Treat 7–40 hex chars as Git commits wherever they appear.
-  (embark-define-regexp-target git-commit
-                               "\\b[0-9a-f]\\{7,40\\}\\b")
-  (add-to-list 'embark-target-finders #'embark-target-git-commit-at-point t)
-  (defvar-keymap my-embark-git-commit-map
-    :doc "Embark actions for Git commits."
-    "RET" #'my-embark-vc-show-commit   ; quick look at COMMIT^!
-    "l"   #'my-embark-vc-show-commit
-    "w"   #'my-embark-copy-commit)
-
-  (add-to-list 'embark-keymap-alist
-               '(git-commit . my-embark-git-commit-map)))
 
 (use-package embark-consult
   ;; only need to install it, embark loads it after consult if found
@@ -3614,6 +3475,27 @@ The value of `calc-language` is restored after BODY has been processed."
        (calc-set-language old-lang))))
 
 ;;; git
+
+(use-package czm-vc
+  :ensure (:host github :repo "ultronozm/czm-vc.el"
+                 :depth nil
+                 :inherit nil)
+  :after vc
+  :config
+  (with-eval-after-load 'vc
+    (keymap-set vc-prefix-map "K" #'czm-vc-root-shortlog-all)
+    (keymap-set vc-prefix-map "C" #'czm-vc-diff-staged)
+    (keymap-set vc-prefix-map "N" #'czm-vc-create-directory-with-git-repo))
+  (with-eval-after-load 'vc-dir
+    (keymap-set vc-dir-mode-map "C-c d" #'czm-vc-dir-dired-marked))
+  (with-eval-after-load 'log-view
+    (keymap-set log-view-mode-map "E" #'czm-vc-git-fixup-staged))
+  (with-eval-after-load 'project
+    (keymap-set project-prefix-map "P" #'czm-vc-project-format-patch-last-commit))
+  (with-eval-after-load 'diff-mode
+    (keymap-set diff-mode-map "C-c d" #'czm-vc-diff-dired-changed-files))
+  (with-eval-after-load 'embark
+    (czm-vc-embark-setup)))
 
 (use-package transient
   :ensure t
