@@ -96,7 +96,7 @@ for the agent configuration."
             reader-discuss-default-agent-config))
          (reading-window (selected-window))
          (file-link
-          (if-let ((file (buffer-file-name)))
+          (if-let* ((file (buffer-file-name)))
               (let ((line (line-number-at-pos))
                     (abbr (abbreviate-file-name file)))
                 (format "[[file:%s::%d][Full context: %s]]"
