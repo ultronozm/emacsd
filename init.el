@@ -4575,3 +4575,12 @@ create it if it doesn't already exist."
   (setopt iread-chars 20))
 
 (use-package code-cells)
+
+(use-package python-repl-eldoc
+  :ensure (:host github :repo "ultronozm/python-repl-eldoc.el"
+                 :depth nil
+                 :inherit nil)
+  :after python
+  :demand
+  :config
+  (python-repl-eldoc-global-mode 1))
