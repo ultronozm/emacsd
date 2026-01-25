@@ -3785,15 +3785,9 @@ complete document rather than just a previewed region."
                      "https://git.savannah.gnu.org/git/auctex.git")
             :depth nil
             :inherit nil
-            :pin t
-            :pre-build (("./autogen.sh")
-                        ("./configure"
-                         "--without-texmf-dir"
-                         "--with-packagelispdir=./"
-                         "--with-packagedatadir=./"
-                         "--with-lispdir=.")
-                        ("make"))
-            :build (:not elpaca--compile-info) ;; Make will take care of this step
+            :pre-build (("sh" "-lc" "cd doc && makeinfo --no-split auctex.texi")
+                        ("sh" "-lc" "cd doc && makeinfo --no-split preview-latex.texi"))
+            :build (:not elpaca--compile-info)
             :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
   ;; :demand                             ; otherwise, madness ensues.
   :config
