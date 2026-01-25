@@ -4530,3 +4530,11 @@ create it if it doesn't already exist."
                proc (process-live-p proc))
           (pop-to-buffer buf)
         (vterm vterm-buffer-name)))))
+
+(use-package diff-vc-patch
+  :ensure (:host github :repo "ultronozm/diff-vc-patch.el"
+                 :depth nil
+                 :inherit nil)
+  :after diff-mode
+  :demand
+  :hook (diff-mode . diff-vc-patch-mode))
