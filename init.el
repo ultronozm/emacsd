@@ -2690,6 +2690,7 @@ The content is escaped to prevent org syntax interpretation."
         ("b" . org-drag-element-backward))
   :config
   (require 'ob-shell)
+  (add-hook 'org-src-mode-hook #'hack-dir-local-variables-non-file-buffer)
   (dolist (item '(("m" . org-babel-mark-block)
                   ("\C-m" . org-babel-mark-block)))
     (add-to-list 'org-babel-key-bindings item))
