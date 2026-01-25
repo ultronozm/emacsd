@@ -10,4 +10,8 @@
 (scroll-bar-mode 0)
 (setq initial-frame-alist '((fullscreen . fullboth)
                             (vertical-scroll-bars . nil)))
-(setq default-frame-alist '((vertical-scroll-bars . nil)))
+(setq default-frame-alist '((vertical-scroll-bars . nil)
+                            ;; (width . 80) ;; default
+                            ;; (height . 36) ;; default
+                            (width . 120)
+                            (height . 54)))
