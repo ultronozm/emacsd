@@ -1844,13 +1844,40 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
            '("~/.emacs.d/init.el" "~/.emacs.d/init-personal.el"))
    nil))
 
+(defcustom my-python-venv-ripgrep-libs '("numpy" "matplotlib")
+  "Top-level packages under site-packages to search."
+  :type '(repeat string))
+
+(defun my-python-venv--project-root ()
+  (or (locate-dominating-file default-directory ".venv")
+      (user-error "No .venv found above %S" default-directory)))
+
+(defun my-python-venv--site-packages ()
+  (let* ((root (my-python-venv--project-root))
+         (libdir (expand-file-name ".venv/lib" root))
+         (pyver (car (seq-filter (lambda (d) (string-prefix-p "python" d))
+                                 (directory-files libdir nil "\\`python")))))
+    (unless pyver (user-error "No python* dir under %s" libdir))
+    (expand-file-name (concat ".venv/lib/" pyver "/site-packages") root)))
+
+(defun my-consult-ripgrep-python-venv-libs ()
+  (interactive)
+  (let* ((dir (my-python-venv--site-packages))
+         (globs (mapconcat (lambda (p) (format "--glob %s/**" (shell-quote-argument p)))
+                           my-python-venv-ripgrep-libs
+                           " "))
+         (consult-ripgrep-args
+          (concat consult-ripgrep-args " --no-ignore-parent " globs)))
+    (consult-ripgrep dir)))
+
 (defvar-keymap my-ripgrep-map
   :doc "Keymap for enhanced consult-ripgrep commands."
   "r" #'consult-ripgrep
   "d" #'consult-ripgrep-current-directory
   "l" #'consult-ripgrep-org-logs
   "t" #'consult-ripgrep-todo-notes
-  "c" #'consult-ripgrep-config-files)
+  "c" #'consult-ripgrep-config-files
+  "v" #'my-consult-ripgrep-python-venv-libs)
 
 (keymap-global-set "M-s r" my-ripgrep-map)
 
