@@ -3108,8 +3108,8 @@ Skips empty days and diary holidays."
   ((agent-shell-mode . abbrev-mode)
    (agent-shell-mode . my/agent-shell-mode-hook))
   :config
-  (setq agent-shell-openai-authentication
-        (agent-shell-openai-make-authentication :login t))
+  (setopt agent-shell-openai-authentication
+          (agent-shell-openai-make-authentication :login t))
   (setopt agent-shell-anthropic-default-model-id "opus")
 
   (setopt agent-shell-file-completion-enabled nil)
