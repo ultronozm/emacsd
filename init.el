@@ -2340,8 +2340,34 @@ them at the first newline."
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :ensure (:host github :repo "vedang/pdf-tools"
                  :depth nil
-                 :remotes (("orgtre" :repo "orgtre/pdf-tools"))
-                 :inherit nil :pin t)
+                 :inherit nil :pin t
+                 ;; :remotes (("orgtre" :repo "orgtre/pdf-tools"))
+                 ;; pdf-tools builds `epdfinfo' from `build/server'.  With Elpaca's
+                 ;; default symlinks, building would write artifacts into the git
+                 ;; checkout under `repos/'.  Copy server sources into the build dir
+                 ;; so building stays under `builds/'.
+                 :post-build
+                 (let* ((repo default-directory)
+                        (pkg (file-name-nondirectory (directory-file-name repo)))
+                        (build (expand-file-name (file-name-as-directory pkg) elpaca-builds-directory))
+                        (src (expand-file-name "server" repo))
+                        (dst (expand-file-name "build/server" build)))
+	           (when (file-directory-p src)
+	             (when (file-exists-p dst)
+	               (cond
+	                ((file-symlink-p dst) (delete-file dst))
+	                ((file-directory-p dst) (delete-directory dst t))
+	                (t (delete-file dst))))
+		     (make-directory (file-name-directory dst) t)
+		     (copy-directory src dst t t t)
+		     ;; Always regenerate autotools outputs in the copied build
+		     ;; tree (if available). This avoids brittle version checks
+		     ;; like `aclocal-1.16` and keeps all generated files under
+		     ;; `elpaca/builds/`.
+		     (when (executable-find "autoreconf")
+		       (let ((default-directory dst))
+		         (unless (zerop (call-process "autoreconf" nil "*elpaca pdf-tools autoreconf*" t "-i"))
+		           (error "pdf-tools: autoreconf failed in %s" default-directory)))))))
   :custom
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
   (global-auto-revert-ignore-modes '(pdf-view-mode))
