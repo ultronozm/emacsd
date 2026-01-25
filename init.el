@@ -3879,7 +3879,9 @@ numbered variant \"equation\"."
                  :inherit nil)
   :after latex
   :bind (:map LaTeX-mode-map
-              ("C-c '" . czm-tex-pythontex-edit-indirect)))
+              ("C-c '" . czm-tex-pythontex-edit-indirect))
+  :config
+  (czm-tex-pythontex-flush-left-begin-end-mode 1))
 
 (defun czm-setup-and-activate-tex-fold ()
   (require 'czm-pythontex)
