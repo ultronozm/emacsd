@@ -2230,7 +2230,6 @@ them at the first newline."
 		           (error "pdf-tools: autoreconf failed in %s" default-directory)))))))
   :custom
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
-  (global-auto-revert-ignore-modes '(pdf-view-mode))
   (pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
   ;; (pdf-annot-tweak-tooltips nil)
   :bind
@@ -2245,6 +2244,7 @@ them at the first newline."
         ("s-t" . pdf-view-jump-to-register)
         ("s-T" . pdf-view-position-to-register))
   :config
+  (add-to-list 'global-auto-revert-ignore-modes 'pdf-view-mode)
   (pdf-tools-install :no-query)
   (require 'pdf-occur)
   ;; (add-hook 'pdf-view-mode-hook #'pdf-view-roll-minor-mode)
@@ -4271,6 +4271,7 @@ numbered variant \"equation\"."
               ("C-M-i" . completion-at-point)
               ("C-c C-k" . quail-show-key))
   :config
+  (add-to-list 'global-auto-revert-ignore-modes 'lean4-mode)
   (add-to-list 'lean4-workspace-roots "~/.elan/toolchains/leanprover--lean4---v4.15.0-rc1/src/lean/")
   (font-lock-add-keywords 'lean4-mode '(("`\\<\\([^`]+\\)\\>`" 1 'font-lock-constant-face prepend)))
   :defer t)
