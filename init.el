@@ -2091,6 +2091,7 @@ them at the first newline."
   (global-treesit-auto-mode))
 
 (use-package eglot
+  :ensure nil
   :bind
   (:map eglot-mode-map
         ("C-c C-q" . eglot-code-action-quickfix)
