@@ -2671,6 +2671,7 @@ The content is escaped to prevent org syntax interpretation."
   :config
   (add-to-list 'warning-suppress-types '(copilot copilot-exceeds-max-char))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
+  (add-to-list 'copilot-indentation-alist '(lean4-mode 2))
   :custom
   (copilot-indent-offset-warning-disable t)
   :bind
