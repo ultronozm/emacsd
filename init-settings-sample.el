@@ -32,7 +32,8 @@
                         (tab-bar . 120))
       my-auctex-git-permissions nil
       my-latex-buffer-face '(:height 216 :width normal
-                                     :family "Andale Mono"))
+                                     :family "Andale Mono")
+      my-agent-shell-transcripts-dir "~/agent-transcripts/")
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")

@@ -74,7 +74,7 @@ command is invoked with a prefix argument."
       (when submit
         (shell-maker-submit)))
     (setq-local shell-maker-transcript-default-path
-                (expand-file-name "~/agent-transcripts/excerpts")))
+                (expand-file-name my-agent-shell-transcripts-dir)))
   shell-buffer)
 
 (defun reader-discuss-excerpt (excerpt &optional prefix)
@@ -2957,7 +2957,7 @@ Skips empty days and diary holidays."
                  :pin t)
   :config
   (setopt shell-maker-transcript-default-path
-          (expand-file-name "~/agent-transcripts/"))
+          (expand-file-name my-agent-shell-transcripts-dir))
   (setopt shell-maker-transcript-default-filename
           (lambda ()
             (format "%s--transcript.txt"
@@ -3025,7 +3025,7 @@ Skips empty days and diary holidays."
                 (goto-char (point-min))
                 (when (re-search-forward "[a-z][a-z-]*$")
                   (concat "-" (match-string 0)))))))
-   "~/agent-transcripts/"))
+   my-agent-shell-transcripts-dir))
 
 (defun my/agent-shell-mode-hook ()
   (my/set-TeX-master-preview)
