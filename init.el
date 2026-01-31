@@ -3574,12 +3574,18 @@ The value of `calc-language` is restored after BODY has been processed."
          :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")
          :chat-model "claude-sonnet-4-5")))
 
+(defun my/diff-hl-mode-hook ()
+  "Enable `diff-hl-margin-mode' in `lean4-mode' buffers."
+  (when (bound-and-true-p lean4-mode)
+    (diff-hl-margin-local-mode)))
+
 (use-package diff-hl
   :defer t
   :bind
   ("H-d" . diff-hl-mode)
   ("H-D" . diff-hl-set-reference-rev-in-project)
   :config
+  (add-hook 'diff-hl-mode-hook #'my/diff-hl-mode-hook)
   (setopt diff-hl-goto-hunk-old-revisions t)
   (setopt diff-hl-show-staged-changes nil)
   (set-face-attribute 'diff-hl-insert nil
