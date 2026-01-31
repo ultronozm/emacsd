@@ -3031,6 +3031,38 @@ Skips empty days and diary holidays."
   (my/set-TeX-master-preview)
   (setq-local preview-tailor-local-multiplier 0.8))
 
+(defconst my/agent-shell-workspace-root "/Users/Shared/workspace/"
+  "Path prefix for projects that should run agent executables as `runner'.")
+
+(defconst my/agent-shell-runner-prefix
+  '("ssh" "-i" "~/.ssh/runner_localhost" "runner@localhost" "--")
+  "Command prefix for running agent-shell backends as the `runner' user.")
+
+(defun my/agent-shell--set-container-runner-from-default-directory ()
+  "Set `agent-shell-container-command-runner' based on `default-directory'.
+Buffers rooted under `my/agent-shell-workspace-root' run agent backends
+and shell tool calls as the `runner' user via SSH-to-localhost. Other
+buffers run locally."
+  (when (boundp 'agent-shell-container-command-runner)
+    (let* ((dir (and (stringp default-directory)
+                     (expand-file-name default-directory)))
+           (in-workspace (and dir
+                              (file-in-directory-p dir my/agent-shell-workspace-root))))
+      (setq-local agent-shell-container-command-runner
+                  (when in-workspace my/agent-shell-runner-prefix))
+      (when (boundp 'agent-shell-text-file-capabilities)
+        ;; Disable ACP file read/write in the sandboxed workspace; rely on
+        ;; runner's filesystem access instead.
+        (setq-local agent-shell-text-file-capabilities (not in-workspace)))
+      ;; For Claude Code ACP, start in bypass-permissions mode in the sandboxed
+      ;; workspace to avoid interactive permission prompts.
+      (when (boundp 'agent-shell-anthropic-default-session-mode-id)
+        (setq-local agent-shell-anthropic-default-session-mode-id
+                    (when in-workspace "bypassPermissions"))))))
+
+(add-hook 'agent-shell-mode-hook
+          #'my/agent-shell--set-container-runner-from-default-directory)
+
 (use-package agent-shell
   :ensure (:host github :repo "xenodium/agent-shell"
                  :depth nil
