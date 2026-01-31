@@ -2213,22 +2213,22 @@ them at the first newline."
                         (build (expand-file-name (file-name-as-directory pkg) elpaca-builds-directory))
                         (src (expand-file-name "server" repo))
                         (dst (expand-file-name "build/server" build)))
-	           (when (file-directory-p src)
-	             (when (file-exists-p dst)
-	               (cond
-	                ((file-symlink-p dst) (delete-file dst))
-	                ((file-directory-p dst) (delete-directory dst t))
-	                (t (delete-file dst))))
-		     (make-directory (file-name-directory dst) t)
-		     (copy-directory src dst t t t)
-		     ;; Always regenerate autotools outputs in the copied build
-		     ;; tree (if available). This avoids brittle version checks
-		     ;; like `aclocal-1.16` and keeps all generated files under
-		     ;; `elpaca/builds/`.
-		     (when (executable-find "autoreconf")
-		       (let ((default-directory dst))
-		         (unless (zerop (call-process "autoreconf" nil "*elpaca pdf-tools autoreconf*" t "-i"))
-		           (error "pdf-tools: autoreconf failed in %s" default-directory)))))))
+	                  (when (file-directory-p src)
+	                    (when (file-exists-p dst)
+	                      (cond
+	                       ((file-symlink-p dst) (delete-file dst))
+	                       ((file-directory-p dst) (delete-directory dst t))
+	                       (t (delete-file dst))))
+		                   (make-directory (file-name-directory dst) t)
+		                   (copy-directory src dst t t t)
+		                   ;; Always regenerate autotools outputs in the copied build
+		                   ;; tree (if available). This avoids brittle version checks
+		                   ;; like `aclocal-1.16` and keeps all generated files under
+		                   ;; `elpaca/builds/`.
+		                   (when (executable-find "autoreconf")
+		                     (let ((default-directory dst))
+		                       (unless (zerop (call-process "autoreconf" nil "*elpaca pdf-tools autoreconf*" t "-i"))
+		                         (error "pdf-tools: autoreconf failed in %s" default-directory)))))))
   :custom
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
   (pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
