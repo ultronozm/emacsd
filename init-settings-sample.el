@@ -33,7 +33,8 @@
       my-auctex-git-permissions nil
       my-latex-buffer-face '(:height 216 :width normal
                                      :family "Andale Mono")
-      my-agent-shell-transcripts-dir "~/agent-transcripts/")
+      my-agent-shell-transcripts-dir "~/agent-transcripts/"
+      my-firefox-folder "~/Library/Application Support/Firefox")
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")
