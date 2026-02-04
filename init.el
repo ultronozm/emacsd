@@ -4300,11 +4300,13 @@ numbered variant \"equation\"."
   (lean4-info-plain nil)
   (lean4-info-refresh-even-if-invisible t)
   :bind (:map lean4-mode-map
-              ("RET" . newline)
-              ("C-j" . newline-and-indent)
-              ("C-M-i" . completion-at-point)
               ("C-c C-k" . quail-show-key))
   :config
+  (add-hook 'lean4-mode-hook
+          (lambda ()
+            (require 'lean4-imenu)
+            (setq-local eglot-stay-out-of (cons 'imenu eglot-stay-out-of))
+            (setq-local imenu-create-index-function #'lean4-imenu-create-index)))
   (add-to-list 'global-auto-revert-ignore-modes 'lean4-mode)
   (add-to-list 'lean4-workspace-roots "~/.elan/toolchains/leanprover--lean4---v4.15.0-rc1/src/lean/")
   (font-lock-add-keywords 'lean4-mode '(("`\\<\\([^`]+\\)\\>`" 1 'font-lock-constant-face prepend)))
