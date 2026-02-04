@@ -3610,8 +3610,8 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (defun my/diff-hl-mode-hook ()
   "Enable `diff-hl-margin-mode' in `lean4-mode' buffers."
-  (when (bound-and-true-p lean4-mode)
-    (diff-hl-margin-local-mode)))
+  (when (eq major-mode 'lean4-mode)
+    (diff-hl-margin-local-mode (if diff-hl-mode 1 -1))))
 
 (use-package diff-hl
   :defer t
