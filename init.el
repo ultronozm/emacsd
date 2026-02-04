@@ -4513,3 +4513,28 @@ create it if it doesn't already exist."
   :demand
   :config
   (python-repl-eldoc-global-mode 1))
+
+(use-package overleaf
+  :defer 5
+  :ensure (:host github
+                 :repo "ultronozm/overleaf.el"
+                 :remotes (("upstream" :repo "vale981/overleaf.el"))
+                 :depth nil
+                 :inherit nil
+                 :pin t)
+  :config
+  (with-eval-after-load 'overleaf
+    (add-hook 'overleaf-mode-hook
+              (lambda ()
+                (when (bound-and-true-p aggressive-indent-mode)
+                  (aggressive-indent-mode -1)))))
+  (let ((cookie-file (expand-file-name "~/.overleaf-cookies.gpg")))
+    (setopt overleaf-save-cookies (overleaf-save-cookies-to-file cookie-file))
+    (setopt overleaf-cookies
+            (overleaf-read-cookies-from-firefox
+             :firefox-folder (expand-file-name my-firefox-folder)
+             :profile "default-release")))
+  (with-eval-after-load 'latex
+    (keymap-set LaTeX-mode-map "C-c o" overleaf-command-map))
+  (with-eval-after-load 'bibtex
+    (keymap-set bibtex-mode-map "C-c o" overleaf-command-map)))
