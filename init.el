@@ -3023,7 +3023,7 @@ Skips empty days and diary holidays."
               (with-temp-buffer
                 (insert name)
                 (goto-char (point-min))
-                (when (re-search-forward "[a-z][a-z-]*$")
+                (when (re-search-forward "[a-z0-9][a-z0-9-]*$")
                   (concat "-" (match-string 0)))))))
    my-agent-shell-transcripts-dir))
 
