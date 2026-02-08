@@ -4338,7 +4338,11 @@ numbered variant \"equation\"."
   :config
   (with-eval-after-load 'flymake
     (setopt flymake-overlays-fontify-text-function #'czm-lean4-maybe-colorize)
-    (require 'flymake-overlays))
+    (require 'flymake-overlays)
+    (set-face-attribute 'flymake-overlays-face nil :background
+                        "#fff59d" :foreground "black")
+    (set-face-attribute 'czm-lean4-overlay-face nil :background
+                        "#fff59d" :foreground "black"))
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay)
   (advice-add 'lean4-info-buffer-redisplay :after #'czm-lean4--goal-overlay-update-adapter)
   (map-keymap
