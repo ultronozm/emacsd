@@ -744,6 +744,16 @@ Any prefix ARG →  call `diff-current-kill`.
               (let ((help-window-select nil))
                 (apply orig-fun args))))
 
+(defun my-diff-goto-source-same-window (orig &rest args)
+  "Make `diff-goto-source' reuse the current window."
+  (let ((display-buffer-overriding-action
+         '((display-buffer-same-window)
+           (inhibit-same-window . nil))))
+    (apply orig args)))
+
+(with-eval-after-load 'diff-mode
+  (advice-add 'diff-goto-source :around #'my-diff-goto-source-same-window))
+
 (defvar ediff-saved-window-configuration nil
   "Window configuration saved before Ediff was started.")
 
