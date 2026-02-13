@@ -247,7 +247,6 @@ for the agent configuration."
   (echo-keystrokes 0.01)
   (mark-even-if-inactive nil)
   (tramp-default-method "ssh")
-  (tramp-ssh-extra-args (list "-i" "~/.ssh/"))
   (password-cache-expiry nil)
   (enable-recursive-minibuffers t)
   (max-lisp-eval-depth 12000)
@@ -286,6 +285,7 @@ for the agent configuration."
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt vc-handled-backends '(Git))
   (setopt safe-local-variable-directories
           '("/Users/au710211/repos/nla-main/"
             "/Users/au710211/repos/nla-prep/"))
@@ -581,16 +581,17 @@ Pushes a mark at the starting position."
   (cdr project))
 
 (defun czm/project-try-local (dir)
-  "Determine if DIR is a non-Git project.
-DIR must include a .project file to be considered a project."
-  (let ((root (locate-dominating-file dir ".project")))
-    (and root (cons 'local root))))
+  "Determine if DIR is a non-Git local project using a .project marker."
+  (unless (file-remote-p dir) ; critical: avoid TRAMP directory walking
+    (let ((root (locate-dominating-file dir ".project")))
+      (and root (cons 'local root)))))
 
 (with-eval-after-load 'dired
   (setcdr dired-jump-map nil))
 
 (with-eval-after-load 'project
-  (add-to-list 'project-find-functions 'czm/project-try-local)
+  ;; Append, don't prepend, so mode-specific finders (like lean4) run first.
+  (add-to-list 'project-find-functions #'czm/project-try-local t)
   (add-to-list 'project-switch-commands '(project-shell "Shell")))
 
 (bind-keys
@@ -2182,12 +2183,31 @@ them at the first newline."
   (debbugs-gnu-mail-backend 'rmail)
   (debbugs-cache-expiry nil))
 
+(defun czm/bug-reference-vc-log-local-only ()
+  (unless (file-remote-p default-directory)
+    (bug-reference-mode 1)))
+
 (use-package bug-reference
   :ensure nil
   :config
-  (add-hook 'vc-git-region-history-mode-hook #'bug-reference-mode)
-  (add-hook 'vc-git-log-view-mode-hook #'bug-reference-mode)
+  (add-hook 'vc-git-region-history-mode-hook #'czm/bug-reference-vc-log-local-only)
+  (add-hook 'vc-git-log-view-mode-hook #'czm/bug-reference-vc-log-local-only)
   (keymap-set bug-reference-map "C-c C-o" #'bug-reference-push-button))
+
+(defun czm/vc-dir-remote-tweaks ()
+  (when (file-remote-p default-directory)
+    (setq-local vc-dir-show-outgoing-count nil)
+    (setq-local vc-git-show-stash nil)))
+
+(add-hook 'vc-dir-mode-hook #'czm/vc-dir-remote-tweaks)
+
+(connection-local-set-profile-variables
+ 'remote-direct-async-process
+ '((tramp-direct-async-process . t)))
+
+(connection-local-set-profiles
+ '(:application tramp :protocol "ssh" :machine "sandbox")
+ 'remote-direct-async-process)
 
 (defun my/disable-vertico-for-debbugs-search (orig-fun &rest args)
   "Temporarily disable Vertico while executing `debbugs-gnu-search'."
