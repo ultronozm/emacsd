@@ -3771,6 +3771,7 @@ complete document rather than just a previewed region."
             :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
   ;; :demand                             ; otherwise, madness ensues.
   :config
+  (setopt preview-image-type 'dvi*)
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
   (setq TeX-lisp-directory TeX-data-directory)
   (add-to-list 'TeX-file-extensions "tex\\.~[^~]+~")
@@ -3824,7 +3825,6 @@ complete document rather than just a previewed region."
                           (forward-line 1))))
 
   (preview-auto-cache-preamble t)
-  (preview-image-type 'dvi*)
   ;; (TeX-fold-quotes-on-insert t)
   (TeX-fold-bib-files (list my-master-bib-file))
   (TeX-ignore-warnings "Package hyperref Warning: Token not allowed in a PDF string")
@@ -4104,13 +4104,15 @@ numbered variant \"equation\"."
   :after latex
   :hook (LaTeX-mode . preview-auto-setup)
   :config
+  (keymap-global-set "H-r" #'preview-auto-mode)
+  (setopt preview-LaTeX-command-replacements
+          '(preview-LaTeX-disable-pdfoutput))
   (setq preview-protect-point t)
   (setq preview-locating-previews-message nil)
   (setq preview-leave-open-previews-visible t)
   :custom
   (preview-auto-interval 0.1)
-  (preview-LaTeX-command-replacements
-   '(preview-LaTeX-disable-pdfoutput)))
+  )
 
 (use-package buframe)
 
