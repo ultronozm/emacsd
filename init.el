@@ -753,6 +753,8 @@ Any prefix ARG →  call `diff-current-kill`.
     (apply orig args)))
 
 (with-eval-after-load 'diff-mode
+  (keymap-set diff-read-only-map "[" #'diff-file-prev)
+  (keymap-set diff-read-only-map "]" #'diff-file-next)
   (advice-add 'diff-goto-source :around #'my-diff-goto-source-same-window))
 
 (defvar ediff-saved-window-configuration nil
