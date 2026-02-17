@@ -16,9 +16,10 @@
 (load (locate-user-emacs-file "init-settings.el"))
 
 (when (string-equal system-type "darwin")
-  (setq ns-command-modifier 'meta)
-  (setq ns-alternate-modifier 'super)
-  (setq ns-function-modifier 'hyper))
+  (setq ns-command-modifier nil)
+  (setq ns-right-control-modifier 'super)
+  (setq ns-function-modifier 'hyper)
+  (setq ns-right-option-modifier 'super))
 
 (when (string-equal system-type "windows-nt")
   (setq w32-lwindow-modifier 'super)
