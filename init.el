@@ -154,6 +154,7 @@ for the agent configuration."
    ("C-s-o" . other-frame)
    ("C-x C-M-t" . transpose-regions)
    ("C-x C-b" . ibuffer)
+   ("C-x v /"  . vc-log-search)
    ("C-z" . nil)
    ("C-z c" . calendar)
    ("C-z d" . eldoc-doc-buffer)
