@@ -169,7 +169,7 @@ for the agent configuration."
    ("C-z A" . tab-recent)
    ("H-SPC H-SPC" . ediff-buffers)
    ("H-SPC SPC" . ediff-buffers)
-   ("H-SPC d" . diff-current-file)
+   ("H-SPC d" . diff-buffer-with-file)
    ("H-SPC e" . ediff-current-file)
    ;; H-ACFNHMD -- macOS annoyance
    ("H-b" . abbrev-mode)
@@ -217,7 +217,6 @@ for the agent configuration."
    ("s-g" . clipboard-compare)
    ("s-h" . nil)
    ("s-H" . nil)
-   ("s-i" . find-init-file)
    ("s-k" . kill-current-buffer)
    ("s-K" . kill-buffer-and-window)
    ;; "s-l" ; goto-line
@@ -360,33 +359,6 @@ for the agent configuration."
   (dired-mode . dired-omit-mode)
   (dired-mode . hl-line-mode))
 
-(defun diff-current-file ()
-  (interactive)
-  (diff-buffer-with-file (current-buffer)))
-
-(defun find-init-file (&optional arg)
-  "Opens an elisp file in the ~/.emacs.d or ~/.emacs.d/lisp directory.
-With prefix argument ARG, opens `user-init-file' directly."
-  (interactive "P")
-  (if arg
-      (find-file (or user-init-file
-                     (expand-file-name "init.el" user-emacs-directory)))
-    (let* ((elisp-dir1 (expand-file-name user-emacs-directory))
-           (elisp-files (append
-                         (directory-files elisp-dir1 t "\\.el$")))
-           (default-elisp-file (concat user-emacs-directory "init.el"))
-           (selected-elisp-file (completing-read
-                                 "Select elisp file: " elisp-files
-                                 nil t nil nil default-elisp-file)))
-      (when selected-elisp-file (find-file selected-elisp-file)))))
-
-(defun czm-dired-downloads ()
-  "Open the downloads directory in Dired mode."
-  (interactive)
-  (dired my-downloads-folder))
-
-(keymap-global-set "C-c d" #'czm-dired-downloads)
-
 (defun czm-find-math-document ()
   "Find a file in the math documents folder."
   (interactive)
@@ -394,13 +366,6 @@ With prefix argument ARG, opens `user-init-file' directly."
   (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
 
 (keymap-global-set "s-d" #'czm-find-math-document)
-
-(defun czm-dired-drafts ()
-  "Open drafts folder in Dired."
-  (interactive)
-  (dired message-auto-save-directory))
-
-(keymap-global-set "C-z u" #'czm-dired-drafts)
 
 (defun my/save-clipboard-to-kill-ring ()
   "Save current system clipboard to kill ring without yanking."
@@ -1103,12 +1068,6 @@ With prefix ARG, attach all visible buffers instead."
   (setq-local preview-tailor-local-multiplier 0.6)
   (setq-local TeX-master my-preview-master))
 
-(defun my-rmail-with-prefix ()
-  "Call rmail with a prefix argument of 4."
-  (interactive)
-  (let ((current-prefix-arg '(4)))
-    (call-interactively #'rmail)))
-
 (defun my-rmail-refile-and-store-link ()
   "Refile current message and store an org link to it."
   (interactive)
@@ -1138,8 +1097,7 @@ This mirrors `rmail-summary-output' but also stores a link."
   :ensure nil
   :defer t
   :bind
-  ("C-z r" . my-rmail-with-prefix)
-  ("C-z R" . rmail)
+  ("C-z r" . rmail)
   (:map rmail-mode-map
         ("S" . my-rmail-refile-and-store-link)
         ("q" . rmail-bury)
@@ -1644,6 +1602,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
    ([remap repeat-complex-command] . consult-complex-command)
    ([remap switch-to-buffer] . consult-buffer)
    ([remap bookmark-jump] . consult-bookmark)
+   ("s-i" . consult-bookmark)
    ([remap project-switch-to-buffer] . consult-project-buffer)
    ("s-t" . consult-register-load)
    ("s-T" . consult-register-store)
@@ -2390,18 +2349,9 @@ in all current and future PDF buffers."
   :ensure nil
   :demand)
 
-(defun czm-org-edit-src ()
-  "Edit source block at point, with some customizations.
-- Set fill-column to a large number.
-- Set TeX-master to my-preview-master."
+(defun my/set-TeX-master-preview ()
   (interactive)
-  (let ((src-buffer
-         (save-window-excursion
-           (org-edit-src-code)
-           (setq fill-column 999999) ; should this be in a latex mode hook?
-           (setq TeX-master my-preview-master)
-           (current-buffer))))
-    (switch-to-buffer src-buffer)))
+  (setq-local TeX-master "~/doit/preview-master.tex"))
 
 (defun my/org-schedule-and-refile ()
   "Schedule the current heading and refile it to the Scheduled node."
@@ -2581,7 +2531,6 @@ The content is escaped to prevent org syntax interpretation."
            (progn
              (insert "#+end_src")
              (newline))))
-        ("C-c p" . czm-org-edit-src)
         ("M-{" . org-backward-paragraph)
         ("M-}" . org-forward-paragraph)
         ("C-c C-' e" . my/org-insert-example-with-yank)
@@ -2621,6 +2570,7 @@ The content is escaped to prevent org syntax interpretation."
   :config
   (require 'ob-shell)
   (add-hook 'org-src-mode-hook #'hack-dir-local-variables-non-file-buffer)
+  (add-hook 'org-src-mode-hook #'my/set-TeX-master-preview)
   (dolist (item '(("m" . org-babel-mark-block)
                   ("\C-m" . org-babel-mark-block)))
     (add-to-list 'org-babel-key-bindings item))
@@ -3103,10 +3053,6 @@ buffers run locally."
                  :inherit nil)
   :bind
   (:map agent-shell-mode-map
-        ("s-n" . agent-shell-ui-forward-block)
-        ("s-p" . agent-shell-ui-backward-block)
-        ("n" . my/agent-shell-ui-forward-block-or-self-insert)
-        ("p" . my/agent-shell-ui-backward-block-or-self-insert)
         ("o" . my/agent-shell-ui-toggle-fragment-at-point-or-self-insert)
         ("C-c t" . (lambda () (interactive) (org-timestamp '(16))))
         ("C-c m" . (lambda () (interactive)
@@ -3190,6 +3136,23 @@ at the input prompt and a character key was pressed, insert the
 character instead of toggling."
   (interactive)
   (my/agent-shell--call-or-self-insert #'agent-shell-ui-toggle-fragment-at-point))
+
+;; (use-package preview-tailor
+;;   :after preview
+;;   :demand
+;;   :config (preview-tailor-init)
+;;   :hook (kill-emacs . preview-tailor-save))
+
+;; (use-package preview-auto
+;;   :after preview
+;;   :demand
+;;   :hook (LaTeX-mode . preview-auto-setup)
+;;   :config
+;;   (setopt preview-LaTeX-command-replacements
+;;           '(preview-LaTeX-disable-pdfoutput))
+;;   (setq preview-protect-point t)
+;;   (setq preview-locating-previews-message nil)
+;;   (setq preview-leave-open-previews-visible t))
 
 (use-package knockknock
   :defer t
