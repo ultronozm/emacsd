@@ -542,23 +542,11 @@ Pushes a mark at the starting position."
       (quietly-read-abbrev-file file)))
   (quietly-read-abbrev-file (concat user-emacs-directory "abbrev.el")))
 
-;; don't remember the point of this
-(cl-defmethod project-root ((project (head local)))
-  "TODO."
-  (cdr project))
-
-(defun czm/project-try-local (dir)
-  "Determine if DIR is a non-Git local project using a .project marker."
-  (unless (file-remote-p dir) ; critical: avoid TRAMP directory walking
-    (let ((root (locate-dominating-file dir ".project")))
-      (and root (cons 'local root)))))
-
 (with-eval-after-load 'dired
   (setcdr dired-jump-map nil))
 
 (with-eval-after-load 'project
-  ;; Append, don't prepend, so mode-specific finders (like lean4) run first.
-  (add-to-list 'project-find-functions #'czm/project-try-local t)
+  (setopt project-vc-extra-root-markers '(".project"))
   (add-to-list 'project-switch-commands '(project-shell "Shell")))
 
 (bind-keys
