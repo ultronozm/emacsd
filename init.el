@@ -4398,9 +4398,9 @@ numbered variant \"equation\"."
 (use-package vundo
   :ensure t
   :defer t
+  :bind (([remap undo] . my/vundo))
   :config
-  (setopt vundo-use-region-undo t)
-  (keymap-global-set "<remap> <undo>" #'my/vundo))
+  (setopt vundo-use-region-undo t))
 
 (with-eval-after-load 'mailcap
   (dolist (item
