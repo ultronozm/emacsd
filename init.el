@@ -4448,8 +4448,7 @@ numbered variant \"equation\"."
   :defer t
   :config
   (setopt vundo-use-region-undo t)
-  :bind
-  (:map global-map ("C-/" . my/vundo)))
+  (keymap-global-set "<remap> <undo>" #'my/vundo))
 
 (with-eval-after-load 'mailcap
   (dolist (item
