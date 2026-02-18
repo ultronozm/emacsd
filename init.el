@@ -4246,13 +4246,23 @@ numbered variant \"equation\"."
    '("latexmk -pvc -shell-escape -pdf -view=none -e "
      ("$pdflatex=q/pdflatex %O -synctex=1 -file-line-error -interaction=nonstopmode %S/"))))
 
+(defun my/preview-auto-mode-ensure-TeX-master (arg)
+  (interactive "P")
+  (if arg
+      (progn
+        (preview-auto-mode -1)
+        (preview-clearout-buffer))
+    (unless (bound-and-true-p TeX-master)
+      (setq-local TeX-master my-preview-master))
+    (preview-auto-mode (if preview-auto-mode -1 1))))
+
 (use-package preview-auto
   :repo-scan
   :ensure (:host github :repo "ultronozm/preview-auto.el" :depth nil)
   :after latex
   :hook (LaTeX-mode . preview-auto-setup)
   :config
-  (keymap-global-set "H-r" #'preview-auto-mode)
+  (keymap-global-set "H-r" #'my/preview-auto-mode-ensure-TeX-master)
   (setopt preview-LaTeX-command-replacements
           '(preview-LaTeX-disable-pdfoutput))
   (setq preview-protect-point t)
