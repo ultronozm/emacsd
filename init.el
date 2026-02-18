@@ -1143,6 +1143,8 @@ This keeps summary navigation commands in the summary window while making
         (switch-to-buffer buf)
         (rmail-show-message msg)))))
 
+(load "/Users/au710211/emacs-rmail-summary/lisp/mail/rmailsum.el")
+
 (use-package rmail
   :ensure nil
   :defer t
@@ -1154,6 +1156,9 @@ This keeps summary navigation commands in the summary window while making
         ("M-m" . nil))
   :hook (rmail-mode . my-rmail-mode-hook)
   :custom
+  (rmail-summary-address-width 35)
+  (rmail-summary-sender-function #'rmail-summary-name-or-address)
+  (rmail-summary-recipient-function #'rmail-summary-recipient-names)
   (rmail-mime-attachment-dirs-alist `((".*" ,my-downloads-folder)))
   (rmail-mime-save-action (lambda (file) (dired-jump nil file)))
   (rmail-file-name (expand-file-name "inbox.rmail" my-mail-folder))
