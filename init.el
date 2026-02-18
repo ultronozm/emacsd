@@ -2272,7 +2272,8 @@ in all current and future PDF buffers."
            (dolist (buf (buffer-list))
              (with-current-buffer buf
                (when (derived-mode-p 'pdf-view-mode)
-                 (pdf-view-midnight-minor-mode (if enable 1 -1))))))))
+                 (ignore-errors
+                   (pdf-view-midnight-minor-mode (if enable 1 -1)))))))))
     (if global-pdf-view-midnight-minor-mode
         (progn
           (funcall process-pdf-buffers t)
