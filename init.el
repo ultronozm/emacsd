@@ -1207,9 +1207,17 @@ This mirrors `rmail-summary-output' but also stores a link."
                 (expand-file-name "sent.rmail" my-mail-folder))))
      (format "Fcc: %s\n" file))))
 
+(defun my-message-insert-debbugs-cc (address)
+  "Insert an X-Debbugs-Cc header with ADDRESS."
+  (interactive (list (read-string "X-Debbugs-Cc: " nil nil "bug-gnu-emacs@gnu.org")))
+  (save-excursion
+    (message-add-header (format "X-Debbugs-Cc: %s" address))))
+
 (use-package message
   :ensure nil
   :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
+  :bind (:map message-mode-map
+        ("C-c C-f C-z" . my-message-insert-debbugs-cc))
   :custom
   (message-make-forward-subject-function #'message-forward-subject-fwd))
 
