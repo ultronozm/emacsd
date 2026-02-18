@@ -701,17 +701,9 @@ Any prefix ARG →  call `diff-current-kill`.
               (let ((help-window-select nil))
                 (apply orig-fun args))))
 
-(defun my-diff-goto-source-same-window (orig &rest args)
-  "Make `diff-goto-source' reuse the current window."
-  (let ((display-buffer-overriding-action
-         '((display-buffer-same-window)
-           (inhibit-same-window . nil))))
-    (apply orig args)))
-
 (with-eval-after-load 'diff-mode
   (keymap-set diff-read-only-map "[" #'diff-file-prev)
-  (keymap-set diff-read-only-map "]" #'diff-file-next)
-  (advice-add 'diff-goto-source :around #'my-diff-goto-source-same-window))
+  (keymap-set diff-read-only-map "]" #'diff-file-next))
 
 (defvar ediff-saved-window-configuration nil
   "Window configuration saved before Ediff was started.")
@@ -1143,6 +1135,53 @@ This keeps summary navigation commands in the summary window while making
         (switch-to-buffer buf)
         (rmail-show-message msg)))))
 
+(defun my-display-buffer-rmail-unsent-p (buffer-or-name _action)
+  "Return non-nil for compose buffers opened from Rmail."
+  (let ((name (if (bufferp buffer-or-name)
+                  (buffer-name buffer-or-name)
+                buffer-or-name)))
+    (and (stringp name)
+         (or (string-prefix-p "*unsent" name)
+             (string= name "*mail*"))
+         (with-current-buffer (window-buffer (selected-window))
+           (derived-mode-p 'rmail-mode 'rmail-summary-mode)))))
+
+(defun my-help-from-what-cursor-position-p (buf-name _action)
+  "Return non-nil if BUF-NAME is a Help buffer for `what-cursor-position'."
+  (when (string= buf-name "*Help*")
+    (with-current-buffer buf-name
+      (save-excursion
+        (goto-char (point-min))
+        (looking-at "^position:")))))
+
+(setopt magit-commit-diff-inhibit-same-window t)
+
+(setq display-buffer-base-action
+      '((display-buffer-reuse-window display-buffer-same-window)
+        (inhibit-same-window . nil)))
+
+(setq display-buffer-alist
+      (list
+       '("\\`\\*?magit-diff:.*\\*?\\'"
+         (display-buffer-in-side-window)
+         (side . right)
+         (slot . 0)
+         (window-width . 0.45)
+         (window-parameters . ((no-delete-other-windows . t))))
+       '("\\`\\*\\(?:.*-\\)?compilation\\*\\(?:<[^>]+>\\)?\\'"
+         (display-buffer-reuse-window display-buffer-in-side-window)
+         (side . bottom)
+         (reusable-frames . visible)
+         (window-height . 0.3))
+       '(my-help-from-what-cursor-position-p
+         (display-buffer-in-side-window)
+         (side . right)
+         (window-width . 0.3)
+         (select . nil))
+       '(my-display-buffer-rmail-unsent-p
+         display-buffer-same-window
+         (inhibit-same-window . nil))))
+
 (load "/Users/au710211/emacs-rmail-summary/lisp/mail/rmailsum.el")
 
 (use-package rmail
@@ -1201,17 +1240,7 @@ This keeps summary navigation commands in the summary window while making
     (define-key rmail-summary-mode-map "O"
                 #'my-rmail-summary-output-and-store-link)
     (define-key rmail-summary-mode-map (kbd "RET")
-                #'my-rmail-summary-goto-msg-and-select))
-  (add-to-list 'display-buffer-alist
-               '((lambda (buffer-name _action)
-                   (with-current-buffer buffer-name
-                     (eq major-mode 'rmail-summary-mode)))
-                 (display-buffer-reuse-window display-buffer-same-window)))
-  (add-to-list 'display-buffer-alist
-               '((lambda (buffer-name action)
-                   (with-current-buffer buffer-name
-                     (eq major-mode 'rmail-mode)))
-                 (display-buffer-reuse-window display-buffer-below-selected))))
+                #'my-rmail-summary-goto-msg-and-select)))
 
 (defun my-always-enable-rmail-font-lock (&rest _)
   "Ensure font-lock-mode is enabled after rmail runs."
@@ -2937,11 +2966,7 @@ The content is escaped to prevent org syntax interpretation."
   (ai-org-chat-select-model "sonnet 4.6")
   (add-hook 'ai-org-chat-response-finished-functions
             #'ai-org-chat-auto-format-response
-            t)
-  (add-to-list 'display-buffer-alist
-               '("\\*ai-chat\\.org\\*\\|--ai-chat\\.org"
-                 (display-buffer-same-window)
-                 (inhibit-same-window . nil))))
+            t))
 
 ;; I use the following functions to provide context to ai-org-chat
 
