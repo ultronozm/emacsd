@@ -2888,7 +2888,7 @@ The content is escaped to prevent org syntax interpretation."
   (add-hook 'llm-tool-collection-post-define-functions #'ai-org-chat-register-tool-spec)
   (mapcar #'ai-org-chat-register-tool-spec (llm-tool-collection-get-all))
   (require 'exec-path-from-shell)
-  (ai-org-chat-select-model "sonnet 4.5")
+  (ai-org-chat-select-model "sonnet 4.6")
   (add-hook 'ai-org-chat-response-finished-functions
             #'ai-org-chat-auto-format-response
             t)
@@ -3784,7 +3784,7 @@ The completion candidates include the Git status of each file."
   (setq llm-vc-commit-model
         (make-llm-claude
          :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")
-         :chat-model "claude-sonnet-4-5")))
+         :chat-model "claude-sonnet-4-6")))
 
 (defun my/diff-hl-mode-hook ()
   "Enable `diff-hl-margin-mode' in `lean4-mode' buffers."
