@@ -4625,7 +4625,7 @@ When used via Embark, WORD comes from the current target."
   (with-eval-after-load 'embark
     (dolist (map '(embark-symbol-map embark-identifier-map embark-region-map))
       (when (boundp map)
-        (define-key (symbol-value map) (kbd "C-d") #'my-osx-dictionary-search)))))
+        (keymap-set (symbol-value map) "C-d" #'my-osx-dictionary-search)))))
 
 (with-eval-after-load 'image-mode
   (keymap-unset image-mode-map "W"))
