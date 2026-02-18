@@ -2276,12 +2276,7 @@ them at the first newline."
    ("M-." . embark-dwim)
    ("C-h B" . embark-bindings))
   :init
-  (setq prefix-help-command #'embark-prefix-help-command)
-  :config
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
+  (setq prefix-help-command #'embark-prefix-help-command))
 
 (use-package embark-consult
   ;; only need to install it, embark loads it after consult if found
