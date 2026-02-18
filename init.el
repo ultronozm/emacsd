@@ -1783,31 +1783,6 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
 
 (keymap-global-set "M-s r" my-ripgrep-map)
 
-(use-package embark
-  :repo-scan
-  :ensure (:host github
-                 :repo "ultronozm/embark"
-                 :remotes (("upstream" :repo "oantolin/embark"))
-                 :depth nil
-                 :inherit nil
-                 :pin t)
-  :bind
-  (("C-." . embark-act)
-   ("M-." . embark-dwim)
-   ("C-h B" . embark-bindings))
-  :init
-  (setq prefix-help-command #'embark-prefix-help-command)
-  :config
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
-
-(use-package embark-consult
-  ;; only need to install it, embark loads it after consult if found
-  :hook
-  (embark-collect-mode . consult-preview-at-point-mode))
-
 (use-package info-colors
   :ensure (:host github :repo "ubolonton/info-colors" :inherit nil)
   :hook (Info-selection . info-colors-fontify-node))
@@ -2221,6 +2196,128 @@ them at the first newline."
 
 (advice-add 'debbugs-gnu-search :around #'my/disable-vertico-for-debbugs-search)
 (advice-add 'debbugs-gnu-bugs :around #'my/disable-vertico-for-debbugs-search)
+
+;;; embark
+
+(use-package embark
+  :repo-scan
+  :ensure (:host github
+                 :repo "ultronozm/embark"
+                 :remotes (("upstream" :repo "oantolin/embark"))
+                 :depth nil
+                 :inherit nil
+                 :pin t)
+  :bind
+  (("C-." . embark-act)
+   ("M-." . embark-dwim)
+   ("C-h B" . embark-bindings))
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command)
+  :config
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+(use-package embark-consult
+  ;; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+(defun my-embark-copy-library-path (library)
+  "Copy the file path of Emacs Lisp LIBRARY to the kill ring."
+  (interactive "sLocate library: ")
+  (let ((path (find-library-name library)))
+    (unless path
+      (user-error "Cannot locate library `%s'" library))
+    (kill-new path)
+    (message "%s" path)))
+
+(defconst my-embark-file-line-location-regexp
+  "\\`\\(.+\\):\\([0-9]+\\)\\(?::\\([0-9]+\\)\\)?\\'"
+  "Regexp matching FILE:LINE and FILE:LINE:COLUMN locations.")
+
+(defun my-embark--sanitize-file-line-location (location)
+  "Drop trailing punctuation from LOCATION."
+  (replace-regexp-in-string "[.,;!?)}\\]>\"']+\\'" "" location))
+
+(defun my-embark--parse-file-line-location (location)
+  "Parse LOCATION and return a list (FILE LINE COLUMN)."
+  (setq location (my-embark--sanitize-file-line-location location))
+  (unless (and (stringp location)
+               (string-match my-embark-file-line-location-regexp location))
+    (user-error "Not a file location: %s" location))
+  (let ((file (expand-file-name (match-string 1 location)))
+        (line (max 1 (string-to-number (match-string 2 location))))
+        (column (and (match-string 3 location)
+                     (string-to-number (match-string 3 location)))))
+    (list file line column)))
+
+(defun my-embark--visit-file-line-location (location finder)
+  "Open LOCATION with FINDER and move point to its line and column."
+  (pcase-let ((`(,file ,line ,column)
+               (my-embark--parse-file-line-location location)))
+    (unless (file-exists-p file)
+      (user-error "File does not exist: %s" file))
+    (when (fboundp 'xref-push-marker-stack)
+      (xref-push-marker-stack))
+    (funcall finder file)
+    (goto-char (point-min))
+    (forward-line (1- line))
+    (when column
+      (move-to-column (max 0 (1- column))))))
+
+(defun my-embark-find-file-line (location)
+  "Visit LOCATION in the current window."
+  (interactive "sFind location (FILE:LINE[:COLUMN]): ")
+  (my-embark--visit-file-line-location location #'find-file))
+
+(defun my-embark-find-file-line-other-window (location)
+  "Visit LOCATION in another window."
+  (interactive "sFind location in other window (FILE:LINE[:COLUMN]): ")
+  (my-embark--visit-file-line-location location #'find-file-other-window))
+
+(defun my-embark-target-file-line-at-point ()
+  "Target FILE:LINE or FILE:LINE:COLUMN text at point."
+  (when-let* ((raw (thing-at-point 'filename t))
+              (location (my-embark--sanitize-file-line-location
+                         (substring-no-properties raw)))
+              (bounds (bounds-of-thing-at-point 'filename))
+              ((string-match my-embark-file-line-location-regexp location))
+              (file (expand-file-name (match-string 1 location)))
+              ((file-exists-p file)))
+    `(file-line ,location ,@bounds)))
+
+(defun my-embark--insert-target-finder-before (finder before)
+  "Insert FINDER in `embark-target-finders' before BEFORE."
+  (setq embark-target-finders
+        (let ((finders (remq finder embark-target-finders))
+              (result nil)
+              (inserted nil))
+          (dolist (fn finders)
+            (when (and (not inserted) (eq fn before))
+              (push finder result)
+              (setq inserted t))
+            (push fn result))
+          (unless inserted
+            (push finder result))
+          (nreverse result))))
+
+(defvar my-embark-file-line-map
+  (let ((map (make-sparse-keymap)))
+    (keymap-set map "RET" #'my-embark-find-file-line)
+    (keymap-set map "f" #'my-embark-find-file-line)
+    (keymap-set map "o" #'my-embark-find-file-line-other-window)
+    map)
+  "Keymap for Embark actions on FILE:LINE targets.")
+
+(with-eval-after-load 'embark
+  (set-keymap-parent my-embark-file-line-map embark-general-map)
+  (add-to-list 'embark-keymap-alist '(file-line my-embark-file-line-map))
+  (my-embark--insert-target-finder-before
+   #'my-embark-target-file-line-at-point
+   #'embark-target-file-at-point)
+  (keymap-set embark-library-map "W" #'my-embark-copy-library-path))
 
 ;;; pdf
 
