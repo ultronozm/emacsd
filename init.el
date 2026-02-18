@@ -286,6 +286,7 @@ for the agent configuration."
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt isearch-lazy-count t)
   (setopt vc-handled-backends '(Git))
   (setopt safe-local-variable-directories
           '("/Users/au710211/repos/nla-main/"
