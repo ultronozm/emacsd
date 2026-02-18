@@ -1128,6 +1128,21 @@ This mirrors `rmail-summary-output' but also stores a link."
     (rmail-summary-output target n)
     (my-rmail-store-link-to-last-message target)))
 
+(defun my-rmail-summary-goto-msg-and-select (&optional n nowarn)
+  "Go to message N and show it in the current window's Rmail buffer.
+This keeps summary navigation commands in the summary window while making
+`RET' replace the summary window with the main Rmail buffer."
+  (interactive
+   (list (and current-prefix-arg
+              (prefix-numeric-value current-prefix-arg))
+         nil))
+  (when (rmail-summary-goto-msg n nowarn t)
+    (let ((msg (rmail-summary-msg-number))
+          (buf (and (boundp 'rmail-buffer) rmail-buffer)))
+      (when (buffer-live-p buf)
+        (switch-to-buffer buf)
+        (rmail-show-message msg)))))
+
 (use-package rmail
   :ensure nil
   :defer t
@@ -1179,7 +1194,14 @@ This mirrors `rmail-summary-output' but also stores a link."
   (add-to-list 'auto-mode-alist '("\\.mbox$" . rmail-mode))
   (with-eval-after-load 'rmailsum
     (define-key rmail-summary-mode-map "O"
-                #'my-rmail-summary-output-and-store-link))
+                #'my-rmail-summary-output-and-store-link)
+    (define-key rmail-summary-mode-map (kbd "RET")
+                #'my-rmail-summary-goto-msg-and-select))
+  (add-to-list 'display-buffer-alist
+               '((lambda (buffer-name _action)
+                   (with-current-buffer buffer-name
+                     (eq major-mode 'rmail-summary-mode)))
+                 (display-buffer-reuse-window display-buffer-same-window)))
   (add-to-list 'display-buffer-alist
                '((lambda (buffer-name action)
                    (with-current-buffer buffer-name
