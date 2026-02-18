@@ -3669,6 +3669,46 @@ The value of `calc-language` is restored after BODY has been processed."
   (with-eval-after-load 'embark
     (czm-vc-embark-setup)))
 
+
+(defun emacs-solo/switch-git-status-buffer ()
+  "Switch to a buffer visiting a modified or renamed file in the current Git repo.
+The completion candidates include the Git status of each file."
+  (interactive)
+  (require 'vc-git)
+  (let ((repo-root (vc-git-root default-directory)))
+    (if (not repo-root)
+        (message "Not inside a Git repository.")
+      (let* ((expanded-root (expand-file-name repo-root))
+             (cmd-output (vc-git--run-command-string nil "status" "--porcelain=v1"))
+             (target-files
+              (let (files)
+                (dolist (line (split-string cmd-output "\n" t) (nreverse files))
+                  (when (>= (length line) 3)
+                    (let ((status (substring line 0 2))
+                          (path-info (substring line 3)))
+                      (cond
+                       ;; Renamed files
+                       ((string-prefix-p "R" status)
+                        (let* ((paths (split-string path-info " -> " t))
+                               (new-path (cadr paths)))
+                          (when new-path
+                            (push (cons (format "R %s" new-path) new-path) files))))
+                       ;; Modified or untracked
+                       ((or (string-match "M" status)
+                            (string-match "\\?\\?" status))
+                        (push (cons (format "%s %s" status path-info) path-info) files)))))))))
+        (if (null target-files)
+            (message "No modified or renamed files found.")
+          (let* ((candidates target-files)
+                 (selection (completing-read "Switch to buffer (Git modified): "
+                                             (mapcar #'car candidates) nil t)))
+            (when selection
+              (let ((file-path (cdr (assoc selection candidates))))
+                (when file-path
+                  (find-file (expand-file-name file-path expanded-root)))))))))))
+
+(keymap-global-set "C-x C-g" #'emacs-solo/switch-git-status-buffer)
+
 (use-package transient
   :ensure t
   :demand t)
