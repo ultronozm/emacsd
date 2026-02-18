@@ -987,6 +987,52 @@ In light mode:
         ("<down>" . nil)
         ("<up>" . nil)))
 
+;;; tramp
+
+(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+
+(with-eval-after-load 'tramp
+  ;; Use bash on the remote side so PATH setup is loaded.
+  (setq tramp-default-remote-shell "/bin/bash")
+  (setq tramp-remote-shell-args '("-lc"))
+  ;; Also let TRAMP use the remote PATH.
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
+(with-eval-after-load 'tramp
+  (setq tramp-verbose 1)                 ; less chatter (and slightly less work)
+  (setq tramp-use-ssh-controlmaster-options t)
+  (setq tramp-chunksize 2000)            ; fewer round trips for larger files
+  ;; Cache file attributes more aggressively
+  (setq remote-file-name-inhibit-cache nil))
+
+(with-eval-after-load 'tramp
+  (setq tramp-verbose 3)                 ; less chatter (and slightly less work)
+  (setq tramp-use-ssh-controlmaster-options t)
+  (setq tramp-chunksize nil)            ; fewer round trips for larger files
+  ;; Cache file attributes more aggressively
+  (setq remote-file-name-inhibit-cache 10))
+
+(with-eval-after-load 'tramp
+  ;; Make async remote processes (used by Eglot) reliable on /ssh:sandbox:
+  ;; - enable direct async processes for this host
+  ;; - ensure ssh is run without a tty (default is -t -t, which breaks LSP)
+  (require 'seq)
+
+  (setq tramp-connection-properties
+        (append
+         (seq-remove (lambda (elt)
+                       (and (equal (nth 0 elt) "/ssh:sandbox:")
+                            (equal (nth 1 elt) "direct-async")))
+                     tramp-connection-properties)
+         (list (list "/ssh:sandbox:" "direct-async" '("-T")))))
+
+  (connection-local-set-profile-variables
+   'sandbox-direct-async-process
+   '((tramp-direct-async-process . t)))
+  (connection-local-set-profiles
+   '(:application tramp :protocol "ssh" :machine "sandbox")
+   'sandbox-direct-async-process))
+
 ;;; mail
 
 (defun mml-attach-buffer-or-file (buffer &optional type description disposition filename)
