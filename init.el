@@ -357,6 +357,51 @@ for the agent configuration."
   (dired-mode . dired-omit-mode)
   (dired-mode . hl-line-mode))
 
+(defun my-help-from-what-cursor-position-p (buf-name _action)
+  "Return non-nil if BUF-NAME is a Help buffer for `what-cursor-position'."
+  (when (string= buf-name "*Help*")
+    (with-current-buffer buf-name
+      (save-excursion
+        (goto-char (point-min))
+        (looking-at "^position:")))))
+
+(defun my-display-buffer-rmail-unsent-p (buffer-or-name _action)
+  "Return non-nil for compose buffers opened from Rmail."
+  (let ((name (if (bufferp buffer-or-name)
+                  (buffer-name buffer-or-name)
+                buffer-or-name)))
+    (and (stringp name)
+         (or (string-prefix-p "*unsent" name)
+             (string= name "*mail*"))
+         (with-current-buffer (window-buffer (selected-window))
+           (derived-mode-p 'rmail-mode 'rmail-summary-mode)))))
+
+(setq display-buffer-base-action
+      '((display-buffer-reuse-window display-buffer-same-window)
+        (inhibit-same-window . nil)))
+
+(setq display-buffer-alist
+      (list
+       '("\\`\\*?magit-diff:.*\\*?\\'"
+         (display-buffer-in-side-window)
+         (side . right)
+         (slot . 0)
+         (window-width . 0.45)
+         (window-parameters . ((no-delete-other-windows . t))))
+       '("\\`\\*\\(?:.*-\\)?compilation\\*\\(?:<[^>]+>\\)?\\'"
+         (display-buffer-reuse-window display-buffer-in-side-window)
+         (side . bottom)
+         (reusable-frames . visible)
+         (window-height . 0.3))
+       '(my-help-from-what-cursor-position-p
+         (display-buffer-in-side-window)
+         (side . right)
+         (window-width . 0.3)
+         (select . nil))
+       '(my-display-buffer-rmail-unsent-p
+         display-buffer-same-window
+         (inhibit-same-window . nil))))
+
 (defun czm-find-math-document ()
   "Find a file in the math documents folder."
   (interactive)
@@ -1131,53 +1176,6 @@ This keeps summary navigation commands in the summary window while making
       (when (buffer-live-p buf)
         (switch-to-buffer buf)
         (rmail-show-message msg)))))
-
-(defun my-display-buffer-rmail-unsent-p (buffer-or-name _action)
-  "Return non-nil for compose buffers opened from Rmail."
-  (let ((name (if (bufferp buffer-or-name)
-                  (buffer-name buffer-or-name)
-                buffer-or-name)))
-    (and (stringp name)
-         (or (string-prefix-p "*unsent" name)
-             (string= name "*mail*"))
-         (with-current-buffer (window-buffer (selected-window))
-           (derived-mode-p 'rmail-mode 'rmail-summary-mode)))))
-
-(defun my-help-from-what-cursor-position-p (buf-name _action)
-  "Return non-nil if BUF-NAME is a Help buffer for `what-cursor-position'."
-  (when (string= buf-name "*Help*")
-    (with-current-buffer buf-name
-      (save-excursion
-        (goto-char (point-min))
-        (looking-at "^position:")))))
-
-(setopt magit-commit-diff-inhibit-same-window t)
-
-(setq display-buffer-base-action
-      '((display-buffer-reuse-window display-buffer-same-window)
-        (inhibit-same-window . nil)))
-
-(setq display-buffer-alist
-      (list
-       '("\\`\\*?magit-diff:.*\\*?\\'"
-         (display-buffer-in-side-window)
-         (side . right)
-         (slot . 0)
-         (window-width . 0.45)
-         (window-parameters . ((no-delete-other-windows . t))))
-       '("\\`\\*\\(?:.*-\\)?compilation\\*\\(?:<[^>]+>\\)?\\'"
-         (display-buffer-reuse-window display-buffer-in-side-window)
-         (side . bottom)
-         (reusable-frames . visible)
-         (window-height . 0.3))
-       '(my-help-from-what-cursor-position-p
-         (display-buffer-in-side-window)
-         (side . right)
-         (window-width . 0.3)
-         (select . nil))
-       '(my-display-buffer-rmail-unsent-p
-         display-buffer-same-window
-         (inhibit-same-window . nil))))
 
 (load "/Users/au710211/emacs-rmail-summary/lisp/mail/rmailsum.el")
 
@@ -3783,6 +3781,7 @@ The completion candidates include the Git status of each file."
   :init
   (add-to-list 'project-switch-commands '(magit-project-status "Magit"))
   :config
+  (setopt magit-commit-diff-inhibit-same-window t)
   :bind
   (:repeat-map
    magit-smerge-repeat-map
