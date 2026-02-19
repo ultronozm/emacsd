@@ -2915,10 +2915,7 @@ The content is escaped to prevent org syntax interpretation."
   :defer t
   :bind
   (:map global-map
-        ("s-/" . ai-org-chat-new)
-        ("s-<return>" . ai-org-chat-simple-respond))
-  (:map project-prefix-map
-        ("a" . ai-org-chat-project))
+        ("s-/" . ai-org-chat-new))
   (:map ai-org-chat-minor-mode-map
         ("s-<return>" . ai-org-chat-respond)
         ("C-c n" . ai-org-chat-branch)
