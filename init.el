@@ -24,109 +24,6 @@
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
-(defcustom reader-discuss-default-agent-config nil
-  "Default agent configuration for `reader-discuss-excerpt'.
-If nil, prompt for an agent.  When set, use that agent unless the
-command is invoked with a prefix argument."
-  :type '(choice (const nil)
-                 (alist :key-type symbol :value-type sexp))
-  :group 'reader)
-
-(defvar agent-shell-highlight-blocks)
-(defvar markdown-overlays-highlight-blocks)
-
-(defun reader-discuss--current-excerpt ()
-  "Return the excerpt at point or signal an error if none is available."
-  (cond
-   ((use-region-p)
-    (buffer-substring-no-properties (region-beginning) (region-end)))
-   ((and (derived-mode-p 'pdf-view-mode)
-         (fboundp 'pdf-view-active-region-p)
-         (pdf-view-active-region-p))
-    (mapconcat #'identity (pdf-view-active-region-text) "\n\n"))
-   (t (or (thing-at-point 'sexp t)
-          (user-error "No excerpt selected or at point")))))
-
-(defun reader-discuss--insert-into-shell (shell-buffer text &optional submit)
-  "Insert TEXT into SHELL-BUFFER and optionally SUBMIT it."
-  (unless (and (buffer-live-p shell-buffer)
-               (stringp text)
-               (string-match-p "\\S-" text))
-    (user-error "Shell buffer unavailable"))
-  (with-current-buffer shell-buffer
-    (when (shell-maker-busy)
-      (user-error "Shell is busy, try later"))
-    (let ((inhibit-read-only t)
-          (insert-start (point-max))
-          insert-end)
-      (goto-char insert-start)
-      (unless (bolp)
-        (insert "\n\n"))
-      (insert text)
-      (setq insert-end (point))
-      (save-restriction
-        (narrow-to-region insert-start insert-end)
-        (let ((markdown-overlays-highlight-blocks agent-shell-highlight-blocks))
-          (markdown-overlays-put)))
-      (goto-char insert-end)
-      (when submit
-        (shell-maker-submit)))
-    (setq-local shell-maker-transcript-default-path
-                (expand-file-name my-agent-shell-transcripts-dir)))
-  shell-buffer)
-
-(defun reader-discuss-excerpt (excerpt &optional prefix)
-  "Discuss EXCERPT with an agent-shell backend.
-
-With no prefix, use `reader-discuss-default-agent-config' (or
-prompt if it is nil).  With \[universal-argument], always prompt
-for the agent configuration."
-  (interactive
-   (list (reader-discuss--current-excerpt)
-         current-prefix-arg))
-  (setq excerpt
-        (or excerpt
-            (reader-discuss--current-excerpt)))
-  (let* ((force-select (equal prefix '(4)))
-         (agent-config
-          (if (or force-select (null reader-discuss-default-agent-config))
-              (agent-shell-select-config :prompt "Select agent for discussion: ")
-            reader-discuss-default-agent-config))
-         (reading-window (selected-window))
-         (file-link
-          (if-let* ((file (buffer-file-name)))
-              (let ((line (line-number-at-pos))
-                    (abbr (abbreviate-file-name file)))
-                (format "[[file:%s::%d][Full context: %s]]"
-                        abbr line (file-name-nondirectory abbr)))
-            ""))
-         (initial-prompt
-          (format "Let's discuss this excerpt:\n\n<excerpt>\n%s\n</excerpt>\n\n%s"
-                  excerpt file-link)))
-    (let ((shell-buffer (agent-shell-start :config agent-config)))
-      (condition-case err
-          (progn
-            (reader-discuss--insert-into-shell shell-buffer initial-prompt))
-        (error
-         (kill-new initial-prompt)
-         (message "Shell prefill failed (%s); excerpt copied to kill ring." (error-message-string err)))))
-    (select-window reading-window)))
-
-(defun reader-discuss-excerpt-from-embark (target)
-  "Start a discussion for TARGET text coming from Embark."
-  (reader-discuss-excerpt target current-prefix-arg))
-
-(defun reader-discuss--embark-target-pdf-region ()
-  "Provide Embark with the current PDF region text, if any."
-  (when (and (derived-mode-p 'pdf-view-mode)
-             (fboundp 'pdf-view-active-region-p)
-             (pdf-view-active-region-p))
-    `(reader-pdf-excerpt ,(mapconcat #'identity (pdf-view-active-region-text) "\n\n"))))
-
-(with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders #'reader-discuss--embark-target-pdf-region t)
-  (keymap-set embark-general-map "z" #'reader-discuss-excerpt-from-embark))
-
 (use-package emacs
   :ensure nil
   :bind
@@ -3083,7 +2980,9 @@ Skips empty days and diary holidays."
   :config (require 'mcp-hub)
   :hook (after-init . mcp-hub-start-all-server))
 
-;;;; agent-shell and related packages
+;;;; agent-shell
+
+;;;;; supporting packages
 
 (use-package shell-maker
   :ensure (:host github :repo "xenodium/shell-maker"
@@ -3147,6 +3046,221 @@ Skips empty days and diary holidays."
     (type . "sse")
     (url . "http://localhost:8000/sse")))
 
+;;;;; container support
+
+(defconst my/agent-shell-workspace-root "/Users/Shared/workspace/"
+  "Path prefix for projects that should run agent executables as `runner'.")
+
+(defconst my/agent-shell-runner-prefix
+  '("ssh" "-i" "~/.ssh/runner_localhost" "runner@localhost" "--")
+  "Command prefix for running agent-shell backends as the `runner' user.")
+
+(defconst my/agent-shell-sandbox-host "sandbox"
+  "TRAMP host name for the sandbox remote.")
+
+(defconst my/agent-shell-sandbox-runner-prefix
+  '("ssh" "-T" "sandbox" "--")
+  "Command prefix for running agent-shell backends on the sandbox remote.")
+
+(defconst my/agent-shell-sandbox-codex-command
+  '("bash" "--login" "-lc" "codex-acp")
+  "Run Codex ACP via a sandbox login shell so nvm-managed PATH is loaded.")
+
+(defconst my/agent-shell-sandbox-claude-command
+  '("bash" "--login" "-lc" "claude-code-acp")
+  "Run Claude ACP via a sandbox login shell so nvm-managed PATH is loaded.")
+
+(defun my/agent-shell--resolve-sandbox-path (path)
+  "Translate between TRAMP paths and bare remote paths for sandbox.
+Strips the TRAMP prefix when sending paths to the agent (e.g. CWD),
+and prepends it when receiving paths from the agent (e.g. file reads)."
+  (let ((tramp-prefix (concat "/ssh:" my/agent-shell-sandbox-host ":")))
+    (cond
+     ;; Emacs -> agent: strip TRAMP prefix
+     ((string-prefix-p tramp-prefix path)
+      (string-remove-prefix tramp-prefix path))
+     ;; Agent -> Emacs: prepend TRAMP prefix
+     ((and (file-name-absolute-p path)
+           (not (file-remote-p path)))
+      (concat tramp-prefix path))
+     (t path))))
+
+(defun my/agent-shell--set-container-runner-from-default-directory ()
+  "Set `agent-shell-container-command-runner' based on `default-directory'.
+Buffers rooted under `my/agent-shell-workspace-root' run agent backends
+and shell tool calls as the `runner' user via SSH-to-localhost.
+Buffers on the sandbox remote run agent backends on that host via SSH.
+Other buffers run locally."
+  (when (boundp 'agent-shell-container-command-runner)
+    (let* ((dir (and (stringp default-directory)
+                     (expand-file-name default-directory)))
+           (in-workspace (and dir
+                              (not (file-remote-p dir))
+                              (file-in-directory-p dir my/agent-shell-workspace-root)))
+           (on-sandbox (and dir
+                            (equal (file-remote-p dir 'host)
+                                   my/agent-shell-sandbox-host))))
+      (setq-local agent-shell-container-command-runner
+                  (cond
+                   (in-workspace my/agent-shell-runner-prefix)
+                   (on-sandbox my/agent-shell-sandbox-runner-prefix)
+                   (t nil)))
+      (when on-sandbox
+        (when (boundp 'agent-shell-openai-codex-command)
+          (setq-local agent-shell-openai-codex-command
+                      my/agent-shell-sandbox-codex-command))
+        (when (boundp 'agent-shell-anthropic-claude-command)
+          (setq-local agent-shell-anthropic-claude-command
+                      my/agent-shell-sandbox-claude-command))
+        ;; Avoid remote icon cache fetches (via TRAMP temporary-file-directory)
+        ;; which can fail when remote shell startup emits extra output.
+        (when (boundp 'agent-shell-header-style)
+          (setq-local agent-shell-header-style 'text)))
+      (when (boundp 'agent-shell-text-file-capabilities)
+        (setq-local agent-shell-text-file-capabilities
+                    (not (or in-workspace on-sandbox))))
+      (when (boundp 'agent-shell-path-resolver-function)
+        (setq-local agent-shell-path-resolver-function
+                    (when on-sandbox
+                      #'my/agent-shell--resolve-sandbox-path)))
+      (when (boundp 'agent-shell-anthropic-default-session-mode-id)
+        (setq-local agent-shell-anthropic-default-session-mode-id
+                    (when (or in-workspace on-sandbox) "bypassPermissions"))))))
+
+(add-hook 'agent-shell-mode-hook
+          #'my/agent-shell--set-container-runner-from-default-directory)
+
+;;;;; region support
+
+(defcustom my/agent-shell-discuss-text-template
+  (string-join
+   '("Let's discuss this excerpt."
+     ""
+     "File/buffer: %f"
+     "Lines: %b-%e"
+     ""
+     "```"
+     "%x"
+     "```\n\n")
+   "\n")
+  "Template for discuss prompts built from text regions.
+
+The following placeholders are replaced using `format-spec':
+  %f file path (or buffer name)
+  %b start line
+  %e end line
+  %x excerpt text."
+  :type 'string
+  :group 'reader)
+
+(defcustom my/agent-shell-discuss-pdf-template
+  (string-join
+   '("Let's discuss this PDF excerpt."
+     ""
+     "PDF: %f"
+     "Page: %p"
+     ""
+     "```"
+     "%x"
+     "```\n\n")
+   "\n")
+  "Template for discuss prompts built from PDF selections.
+
+The following placeholders are replaced using `format-spec':
+  %f PDF file path (or buffer name)
+  %p page number
+  %x excerpt text."
+  :type 'string
+  :group 'reader)
+
+(defun my/agent-shell--discuss-selection ()
+  "Return active discuss selection metadata, or nil when unavailable."
+  (cond
+   ((and (derived-mode-p 'pdf-view-mode)
+         (fboundp 'pdf-view-active-region-p)
+         (fboundp 'pdf-view-active-region-text)
+         (pdf-view-active-region-p))
+    (list :kind 'pdf
+          :file (when-let ((file (buffer-file-name)))
+                  (abbreviate-file-name file))
+          :page (if (fboundp 'pdf-view-current-page)
+                    (number-to-string (pdf-view-current-page))
+                  "?")
+          :excerpt (mapconcat #'identity (pdf-view-active-region-text) "\n\n")))
+   ((use-region-p)
+    (let* ((beg (region-beginning))
+           (end (region-end))
+           (line-start (line-number-at-pos beg))
+           (line-end (line-number-at-pos (if (> end beg) (1- end) end))))
+      (list :kind 'text
+            :file (when-let ((file (buffer-file-name)))
+                    (abbreviate-file-name file))
+            :line-start (number-to-string line-start)
+            :line-end (number-to-string line-end)
+            :excerpt (buffer-substring-no-properties beg end))))
+   (t nil)))
+
+(defun my/agent-shell--format-discuss-prompt (selection)
+  "Build discuss prompt text for SELECTION metadata."
+  (let* ((kind (plist-get selection :kind))
+         (template (if (eq kind 'pdf)
+                       my/agent-shell-discuss-pdf-template
+                     my/agent-shell-discuss-text-template))
+         (file (or (plist-get selection :file)
+                   (buffer-name)))
+         (line-start (or (plist-get selection :line-start) "?"))
+         (line-end (or (plist-get selection :line-end) "?"))
+         (page (or (plist-get selection :page) "?"))
+         (excerpt (or (plist-get selection :excerpt) "")))
+    (format-spec template
+                 `((?f . ,file)
+                   (?b . ,line-start)
+                   (?e . ,line-end)
+                   (?p . ,page)
+                   (?x . ,excerpt)))))
+
+(defun my/agent-shell--start-discuss-with-config (agent-config)
+  "Start AGENT-CONFIG shell and prefill prompt from active selection."
+  (let* ((selection (my/agent-shell--discuss-selection))
+         (prompt (and selection
+                      (my/agent-shell--format-discuss-prompt selection)))
+         (shell-buffer (agent-shell-start :config agent-config)))
+    (when prompt
+      (let ((inserted (agent-shell-insert :text prompt :shell-buffer shell-buffer)))
+        (when-let* ((target-buffer (map-elt inserted :buffer))
+                    ((buffer-live-p target-buffer)))
+          (with-current-buffer target-buffer
+            (let* ((inhibit-read-only t)
+                   (start (map-elt inserted :start))
+                   (end (map-elt inserted :end)))
+              (when (and (integerp start)
+                         (integerp end))
+                (save-excursion
+                  (goto-char start)
+                  (when (looking-at-p "\n\n")
+                    (delete-char 2)
+                    (setq end (- end 2))))
+                (goto-char end)
+                (when-let ((window (get-buffer-window target-buffer)))
+                  (set-window-point window end))))))))
+    shell-buffer))
+
+(defun my/agent-shell-codex-discuss ()
+  "Start Codex and prefill a discuss prompt from active selection."
+  (interactive)
+  (require 'agent-shell-openai)
+  (my/agent-shell--start-discuss-with-config
+   (agent-shell-openai-make-codex-config)))
+
+(defun my/agent-shell-claude-discuss ()
+  "Start Claude Code and prefill a discuss prompt from active selection."
+  (interactive)
+  (require 'agent-shell-anthropic)
+  (my/agent-shell--start-discuss-with-config
+   (agent-shell-anthropic-make-claude-code-config)))
+
+;;;;; package
+
 (defun my/agent-shell-transcript-file-path-function ()
   "Generate a file path for saving agent shell transcripts."
   (expand-file-name
@@ -3166,38 +3280,6 @@ Skips empty days and diary holidays."
   (my/set-TeX-master-preview)
   (setq-local preview-tailor-local-multiplier 0.8))
 
-(defconst my/agent-shell-workspace-root "/Users/Shared/workspace/"
-  "Path prefix for projects that should run agent executables as `runner'.")
-
-(defconst my/agent-shell-runner-prefix
-  '("ssh" "-i" "~/.ssh/runner_localhost" "runner@localhost" "--")
-  "Command prefix for running agent-shell backends as the `runner' user.")
-
-(defun my/agent-shell--set-container-runner-from-default-directory ()
-  "Set `agent-shell-container-command-runner' based on `default-directory'.
-Buffers rooted under `my/agent-shell-workspace-root' run agent backends
-and shell tool calls as the `runner' user via SSH-to-localhost. Other
-buffers run locally."
-  (when (boundp 'agent-shell-container-command-runner)
-    (let* ((dir (and (stringp default-directory)
-                     (expand-file-name default-directory)))
-           (in-workspace (and dir
-                              (file-in-directory-p dir my/agent-shell-workspace-root))))
-      (setq-local agent-shell-container-command-runner
-                  (when in-workspace my/agent-shell-runner-prefix))
-      (when (boundp 'agent-shell-text-file-capabilities)
-        ;; Disable ACP file read/write in the sandboxed workspace; rely on
-        ;; runner's filesystem access instead.
-        (setq-local agent-shell-text-file-capabilities (not in-workspace)))
-      ;; For Claude Code ACP, start in bypass-permissions mode in the sandboxed
-      ;; workspace to avoid interactive permission prompts.
-      (when (boundp 'agent-shell-anthropic-default-session-mode-id)
-        (setq-local agent-shell-anthropic-default-session-mode-id
-                    (when in-workspace "bypassPermissions"))))))
-
-(add-hook 'agent-shell-mode-hook
-          #'my/agent-shell--set-container-runner-from-default-directory)
-
 (use-package agent-shell
   :ensure (:host github :repo "xenodium/agent-shell"
                  :depth nil
@@ -3210,13 +3292,13 @@ buffers run locally."
                      (unless (bolp) (newline))
                      (insert "```\n") (yank) (insert "\n```\n"))))
   (:map project-prefix-map
-        ("z x" . agent-shell-openai-start-codex)
-        ("z c" . agent-shell-anthropic-start-claude-code))
+        ("z x" . my/agent-shell-codex-discuss)
+        ("z c" . my/agent-shell-claude-discuss))
   :init
   (add-to-list 'project-switch-commands
-               '(agent-shell-openai-start-codex "Codex"))
+               '(my/agent-shell-codex-discuss "Codex"))
   (add-to-list 'project-switch-commands
-               '(agent-shell-anthropic-start-claude-code "Claude"))
+               '(my/agent-shell-claude-discuss "Claude"))
   :commands (agent-shell-openai-start-codex
              agent-shell-anthropic-start-claude-code)
   :hook
@@ -3240,12 +3322,6 @@ buffers run locally."
   (setopt agent-shell-transcript-file-path-function
           #'my/agent-shell-transcript-file-path-function))
 
-;; (setopt agent-shell-anthropic-claude-environment
-;;         (agent-shell-make-environment-variables
-;;          "ANTHROPIC_MODEL" "claude-opus-4-5-20251101"))
-
-;; (setopt agent-shell-anthropic-default-model-id "claude-opus-4-5-20251101")
-
 (defun my/agent-shell--call-or-self-insert (command)
   "Run COMMAND unless we should insert at the prompt instead.
 
@@ -3261,24 +3337,6 @@ insert the character instead of invoking COMMAND."
       (self-insert-command 1)
     (funcall command)))
 
-(defun my/agent-shell-ui-forward-block-or-self-insert ()
-  "Jump to the next block or insert typed character at the prompt.
-
-Behaves like `agent-shell-ui-forward-block', but if point is at the
-input prompt and a character key was pressed, insert the character
-instead of navigating."
-  (interactive)
-  (my/agent-shell--call-or-self-insert #'agent-shell-ui-forward-block))
-
-(defun my/agent-shell-ui-backward-block-or-self-insert ()
-  "Jump to the previous block or insert typed character at the prompt.
-
-Behaves like `agent-shell-ui-backward-block', but if point is at the
-input prompt and a character key was pressed, insert the character
-instead of navigating."
-  (interactive)
-  (my/agent-shell--call-or-self-insert #'agent-shell-ui-backward-block))
-
 (defun my/agent-shell-ui-toggle-fragment-at-point-or-self-insert ()
   "Toggle visibility of fragment body at point or insert at prompt.
 
@@ -3287,12 +3345,6 @@ at the input prompt and a character key was pressed, insert the
 character instead of toggling."
   (interactive)
   (my/agent-shell--call-or-self-insert #'agent-shell-ui-toggle-fragment-at-point))
-
-;; (use-package preview-tailor
-;;   :after preview
-;;   :demand
-;;   :config (preview-tailor-init)
-;;   :hook (kill-emacs . preview-tailor-save))
 
 ;; (use-package preview-auto
 ;;   :after preview
@@ -3304,6 +3356,8 @@ character instead of toggling."
 ;;   (setq preview-protect-point t)
 ;;   (setq preview-locating-previews-message nil)
 ;;   (setq preview-leave-open-previews-visible t))
+
+;;;;; attention
 
 (use-package knockknock
   :defer t
@@ -3678,7 +3732,6 @@ The value of `calc-language` is restored after BODY has been processed."
     (keymap-set diff-mode-map "C-c d" #'czm-vc-diff-dired-changed-files))
   (with-eval-after-load 'embark
     (czm-vc-embark-setup)))
-
 
 (defun emacs-solo/switch-git-status-buffer ()
   "Switch to a buffer visiting a modified or renamed file in the current Git repo.
