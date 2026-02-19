@@ -2933,6 +2933,38 @@ The content is escaped to prevent org syntax interpretation."
             #'ai-org-chat-auto-format-response
             t))
 
+(use-package gptel
+  :ensure (:host github :repo "karthink/gptel"
+                 :remotes (("ultronozm" :repo "ultronozm/gptel"))
+                 :inherit nil
+                 :pin t)
+  :after exec-path-from-shell
+  :defer t
+  :bind
+  (("C-c <return>" . gptel-send)
+   ("C-z g" . gptel-rewrite))
+  :custom
+  (gptel-default-mode 'org-mode)
+  (gptel-log-level nil)
+  :config
+  (require 'exec-path-from-shell)
+  (setopt gptel-rewrite-default-action 'accept)
+  (setq gptel-backend
+        (gptel-make-anthropic
+            "Claude"
+          :stream t
+          :key (lambda () (exec-path-from-shell-getenv "ANTHROPIC_KEY"))
+          :models '(claude-sonnet-4-6)))
+  (setq gptel-model 'claude-sonnet-4-6))
+
+(use-package gptel-quick
+  :defer 2
+  :ensure (:host github :repo "karthink/gptel-quick" :inherit nil)
+  :demand
+  :config
+  (with-eval-after-load 'embark
+    (define-key embark-general-map (kbd "?") #'gptel-quick)))
+
 ;; I use the following functions to provide context to ai-org-chat
 
 (defun my/agenda-for-today ()
