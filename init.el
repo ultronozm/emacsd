@@ -1,8 +1,5 @@
 ;;; -*- lexical-binding: t; -*-
 
-;; (load (locate-user-emacs-file "init2.el"))
-;; (throw 'quit-init nil)
-
 ;;; basics
 (setq use-package-compute-statistics t)
 
