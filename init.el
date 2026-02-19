@@ -1023,49 +1023,35 @@ In light mode:
 
 ;;; tramp
 
-(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-
 (with-eval-after-load 'tramp
-  ;; Use bash on the remote side so PATH setup is loaded.
-  (setq tramp-default-remote-shell "/bin/bash")
-  (setq tramp-remote-shell-args '("-lc"))
-  ;; Also let TRAMP use the remote PATH.
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+  ;; Use a login shell remotely so PATH/tool setup is available to Eglot/LSP.
+  ;; Keep startup files quiet: any output from shell init can break TRAMP parsing.
+  ;; If TRAMP login gets flaky, revisit `tramp-remote-shell-args` first.
+  (setq tramp-default-remote-shell "/bin/bash"
+        tramp-remote-shell-args '("-lc")
+        tramp-verbose 1
+        tramp-use-ssh-controlmaster-options t)
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 
-(with-eval-after-load 'tramp
-  (setq tramp-verbose 1)                 ; less chatter (and slightly less work)
-  (setq tramp-use-ssh-controlmaster-options t)
-  (setq tramp-chunksize 2000)            ; fewer round trips for larger files
-  ;; Cache file attributes more aggressively
-  (setq remote-file-name-inhibit-cache nil))
-
-(with-eval-after-load 'tramp
-  (setq tramp-verbose 3)                 ; less chatter (and slightly less work)
-  (setq tramp-use-ssh-controlmaster-options t)
-  (setq tramp-chunksize nil)            ; fewer round trips for larger files
-  ;; Cache file attributes more aggressively
-  (setq remote-file-name-inhibit-cache 10))
-
-(with-eval-after-load 'tramp
-  ;; Make async remote processes (used by Eglot) reliable on /ssh:sandbox:
-  ;; - enable direct async processes for this host
-  ;; - ensure ssh is run without a tty (default is -t -t, which breaks LSP)
+  ;; Make async remote processes (used by Eglot/LSP) reliable over SSH:
+  ;; - enable direct async processes
+  ;; - run ssh without allocating a TTY
   (require 'seq)
-
   (setq tramp-connection-properties
         (append
          (seq-remove (lambda (elt)
-                       (and (equal (nth 0 elt) "/ssh:sandbox:")
+                       (and (stringp (nth 0 elt))
+                            (string-prefix-p "/ssh:" (nth 0 elt))
                             (equal (nth 1 elt) "direct-async")))
                      tramp-connection-properties)
-         (list (list "/ssh:sandbox:" "direct-async" '("-T")))))
+         (list '("/ssh:.*:" "direct-async" ("-T")))))
 
   (connection-local-set-profile-variables
-   'sandbox-direct-async-process
+   'tramp-ssh-direct-async-process
    '((tramp-direct-async-process . t)))
   (connection-local-set-profiles
-   '(:application tramp :protocol "ssh" :machine "sandbox")
-   'sandbox-direct-async-process))
+   '(:application tramp :protocol "ssh")
+   'tramp-ssh-direct-async-process))
 
 ;;; mail
 
@@ -2232,14 +2218,6 @@ them at the first newline."
     (setq-local vc-git-show-stash nil)))
 
 (add-hook 'vc-dir-mode-hook #'czm/vc-dir-remote-tweaks)
-
-(connection-local-set-profile-variables
- 'remote-direct-async-process
- '((tramp-direct-async-process . t)))
-
-(connection-local-set-profiles
- '(:application tramp :protocol "ssh" :machine "sandbox")
- 'remote-direct-async-process)
 
 (defun my/disable-vertico-for-debbugs-search (orig-fun &rest args)
   "Temporarily disable Vertico while executing `debbugs-gnu-search'."
