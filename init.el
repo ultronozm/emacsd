@@ -181,6 +181,12 @@
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt mail-dont-reply-to-names
+          (concat
+           (and (stringp user-mail-address)
+                (> (length user-mail-address) 0)
+                (concat "\\`" (regexp-quote user-mail-address) "\\'\\|"))
+           "@noreply"))
   (setopt isearch-lazy-count t)
   (setopt vc-handled-backends '(Git))
   (setopt safe-local-variable-directories
