@@ -280,6 +280,9 @@
 
 (setq display-buffer-alist
       (list
+       '("\\`CAPTURE-"
+         (display-buffer-same-window)
+         (inhibit-same-window . nil))
        '("\\`\\*?magit-diff:.*\\*?\\'"
          (display-buffer-in-side-window)
          (side . right)
