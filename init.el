@@ -131,6 +131,7 @@
    ("s-y" . replace-buffer-with-clipboard)
    ("s-z" . nil))
   :custom
+  (Man-notify-method 'pushy)
   (diff-entire-buffers nil)
   (ediff-split-window-function 'split-window-horizontally)
   (use-dialog-box nil)
