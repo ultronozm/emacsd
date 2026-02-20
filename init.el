@@ -2699,9 +2699,20 @@ The content is escaped to prevent org syntax interpretation."
 
 ;;; shells (external)
 
+(use-package project-tmux
+  :repo-scan
+  :after project
+  :ensure (:host github :repo "ultronozm/project-tmux.el" :depth nil
+                 :inherit nil)
+  :bind (:map project-prefix-map ("t" . project-tmux))
+  :init (add-to-list 'project-switch-commands '(project-tmux "Tmux" nil)))
+
+(load (expand-file-name "project-tmux.el" (file-name-directory user-init-file)))
+
 (use-package eat
   :ensure (eat :inherit elpaca-menu-non-gnu-elpa)
   :config
+  (add-hook 'eat-mode-hook #'abbrev-mode)
   (let ((key [?\C-\\]))
     (setq-default
      eat-semi-char-non-bound-keys
