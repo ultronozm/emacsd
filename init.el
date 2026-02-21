@@ -2703,15 +2703,17 @@ The content is escaped to prevent org syntax interpretation."
 
 ;;; shells (external)
 
-(use-package project-tmux
+(use-package eat-tmux
   :repo-scan
   :after project
-  :ensure (:host github :repo "ultronozm/project-tmux.el" :depth nil
+  :ensure (:host github :repo "ultronozm/eat-tmux.el" :depth nil
                  :inherit nil)
-  :bind (:map project-prefix-map ("t" . project-tmux))
-  :init (add-to-list 'project-switch-commands '(project-tmux "Tmux" nil)))
+  :bind (:map project-prefix-map ("t" . eat-tmux-project))
+  :init (add-to-list 'project-switch-commands '(eat-tmux-project "Tmux" nil)))
 
-(load (expand-file-name "project-tmux.el" (file-name-directory user-init-file)))
+;; (load "~/repos/eat-tmux-orchestrator/eat-tmux-orchestrator.el")
+
+;; (keymap-set project-prefix-map "T" #'eat-tmux-orchestrator)
 
 (use-package eat
   :ensure (eat :inherit elpaca-menu-non-gnu-elpa)
