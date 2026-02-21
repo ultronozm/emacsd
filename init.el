@@ -1070,8 +1070,6 @@ This keeps summary navigation commands in the summary window while making
         (switch-to-buffer buf)
         (rmail-show-message msg)))))
 
-(load "/Users/au710211/emacs-rmail-summary/lisp/mail/rmailsum.el")
-
 (use-package rmail
   :ensure nil
   :defer t
