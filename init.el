@@ -753,27 +753,6 @@ positions you navigated to during the Ediff session."
      ("\\end{multline*}" . ?⎭)
      ("\\end{multline}" . ?⎭))))
 
-;; https://git.sr.ht/~sebasmonia/stubvex/tree/main/item/stubvex.el
-(defun stubvex-cherry-pick ()
-  "Cherry pick the commits selected in a log view.
-Workflow:
-  1. Use `vc-print-branch-log' (C-x v b l) to open a log view of other branch.
-  2. Mark some commits using `log-view-toggle-mark-entry' (m).
-  3. Invoke this command to cherry pick those commits into the current branch.
-This command doesn't validate (yet?) that you are doing The Right Thing.
-Use with care."
-  (interactive)
-  (unless (derived-mode-p 'vc-git-log-view-mode)
-    (error "Not in a git log view"))
-  (let ((selected-commits (log-view-get-marked))
-        (buf-name "*git cherry-pick*"))
-    (if (= 0 (apply #'vc-git-command buf-name t nil
-                    "cherry-pick" "--no-commit" selected-commits))
-        (message "Cherry pick successful.")
-      (pop-to-buffer buf-name)
-      (when (y-or-n-p "Cherry pick failed - abort?")
-        (vc-git-command buf-name 0 nil "cherry-pick" "--abort")))))
-
 (defun my/eval-expression-and-copy (exp &optional insert-value no-truncate char-print-limit copy-to-kill-ring)
   "Like `eval-expression', but with C-u C-u copies result to kill ring.
 When called with a prefix argument of 16 (interactively, C-u C-u),
@@ -3746,7 +3725,9 @@ The value of `calc-language` is restored after BODY has been processed."
   (with-eval-after-load 'vc-dir
     (keymap-set vc-dir-mode-map "C-c d" #'czm-vc-dir-dired-marked))
   (with-eval-after-load 'log-view
-    (keymap-set log-view-mode-map "E" #'czm-vc-git-fixup-staged))
+    (keymap-set log-view-mode-map "E" #'czm-vc-git-fixup-staged)
+    (keymap-set log-view-mode-map "w" #'czm-vc-log-view-copy-revision-or-range-as-kill)
+    (keymap-set log-view-mode-map "o" #'log-view-toggle-entry-display))
   (with-eval-after-load 'project
     (keymap-set project-prefix-map "P" #'czm-vc-project-format-patch-last-commit))
   (with-eval-after-load 'diff-mode
@@ -3754,44 +3735,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (with-eval-after-load 'embark
     (czm-vc-embark-setup)))
 
-(defun emacs-solo/switch-git-status-buffer ()
-  "Switch to a buffer visiting a modified or renamed file in the current Git repo.
-The completion candidates include the Git status of each file."
-  (interactive)
-  (require 'vc-git)
-  (let ((repo-root (vc-git-root default-directory)))
-    (if (not repo-root)
-        (message "Not inside a Git repository.")
-      (let* ((expanded-root (expand-file-name repo-root))
-             (cmd-output (vc-git--run-command-string nil "status" "--porcelain=v1"))
-             (target-files
-              (let (files)
-                (dolist (line (split-string cmd-output "\n" t) (nreverse files))
-                  (when (>= (length line) 3)
-                    (let ((status (substring line 0 2))
-                          (path-info (substring line 3)))
-                      (cond
-                       ;; Renamed files
-                       ((string-prefix-p "R" status)
-                        (let* ((paths (split-string path-info " -> " t))
-                               (new-path (cadr paths)))
-                          (when new-path
-                            (push (cons (format "R %s" new-path) new-path) files))))
-                       ;; Modified or untracked
-                       ((or (string-match "M" status)
-                            (string-match "\\?\\?" status))
-                        (push (cons (format "%s %s" status path-info) path-info) files)))))))))
-        (if (null target-files)
-            (message "No modified or renamed files found.")
-          (let* ((candidates target-files)
-                 (selection (completing-read "Switch to buffer (Git modified): "
-                                             (mapcar #'car candidates) nil t)))
-            (when selection
-              (let ((file-path (cdr (assoc selection candidates))))
-                (when file-path
-                  (find-file (expand-file-name file-path expanded-root)))))))))))
-
-(keymap-global-set "C-x C-g" #'emacs-solo/switch-git-status-buffer)
+(keymap-global-set "C-x C-g" #'czm-vc-switch-to-git-status-file)
 
 (use-package transient
   :ensure t
