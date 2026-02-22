@@ -3062,12 +3062,12 @@ Skips empty days and diary holidays."
   '("ssh" "-T" "sandbox" "--")
   "Command prefix for running agent-shell backends on the sandbox remote.")
 
-(defconst my/agent-shell-sandbox-codex-command
+(defconst my/agent-shell-sandbox-codex-acp-command
   '("bash" "--login" "-lc" "codex-acp")
   "Run Codex ACP via a sandbox login shell so nvm-managed PATH is loaded.")
 
-(defconst my/agent-shell-sandbox-claude-command
-  '("bash" "--login" "-lc" "claude-code-acp")
+(defconst my/agent-shell-sandbox-claude-acp-command
+  '("bash" "--login" "-lc" "claude-agent-acp")
   "Run Claude ACP via a sandbox login shell so nvm-managed PATH is loaded.")
 
 (defun my/agent-shell--resolve-sandbox-path (path)
@@ -3106,12 +3106,17 @@ Other buffers run locally."
                    (on-sandbox my/agent-shell-sandbox-runner-prefix)
                    (t nil)))
       (when on-sandbox
+        (when (boundp 'agent-shell-openai-codex-acp-command)
+          (setq-local agent-shell-openai-codex-acp-command
+                      my/agent-shell-sandbox-codex-acp-command))
+        (when (boundp 'agent-shell-anthropic-claude-acp-command)
+          (setq-local agent-shell-anthropic-claude-acp-command
+                      my/agent-shell-sandbox-claude-acp-command))
+        ;; Avoid migration warnings/errors from legacy variables.
         (when (boundp 'agent-shell-openai-codex-command)
-          (setq-local agent-shell-openai-codex-command
-                      my/agent-shell-sandbox-codex-command))
+          (setq-local agent-shell-openai-codex-command nil))
         (when (boundp 'agent-shell-anthropic-claude-command)
-          (setq-local agent-shell-anthropic-claude-command
-                      my/agent-shell-sandbox-claude-command))
+          (setq-local agent-shell-anthropic-claude-command nil))
         ;; Avoid remote icon cache fetches (via TRAMP temporary-file-directory)
         ;; which can fail when remote shell startup emits extra output.
         (when (boundp 'agent-shell-header-style)
@@ -3305,6 +3310,7 @@ The following placeholders are replaced using `format-spec':
   ((agent-shell-mode . abbrev-mode)
    (agent-shell-mode . my/agent-shell-mode-hook))
   :config
+  (setopt agent-shell-session-strategy 'prompt)
   (setopt agent-shell-openai-authentication
           (agent-shell-openai-make-authentication :login t))
   (setopt agent-shell-anthropic-default-model-id "opus")
