@@ -723,13 +723,6 @@ positions you navigated to during the Ediff session."
 (add-hook 'ediff-quit-hook #'ediff-restore-window-configuration)
 (add-hook 'ediff-cleanup-hook #'ediff-kill-temporary-file-buffer)
 
-(with-eval-after-load 'smerge-mode
-  (map-keymap
-   (lambda (_key cmd)
-     (when (symbolp cmd)
-       (put cmd 'repeat-map 'smerge-basic-map)))
-   smerge-basic-map))
-
 (bind-keys
  :package doc-view
  :map doc-view-mode-map
