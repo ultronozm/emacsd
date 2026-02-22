@@ -3379,15 +3379,17 @@ character instead of toggling."
                  :inherit nil :pin t)
   :after agent-shell
   :demand
-  :bind (:map agent-shell-attention-mode-map
-              ("C-z a" . agent-shell-attention-jump))
+  :bind (("C-z a" . agent-shell-attention-jump))
   :config
   (require 'knockknock)
   (setopt agent-shell-attention-notify-function
           (lambda (_buffer title body)
             (knockknock-notify
              :title title
-             :message body
+             :message (mapconcat
+                       #'identity
+                       (seq-take (string-lines body) 3)
+                       "\n")
              :icon "nf-cod-bot"
              :duration 5)))
   (setopt agent-shell-attention-render-function
