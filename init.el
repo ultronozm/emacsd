@@ -4767,3 +4767,34 @@ When used via Embark, WORD comes from the current target."
     (keymap-set LaTeX-mode-map "C-c o" overleaf-command-map))
   (with-eval-after-load 'bibtex
     (keymap-set bibtex-mode-map "C-c o" overleaf-command-map)))
+
+(defun my-reload-elisp-dir (dir &optional hard)
+  "Reload all .el files in DIR.
+With prefix arg HARD (\\[universal-argument]), unload features first."
+  (interactive "DDirectory: \nP")
+  (let* ((files (directory-files dir t "\\.el\\'"))
+         (files (seq-remove (lambda (f)
+                              (string-match-p
+                               "\\(?:-autoloads\\.el\\|-pkg\\.el\\)\\'" f))
+                            files))
+         (features
+          (delete-dups
+           (apply #'append
+                  (mapcar
+                   (lambda (file)
+                     (with-temp-buffer
+                       (insert-file-contents file)
+                       (let (out)
+                         (goto-char (point-min))
+                         (while (re-search-forward "^(provide '\\([^)\n]+\\))" nil t)
+                           (push (intern (match-string 1)) out))
+                         out)))
+                   files)))))
+    (when hard
+      (dolist (feat features)
+        (ignore-errors (unload-feature feat t))))
+    (let ((load-prefer-newer t))
+      (dolist (f files)
+        (load (file-name-sans-extension f) nil 'nomessage)))
+    (message "Reloaded %d files from %s%s"
+             (length files) dir (if hard " (hard)" ""))))
