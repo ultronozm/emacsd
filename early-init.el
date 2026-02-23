@@ -3,8 +3,17 @@
 (setq package-enable-at-startup nil)
 (with-eval-after-load 'use-package-core
   (eval-after-load 'lisp-mode
-    `(add-to-list 'lisp-imenu-generic-expression
-                  (list nil ,use-package-form-regexp-eval 2))))
+    `(let ((symbol-regexp
+            (or (bound-and-true-p lisp-mode-symbol-regexp)
+                "\\(?:\\sw\\|\\s_\\|\\\\.\\)+")))
+       (add-to-list 'lisp-imenu-generic-expression
+                    (list nil ,use-package-form-regexp-eval 2))
+       (add-to-list 'lisp-imenu-generic-expression
+                    (list nil
+                          (concat "^\\s-*(use-package-full\\s-+\\("
+                                  symbol-regexp
+                                  "\\)")
+                          1)))))
 (setq use-package-enable-imenu-support t)
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
