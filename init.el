@@ -34,6 +34,41 @@
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
+(defun my-other-window-backward ()
+  "Select the previous window."
+  (interactive)
+  (other-window -1))
+
+(defvar-keymap my-window-map
+  :doc "Window and buffer keymap."
+  "h" #'windmove-left
+  "j" #'windmove-down
+  "k" #'windmove-up
+  "l" #'windmove-right
+  "0" #'delete-window
+  "1" #'delete-other-windows
+  "2" #'split-window-below
+  "3" #'split-window-right
+  "o" #'other-window
+  "O" #'my-other-window-backward
+  "b" #'consult-buffer
+  "i" #'consult-bookmark
+  "n" #'next-buffer
+  "p" #'previous-buffer
+  "q" #'bury-buffer
+  "x" #'kill-current-buffer
+  "X" #'kill-buffer-and-window)
+
+(defun my-window-map-dispatch ()
+  (interactive)
+  (set-transient-map
+   my-window-map
+   t
+   nil
+   "Window: h/j/k/l move, 0/1/2/3 layout, o/O win, n/p buf, x/X kill, b/i switch/bookmark"))
+
+(keymap-global-set "C-c w" #'my-window-map-dispatch)
+
 (use-package emacs
   :ensure nil
   :bind
