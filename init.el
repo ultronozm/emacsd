@@ -2684,7 +2684,14 @@ The content is escaped to prevent org syntax interpretation."
   :demand
   :ensure t
   :config
-  (global-org-modern-mode 1))
+  (global-org-modern-mode 1)
+  (setopt org-modern-star 'fold
+          org-modern-fold-stars
+          '(("▶" . "▼")
+            ("▷" . "▽")
+            ("▸" . "▾")
+            ("▹" . "▿")
+            ("▸" . "▾"))))
 
 (use-package org-appear
   :ensure t
