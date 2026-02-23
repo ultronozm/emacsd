@@ -3,6 +3,16 @@
 ;;; basics
 (setq use-package-compute-statistics t)
 
+(defconst cfg-profile
+  (cond
+   ((and (eq system-type 'gnu/linux) (not (display-graphic-p))) 'cfg-lean)
+   ;; or match hostnames explicitly:
+   ;; ((member (system-name) '("vm-hostname")) 'vm-lean)
+   (t 'cfg-full)))
+
+(defconst cfg-lean (eq cfg-profile 'cfg-lean))
+(defconst cfg-full (eq cfg-profile 'cfg-full))
+
 ;; disable customization interface
 (setq custom-file (locate-user-emacs-file "init-custom.el"))
 
