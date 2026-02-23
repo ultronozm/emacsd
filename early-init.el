@@ -24,3 +24,5 @@
                             ;; (height . 36) ;; default
                             (width . 120)
                             (height . 54)))
+(unless (display-graphic-p)
+  (setq frame-background-mode 'light))
