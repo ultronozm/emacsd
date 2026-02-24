@@ -456,57 +456,37 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
 
 (keymap-global-set "C-c w" #'my-window-map-dispatch)
 
-(defvar-keymap structural-edit-map
-  :doc "Structural editing keymap."
-  :repeat
-  (:continue (backward-down-list
-              kill-to-beginning-of-list
-              kill-to-end-of-list
-              mark-inner
-              kill-sexp
-              eval-last-sexp
-              delete-pair
-              transpose-sexps
-              kill-region
-              kill-ring-save
-              yank
-              mark-sexp
-              newline-and-indent
-              lispy-multiline
-              lispy-split
-              lispy-join
-              lispy-slurp-or-barf-right
-              lispy-slurp-or-barf-left
-              lispy-splice
-              lispy-comment
-              lispy-clone
-              lispy-tab
-              lispy-move-up
-              lispy-move-down))
-  "n" #'forward-list
-  "p" #'backward-list
-  "u" #'backward-up-list
-  "M-u" #'up-list
-  "g" #'down-list
-  "M-g" #'backward-down-list
-  "f" #'forward-sexp
-  "b" #'backward-sexp
-  "a" #'beginning-of-list
-  "A" #'kill-to-beginning-of-list
-  "e" #'end-of-list
-  "E" #'kill-to-end-of-list
-  "i" #'mark-inner
-  "[" #'beginning-of-defun
-  "]" #'end-of-defun
-  "k" #'kill-sexp
-  "x" #'eval-last-sexp
-  "/" #'delete-pair
-  "t" #'transpose-sexps
-  "w" #'kill-region
-  "M-w" #'kill-ring-save
-  "y" #'yank
-  "C-M-SPC" #'mark-sexp
-  "RET" #'newline-and-indent)
+(defvar structural-edit-map (make-sparse-keymap)
+  "Structural editing keymap.")
+
+(bind-keys
+ :map structural-edit-map
+ :repeat-map structural-edit-map
+ ("n" . forward-list)
+ ("p" . backward-list)
+ ("u" . backward-up-list)
+ ("M-u" . up-list)
+ ("g" . down-list)
+ ("f" . forward-sexp)
+ ("b" . backward-sexp)
+ ("a" . beginning-of-list)
+ ("e" . end-of-list)
+ ("[" . beginning-of-defun)
+ ("]" . end-of-defun)
+ :continue-only
+ ("M-g" . backward-down-list)
+ ("A" . kill-to-beginning-of-list)
+ ("E" . kill-to-end-of-list)
+ ("i" . mark-inner)
+ ("k" . kill-sexp)
+ ("x" . eval-last-sexp)
+ ("/" . delete-pair)
+ ("t" . transpose-sexps)
+ ("w" . kill-region)
+ ("M-w" . kill-ring-save)
+ ("y" . yank)
+ ("C-M-SPC" . mark-sexp)
+ ("RET" . newline-and-indent))
 
 (put 'recenter-top-bottom 'repeat-continue t)
 
@@ -1954,24 +1934,39 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
 
 (use-package lispy
   :ensure t
+  :commands (lispy-multiline
+             lispy-split
+             lispy-join
+             lispy-slurp-or-barf-right
+             lispy-slurp-or-barf-left
+             lispy-splice
+             lispy-comment
+             lispy-clone
+             lispy-tab
+             lispy-move-up
+             lispy-move-down)
   :bind
   (:map
    emacs-lisp-mode-map
    (";" . czm-lispy-comment-maybe)
    ("M-1" . lispy-describe-inline)
    ("M-2" . lispy-arglist-inline))
-  :config
-  (keymap-set structural-edit-map "m" #'lispy-multiline)
-  (keymap-set structural-edit-map "j" #'lispy-split)
-  (keymap-set structural-edit-map "+" #'lispy-join)
-  (keymap-set structural-edit-map ">" #'lispy-slurp-or-barf-right)
-  (keymap-set structural-edit-map "<" #'lispy-slurp-or-barf-left)
-  (keymap-set structural-edit-map "/" #'lispy-splice)
-  (keymap-set structural-edit-map ";" #'lispy-comment)
-  (keymap-set structural-edit-map "c" #'lispy-clone)
-  (keymap-set structural-edit-map "<tab>" #'lispy-tab)
-  (keymap-set structural-edit-map "<up>" #'lispy-move-up)
-  (keymap-set structural-edit-map "<down>" #'lispy-move-down))
+  :init
+  (bind-keys
+   :map structural-edit-map
+   :repeat-map structural-edit-map
+   :continue-only
+   ("m" . lispy-multiline)
+   ("j" . lispy-split)
+   ("+" . lispy-join)
+   (">" . lispy-slurp-or-barf-right)
+   ("<" . lispy-slurp-or-barf-left)
+   ("/" . lispy-splice)
+   (";" . lispy-comment)
+   ("c" . lispy-clone)
+   ("<tab>" . lispy-tab)
+   ("<up>" . lispy-move-up)
+   ("<down>" . lispy-move-down)))
 
 (defun czm-edebug-eval-hook ()
   (dolist (cmd '(lispy-mode copilot-mode aggressive-indent-mode))
@@ -4570,7 +4565,6 @@ numbered variant \"equation\"."
    ("w" . kill-region)
    ("M-w" . kill-ring-save)
    ("y" . yank)
-   ("c" . lispy-clone)
    ("RET" . TeX-newline))
   :hook
   (LaTeX-mode . tex-parens-mode))
