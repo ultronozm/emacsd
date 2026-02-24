@@ -4756,7 +4756,6 @@ numbered variant \"equation\"."
     (set-face-attribute 'czm-lean4-overlay-face nil :background
                         "#fff59d" :foreground "black"))
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay)
-  (advice-add 'lean4-info-buffer-redisplay :after #'czm-lean4--goal-overlay-update-adapter)
   (with-eval-after-load 'copilot
     (when (boundp 'copilot-completion-map)
       (map-keymap
@@ -4782,7 +4781,6 @@ numbered variant \"equation\"."
     (add-hook 'eldoc-documentation-functions #'lean4-info-eldoc-function
               nil t)
     (eldoc-mode)))
-
 (use-package eldoc-icebox
   :repo-scan
   :ensure (:host github :repo "ultronozm/eldoc-icebox.el" :depth nil)
