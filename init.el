@@ -153,7 +153,10 @@ Pushes a mark at the starting position."
     "Find a file in the math documents folder."
     (interactive)
     (require 'project)
-    (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder))))
+    (let* ((root (file-name-as-directory (expand-file-name my-math-folder)))
+           (project (or (project-current nil root)
+                        (cons 'transient root))))
+      (project-find-file-in nil (list root) project))))
 
 (defun czm-create-scratch-file (dir extension &optional setup-fn)
   "Create a new temporary file in DIR with EXTENSION.
