@@ -55,6 +55,7 @@
 
 (defun my/maybe-set-preview-master-local ()
   "Set local `TeX-master' from `my-preview-master' when enabled."
+  (interactive)
   (when (bound-and-true-p my-preview-master)
     (setq-local TeX-master my-preview-master)))
 
@@ -4469,22 +4470,24 @@ numbered variant \"equation\"."
    '("latexmk -pvc -shell-escape -pdf -view=none -e "
      ("$pdflatex=q/pdflatex %O -synctex=1 -file-line-error -interaction=nonstopmode %S/"))))
 
+(defun my/preview-auto-mode-ensure-TeX-master (arg)
+  (interactive "P")
+  (if arg
+      (progn
+        (preview-auto-mode -1)
+        (preview-clearout-buffer))
+    (when (bound-and-true-p TeX-master)
+      (my/maybe-set-preview-master-local))
+    (preview-auto-mode (if preview-auto-mode -1 1))))
+
 (use-package-full preview-auto
   :repo-scan
   :ensure (:host github :repo "ultronozm/preview-auto.el" :depth nil)
   :after latex
   :hook (LaTeX-mode . preview-auto-setup)
-  :config
-  (defun my/preview-auto-mode-ensure-TeX-master (arg)
-    (interactive "P")
-    (if arg
-        (progn
-          (preview-auto-mode -1)
-          (preview-clearout-buffer))
-      (unless (bound-and-true-p TeX-master)
-        (my/maybe-set-preview-master-local))
-      (preview-auto-mode (if preview-auto-mode -1 1))))
+  :init
   (keymap-global-set "H-r" #'my/preview-auto-mode-ensure-TeX-master)
+  :config
   (setopt preview-LaTeX-command-replacements
           '(preview-LaTeX-disable-pdfoutput))
   (setq preview-protect-point t)
