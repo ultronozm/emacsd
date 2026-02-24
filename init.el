@@ -1,7 +1,10 @@
 ;;; -*- lexical-binding: t; -*-
 
-;;; basics
-(setq use-package-compute-statistics t)
+(setopt use-package-compute-statistics t)
+(setopt use-package-verbose t)
+(setopt use-package-minimum-reported-time 0.1)
+
+;;; profile
 
 (defconst cfg-profile
   (cond
@@ -27,6 +30,34 @@
 
 (load (locate-user-emacs-file "init-settings.el"))
 
+;;; optional settings defaults
+
+(defvar my-todo-file nil
+  "Primary todo Org file path, or nil when not configured.")
+
+(defvar my-projects-file nil
+  "Projects Org file path, or nil when not configured.")
+
+(defvar my-log-file nil
+  "Org log/journal file path, or nil when not configured.")
+
+(defvar my-face-heights nil
+  "Face height alist used by `czm-set-face-heights'.")
+
+(defun my-setting-string (sym)
+  "Return SYM value when it is a non-empty string, else nil."
+  (let ((val (and (boundp sym) (symbol-value sym))))
+    (and (stringp val) (> (length val) 0) val)))
+
+(defun my-setting-files (&rest syms)
+  "Return configured file paths from SYMS, omitting unset values."
+  (delq nil (mapcar #'my-setting-string syms)))
+
+(defun my/maybe-set-preview-master-local ()
+  "Set local `TeX-master' from `my-preview-master' when enabled."
+  (when (bound-and-true-p my-preview-master)
+    (setq-local TeX-master my-preview-master)))
+
 (when (string-equal system-type "darwin")
   (setq ns-command-modifier nil)
   (setq ns-right-control-modifier 'super)
@@ -39,10 +70,359 @@
   (w32-register-hot-key [s-])
   (w32-register-hot-key [s]))
 
+;;; core commands
+
 (defun my-other-window-backward ()
   "Select the previous window."
   (interactive)
   (other-window -1))
+
+(defun mark-inner ()
+  "Mark interior of the current list."
+  (interactive)
+  (condition-case nil
+      (progn
+        (backward-up-list)
+        (down-list)
+        (set-mark (point))
+        (up-list)
+        (backward-down-list))
+    (error (message "No inner list found."))))
+
+(defun beginning-of-list ()
+  "Move to the beginning of the current list.
+Pushes a mark at the starting position."
+  (interactive)
+  (let ((origin (point))
+        (last (point))
+        (continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (backward-sexp)
+            (when (>= (point) last)
+              (setq continue nil)))
+        (scan-error
+         (setq continue nil)))
+      (setq last (point)))
+    (unless (= origin (point))
+      (push-mark origin t))))
+
+(defun end-of-list ()
+  "Move to the end of the current list.
+Pushes a mark at the starting position."
+  (interactive)
+  (let ((origin (point))
+        (last (point))
+        (continue t))
+    (while continue
+      (condition-case nil
+          (progn
+            (forward-sexp)
+            (when (<= (point) last)
+              (setq continue nil)))
+        (scan-error
+         (setq continue nil)))
+      (setq last (point)))
+    (unless (= origin (point))
+      (push-mark origin t))))
+
+(defun kill-to-end-of-list ()
+  "Kill text between point and end of current list."
+  (interactive)
+  (let ((end (save-excursion (end-of-list) (point))))
+    (kill-region (point) end)))
+
+(defun kill-to-beginning-of-list ()
+  "Kill text between point and beginning of current list."
+  (interactive)
+  (let ((beginning (save-excursion (beginning-of-list) (point))))
+    (kill-region beginning (point))))
+
+(defun backward-down-list ()
+  "Move backward down a list."
+  (interactive)
+  (down-list -1))
+
+(defun foldout-exit-fold-without-hiding ()
+  (interactive)
+  (foldout-exit-fold -1))
+
+(when cfg-full
+  (defun czm-find-math-document ()
+    "Find a file in the math documents folder."
+    (interactive)
+    (require 'project)
+    (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder))))
+
+(defun czm-create-scratch-file (dir extension &optional setup-fn)
+  "Create a new temporary file in DIR with EXTENSION.
+Optionally run SETUP-FN after creating the file."
+  (let* ((dir (file-name-as-directory dir))
+         (filename (format-time-string (concat "%Y%m%dT%H%M%S--scratch." extension)))
+         (filepath (expand-file-name filename dir)))
+    (unless (file-directory-p dir)
+      (make-directory dir t))
+    (find-file filepath)
+    (save-buffer)
+    (when setup-fn (funcall setup-fn))))
+
+(defun czm-create-scratch-org ()
+  "Create new scratch org buffer."
+  (interactive)
+  (czm-create-scratch-file my-scratch-org-dir "org"))
+
+(defun czm-create-scratch-markdown ()
+  "Create new scratch markdown buffer."
+  (interactive)
+  (czm-create-scratch-file my-scratch-markdown-dir "md"))
+
+(defun czm-create-scratch-tex ()
+  "Create new scratch LaTeX buffer."
+  (interactive)
+  (czm-create-scratch-file my-scratch-tex-dir "tex"))
+
+(defun czm-create-scratch-sage ()
+  "Create new scratch sage file."
+  (interactive)
+  (czm-create-scratch-file my-scratch-sage-dir "sage"))
+
+(defun czm-tmp-buffer-tex ()
+  "Create new temporary LaTeX buffer."
+  (interactive)
+  (let ((buf (generate-new-buffer "*tmp-tex*")))
+    (switch-to-buffer buf)
+    (when (fboundp 'TeX-mode)
+      (LaTeX-mode)
+      (my/maybe-set-preview-master-local))))
+
+(defvar czm--modus-vivendi-tinted-active nil)
+
+(defun czm-set-face-heights ()
+  "Set the heights of various faces."
+  (pcase-dolist
+      (`(,face . ,height)
+       my-face-heights)
+    (set-face-attribute face nil :height height)))
+
+(defun czm-toggle-dark-mode ()
+  "Toggle between light and dark modes.
+In dark mode:
+- Uses modus-vivendi-tinted theme
+- Enables dark mode for PDF viewing
+In light mode:
+- Uses default Emacs theme
+- Disables dark mode for PDF viewing"
+  (interactive)
+  (if czm--modus-vivendi-tinted-active
+      (progn
+        (disable-theme 'modus-vivendi-tinted)
+        (when (fboundp #'global-pdf-view-midnight-minor-mode)
+          (global-pdf-view-midnight-minor-mode -1))
+        (setq czm--modus-vivendi-tinted-active nil))
+    (disable-theme 'modus-vivendi-tinted)
+    (load-theme 'modus-vivendi-tinted t)
+    (when (fboundp #'global-pdf-view-midnight-minor-mode)
+      (global-pdf-view-midnight-minor-mode 1))
+    (setq czm--modus-vivendi-tinted-active t))
+  (czm-set-face-heights))
+
+(when cfg-full
+  (czm-set-face-heights))
+
+(add-hook 'modus-themes-post-load-hook #'czm-set-face-heights)
+
+(defun my/eval-expression-and-copy (exp &optional insert-value no-truncate char-print-limit copy-to-kill-ring)
+  "Like `eval-expression', but with C-u C-u copies result to kill ring.
+When called with a prefix argument of 16 (interactively, C-u C-u),
+the result is copied to the kill ring in addition to being displayed.
+All other prefix arguments work as in `eval-expression'."
+  (interactive
+   (let* ((prefix-arg current-prefix-arg)
+          (copy-p (equal prefix-arg '(16)))
+          ;; If copying, pass nil as prefix to eval-expression logic
+          (current-prefix-arg (if copy-p nil prefix-arg))
+          (args (cons (read--expression "Eval: ")
+                      (eval-expression-get-print-arguments current-prefix-arg))))
+     (append args (list copy-p))))
+  
+  (let ((result (eval-expression exp insert-value no-truncate char-print-limit)))
+    (when copy-to-kill-ring
+      (let ((result-str (with-temp-buffer
+                          (prin1 result (current-buffer))
+                          (buffer-string))))
+        (kill-new result-str)
+        (message "Result copied to kill ring: %s" result-str)))
+    result))
+
+(defun fill-previous-paragraph ()
+  "Fill the previous paragraph."
+  (interactive)
+  (save-excursion
+    (previous-line)
+    (fill-paragraph)))
+
+(defun ediff-current-kill ()
+  "Run Ediff between the current buffer (or its active region) and the clipboard.
+
+If a region is active, the command first creates an indirect buffer that is
+narrowed to that region; otherwise the whole buffer is used.  A new tab is then
+opened, its frame is split vertically, and the clipboard contents are inserted
+into a temporary buffer in the right window.  Both buffers share the same major
+mode as the original.
+
+Ediff is started on the two buffers and, when the Ediff session ends, all
+temporary artifacts—the indirect buffer (if any), the clipboard buffer, and the
+tab—are cleaned up automatically."
+  (interactive)
+  (let* ((original-buffer (current-buffer))
+         (original-mode   major-mode)
+         (clipboard-contents (current-kill 0))
+         (region-active  (use-region-p))
+         (region-beg     (when region-active (region-beginning)))
+         (region-end     (when region-active (region-end)))
+         (indirect-buffer (when region-active
+                            (deactivate-mark)
+                            (make-indirect-buffer
+                             original-buffer
+                             (generate-new-buffer-name
+                              (concat (buffer-name) "-region"))
+                             t)))
+         (source-buffer  (or indirect-buffer original-buffer))
+         (clip-buffer    (generate-new-buffer "*clipboard-compare*")))
+    (tab-new)
+    (when indirect-buffer
+      (switch-to-buffer indirect-buffer)
+      (narrow-to-region region-beg region-end))
+    (delete-other-windows)
+    (let ((right-window (split-window-right)))
+      (with-selected-window right-window
+        (switch-to-buffer clip-buffer)
+        (insert clipboard-contents)
+        (funcall original-mode))
+      (let ((ediff-buf
+             (ediff-buffers source-buffer clip-buffer))
+            (cleanup
+             (lambda ()
+               (ediff-cleanup-mess)
+               (when indirect-buffer (kill-buffer indirect-buffer))
+               (tab-bar-close-tab))))
+        (with-current-buffer ediff-buf
+          (add-hook 'ediff-quit-hook cleanup nil t))))))
+
+(defun diff-current-kill (&optional switches arg)
+  "Unified diff between the current buffer/region and the clipboard.
+
+• No prefix → run silently with \"-u\".  
+• One C-u   → choose diff‑mode (still silent).  
+• Two C-u   → additionally prompt for extra switches.
+
+The patch shows the *current buffer’s file* as the OLD side (---) and
+the clipboard as the NEW side (+++) so that
+`diff-apply-hunk` (C‑c C‑a) can apply the change directly."
+  (interactive
+   (let ((arg current-prefix-arg))
+     (list (and (>= (prefix-numeric-value (or arg 0)) 16)
+                (read-from-minibuffer "Extra diff switches: "
+                                      nil nil nil 'diff-switches-history))
+           arg)))
+  ;; ───────────────────────────────── gather input ─────────────────────────
+  (let* ((orig-buf   (current-buffer))
+         (file-name  (or (buffer-file-name orig-buf)
+                         (user-error "Buffer isn’t visiting a file")))
+         (regionp    (use-region-p))
+         (src-buf    (if regionp
+                         (let ((ib (make-indirect-buffer
+                                    orig-buf
+                                    (generate-new-buffer-name
+                                     (concat (buffer-name) "-region"))
+                                    t)))
+                           (deactivate-mark)
+                           (with-current-buffer ib
+                             (narrow-to-region (region-beginning)
+                                               (region-end)))
+                           ib)
+                       orig-buf))
+         (clip-file  (make-temp-file "diff-current-kill-clip-"))
+         (src-file   (make-temp-file "diff-current-kill-src-"))
+         ;; first label = first file (old)   second label = second file (new)
+         (labels     (list "--label" file-name "--label" "clipboard"))
+         (switches   (append '("-u") labels (when switches (list switches)))))
+    (unwind-protect
+        (progn
+          ;; write temp files ------------------------------------------------
+          (with-temp-file clip-file (insert (current-kill 0)))
+          (with-current-buffer src-buf
+            (write-region (point-min) (point-max) src-file nil 'silent))
+          ;; run diff --------------------------------------------------------
+          (let* ((ret (diff src-file clip-file switches 'noasync))
+                 (diff-buf (if (windowp ret) (window-buffer ret) ret)))
+            ;; `diff` already enabled diff-mode; just add mapping so C‑c C‑a
+            ;; knows where to patch without asking.
+            (with-current-buffer diff-buf
+              (setq-local diff-remembered-files-alist
+                          (list (cons (list file-name "clipboard")
+                                      file-name))))
+            (pop-to-buffer diff-buf)))
+      ;; cleanup ------------------------------------------------------------
+      (delete-file clip-file) (delete-file src-file)
+      (when (and regionp (buffer-live-p src-buf))
+        (kill-buffer src-buf)))))
+
+(defun clipboard-compare (&optional arg)
+  "Compare the clipboard with the current buffer (or its active region).
+
+No prefix ARG  →  call `ediff-current-kill` (side‑by‑side Ediff).
+
+Any prefix ARG →  call `diff-current-kill`.
+                  *One* C‑u shows the diff with default switches;
+                  *two* C‑u’s lets `diff-current-kill` prompt for extra switches,
+                  because the raw prefix it receives is (16)."
+  (interactive "P")
+  (if arg
+      (let ((current-prefix-arg arg))      ; forward the exact prefix
+        (call-interactively #'diff-current-kill))
+    (ediff-current-kill)))
+
+(defun my/save-clipboard-to-kill-ring ()
+  "Save current system clipboard to kill ring without yanking."
+  (interactive)
+  (when-let* ((text (gui-get-selection 'CLIPBOARD)))
+    (kill-new text)
+    (message "Clipboard saved to kill ring")))
+
+(defun my-reload-elisp-dir (dir &optional hard)
+  "Reload all .el files in DIR.
+With prefix arg HARD (\\[universal-argument]), unload features first."
+  (interactive "DDirectory: \nP")
+  (let* ((files (directory-files dir t "\\.el\\'"))
+         (files (seq-remove (lambda (f)
+                              (string-match-p
+                               "\\(?:-autoloads\\.el\\|-pkg\\.el\\)\\'" f))
+                            files))
+         (features
+          (delete-dups
+           (apply #'append
+                  (mapcar
+                   (lambda (file)
+                     (with-temp-buffer
+                       (insert-file-contents file)
+                       (let (out)
+                         (goto-char (point-min))
+                         (while (re-search-forward "^(provide '\\([^)\n]+\\))" nil t)
+                           (push (intern (match-string 1)) out))
+                         out)))
+                   files)))))
+    (when hard
+      (dolist (feat features)
+        (ignore-errors (unload-feature feat t))))
+    (let ((load-prefer-newer t))
+      (dolist (f files)
+        (load (file-name-sans-extension f) nil 'nomessage)))
+    (message "Reloaded %d files from %s%s"
+             (length files) dir (if hard " (hard)" ""))))
+
+;;; keymaps
 
 (defvar-keymap my-window-map
   :doc "Window and buffer keymap."
@@ -73,6 +453,156 @@
    "Window: h/j/k/l move, 0/1/2/3 layout, o/O win, n/p buf, x/X kill, b/i switch/bookmark"))
 
 (keymap-global-set "C-c w" #'my-window-map-dispatch)
+
+(defvar-keymap structural-edit-map
+  :doc "Structural editing keymap."
+  :repeat
+  (:continue (backward-down-list
+              kill-to-beginning-of-list
+              kill-to-end-of-list
+              mark-inner
+              kill-sexp
+              eval-last-sexp
+              delete-pair
+              transpose-sexps
+              kill-region
+              kill-ring-save
+              yank
+              mark-sexp
+              newline-and-indent
+              lispy-multiline
+              lispy-split
+              lispy-join
+              lispy-slurp-or-barf-right
+              lispy-slurp-or-barf-left
+              lispy-splice
+              lispy-comment
+              lispy-clone
+              lispy-tab
+              lispy-move-up
+              lispy-move-down))
+  "n" #'forward-list
+  "p" #'backward-list
+  "u" #'backward-up-list
+  "M-u" #'up-list
+  "g" #'down-list
+  "M-g" #'backward-down-list
+  "f" #'forward-sexp
+  "b" #'backward-sexp
+  "a" #'beginning-of-list
+  "A" #'kill-to-beginning-of-list
+  "e" #'end-of-list
+  "E" #'kill-to-end-of-list
+  "i" #'mark-inner
+  "[" #'beginning-of-defun
+  "]" #'end-of-defun
+  "k" #'kill-sexp
+  "x" #'eval-last-sexp
+  "/" #'delete-pair
+  "t" #'transpose-sexps
+  "w" #'kill-region
+  "M-w" #'kill-ring-save
+  "y" #'yank
+  "C-M-SPC" #'mark-sexp
+  "RET" #'newline-and-indent)
+
+(put 'recenter-top-bottom 'repeat-continue t)
+
+(defun my-structural-edit-dispatch ()
+  "Activate a structural editing keymap for the current context."
+  (interactive)
+  (let ((map (cond
+              ((and (bound-and-true-p tex-parens-mode)
+                    (boundp 'tex-parens-structural-edit-repeat-map))
+               tex-parens-structural-edit-repeat-map)
+              ((boundp 'structural-edit-map)
+               structural-edit-map))))
+    (unless map
+      (user-error "No structural editing map is available here"))
+    (set-transient-map
+     map
+     t
+     nil
+     "Struct: n/p/u/g lists, a/e list bounds, A/E kill bounds, [/] defun, m/j/+ etc mode extras")))
+
+(defvar-keymap my-outline-map
+  "n" #'outline-next-heading
+  "p" #'outline-previous-heading
+  "u" #'outline-up-heading
+  "f" #'outline-forward-same-level
+  "b" #'outline-backward-same-level
+  "<left>" #'outline-promote
+  "<right>" #'outline-demote
+  "<up>" #'outline-move-subtree-up
+  "<down>" #'outline-move-subtree-down
+  "x" #'foldout-exit-fold-without-hiding
+  "z" #'foldout-zoom-subtree
+  "a" #'outline-show-all
+  "c" #'outline-hide-entry
+  "d" #'outline-hide-subtree
+  "e" #'outline-show-entry
+  "<tab>" #'outline-cycle
+  "<backtab>" #'outline-cycle-buffer
+  "k" #'outline-show-branches
+  "l" #'outline-hide-leaves
+  "o" #'outline-hide-other
+  "q" #'outline-hide-sublevels
+  "s" #'outline-show-subtree
+  "t" #'outline-hide-body
+  "@" #'outline-mark-subtree
+  "C-M-SPC" #'outline-mark-subtree
+  "w" #'kill-region
+  "M-w" #'kill-ring-save
+  "C-/" #'undo
+  "y" #'yank)
+
+(defun my-outline-map-dispatch ()
+  "Activate `my-outline-map' transiently."
+  (interactive)
+  (set-transient-map
+   my-outline-map
+   t
+   nil
+   "Outline: n/p/u/f/b move, a/c/d/e/s show-hide, arrows move/promote, x/z foldout"))
+
+(keymap-global-set "C-c o" #'my-outline-map-dispatch)
+(keymap-global-set "C-c j" #'my-structural-edit-dispatch)
+(keymap-global-set "H-t" #'czm-toggle-dark-mode)
+(keymap-global-set "<remap> <eval-expression>" #'my/eval-expression-and-copy)
+
+(when cfg-full
+  (keymap-global-set "s-d" #'czm-find-math-document))
+
+(bind-keys
+ :repeat-map paragraph-repeat-map
+ ("]" . forward-paragraph)
+ ("}" . forward-paragraph)
+ ("[" . backward-paragraph)
+ ("{" . backward-paragraph)
+ :exit
+ ("C-/" . undo)
+ :continue-only
+ ("M-h" . mark-paragraph)
+ ("h" . mark-paragraph)
+ ("k" . kill-paragraph)
+ ("w" . kill-region)
+ ("M-w" . kill-ring-save)
+ ("y" . yank)
+ ("t" . transpose-paragraphs)
+ ("q" . fill-previous-paragraph))
+
+(bind-keys
+ :repeat-map sentence-repeat-map
+ ("e" . forward-sentence)
+ ("a" . backward-sentence)
+ :continue-only
+ ("M-h" . mark-end-of-sentence)
+ ("h" . mark-end-of-sentence)
+ ("k" . kill-sentence)
+ ("w" . kill-region)
+ ("M-w" . kill-ring-save)
+ ("y" . yank)
+ ("t" . transpose-sentences))
 
 (use-package emacs
   :ensure nil
@@ -106,6 +636,7 @@
    ("C-z C-e" . pp-macroexpand-last-sexp)
    ("C-z C-s" . desktop-save-in-desktop-dir)
    ("C-z C-f" . desktop-read)
+   ("C-z y" . my/save-clipboard-to-kill-ring)
    ("C-z s" . whitespace-cleanup)
    ("H-0" . tab-close)
    ("H-1" . tab-close-other)
@@ -178,7 +709,6 @@
    ("s-v" . nil)
    ("s-w" . nil) ; delete frame
    ("s-x" . nil)
-   ("s-y" . replace-buffer-with-clipboard)
    ("s-z" . nil))
   :custom
   (Man-notify-method 'pushy)
@@ -290,6 +820,7 @@
   ;; (fset 'yes-or-no-p 'y-or-n-p)
   (setq-default indent-tabs-mode nil)
   (setq desktop-dirname user-emacs-directory)
+  (auto-insert-mode)
   (electric-pair-mode)
   (minibuffer-depth-indicate-mode)
   (global-auto-revert-mode)
@@ -311,6 +842,24 @@
   (dired-mode . dired-omit-mode)
   (dired-mode . hl-line-mode))
 
+
+;;; display
+
+(setq display-buffer-base-action
+      '((display-buffer-reuse-window display-buffer-same-window)
+        (inhibit-same-window . nil)))
+
+(add-to-list 'display-buffer-alist
+             '("\\`\\*\\(?:.*-\\)?compilation\\*\\(?:<[^>]+>\\)?\\'"
+               (display-buffer-reuse-window display-buffer-in-side-window)
+               (side . bottom)
+               (reusable-frames . visible)
+               (window-height . 0.3)))
+
+;; Detect if a Help buffer is being displayed for
+;; `what-cursor-position' and, if so, display it in a side window on
+;; the right instead of the default behavior.
+
 (defun my-help-from-what-cursor-position-p (buf-name _action)
   "Return non-nil if BUF-NAME is a Help buffer for `what-cursor-position'."
   (when (string= buf-name "*Help*")
@@ -319,163 +868,20 @@
         (goto-char (point-min))
         (looking-at "^position:")))))
 
-(defun my-display-buffer-rmail-unsent-p (buffer-or-name _action)
-  "Return non-nil for compose buffers opened from Rmail."
-  (let ((name (if (bufferp buffer-or-name)
-                  (buffer-name buffer-or-name)
-                buffer-or-name)))
-    (and (stringp name)
-         (or (string-prefix-p "*unsent" name)
-             (string= name "*mail*"))
-         (with-current-buffer (window-buffer (selected-window))
-           (derived-mode-p 'rmail-mode 'rmail-summary-mode)))))
+(add-to-list 'display-buffer-alist
+             '(my-help-from-what-cursor-position-p
+               (display-buffer-in-side-window)
+               (side . right)
+               (window-width . 0.3)
+               (select . nil)))
 
-(setq display-buffer-base-action
-      '((display-buffer-reuse-window display-buffer-same-window)
-        (inhibit-same-window . nil)))
-
-(setq display-buffer-alist
-      (list
-       '("\\`CAPTURE-"
-         (display-buffer-same-window)
-         (inhibit-same-window . nil))
-       '("\\`\\*?magit-diff:.*\\*?\\'"
-         (display-buffer-in-side-window)
-         (side . right)
-         (slot . 0)
-         (window-width . 0.45)
-         (window-parameters . ((no-delete-other-windows . t))))
-       '("\\`\\*\\(?:.*-\\)?compilation\\*\\(?:<[^>]+>\\)?\\'"
-         (display-buffer-reuse-window display-buffer-in-side-window)
-         (side . bottom)
-         (reusable-frames . visible)
-         (window-height . 0.3))
-       '(my-help-from-what-cursor-position-p
-         (display-buffer-in-side-window)
-         (side . right)
-         (window-width . 0.3)
-         (select . nil))
-       '(my-display-buffer-rmail-unsent-p
-         display-buffer-same-window
-         (inhibit-same-window . nil))))
-
-(defun czm-find-math-document ()
-  "Find a file in the math documents folder."
-  (interactive)
-  (require 'project)
-  (project-find-file-in nil (list my-math-folder) `(local . ,my-math-folder)))
-
-(keymap-global-set "s-d" #'czm-find-math-document)
-
-(defun my/save-clipboard-to-kill-ring ()
-  "Save current system clipboard to kill ring without yanking."
-  (interactive)
-  (when-let* ((text (gui-get-selection 'CLIPBOARD)))
-    (kill-new text)
-    (message "Clipboard saved to kill ring")))
-
-(keymap-global-set "C-z y" #'my/save-clipboard-to-kill-ring)
-
-(defvar edebug-previous-result-raw nil) ;; Last result returned, raw.
-(defun edebug-compute-previous-result (previous-value)
-  "Redefinition of built-in function `edebug-compute-previous-result'.
-This version saves PREVIOUS-VALUE in `edebug-previous-result-raw'."
-  (if edebug-unwrap-results
-      (setq previous-value
-            (edebug-unwrap* previous-value)))
-  (setq edebug-previous-result-raw previous-value)
-  (setq edebug-previous-result
-        (concat "Result: "
-                (edebug-safe-prin1-to-string previous-value)
-                (eval-expression-print-format previous-value))))
-
-(defun mark-inner ()
-  "Mark interior of the current list."
-  (interactive)
-  (condition-case nil
-      (progn
-        (backward-up-list)
-        (down-list)
-        (set-mark (point))
-        (up-list)
-        (backward-down-list))
-    (error (message "No inner list found."))))
-
-(defun beginning-of-list ()
-  "Move to the beginning of the current list.
-Pushes a mark at the starting position."
-  (interactive)
-  (let ((origin (point))
-        (last (point))
-        (continue t))
-    (while continue
-      (condition-case nil
-          (progn
-            (backward-sexp)
-            (when (>= (point) last)
-              (setq continue nil)))
-        (scan-error
-         (setq continue nil)))
-      (setq last (point)))
-    (unless (= origin (point))
-      (push-mark origin t))))
-
-(defun end-of-list ()
-  "Move to the end of the current list.
-Pushes a mark at the starting position."
-  (interactive)
-  (let ((origin (point))
-        (last (point))
-        (continue t))
-    (while continue
-      (condition-case nil
-          (progn
-            (forward-sexp)
-            (when (<= (point) last)
-              (setq continue nil)))
-        (scan-error
-         (setq continue nil)))
-      (setq last (point)))
-    (unless (= origin (point))
-      (push-mark origin t))))
-
-(defun kill-to-end-of-list ()
-  "Kill text between point and end of current list."
-  (interactive)
-  (let ((end (save-excursion (end-of-list) (point))))
-    (kill-region (point) end)))
-
-(defun kill-to-beginning-of-list ()
-  "Kill text between point and beginning of current list."
-  (interactive)
-  (let ((beginning (save-excursion (beginning-of-list) (point))))
-    (kill-region beginning (point))))
-
-(defun backward-down-list ()
-  "Move backward down a list."
-  (interactive)
-  (down-list -1))
-
-(defun czm-set-face-heights ()
-  "Set the heights of various faces."
-  (pcase-dolist
-      (`(,face . ,height)
-       my-face-heights)
-    (set-face-attribute face nil :height height)))
-
-(czm-set-face-heights)
-
-(defun foldout-exit-fold-without-hiding ()
-  (interactive)
-  (foldout-exit-fold -1))
+;;; built-in package tweaks
 
 (use-package outline
   :ensure nil
   :demand t
   :config
   (require 'foldout)
-  (setcdr outline-navigation-repeat-map nil)
-  (setcdr outline-editing-repeat-map nil)
   :bind
   (:map
    outline-minor-mode-map
@@ -485,40 +891,7 @@ Pushes a mark at the starting position."
    ("<right-margin> S-<mouse-1>" . nil)
    ("<right-margin> <mouse-1>" . nil)
    ("<left-margin> S-<mouse-1>" . nil)
-   ("<left-margin> <mouse-1>" . nil))
-  (:repeat-map
-   outline-repeat-map
-   ("n" . outline-next-heading)
-   ("p" . outline-previous-heading)
-   ("u" . outline-up-heading)
-   ("f" . outline-forward-same-level)
-   ("b" . outline-backward-same-level)
-   ("<left>" . outline-promote)
-   ("<right>" . outline-demote)
-   ("<up>" . outline-move-subtree-up)
-   ("<down>" . outline-move-subtree-down)
-   ("x" . foldout-exit-fold-without-hiding)
-   ("z" . foldout-zoom-subtree)
-   ("a" . outline-show-all)
-   ("c" . outline-hide-entry)
-   ("d" . outline-hide-subtree)
-   ("e" . outline-show-entry)
-   ("<tab>" . outline-cycle)
-   ("<backtab>" . outline-cycle-buffer)
-   ("k" . outline-show-branches)
-   ("l" . outline-hide-leaves)
-   ;; ("RET" . outline-insert-heading)
-   ("o" . outline-hide-other)
-   ("q" . outline-hide-sublevels)
-   ("s" . outline-show-subtree)
-   ("t" . outline-hide-body)
-   ("@" . outline-mark-subtree)
-   :continue-only
-   ("C-M-SPC" . outline-mark-subtree)
-   ("w" . kill-region)
-   ("M-w" . kill-ring-save)
-   ("C-/" . undo)
-   ("y" . yank)))
+   ("<left-margin> <mouse-1>" . nil)))
 
 ;; This could be its own package, accommodating git-friendly abbrev storage?
 ;; Need a good way to update the source.
@@ -529,7 +902,7 @@ Pushes a mark at the starting position."
   (dolist (abbrev abbrevs)
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
-(use-package abbrev
+(use-package-full abbrev
   :ensure nil
   :defer
   :hook ((prog-mode text-mode erc-mode) . abbrev-mode)
@@ -562,138 +935,6 @@ Pushes a mark at the starting position."
  :package em-hist
  :map eshell-hist-mode-map
  ("<up>" . nil) ("<down>" . nil))
-
-(defvar maximize-window-mode-history nil
-  "History of major modes used in maximize-window function.")
-
-(defun ediff-current-kill ()
-  "Run Ediff between the current buffer (or its active region) and the clipboard.
-
-If a region is active, the command first creates an indirect buffer that is
-narrowed to that region; otherwise the whole buffer is used.  A new tab is then
-opened, its frame is split vertically, and the clipboard contents are inserted
-into a temporary buffer in the right window.  Both buffers share the same major
-mode as the original.
-
-Ediff is started on the two buffers and, when the Ediff session ends, all
-temporary artifacts—the indirect buffer (if any), the clipboard buffer, and the
-tab—are cleaned up automatically."
-  (interactive)
-  (let* ((original-buffer (current-buffer))
-         (original-mode   major-mode)
-         (clipboard-contents (current-kill 0))
-         (region-active  (use-region-p))
-         (region-beg     (when region-active (region-beginning)))
-         (region-end     (when region-active (region-end)))
-         (indirect-buffer (when region-active
-                            (deactivate-mark)
-                            (make-indirect-buffer
-                             original-buffer
-                             (generate-new-buffer-name
-                              (concat (buffer-name) "-region"))
-                             t)))
-         (source-buffer  (or indirect-buffer original-buffer))
-         (clip-buffer    (generate-new-buffer "*clipboard-compare*")))
-    (tab-new)
-    (when indirect-buffer
-      (switch-to-buffer indirect-buffer)
-      (narrow-to-region region-beg region-end))
-    (delete-other-windows)
-    (let ((right-window (split-window-right)))
-      (with-selected-window right-window
-        (switch-to-buffer clip-buffer)
-        (insert clipboard-contents)
-        (funcall original-mode))
-      (let ((ediff-buf
-             (ediff-buffers source-buffer clip-buffer))
-            (cleanup
-             (lambda ()
-               (ediff-cleanup-mess)
-               (when indirect-buffer (kill-buffer indirect-buffer))
-               (tab-bar-close-tab))))
-        (with-current-buffer ediff-buf
-          (add-hook 'ediff-quit-hook cleanup nil t))))))
-
-(defun diff-current-kill (&optional switches arg)
-  "Unified diff between the current buffer/region and the clipboard.
-
-• No prefix → run silently with \"-u\".  
-• One C-u   → choose diff‑mode (still silent).  
-• Two C-u   → additionally prompt for extra switches.
-
-The patch shows the *current buffer’s file* as the OLD side (---) and
-the clipboard as the NEW side (+++) so that
-`diff-apply-hunk` (C‑c C‑a) can apply the change directly."
-  (interactive
-   (let ((arg current-prefix-arg))
-     (list (and (>= (prefix-numeric-value (or arg 0)) 16)
-                (read-from-minibuffer "Extra diff switches: "
-                                      nil nil nil 'diff-switches-history))
-           arg)))
-  ;; ───────────────────────────────── gather input ─────────────────────────
-  (let* ((orig-buf   (current-buffer))
-         (file-name  (or (buffer-file-name orig-buf)
-                         (user-error "Buffer isn’t visiting a file")))
-         (regionp    (use-region-p))
-         (src-buf    (if regionp
-                         (let ((ib (make-indirect-buffer
-                                    orig-buf
-                                    (generate-new-buffer-name
-                                     (concat (buffer-name) "-region"))
-                                    t)))
-                           (deactivate-mark)
-                           (with-current-buffer ib
-                             (narrow-to-region (region-beginning)
-                                               (region-end)))
-                           ib)
-                       orig-buf))
-         (clip-file  (make-temp-file "diff-current-kill-clip-"))
-         (src-file   (make-temp-file "diff-current-kill-src-"))
-         ;; first label = first file (old)   second label = second file (new)
-         (labels     (list "--label" file-name "--label" "clipboard"))
-         (switches   (append '("-u") labels (when switches (list switches)))))
-    (unwind-protect
-        (progn
-          ;; write temp files ------------------------------------------------
-          (with-temp-file clip-file (insert (current-kill 0)))
-          (with-current-buffer src-buf
-            (write-region (point-min) (point-max) src-file nil 'silent))
-          ;; run diff --------------------------------------------------------
-          (let* ((ret (diff src-file clip-file switches 'noasync))
-                 (diff-buf (if (windowp ret) (window-buffer ret) ret)))
-            ;; `diff` already enabled diff-mode; just add mapping so C‑c C‑a
-            ;; knows where to patch without asking.
-            (with-current-buffer diff-buf
-              (setq-local diff-remembered-files-alist
-                          (list (cons (list file-name "clipboard")
-                                      file-name))))
-            (pop-to-buffer diff-buf)))
-      ;; cleanup ------------------------------------------------------------
-      (delete-file clip-file) (delete-file src-file)
-      (when (and regionp (buffer-live-p src-buf))
-        (kill-buffer src-buf)))))
-
-(defun clipboard-compare (&optional arg)
-  "Comp4re the clipboard with the current buffer (or its active region).
-
-No prefix ARG  →  call `ediff-current-kill` (side‑by‑side Ediff).
-
-Any prefix ARG →  call `diff-current-kill`.
-                  *One* C‑u shows the diff with default switches;
-                  *two* C‑u’s lets `diff-current-kill` prompt for extra switches,
-                  because the raw prefix it receives is (16)."
-  (interactive "P")
-  (if arg
-      (let ((current-prefix-arg arg))      ; forward the exact prefix
-        (call-interactively #'diff-current-kill))
-    (ediff-current-kill)))
-
-(defun replace-buffer-with-clipboard ()
-  "Erase buffer and replace its contents with clipboard."
-  (interactive)
-  (erase-buffer)
-  (yank)
-  (ediff-current-file))
 
 (advice-add 'describe-char :around
             (lambda (orig-fun &rest args)
@@ -773,11 +1014,6 @@ positions you navigated to during the Ediff session."
 (add-hook 'ediff-quit-hook #'ediff-restore-window-configuration)
 (add-hook 'ediff-cleanup-hook #'ediff-kill-temporary-file-buffer)
 
-(bind-keys
- :package doc-view
- :map doc-view-mode-map
- ("C-c g" . doc-view-goto-page))
-
 (with-eval-after-load 'tex-mode
   (mapc
    (lambda (sym) (add-to-list 'tex--prettify-symbols-alist sym))
@@ -796,150 +1032,6 @@ positions you navigated to during the Ediff session."
      ("\\end{multline*}" . ?⎭)
      ("\\end{multline}" . ?⎭))))
 
-(defun my/eval-expression-and-copy (exp &optional insert-value no-truncate char-print-limit copy-to-kill-ring)
-  "Like `eval-expression', but with C-u C-u copies result to kill ring.
-When called with a prefix argument of 16 (interactively, C-u C-u),
-the result is copied to the kill ring in addition to being displayed.
-All other prefix arguments work as in `eval-expression'."
-  (interactive
-   (let* ((prefix-arg current-prefix-arg)
-          (copy-p (equal prefix-arg '(16)))
-          ;; If copying, pass nil as prefix to eval-expression logic
-          (current-prefix-arg (if copy-p nil prefix-arg))
-          (args (cons (read--expression "Eval: ")
-                      (eval-expression-get-print-arguments current-prefix-arg))))
-     (append args (list copy-p))))
-  
-  (let ((result (eval-expression exp insert-value no-truncate char-print-limit)))
-    (when copy-to-kill-ring
-      (let ((result-str (with-temp-buffer
-                          (prin1 result (current-buffer))
-                          (buffer-string))))
-        (kill-new result-str)
-        (message "Result copied to kill ring: %s" result-str)))
-    result))
-
-(global-set-key [remap eval-expression] #'my/eval-expression-and-copy)
-
-(defun czm-create-scratch-file (dir extension &optional setup-fn)
-  "Create a new temporary file in DIR with EXTENSION.
-Optionally run SETUP-FN after creating the file."
-  (let* ((dir (file-name-as-directory dir))
-         (filename (format-time-string (concat "%Y%m%dT%H%M%S--scratch." extension)))
-         (filepath (expand-file-name filename dir)))
-    (unless (file-directory-p dir)
-      (make-directory dir t))
-    (find-file filepath)
-    (save-buffer)
-    (when setup-fn (funcall setup-fn))))
-
-(defun czm-create-scratch-org ()
-  "Create new scratch org buffer."
-  (interactive)
-  (czm-create-scratch-file my-scratch-org-dir "org"))
-
-(defun czm-create-scratch-markdown ()
-  "Create new scratch markdown buffer."
-  (interactive)
-  (czm-create-scratch-file my-scratch-markdown-dir "md"))
-
-(defun czm-create-scratch-tex ()
-  "Create new scratch LaTeX buffer."
-  (interactive)
-  (czm-create-scratch-file my-scratch-tex-dir "tex"))
-
-(defun czm-create-scratch-sage ()
-  "Create new scratch sage file."
-  (interactive)
-  (czm-create-scratch-file my-scratch-sage-dir "sage"))
-
-(defun czm-tmp-buffer-tex ()
-  "Create new temporary LaTeX buffer."
-  (interactive)
-  (let ((buf (generate-new-buffer "*tmp-tex*")))
-    (switch-to-buffer buf)
-    (LaTeX-mode)
-    (setq-local TeX-master my-preview-master)))
-
-(auto-insert-mode)
-(add-to-list 'auto-insert-alist
-             '("\\.tex\\'" . czm-setup-tex-file))
-
-(tool-bar-mode 0)
-(scroll-bar-mode 0)
-(add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
-
-(add-hook 'modus-themes-post-load-hook #'czm-set-face-heights)
-
-(defvar czm--modus-vivendi-tinted-active nil)
-
-(defun czm-toggle-dark-mode ()
-  "Toggle between light and dark modes.
-In dark mode:
-- Uses modus-vivendi-tinted theme
-- Enables dark mode for PDF viewing
-In light mode:
-- Uses default Emacs theme
-- Disables dark mode for PDF viewing"
-  (interactive)
-  (if czm--modus-vivendi-tinted-active
-      (progn
-        (disable-theme 'modus-vivendi-tinted)
-        (when (fboundp #'global-pdf-view-midnight-minor-mode)
-          (global-pdf-view-midnight-minor-mode -1))
-        (setq czm--modus-vivendi-tinted-active nil))
-    (disable-theme 'modus-vivendi-tinted)
-    (load-theme 'modus-vivendi-tinted t)
-    (when (fboundp #'global-pdf-view-midnight-minor-mode)
-      (global-pdf-view-midnight-minor-mode 1))
-    (setq czm--modus-vivendi-tinted-active t))
-  (czm-set-face-heights))
-
-(keymap-global-set "H-t" #'czm-toggle-dark-mode)
-
-(setopt use-package-verbose t
-        use-package-minimum-reported-time 0.1)
-
-(defun fill-previous-paragraph ()
-  "Fill the previous paragraph."
-  (interactive)
-  (save-excursion
-    (previous-line)
-    (fill-paragraph)))
-
-(put 'recenter-top-bottom 'repeat-continue t)
-
-(bind-keys
- :repeat-map paragraph-repeat-map
- ("]" . forward-paragraph)
- ("}" . forward-paragraph)
- ("[" . backward-paragraph)
- ("{" . backward-paragraph)
- :exit
- ("C-/" . undo)
- :continue-only
- ("M-h" . mark-paragraph)
- ("h" . mark-paragraph)
- ("k" . kill-paragraph)
- ("w" . kill-region)
- ("M-w" . kill-ring-save)
- ("y" . yank)
- ("t" . transpose-paragraphs)
- ("q" . fill-previous-paragraph))
-
-(bind-keys
- :repeat-map sentence-repeat-map
- ("e" . forward-sentence)
- ("a" . backward-sentence)
- :continue-only
- ("M-h" . mark-end-of-sentence)
- ("h" . mark-end-of-sentence)
- ("k" . kill-sentence)
- ("w" . kill-region)
- ("M-w" . kill-ring-save)
- ("y" . yank)
- ("t" . transpose-sentences))
-
 (font-lock-add-keywords 'Info-mode '((" -- \\([^:]+\\): \\_<\\(.+\\)\\_>" . 2)))
 (font-lock-add-keywords 'Info-mode '(("‘\\<\\([^’]+\\)\\>’" . 1)))
 
@@ -947,12 +1039,15 @@ In light mode:
   :ensure nil
   :bind
   (:map doc-view-mode-map
+        ("C-c g" . doc-view-goto-page)
         ("<down>" . nil)
         ("<up>" . nil)))
 
 ;;; tramp
 
-(with-eval-after-load 'tramp
+(use-package-full tramp
+  :ensure nil
+  :config
   ;; Use a login shell remotely so PATH/tool setup is available to Eglot/LSP.
   ;; Keep startup files quiet: any output from shell init can break TRAMP parsing.
   ;; If TRAMP login gets flaky, revisit `tramp-remote-shell-args` first.
@@ -1043,14 +1138,9 @@ With prefix ARG, attach all visible buffers instead."
       (dolist (buffer buffers)
         (mml-attach-buffer-or-file buffer)))))
 
-(bind-keys
- :package message
- :map message-mode-map
- ("C-c RET a" . mml-attach-buffer-or-file))
-
 (defun my-rmail-mode-hook ()
   (setq-local preview-tailor-local-multiplier 0.6)
-  (setq-local TeX-master my-preview-master))
+  (my/maybe-set-preview-master-local))
 
 (defun my-rmail-refile-and-store-link ()
   "Refile current message and store an org link to it."
@@ -1092,7 +1182,7 @@ This keeps summary navigation commands in the summary window while making
         (switch-to-buffer buf)
         (rmail-show-message msg)))))
 
-(use-package rmail
+(use-package-full rmail
   :ensure nil
   :defer t
   :bind
@@ -1148,17 +1238,29 @@ This keeps summary navigation commands in the summary window while making
     (define-key rmail-summary-mode-map "O"
                 #'my-rmail-summary-output-and-store-link)
     (define-key rmail-summary-mode-map (kbd "RET")
-                #'my-rmail-summary-goto-msg-and-select)))
+                #'my-rmail-summary-goto-msg-and-select))
+  (defun my-always-enable-rmail-font-lock (&rest _)
+    "Ensure font-lock-mode is enabled after rmail runs."
+    ;; Check we're actually in rmail-mode, in case rmail errored out.
+    (when (derived-mode-p 'rmail-mode)
+      (font-lock-mode 1)))
+  (advice-add 'rmail :after #'my-always-enable-rmail-font-lock)
+  (defun my-display-buffer-rmail-unsent-p (buffer-or-name _action)
+    "Return non-nil for compose buffers opened from Rmail."
+    (let ((name (if (bufferp buffer-or-name)
+                    (buffer-name buffer-or-name)
+                  buffer-or-name)))
+      (and (stringp name)
+           (or (string-prefix-p "*unsent" name)
+               (string= name "*mail*"))
+           (with-current-buffer (window-buffer (selected-window))
+             (derived-mode-p 'rmail-mode 'rmail-summary-mode)))))
+  (add-to-list 'display-buffer-alist
+               '(my-display-buffer-rmail-unsent-p
+                 display-buffer-same-window
+                 (inhibit-same-window . nil))))
 
-(defun my-always-enable-rmail-font-lock (&rest _)
-  "Ensure font-lock-mode is enabled after rmail runs."
-  ;; Check we're actually in rmail-mode, in case rmail errored out.
-  (when (derived-mode-p 'rmail-mode)
-    (font-lock-mode 1)))
-
-(advice-add 'rmail :after #'my-always-enable-rmail-font-lock)
-
-(use-package sendmail
+(use-package-full sendmail
   :ensure nil
   :defer t
   :config
@@ -1171,21 +1273,30 @@ This keeps summary navigation commands in the summary window while making
                 (expand-file-name "sent.rmail" my-mail-folder))))
      (format "Fcc: %s\n" file))))
 
-(defun my-message-insert-debbugs-cc (address)
-  "Insert an X-Debbugs-Cc header with ADDRESS."
-  (interactive (list (read-string "X-Debbugs-Cc: " nil nil "bug-gnu-emacs@gnu.org")))
-  (save-excursion
-    (message-add-header (format "X-Debbugs-Cc: %s" address))))
 
-(use-package message
+(use-package-full message
   :ensure nil
   :mode ("\\*message\\*-[0-9]\\{8\\}-[0-9]\\{6\\}\\'" . message-mode)
+  :config
+  (defun my-mail-message-tab ()
+    "Use `mail-abbrev-insert-alias' in headers, otherwise `message-tab'."
+    (interactive)
+    (if (message-point-in-header-p)
+        (call-interactively #'mail-abbrev-insert-alias)
+      (message-tab)))
+  (defun my-message-insert-debbugs-cc (address)
+    "Insert an X-Debbugs-Cc header with ADDRESS."
+    (interactive (list (read-string "X-Debbugs-Cc: " nil nil "bug-gnu-emacs@gnu.org")))
+    (save-excursion
+      (message-add-header (format "X-Debbugs-Cc: %s" address))))
   :bind (:map message-mode-map
-        ("C-c C-f C-z" . my-message-insert-debbugs-cc))
+              ("C-c RET a" . mml-attach-buffer-or-file)
+              ("C-c C-f C-z" . my-message-insert-debbugs-cc)
+              ("TAB" . my-mail-message-tab))
   :custom
   (message-make-forward-subject-function #'message-forward-subject-fwd))
 
-(use-package mairix
+(use-package-full mairix
   :ensure nil
   :defer t
   :bind
@@ -1248,21 +1359,6 @@ s:substring=2 : match substring with <=2 errors in any word in Subject:"
             ("i" "Info docs" (lambda ()
                                (interactive)
                                (info "(mairix-el)")))]))
-
-
-(defun my-mail-message-tab ()
-  "Use `mail-abbrev-insert-alias' in headers, otherwise `message-tab'."
-  (interactive)
-  (if (message-point-in-header-p)
-      (call-interactively #'mail-abbrev-insert-alias)
-    (message-tab)))
-
-(use-package message
-  :defer t
-  :ensure nil
-  :bind
-  (:map message-mode-map
-        ("TAB" . my-mail-message-tab)))
 
 ;;; quit
 
@@ -1406,59 +1502,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (with-eval-after-load 'tex-mode
   (add-hook 'LaTeX-mode-hook
             (lambda () (setq TeX-base-mode-name "L"))))
-
-(defun avy-action-embark (pt)
-  (unwind-protect
-      (save-excursion
-        (goto-char pt)
-        (embark-act))
-    (select-window
-     (cdr (ring-ref avy-ring 0))))
-  t)
-
-(defun avy-action-easy-kill (pt)
-  (unless (require 'easy-kill nil t)
-    (user-error "Easy Kill not found, please install."))
-  (cl-letf*
-      ((bounds (if (use-region-p)
-                   (prog1 (cons (region-beginning) (region-end))
-                     (deactivate-mark))
-                 (bounds-of-thing-at-point 'sexp)))
-       (transpose-map
-        (define-keymap
-          "M-t" (lambda () (interactive "*")
-                  (pcase-let ((`(,beg . ,end) (easy-kill--bounds)))
-                    (transpose-regions (car bounds) (cdr bounds) beg end
-                                       'leave-markers)))))
-       ((symbol-function 'easy-kill-activate-keymap)
-        (lambda ()
-          (let ((map (easy-kill-map)))
-            (set-transient-map
-             (make-composed-keymap transpose-map map)
-             (lambda ()
-               ;; Prevent any error from activating the keymap forever.
-               (condition-case err
-                   (or (and (not (easy-kill-exit-p this-command))
-                            (or (eq this-command
-                                    (lookup-key map (this-single-command-keys)))
-                                (let ((cmd (key-binding
-                                            (this-single-command-keys) nil t)))
-                                  (command-remapping cmd nil (list map)))))
-                       (ignore
-                        (easy-kill-destroy-candidate)
-                        (unless (or (easy-kill-get mark) (easy-kill-exit-p this-command))
-                          (easy-kill-save-candidate))))
-                 (error (message "%s:%s" this-command (error-message-string err))
-                        nil)))
-             (lambda ()
-               (let ((dat (ring-ref avy-ring 0)))
-                 (select-frame-set-input-focus
-                  (window-frame (cdr dat)))
-                 (select-window (cdr dat))
-                 (goto-char (car dat)))))))))
-    (goto-char pt)
-    (easy-kill)))
-
 (use-package avy
   :custom
   (avy-single-candidate-jump nil)
@@ -1479,6 +1522,59 @@ If the predicate is true, add NAME to `repo-scan-repos'."
      (?K . avy-action-kill-whole-line)))
   (with-eval-after-load 'org
     (keymap-set org-mode-map "C-'" nil))
+
+
+  (defun avy-action-embark (pt)
+    (unwind-protect
+        (save-excursion
+          (goto-char pt)
+          (embark-act))
+      (select-window
+       (cdr (ring-ref avy-ring 0))))
+    t)
+
+  (defun avy-action-easy-kill (pt)
+    (unless (require 'easy-kill nil t)
+      (user-error "Easy Kill not found, please install."))
+    (cl-letf*
+        ((bounds (if (use-region-p)
+                     (prog1 (cons (region-beginning) (region-end))
+                       (deactivate-mark))
+                   (bounds-of-thing-at-point 'sexp)))
+         (transpose-map
+          (define-keymap
+            "M-t" (lambda () (interactive "*")
+                    (pcase-let ((`(,beg . ,end) (easy-kill--bounds)))
+                      (transpose-regions (car bounds) (cdr bounds) beg end
+                                         'leave-markers)))))
+         ((symbol-function 'easy-kill-activate-keymap)
+          (lambda ()
+            (let ((map (easy-kill-map)))
+              (set-transient-map
+               (make-composed-keymap transpose-map map)
+               (lambda ()
+                 ;; Prevent any error from activating the keymap forever.
+                 (condition-case err
+                     (or (and (not (easy-kill-exit-p this-command))
+                              (or (eq this-command
+                                      (lookup-key map (this-single-command-keys)))
+                                  (let ((cmd (key-binding
+                                              (this-single-command-keys) nil t)))
+                                    (command-remapping cmd nil (list map)))))
+                         (ignore
+                          (easy-kill-destroy-candidate)
+                          (unless (or (easy-kill-get mark) (easy-kill-exit-p this-command))
+                            (easy-kill-save-candidate))))
+                   (error (message "%s:%s" this-command (error-message-string err))
+                          nil)))
+               (lambda ()
+                 (let ((dat (ring-ref avy-ring 0)))
+                   (select-frame-set-input-focus
+                    (window-frame (cdr dat)))
+                   (select-window (cdr dat))
+                   (goto-char (car dat)))))))))
+      (goto-char pt)
+      (easy-kill)))
 
   (defun avy-action-teleport-whole-line (pt)
     (avy-action-kill-whole-line pt)
@@ -1590,19 +1686,23 @@ If the predicate is true, add NAME to `repo-scan-repos'."
    ))
 
 (use-package vertico
+  :ensure t
   :config (vertico-mode))
 
 (use-package marginalia
+  :ensure t
   :demand
   :config (marginalia-mode)
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle)))
 
 (use-package orderless
+  :ensure t
   :custom
   (completion-styles '(orderless basic)))
 
 (use-package consult
+  :ensure t
   :bind
   (("C-c M-x" . consult-mode-command)
    ("C-c i" . consult-info)
@@ -1611,6 +1711,9 @@ If the predicate is true, add NAME to `repo-scan-repos'."
    ([remap bookmark-jump] . consult-bookmark)
    ("s-i" . consult-bookmark)
    ([remap project-switch-to-buffer] . consult-project-buffer)
+   ("C-x r SPC" . consult-register-store)
+   ("C-x r j" . consult-register-load)
+   ("C-x r RET" . consult-register)
    ("s-t" . consult-register-load)
    ("s-T" . consult-register-store)
    ("C-s-t" . consult-register)
@@ -1641,7 +1744,6 @@ If the predicate is true, add NAME to `repo-scan-repos'."
    ("M-r" . consult-history))
   (:map project-prefix-map
         ("g" . consult-ripgrep))
-  :hook (completion-list-mode . consult-preview-at-point-mode)
   :init
   (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format)
@@ -1653,8 +1755,9 @@ If the predicate is true, add NAME to `repo-scan-repos'."
    consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
+   consult-source-bookmark consult-source-file-register
+   consult-source-recent-file consult-source-project-recent-file
+   consult-source-project-recent-file-hidden
    :preview-key '(:debounce 0.4 any))
   (setq consult-narrow-key "<")
   (setq completion-in-region-function
@@ -1663,7 +1766,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                      #'consult-completion-in-region
                    #'completion--in-region)
                  args)))
-  (add-to-list 'project-switch-commands '(consult-ripgrep "Ripgrep"))
+  (with-eval-after-load 'project
+    (add-to-list 'project-switch-commands '(consult-ripgrep "Ripgrep")))
   (setq project-switch-commands
         (cl-remove 'project-find-regexp project-switch-commands :key #'car)))
 
@@ -1700,13 +1804,15 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
 (defun consult-ripgrep-todo-notes ()
   "Search todo note files."
   (interactive)
-  (consult-ripgrep--files
-   "Ripgrep todo notes"
-   (list my-todo-file
-         my-projects-file
-         "~/doit/reference.org"
-         (expand-file-name "diary" user-emacs-directory))
-   nil))
+  (let ((files
+         (append
+          (my-setting-files 'my-todo-file 'my-projects-file)
+          (list "~/doit/reference.org"
+                (expand-file-name "diary" user-emacs-directory)))))
+    (consult-ripgrep--files
+     "Ripgrep todo notes"
+     files
+     nil)))
 
 (defun consult-ripgrep-config-files ()
   "Search config files."
@@ -1760,8 +1866,28 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
   :hook (Info-selection . info-colors-fontify-node))
 
 (use-package ace-window
+  :config
+  ;; https://karthinks.com/software/emacs-window-management-almanac/#aw-select-the-completing-read-for-emacs-windows
+  (defun ace-window-prefix ()
+    "Use `ace-window' to display the buffer of the next command.
+The next buffer is the buffer displayed by the next command invoked
+immediately after this command (ignoring reading from the minibuffer).
+Creates a new window before displaying the buffer.
+When `switch-to-buffer-obey-display-actions' is non-nil,
+`switch-to-buffer' commands are also supported."
+    (interactive)
+    (display-buffer-override-next-command
+     (lambda (buffer _)
+       (let (window type)
+         (setq
+          window (aw-select (propertize " ACE" 'face 'mode-line-highlight))
+          type 'reuse)
+         (cons window type)))
+     nil "[ace-window]")
+    (message "Use `ace-window' to display next command buffer..."))
   :bind
-  ("C-x o" . ace-window))
+  ("C-x o" . ace-window)
+  ("C-x 4 o" . ace-window-prefix))
 
 ;; https://www.jamescherti.com/emacs-customize-ellipsis-outline-minor-mode/
 (defun my-outline-set-global-ellipsis (ellipsis)
@@ -1772,7 +1898,7 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
 
 (my-outline-set-global-ellipsis " ▼ ")
 
-(use-package outline-skip
+(use-package-full outline-skip
   :repo-scan
   :after latex
   :ensure (:host github :repo "ultronozm/outline-skip.el"
@@ -1780,7 +1906,7 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
                  :inherit nil :pin t)
   :hook (LaTeX-mode . outline-skip-mode))
 
-(use-package perfect-margin
+(use-package-full perfect-margin
   :defer t
   :diminish
   :bind ("H-m" . perfect-margin-mode))
@@ -1808,14 +1934,7 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
   :bind
   (:map global-map ("C-c e" . eldoc-box-help-at-point)))
 
-(use-package expand-region
-  :bind
-  (("C-=" . er/expand-region)))
-
-(use-package pos-tip
-  :defer t)
-
-(use-package rust-mode
+(use-package-full rust-mode
   :defer t
   :hook
   (rust-mode . eglot-ensure))
@@ -1832,45 +1951,25 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
     (call-interactively #'self-insert-command)))
 
 (use-package lispy
+  :ensure t
   :bind
   (:map
    emacs-lisp-mode-map
    (";" . czm-lispy-comment-maybe)
    ("M-1" . lispy-describe-inline)
    ("M-2" . lispy-arglist-inline))
-  (:repeat-map
-   structural-edit-map
-   ("n" . forward-list)
-   ("p" . backward-list)
-   ("u" . backward-up-list)
-   ("M-u" . up-list)
-   ("g" . down-list)
-   :continue-only
-   ("M-g" . backward-down-list)
-   ("f" . forward-sexp)
-   ("b" . backward-sexp)
-   ("a" . beginning-of-defun)
-   ("e" . end-of-defun)
-   ("k" . kill-sexp)
-   ("x" . eval-last-sexp)
-   ("m" . lispy-multiline)
-   ("j" . lispy-split)
-   ("+" . lispy-join)
-   (">" . lispy-slurp-or-barf-right)
-   ("<" . lispy-slurp-or-barf-left)
-   ("C-/" . undo)
-   ("/" . lispy-splice)
-   (";" . lispy-comment)
-   ("t" . transpose-sexps)
-   ("w" . kill-region)
-   ("M-w" . kill-ring-save)
-   ("y" . yank)
-   ("c" . lispy-clone)
-   ("C-M-SPC" . mark-sexp)
-   ("RET" . newline-and-indent)
-   ("i" . lispy-tab)
-   ("<up>" . lispy-move-up)
-   ("<down>" . lispy-move-down)))
+  :config
+  (keymap-set structural-edit-map "m" #'lispy-multiline)
+  (keymap-set structural-edit-map "j" #'lispy-split)
+  (keymap-set structural-edit-map "+" #'lispy-join)
+  (keymap-set structural-edit-map ">" #'lispy-slurp-or-barf-right)
+  (keymap-set structural-edit-map "<" #'lispy-slurp-or-barf-left)
+  (keymap-set structural-edit-map "/" #'lispy-splice)
+  (keymap-set structural-edit-map ";" #'lispy-comment)
+  (keymap-set structural-edit-map "c" #'lispy-clone)
+  (keymap-set structural-edit-map "<tab>" #'lispy-tab)
+  (keymap-set structural-edit-map "<up>" #'lispy-move-up)
+  (keymap-set structural-edit-map "<down>" #'lispy-move-down))
 
 (defun czm-edebug-eval-hook ()
   (dolist (cmd '(lispy-mode copilot-mode aggressive-indent-mode))
@@ -1887,17 +1986,6 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
   :config
   (emacs-src-redirect-mode))
 
-(defun isearch-forward-enclosing-defun ()
-  "Start an incremental search for the name of the enclosing defun."
-  (interactive)
-  (end-of-defun)
-  (beginning-of-defun)
-  (down-list)
-  (forward-sexp 2)
-  (isearch-forward-symbol-at-point))
-
-(keymap-global-set "M-s q" #'isearch-forward-enclosing-defun)
-
 (defun czm-xref-restrict-to-project-advice (orig-fun &rest args)
   "Advice to restrict xref searches to the current project root."
   (let ((project-vc-external-roots-function #'ignore))
@@ -1913,7 +2001,8 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
 
 (czm-xref-project-only-mode)
 
-(use-package flycheck
+(use-package-full flycheck
+  :ensure t
   :defer t
   :bind
   (:repeat-map
@@ -1938,7 +2027,8 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
   :config
   (setq flycheck-emacs-lisp-load-path 'inherit))
 
-(use-package flycheck-package
+(use-package-full flycheck-package
+  :ensure t
   :defer t
   :hook
   (emacs-lisp-mode . flycheck-package-setup))
@@ -1988,7 +2078,7 @@ them at the first newline."
     (advice-remove 'flymake--tabulated-entries-1
                    #'flymake-preserve-multiline--fix-entries)))
 
-(use-package attrap
+(use-package-full attrap
   :repo-scan
   :ensure (:host github
                  :repo "ultronozm/attrap.el"
@@ -2053,7 +2143,7 @@ them at the first newline."
         ("C-c C-q" . eglot-code-action-quickfix)
         ("C-c C-a" . eglot-code-actions)))
 
-(use-package consult-abbrev
+(use-package-full consult-abbrev
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil
@@ -2077,35 +2167,35 @@ them at the first newline."
   :ensure t
   :defer t)
 
-(use-package julia-ts-mode
+(use-package-full julia-ts-mode
   :ensure (:host github :repo "dhanak/julia-ts-mode"
                  :depth nil
                  :inherit nil)
   :mode "\\.jl$")
 
-(use-package eglot-jl
+(use-package-full eglot-jl
   :defer t
   :config
   (eglot-jl-init))
 
-(use-package nerd-icons
+(use-package-full nerd-icons
   :defer t
   :ensure t)
 
-(use-package nerd-icons-completion
+(use-package-full nerd-icons-completion
   :defer t
   :ensure t
   :after marginalia
   :config
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
-(use-package nerd-icons-dired
+(use-package-full nerd-icons-dired
   :defer t
   :ensure t
   :hook
   (dired-mode . nerd-icons-dired-mode))
 
-(use-package dired-du
+(use-package-full dired-du
   :defer t
   ;; important to use `dired-omit-mode' to avoid performance issues
   ;; with `..'
@@ -2116,7 +2206,7 @@ them at the first newline."
 
 (add-to-list 'major-mode-remap-defaults '(markdown-mode))
 
-(use-package debbugs
+(use-package-full debbugs
   :defer t
   :ensure (debbugs
            :host github :repo "emacs-mirror/debbugs"
@@ -2128,13 +2218,12 @@ them at the first newline."
   (debbugs-gnu-mail-backend 'rmail)
   (debbugs-cache-expiry nil))
 
-(defun czm/bug-reference-vc-log-local-only ()
-  (unless (file-remote-p default-directory)
-    (bug-reference-mode 1)))
-
-(use-package bug-reference
+(use-package-full bug-reference
   :ensure nil
   :config
+  (defun czm/bug-reference-vc-log-local-only ()
+    (unless (file-remote-p default-directory)
+      (bug-reference-mode 1)))
   (add-hook 'vc-git-region-history-mode-hook #'czm/bug-reference-vc-log-local-only)
   (add-hook 'vc-git-log-view-mode-hook #'czm/bug-reference-vc-log-local-only)
   (keymap-set bug-reference-map "C-c C-o" #'bug-reference-push-button))
@@ -2171,17 +2260,25 @@ them at the first newline."
                  :depth nil
                  :inherit nil
                  :pin t)
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command)
+  :config
+  (defun my-embark-dwim-or-act (arg)
+    "Run `embark-dwim'; with prefix ARG run `embark-act'."
+    (interactive "P")
+    (if arg
+        (call-interactively #'embark-act)
+      (call-interactively #'embark-dwim)))
   :bind
   (("C-." . embark-act)
-   ("M-." . embark-dwim)
-   ("C-h B" . embark-bindings))
-  :init
-  (setq prefix-help-command #'embark-prefix-help-command))
+   ("C-c ." . embark-act)
+   ("M-." . my-embark-dwim-or-act)
+   ("C-h B" . embark-bindings)))
 
 (use-package embark-consult
+  :ensure t
   ;; only need to install it, embark loads it after consult if found
-  :hook
-  (embark-collect-mode . consult-preview-at-point-mode))
+  :after (embark consult))
 
 (defun my-embark-copy-library-path (library)
   "Copy the file path of Emacs Lisp LIBRARY to the kill ring."
@@ -2280,7 +2377,7 @@ them at the first newline."
 
 ;;; pdf
 
-(use-package pdf-tools
+(use-package-full pdf-tools
   ;; :disabled
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :ensure (:host github :repo "vedang/pdf-tools"
@@ -2337,25 +2434,25 @@ them at the first newline."
 
 (defun my/pdf-annot-setup (_a)
   (LaTeX-mode)
-  (setq TeX-master my-preview-master)
+  (my/maybe-set-preview-master-local)
   (preview-auto-mode))
 
 (setq pdf-annot-edit-contents-setup-function #'my/pdf-annot-setup)
 
-(use-package doc-view-follow
+(use-package-full doc-view-follow
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/doc-view-follow.el" :depth nil
                  :inherit nil :pin t)
   :custom (doc-view-follow-hijack t))
 
-(use-package pdf-extract
+(use-package-full pdf-extract
   :defer t
   :repo-scan
   :ensure (:host github :repo "ultronozm/pdf-extract.el"
                  :inherit nil :pin t))
 
-(use-package pdf-tools-org-extract
+(use-package-full pdf-tools-org-extract
   :repo-scan
   :after pdf-annot
   :demand
@@ -2386,7 +2483,7 @@ in all current and future PDF buffers."
 
 ;;; translation
 
-(use-package gt
+(use-package-full gt
   :defer t
   :config
   (setq gt-langs '(da en fr de))
@@ -2443,7 +2540,7 @@ in all current and future PDF buffers."
 
 (defun my/set-TeX-master-preview ()
   (interactive)
-  (setq-local TeX-master "~/doit/preview-master.tex"))
+  (my/maybe-set-preview-master-local))
 
 (defun my/org-schedule-and-refile ()
   "Schedule the current heading and refile it to the Scheduled node."
@@ -2504,18 +2601,18 @@ The content is escaped to prevent org syntax interpretation."
 
 (defun czm-org-preview-setup ()
   "Set up org-mode buffer for use with preview-auto-mode."
-  (setq-local TeX-master my-preview-master)
+  (my/maybe-set-preview-master-local)
   (setq-local preview-tailor-local-multiplier 0.7))
 
 (defun my-markdown-hook ()
-  (setq-local TeX-master my-preview-master)
+  (my/maybe-set-preview-master-local)
   (setq-local preview-tailor-local-multiplier 0.7))
 
 (add-hook 'markdown-mode-hook #'my-markdown-hook)
 
 (defun czm-diff-preview-setup ()
   "Set up diff buffer for use with preview-auto-mode."
-  (setq-local TeX-master my-preview-master)
+  (my/maybe-set-preview-master-local)
   (setq-local preview-tailor-local-multiplier 0.7))
 
 (add-hook 'diff-mode-hook #'czm-diff-preview-setup)
@@ -2555,27 +2652,31 @@ The content is escaped to prevent org syntax interpretation."
   :custom
   (org-hide-emphasis-markers t)
   (org-agenda-custom-commands
-   '(("n" "Agenda and all TODOs"
-      ((agenda "")
-       (todo "TODO")
-       (tags "CLOSED>=\"<today>\""
-             ((org-agenda-overriding-header "\nCompleted today\n")))))
-     ("y" "Year view"
-      ((agenda ""
-               ((org-agenda-files (list my-projects-file))
-                (org-agenda-span 365)
-                (org-agenda-start-on-weekday nil)
-                (org-agenda-start-day (format-time-string "%Y-%m-%d"))
-                (org-agenda-prefix-format
-                 '((agenda . "  %-12:c%?-12t%6e  %s")))
-                (org-agenda-show-all-dates nil)
-                (diary-show-holidays-flag nil)
-                (org-agenda-include-diary t))))
-      ((org-agenda-skip-function
-        '(org-agenda-skip-entry-if 'todo 'done))))))
-  (org-default-notes-file my-todo-file)
+   (append
+    '(("n" "Agenda and all TODOs"
+       ((agenda "")
+        (todo "TODO")
+        (tags "CLOSED>=\"<today>\""
+              ((org-agenda-overriding-header "\nCompleted today\n"))))))
+    (when-let* ((projects-file (my-setting-string 'my-projects-file)))
+      `(("y" "Year view"
+         ((agenda ""
+                  ((org-agenda-files (list ,projects-file))
+                   (org-agenda-span 365)
+                   (org-agenda-start-on-weekday nil)
+                   (org-agenda-start-day (format-time-string "%Y-%m-%d"))
+                   (org-agenda-prefix-format
+                    '((agenda . "  %-12:c%?-12t%6e  %s")))
+                   (org-agenda-show-all-dates nil)
+                   (diary-show-holidays-flag nil)
+                   (org-agenda-include-diary t))))
+         ((org-agenda-skip-function
+           '(org-agenda-skip-entry-if 'todo 'done))))))))
+  (org-default-notes-file
+   (or (my-setting-string 'my-todo-file)
+       (expand-file-name "notes.org" user-emacs-directory)))
   (org-directory "~/")
-  (org-agenda-files `(,my-todo-file ,my-projects-file))
+  (org-agenda-files (my-setting-files 'my-todo-file 'my-projects-file))
   (org-goto-auto-isearch nil)
   (org-agenda-include-diary t)
   (org-babel-load-languages '((latex . t) (emacs-lisp . t)
@@ -2585,7 +2686,6 @@ The content is escaped to prevent org syntax interpretation."
   (org-confirm-babel-evaluate nil)
   (org-link-elisp-confirm-function nil)
   (org-enforce-todo-dependencies t)
-  (org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)))
   (org-hide-leading-stars t)
   (org-list-allow-alphabetical t)
   (org-refile-targets '((nil :level . 1)
@@ -2600,16 +2700,22 @@ The content is escaped to prevent org syntax interpretation."
    '((sequence "TODO(t)" "|" "DONE(d)" "CANCELED(c)")))
   (org-use-speed-commands t)
   (org-capture-templates
-   '(("i" "Inbox" entry (file+headline my-todo-file "Inbox")
-      "* %?\n  %i")
-     ("j" "Journal" entry (file+datetree my-log-file)
-      "* %?\nEntered on %U\n")
-     ("a" "Inbox (annotated)" entry (file+headline my-todo-file "Inbox")
-      "* %?\n%a")
-     ("k" "Interruptions" entry (file+headline my-todo-file "Interruptions")
-      "* %?\n%U\n" :clock-in t :clock-resume t)
-     ("d" "Diary" entry (file+datetree simple-journal-db-file)
-      "* %U \n%?%i\n" :tree-type week)))
+   (let ((todo-file (my-setting-string 'my-todo-file))
+         (log-file (my-setting-string 'my-log-file)))
+     (append
+      (when todo-file
+        `(("i" "Inbox" entry (file+headline ,todo-file "Inbox")
+           "* %?\n  %i")))
+      (when log-file
+        `(("j" "Journal" entry (file+datetree ,log-file)
+           "* %?\nEntered on %U\n")))
+      (when todo-file
+        `(("a" "Inbox (annotated)" entry (file+headline ,todo-file "Inbox")
+           "* %?\n%a")
+          ("k" "Interruptions" entry (file+headline ,todo-file "Interruptions")
+           "* %?\n%U\n" :clock-in t :clock-resume t)))
+      '(("d" "Diary" entry (file+datetree simple-journal-db-file)
+         "* %U \n%?%i\n" :tree-type week)))))
   (org-src-window-setup 'current-window)
   :bind
   (:map org-mode-map
@@ -2661,8 +2767,11 @@ The content is escaped to prevent org syntax interpretation."
         ("b" . org-drag-element-backward))
   :config
   (require 'ob-shell)
+  (setopt org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)
+                          ("\\.xlsx\\'" . system)
+                          ("\\.docx\\'" . system)))
   (add-hook 'org-src-mode-hook #'hack-dir-local-variables-non-file-buffer)
-  (add-hook 'org-src-mode-hook #'my/set-TeX-master-preview)
+  (add-hook 'org-src-mode-hook #'my/maybe-set-preview-master-local)
   (dolist (item '(("m" . org-babel-mark-block)
                   ("\C-m" . org-babel-mark-block)))
     (add-to-list 'org-babel-key-bindings item))
@@ -2672,7 +2781,11 @@ The content is escaped to prevent org syntax interpretation."
   (add-to-list 'org-src-lang-modes '("lean" . lean4))
   (add-to-list 'org-src-lang-modes '("tex" . latex))
   (add-to-list 'org-src-lang-modes '("cmake" . cmake-ts))
-  (add-to-list 'org-src-lang-modes '("yaml" . yaml-ts)))
+  (add-to-list 'org-src-lang-modes '("yaml" . yaml-ts))
+  (add-to-list 'display-buffer-alist
+               '("\\`CAPTURE-"
+                 (display-buffer-same-window)
+                 (inhibit-same-window . nil))))
 
 (defun my/org-archive-done-tasks ()
   "Archive all done tasks in the current buffer."
@@ -2684,7 +2797,7 @@ The content is escaped to prevent org syntax interpretation."
        "^\\*+ "
        (regexp-opt '("DONE" "CANCELED")))))))
 
-(use-package org-modern
+(use-package-full org-modern
   :after org
   :demand
   :ensure t
@@ -2698,12 +2811,12 @@ The content is escaped to prevent org syntax interpretation."
             ("▹" . "▿")
             ("▸" . "▾"))))
 
-(use-package org-appear
+(use-package-full org-appear
   :ensure t
   :hook
   (org-mode . org-appear-mode))
 
-(use-package org-remark
+(use-package-full org-remark
   :after org
   :demand
   :config
@@ -2712,7 +2825,7 @@ The content is escaped to prevent org syntax interpretation."
 
 ;;; more mail
 
-(use-package czm-mail
+(use-package-full czm-mail
   :repo-scan
   :after rmail
   :demand
@@ -2732,7 +2845,7 @@ The content is escaped to prevent org syntax interpretation."
 
 ;;; shells (external)
 
-(use-package eat-tmux
+(use-package-full eat-tmux
   :repo-scan
   :after project
   :ensure (:host github :repo "ultronozm/eat-tmux.el" :depth nil
@@ -2744,7 +2857,7 @@ The content is escaped to prevent org syntax interpretation."
 
 ;; (keymap-set project-prefix-map "T" #'eat-tmux-orchestrator)
 
-(use-package eat
+(use-package-full eat
   :ensure (eat :inherit elpaca-menu-non-gnu-elpa)
   :config
   (add-hook 'eat-mode-hook #'abbrev-mode)
@@ -2764,7 +2877,7 @@ The content is escaped to prevent org syntax interpretation."
 
 ;;; ai stuff
 
-(use-package copilot
+(use-package-full copilot
   :ensure (:host github
                  :repo "zerolfx/copilot.el"
                  :files ("*.el" "dist")
@@ -2812,27 +2925,26 @@ The content is escaped to prevent org syntax interpretation."
 ;; (keymap-set copilot-completion-map "<remap> <zap-to-char>" #'copilot-accept-completion-to-char)
 ;; (keymap-set copilot-completion-map "<remap> <zap-up-to-char>" #'copilot-accept-completion-up-to-char)
 
-(use-package plz
+(use-package-full plz
   :defer t
   :ensure (:host github :repo "alphapapa/plz.el"
                  :depth nil
                  :inherit nil))
 
-(use-package plz-event-source
+(use-package-full plz-event-source
   :defer t
   :ensure (:host github :repo "r0man/plz-event-source"
                  :depth nil
                  :inherit nil))
 
 
-(use-package llm
+(use-package-full llm
   :defer t
   :ensure (:host github
                  :repo "ahyatt/llm"
                  :depth nil
                  :remotes (("ultronozm" :repo "ultronozm/llm"))
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   ;; :init
   ;; (require 'llm-openai)
   ;; (require 'llm-gemini)
@@ -2843,7 +2955,7 @@ The content is escaped to prevent org syntax interpretation."
   :config
   (add-to-list 'warning-suppress-types '(llm)))
 
-(use-package llm-tool-collection
+(use-package-full llm-tool-collection
   :defer t
   :after llm
   :ensure (:host github
@@ -2853,7 +2965,7 @@ The content is escaped to prevent org syntax interpretation."
                  :inherit nil
                  :pin t))
 
-(use-package ai-org-chat
+(use-package-full ai-org-chat
   :repo-scan
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
                  :inherit nil
@@ -2880,7 +2992,7 @@ The content is escaped to prevent org syntax interpretation."
             #'ai-org-chat-auto-format-response
             t))
 
-(use-package gptel
+(use-package-full gptel
   :ensure (:host github :repo "karthink/gptel"
                  :remotes (("ultronozm" :repo "ultronozm/gptel"))
                  :inherit nil
@@ -2904,7 +3016,7 @@ The content is escaped to prevent org syntax interpretation."
           :models '(claude-sonnet-4-6)))
   (setq gptel-model 'claude-sonnet-4-6))
 
-(use-package gptel-quick
+(use-package-full gptel-quick
   :defer 2
   :ensure (:host github :repo "karthink/gptel-quick" :inherit nil)
   :demand
@@ -2966,21 +3078,24 @@ Skips empty days and diary holidays."
   (interactive)
   (save-window-excursion
     (require 'org-agenda)
-    (let ((org-agenda-files (list my-projects-file))
-          (org-agenda-span 365)
-          (org-agenda-start-on-weekday nil)
-          (org-agenda-start-day (format-time-string "%Y-%m-%d"))
-          (org-agenda-prefix-format
-           '((agenda . "  %-12:c%?-12t%6e  %s")))
-          (org-agenda-include-diary t)
-          (diary-show-holidays-flag nil)
-          (org-agenda-show-all-dates nil))
-      (my/with-filtered-diary
-       (lambda ()
-         (org-agenda nil "a")
-         (buffer-substring-no-properties (point-min) (point-max)))))))
+    (let ((projects-file (my-setting-string 'my-projects-file)))
+      (unless projects-file
+        (user-error "Set my-projects-file in init-settings.el to use this command"))
+      (let ((org-agenda-files (list projects-file))
+            (org-agenda-span 365)
+            (org-agenda-start-on-weekday nil)
+            (org-agenda-start-day (format-time-string "%Y-%m-%d"))
+            (org-agenda-prefix-format
+             '((agenda . "  %-12:c%?-12t%6e  %s")))
+            (org-agenda-include-diary t)
+            (diary-show-holidays-flag nil)
+            (org-agenda-show-all-dates nil))
+        (my/with-filtered-diary
+         (lambda ()
+           (org-agenda nil "a")
+           (buffer-substring-no-properties (point-min) (point-max))))))))
 
-(use-package content-quoter
+(use-package-full content-quoter
   :repo-scan
   :ensure (:host github :repo "ultronozm/content-quoter.el"
                  :depth nil
@@ -2992,7 +3107,7 @@ Skips empty days and diary holidays."
 
 (use-package mcp-server-lib)
 
-(use-package life-mail-mcp
+(use-package-full life-mail-mcp
   :load-path "~/repos/life-mail-mcp"
   :after mcp-server-lib
   :config
@@ -3000,14 +3115,14 @@ Skips empty days and diary holidays."
           (expand-file-name "~/mail/inbox.rmail"))
   (life-mail-mcp-init))
 
-(use-package elisp-dev-mcp
+(use-package-full elisp-dev-mcp
   :ensure (:host github :repo "laurynas-biveinis/elisp-dev-mcp"
                  :depth nil)
   :after mcp-server-lib
   :config
   (elisp-dev-mcp-enable))
 
-(use-package mcp
+(use-package-full mcp
   :ensure t
   :custom (mcp-hub-servers
            `(("filesystem" . (:command "npx"
@@ -3034,7 +3149,7 @@ Skips empty days and diary holidays."
 
 ;;;;; supporting packages
 
-(use-package shell-maker
+(use-package-full shell-maker
   :ensure (:host github :repo "xenodium/shell-maker"
                  :depth nil
                  :inherit nil
@@ -3047,7 +3162,7 @@ Skips empty days and diary holidays."
             (format "%s--transcript.txt"
                     (format-time-string "%Y%m%dT%H%M%S")))))
 
-(use-package acp
+(use-package-full acp
   :ensure (:host github :repo "xenodium/acp.el"
                  :depth nil
                  :inherit nil
@@ -3236,7 +3351,7 @@ The following placeholders are replaced using `format-spec':
          (fboundp 'pdf-view-active-region-text)
          (pdf-view-active-region-p))
     (list :kind 'pdf
-          :file (when-let ((file (buffer-file-name)))
+          :file (when-let* ((file (buffer-file-name)))
                   (abbreviate-file-name file))
           :page (if (fboundp 'pdf-view-current-page)
                     (number-to-string (pdf-view-current-page))
@@ -3248,7 +3363,7 @@ The following placeholders are replaced using `format-spec':
            (line-start (line-number-at-pos beg))
            (line-end (line-number-at-pos (if (> end beg) (1- end) end))))
       (list :kind 'text
-            :file (when-let ((file (buffer-file-name)))
+            :file (when-let* ((file (buffer-file-name)))
                     (abbreviate-file-name file))
             :line-start (number-to-string line-start)
             :line-end (number-to-string line-end)
@@ -3296,7 +3411,7 @@ The following placeholders are replaced using `format-spec':
                     (delete-char 2)
                     (setq end (- end 2))))
                 (goto-char end)
-                (when-let ((window (get-buffer-window target-buffer)))
+                (when-let* ((window (get-buffer-window target-buffer)))
                   (set-window-point window end))))))))
     shell-buffer))
 
@@ -3335,17 +3450,28 @@ The following placeholders are replaced using `format-spec':
   (my/set-TeX-master-preview)
   (setq-local preview-tailor-local-multiplier 0.8))
 
-(use-package agent-shell
+(defun my/agent-shell-insert-org-timestamp ()
+  "Insert an Org timestamp with time at point."
+  (interactive)
+  (org-timestamp '(16)))
+
+(defun my/agent-shell-yank-fenced-block ()
+  "Insert yanked text in a fenced code block."
+  (interactive)
+  (unless (bolp) (newline))
+  (insert "```\n")
+  (yank)
+  (insert "\n```\n"))
+
+(use-package-full agent-shell
   :ensure (:host github :repo "xenodium/agent-shell"
                  :depth nil
                  :inherit nil)
   :bind
   (:map agent-shell-mode-map
         ("o" . my/agent-shell-ui-toggle-fragment-at-point-or-self-insert)
-        ("C-c t" . (lambda () (interactive) (org-timestamp '(16))))
-        ("C-c m" . (lambda () (interactive)
-                     (unless (bolp) (newline))
-                     (insert "```\n") (yank) (insert "\n```\n"))))
+        ("C-c t" . my/agent-shell-insert-org-timestamp)
+        ("C-c m" . my/agent-shell-yank-fenced-block))
   (:map project-prefix-map
         ("z x" . my/agent-shell-codex-discuss)
         ("z c" . my/agent-shell-claude-discuss))
@@ -3402,7 +3528,7 @@ character instead of toggling."
   (interactive)
   (my/agent-shell--call-or-self-insert #'agent-shell-ui-toggle-fragment-at-point))
 
-;; (use-package preview-auto
+;; (use-package-full preview-auto
 ;;   :after preview
 ;;   :demand
 ;;   :hook (LaTeX-mode . preview-auto-setup)
@@ -3415,14 +3541,14 @@ character instead of toggling."
 
 ;;;;; attention
 
-(use-package knockknock
+(use-package-full knockknock
   :defer t
   :ensure (:host github :repo "konrad1977/knockknock"
                  :depth nil
                  :inherit nil
                  :pin t))
 
-(use-package agent-shell-attention
+(use-package-full agent-shell-attention
   :repo-scan
   :ensure (:host github :repo "ultronozm/agent-shell-attention.el"
                  :depth nil
@@ -3473,7 +3599,7 @@ character instead of toggling."
 
 ;;; erc
 
-(use-package erc
+(use-package-full erc
   :ensure nil
   :defer t
   ;; :hook
@@ -3513,7 +3639,7 @@ character instead of toggling."
 
 
 ;; logging doesn't seem to be working; not sure what the story is there.
-(use-package erc-log
+(use-package-full erc-log
   :ensure nil
   :defer t
   :after erc
@@ -3534,7 +3660,7 @@ character instead of toggling."
 ;;   :config
 ;;   (erc-netsplit-mode))
 
-(use-package erc-desktop-notifications
+(use-package-full erc-desktop-notifications
   :ensure nil
   :defer t
   :after erc
@@ -3639,7 +3765,7 @@ character instead of toggling."
   (set-fill-column 120)
   (setq next-error-function #'flymake-goto-next-error))
 
-(use-package cc-mode
+(use-package-full cc-mode
   :ensure nil
   :bind
   ("C-c M-o" . ff-find-other-file)
@@ -3660,7 +3786,7 @@ character instead of toggling."
 ;;   :hook
 ;;   (c-mode-common . clang-format+-mode))
 
-(use-package cmake-build
+(use-package-full cmake-build
   :ensure (:host github :repo "ultronozm/cmake-build.el" :depth nil)
   :bind (("s-m m" . cmake-build-menu)
          ("s-m 1" . cmake-build-set-cmake-profile)
@@ -3679,7 +3805,7 @@ character instead of toggling."
   (cmake-build-options "-j 16")
   (cmake-build-options "-j 8 --verbose"))
 
-(use-package czm-cpp
+(use-package-full czm-cpp
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-cpp.el" :files ("*.el" "template") :depth nil
                  :inherit nil :pin t)
@@ -3689,7 +3815,7 @@ character instead of toggling."
 
 (add-to-list 'auto-mode-alist '("\\.ixx\\'" . c++-mode))
 
-(use-package c-ts-mode
+(use-package-full c-ts-mode
   :disabled
   :ensure nil ;; emacs built-in
   :defer t
@@ -3716,7 +3842,7 @@ character instead of toggling."
   (setq c-ts-mode-indent-offset 2)
   (setq c-ts-mode-indent-style #'my--c-ts-indent-style))
 
-(use-package cmake-ts-mode
+(use-package-full cmake-ts-mode
   :ensure nil
   :defer t
   :mode ("CMakeLists\\.txt\\'" "\\.cmake\\'")
@@ -3780,6 +3906,8 @@ The value of `calc-language` is restored after BODY has been processed."
     (keymap-set vc-prefix-map "K" #'czm-vc-root-shortlog-all)
     (keymap-set vc-prefix-map "C" #'czm-vc-diff-staged)
     (keymap-set vc-prefix-map "N" #'czm-vc-create-directory-with-git-repo))
+  (with-eval-after-load 'vc-git
+    (keymap-global-set "C-x C-g" #'czm-vc-switch-to-git-status-file))
   (with-eval-after-load 'vc-dir
     (keymap-set vc-dir-mode-map "C-c d" #'czm-vc-dir-dired-marked))
   (with-eval-after-load 'log-view
@@ -3793,7 +3921,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (with-eval-after-load 'embark
     (czm-vc-embark-setup)))
 
-(keymap-global-set "C-x C-g" #'czm-vc-switch-to-git-status-file)
+
 
 (use-package transient
   :ensure t
@@ -3807,6 +3935,13 @@ The value of `calc-language` is restored after BODY has been processed."
   (add-to-list 'project-switch-commands '(magit-project-status "Magit"))
   :config
   (setopt magit-commit-diff-inhibit-same-window t)
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*?magit-diff:.*\\*?\\'"
+                 (display-buffer-in-side-window)
+                 (side . right)
+                 (slot . 0)
+                 (window-width . 0.45)
+                 (window-parameters . ((no-delete-other-windows . t)))))
   :bind
   (:repeat-map
    magit-smerge-repeat-map
@@ -3834,7 +3969,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (or (string-suffix-p ".tex" file)
       (string-suffix-p ".bib" file)))
 
-(use-package publish
+(use-package-full publish
   :repo-scan
   :ensure (:host github :repo "ultronozm/publish.el" :depth nil)
   :defer t
@@ -3842,7 +3977,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (publish-repo-root my-publish-math-repo)
   (publish-disallowed-unstaged-file-predicate #'czm-file-is-tex-or-bib))
 
-(use-package magit-fill-column
+(use-package-full magit-fill-column
   :repo-scan
   :ensure (:host github :repo "ultronozm/magit-fill-column.el" :depth nil)
   :hook (git-commit-setup . magit-fill-column-set)
@@ -3857,7 +3992,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (:map git-commit-mode-map
         ("C-c C-l" . magit-generate-changelog)))
 
-(use-package llm-vc-commit
+(use-package-full llm-vc-commit
   :repo-scan
   :ensure (:host github :repo "ultronozm/llm-vc-commit.el" :depth nil)
   :after log-edit
@@ -3906,7 +4041,7 @@ The value of `calc-language` is restored after BODY has been processed."
                       :background "#880088"
                       :foreground "#880088"))
 
-(use-package repo-scan
+(use-package-full repo-scan
   :repo-scan
   :ensure (:host github :repo "ultronozm/repo-scan.el" :depth nil)
   :defer t)
@@ -3917,7 +4052,7 @@ The value of `calc-language` is restored after BODY has been processed."
 (defun my/edit-indirect-setup ()
   (setq fill-column 999999)
   (setq-local dynexp-math-delimiters 'paren)
-  (setq TeX-master my-preview-master)
+  (my/maybe-set-preview-master-local)
   (preview-auto-mode))
 
 (defun my/maybe-edit-indirect-setup ()
@@ -3946,7 +4081,7 @@ The value of `calc-language` is restored after BODY has been processed."
              (latex-mode)))))
     (edit-indirect-region beg end t)))
 
-(use-package edit-indirect
+(use-package-full edit-indirect
   :ensure (:host github :repo "Fanael/edit-indirect"
                  :depth nil
                  :inherit nil
@@ -3992,7 +4127,7 @@ complete document rather than just a previewed region."
   (let ((TeX-current-process-region-p nil))
     (call-interactively #'TeX-view)))
 
-(use-package latex
+(use-package-full latex
   :ensure `(auctex
             :host nil
             :repo ,(if my-auctex-git-permissions
@@ -4025,10 +4160,24 @@ complete document rather than just a previewed region."
         (add-to-list 'TeX-fold-auto-reveal-commands cmd))))
   (advice-add 'text-scale-adjust :after (lambda (&rest _) (preview-clearout-buffer)))
   (advice-add 'global-text-scale-adjust :after (lambda (&rest _) (preview-clearout-buffer)))
+  (defun czm-tex-font-fold-advice (&rest _)
+    "Advice to fold macros after `TeX-font' is called."
+    (when TeX-fold-mode
+      (save-excursion
+        (when (looking-at "}")
+          (forward-char))
+        (when (looking-back "[{}]" (- (point) 1))
+          (backward-sexp))
+        (let ((macro-start (point)))
+          (forward-sexp)
+          (font-lock-ensure macro-start (point))
+          (goto-char macro-start)
+          (TeX-fold-macro)))))
+  (advice-add 'TeX-font :after #'czm-tex-font-fold-advice)
   :hook
   (LaTeX-mode . my-LaTeX-mode-setup)
   (TeX-mode . prettify-symbols-mode)
-  (prog-mode . (lambda () (setq-local TeX-master my-preview-master)))
+  (prog-mode . my/maybe-set-preview-master-local)
   :bind
   (:map LaTeX-mode-map
         ("C-c m" . latex-math-from-calc)
@@ -4135,7 +4284,7 @@ numbered variant \"equation\"."
             (copy-file source dest t))))
     (message "Aborted.")))
 
-(use-package preview-tailor
+(use-package-full preview-tailor
   :repo-scan
   :ensure (:host github :repo "ultronozm/preview-tailor.el" :depth nil)
   :after preview
@@ -4148,7 +4297,7 @@ numbered variant \"equation\"."
   (preview-tailor-additional-factor-function
    (lambda () (if (string-suffix-p ".lean" (buffer-file-name)) 0.6 0.833))))
 
-(use-package czm-tex-util
+(use-package-full czm-tex-util
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-util.el" :depth nil)
   :after latex)
@@ -4178,7 +4327,7 @@ numbered variant \"equation\"."
 
 (advice-add 'LaTeX-environment :after #'my-latex-fold-current-environment)
 
-(use-package czm-pythontex
+(use-package-full czm-pythontex
   :ensure (:host github :repo "ultronozm/czm-pythontex.el"
                  :depth nil
                  :inherit nil)
@@ -4237,7 +4386,7 @@ numbered variant \"equation\"."
   (remove-hook 'LaTeX-mode-hook #'czm-setup-and-activate-tex-fold)
   (add-hook 'LaTeX-mode-hook #'TeX-fold-mode))
 
-(use-package czm-tex-jump
+(use-package-full czm-tex-jump
   :repo-scan
   :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git" :depth nil
                  :inherit nil :pin t)
@@ -4248,7 +4397,7 @@ numbered variant \"equation\"."
         ("s-r" . czm-tex-jump))
   :hook (LaTeX-mode . czm-tex-jump-setup))
 
-(use-package czm-tex-ref
+(use-package-full czm-tex-ref
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-ref.el"
                  :depth nil)
@@ -4270,7 +4419,7 @@ numbered variant \"equation\"."
     (setcdr (assoc 'LaTeX-flymake attrap-flymake-backends-alist)
             #'czm-attrap-LaTeX-fixer-flymake)))
 
-(use-package dynexp
+(use-package-full dynexp
   :repo-scan
   :ensure (:host github :repo "ultronozm/dynexp.el" :depth nil)
   :after latex
@@ -4279,23 +4428,7 @@ numbered variant \"equation\"."
               ("SPC" . dynexp-space)
               ("TAB" . dynexp-next)))
 
-(defun czm-tex-font-fold-advice (&rest _)
-  "Advice to fold macros after `TeX-font' is called."
-  (when TeX-fold-mode
-    (save-excursion
-      (when (looking-at "}")
-        (forward-char))
-      (when (looking-back "[{}]" (- (point) 1))
-        (backward-sexp))
-      (let ((macro-start (point)))
-        (forward-sexp)
-        (font-lock-ensure macro-start (point))
-        (goto-char macro-start)
-        (TeX-fold-macro)))))
-
-(advice-add 'TeX-font :after #'czm-tex-font-fold-advice)
-
-(use-package czm-tex-edit
+(use-package-full czm-tex-edit
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el" :depth nil
                  :inherit nil :pin t)
@@ -4323,7 +4456,7 @@ numbered variant \"equation\"."
    "C-c t c"
    (("red" . "r") ("green" . "g") ("blue" . "b") ("yellow" . "y") ("orange" . "o") ("purple" . "p") ("black" . "k") ("white" . "w") ("cyan" . "c") ("magenta" . "m") ("lime" . "l") ("teal" . "t") ("violet" . "v") ("pink" . "i") ("brown" . "n") ("gray" . "a") ("darkgreen" . "d") ("lightblue" . "h") ("lavender" . "e") ("maroon" . "u") ("beige" . "j") ("indigo" . "x") ("turquoise" . "q") ("gold" . "f") ("silver" . "s") ("bronze" . "z"))))
 
-(use-package auctex-cont-latexmk
+(use-package-full auctex-cont-latexmk
   :repo-scan
   :ensure (:host github :repo "ultronozm/auctex-cont-latexmk.el" :depth nil)
   :after latex
@@ -4333,68 +4466,63 @@ numbered variant \"equation\"."
    '("latexmk -pvc -shell-escape -pdf -view=none -e "
      ("$pdflatex=q/pdflatex %O -synctex=1 -file-line-error -interaction=nonstopmode %S/"))))
 
-(defun my/preview-auto-mode-ensure-TeX-master (arg)
-  (interactive "P")
-  (if arg
-      (progn
-        (preview-auto-mode -1)
-        (preview-clearout-buffer))
-    (unless (bound-and-true-p TeX-master)
-      (setq-local TeX-master my-preview-master))
-    (preview-auto-mode (if preview-auto-mode -1 1))))
-
-(use-package preview-auto
+(use-package-full preview-auto
   :repo-scan
   :ensure (:host github :repo "ultronozm/preview-auto.el" :depth nil)
   :after latex
   :hook (LaTeX-mode . preview-auto-setup)
   :config
+  (defun my/preview-auto-mode-ensure-TeX-master (arg)
+    (interactive "P")
+    (if arg
+        (progn
+          (preview-auto-mode -1)
+          (preview-clearout-buffer))
+      (unless (bound-and-true-p TeX-master)
+        (my/maybe-set-preview-master-local))
+      (preview-auto-mode (if preview-auto-mode -1 1))))
   (keymap-global-set "H-r" #'my/preview-auto-mode-ensure-TeX-master)
   (setopt preview-LaTeX-command-replacements
           '(preview-LaTeX-disable-pdfoutput))
   (setq preview-protect-point t)
   (setq preview-locating-previews-message nil)
   (setq preview-leave-open-previews-visible t)
+  (defalias 'czm-setup-tex-file
+    (kmacro "l t x SPC s-s s-p z C-n C-n C-c C-p C-a C-c C-p C-f"))
+  (add-to-list 'auto-insert-alist
+               '("\\.tex\\'" . czm-setup-tex-file))
   :custom
-  (preview-auto-interval 0.1)
-  )
+  (preview-auto-interval 0.1))
 
-(use-package buframe)
+(use-package-full buframe)
 
-(use-package auctex-label-numbers
+(use-package-full auctex-label-numbers
   :repo-scan
   :ensure (:host github :repo "ultronozm/auctex-label-numbers.el" :depth nil)
   :after latex)
 
-(defun my-downloads-or-newest-pdf (arg)
-  "Find Downloads directory or, with prefix ARG, newest PDF therein."
-  (interactive "P")
-  (if arg
-      (library-find-newest-downloaded-pdf)
-    (dired my-downloads-folder)))
-
-(use-package library
+(use-package-full library
   :repo-scan
   :after latex czm-tex-util
   :defer t
   :ensure (:host github :repo "ultronozm/library.el" :depth nil)
-  :bind
-  ("C-c d" . my-downloads-or-newest-pdf)  
   :custom
   (library-pdf-directory my-pdf-folder)
   (library-bibtex-file my-master-bib-file)
   (library-download-directory my-downloads-folder)
   (library-org-capture-template-key "j"))
 
-(defun czm-tex-jump-back-with-breadcrumb ()
-  (interactive)
-  (save-excursion (insert "<++>"))
-  (call-interactively #'tex-parens-backward-down-list))
-
-(use-package tex-parens
+(use-package-full tex-parens
   :repo-scan
   :ensure (:host github :repo "ultronozm/tex-parens.el" :depth nil)
   :after latex
+  :config
+  (repeat-mode 1)
+  (defun czm-tex-jump-back-with-breadcrumb ()
+    (interactive)
+    (save-excursion (insert "<++>"))
+    (call-interactively #'tex-parens-backward-down-list))
+  (add-to-list 'preview-auto-reveal-commands #'czm-tex-jump-back-with-breadcrumb)
   :bind
   (:map
    LaTeX-mode-map
@@ -4417,17 +4545,19 @@ numbered variant \"equation\"."
    ("n" . tex-parens-forward-list)
    ("p" . tex-parens-backward-list)
    ("u" . tex-parens-backward-up-list)
-   ("n" . tex-parens-forward-list)
-   ("p" . tex-parens-backward-list)
-   ("u" . tex-parens-backward-up-list)
    ("M-u" . tex-parens-up-list)
    ("g" . tex-parens-down-list)
    ("M-g" . tex-parens-backward-down-list)
    :continue-only
    ("f" . tex-parens-forward-sexp)
    ("b" . tex-parens-backward-sexp)
-   ("a" . beginning-of-defun)
-   ("e" . end-of-defun)
+   ("a" . tex-parens-beginning-of-list)
+   ("A" . tex-parens-kill-to-beginning-of-list)
+   ("e" . tex-parens-end-of-list)
+   ("E" . tex-parens-kill-to-end-of-list)
+   ("i" . tex-parens-mark-inner)
+   ("[" . beginning-of-defun)
+   ("]" . end-of-defun)
    ("k" . kill-sexp)
    (">" . tex-parens-burp-right)
    ("<" . tex-parens-burp-left)
@@ -4441,12 +4571,9 @@ numbered variant \"equation\"."
    ("c" . lispy-clone)
    ("RET" . TeX-newline))
   :hook
-  (LaTeX-mode . tex-parens-mode)
-  :config
-  (add-to-list 'preview-auto-reveal-commands #'czm-tex-jump-back-with-breadcrumb)
-  (repeat-mode 1))
+  (LaTeX-mode . tex-parens-mode))
 
-(use-package tex-item
+(use-package-full tex-item
   :repo-scan
   :ensure (:host github :repo "ultronozm/tex-item.el" :depth nil)
   :after latex
@@ -4463,20 +4590,9 @@ numbered variant \"equation\"."
     "<up>" #'tex-item-move-up)
   (define-key LaTeX-mode-map (kbd "M-g M-i") tex-item-map))
 
-(defalias 'czm-setup-tex-file
-  (kmacro "l t x SPC s-s s-p z C-n C-n C-c C-p C-a C-c C-p C-f"))
-
 ;;; sage
 
-(defun my/setup-sage ()
-  "Set up completion for Sage mode."
-  (setq-local completion-styles '(basic))
-  (setq-local corfu-sort-function 'nil)
-  (corfu-mode)
-  (setq-local orderless-component-separator (rx (or "_" ".")))
-  (setq-local gud-pdb-command-name "sage -python -m pdb"))
-
-(use-package sage
+(use-package-full sage
   :ensure (:host nil :repo "https://codeberg.org/ultronozm/sage-mode"
                  :remotes
                  (("upstream" :repo "https://codeberg.org/rahguzar/sage-mode"))
@@ -4485,6 +4601,13 @@ numbered variant \"equation\"."
                  :inherit nil)
   :defer t
   :config
+  (defun my/setup-sage ()
+    "Set up completion for Sage mode."
+    (setq-local completion-styles '(basic))
+    (setq-local corfu-sort-function 'nil)
+    (corfu-mode)
+    (setq-local orderless-component-separator (rx (or "_" ".")))
+    (setq-local gud-pdb-command-name "sage -python -m pdb"))
   (add-hook 'sage-mode-hook #'my/setup-sage)
   (add-hook 'sage-shell-mode-hook #'my/setup-sage)
   (add-to-list 'org-src-lang-modes '("sage" . sage))
@@ -4521,7 +4644,7 @@ numbered variant \"equation\"."
       (calc-pop 1)
       (calc-push (car modified-value)))))
 
-(use-package mmm-mode
+(use-package-full mmm-mode
   :defer t
   :custom (mmm-global-mode nil)
   :config
@@ -4530,7 +4653,7 @@ numbered variant \"equation\"."
                    (((background dark)) (:background "#004444")))
                  'face-defface-spec))
 
-(use-package czm-tex-mint
+(use-package-full czm-tex-mint
   :disabled
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-mint.el" :depth nil)
@@ -4546,7 +4669,7 @@ numbered variant \"equation\"."
   (mmm-sage-shell:sage-mode-enter . czm-tex-mint-enable)
   (mmm-sage-shell:sage-mode-exit . czm-tex-mint-disable))
 
-(use-package symtex
+(use-package-full symtex
   :repo-scan
   :ensure (:host github :repo "ultronozm/symtex.el" :depth nil)
   :after latex
@@ -4558,7 +4681,14 @@ numbered variant \"equation\"."
 
 (defun czm-set-lean4-local-variables ()
   (setq-local preview-tailor-local-multiplier 0.7)
-  (setq-local TeX-master my-preview-master))
+  (my/maybe-set-preview-master-local)
+  ;; lean4-mode's non-plain info buffer uses a synchronous JSON-RPC
+  ;; request (`$/lean/rpc/connect`), which can make Emacs feel stuck
+  ;; over TRAMP.  Prefer the async plain-goal path for remote buffers.
+  (when (file-remote-p default-directory)
+    (setq-local lean4-info-plain t)
+    (setq-local lean4-info-refresh-even-if-invisible nil)
+    (setq-local lean4-idle-delay 0.2)))
 
 (use-package lean4-mode
   :repo-scan
@@ -4573,14 +4703,14 @@ numbered variant \"equation\"."
   :hook
   (lean4-mode . czm-set-lean4-local-variables)
   :custom
-  (lean4-idle-delay 0.02)
-  (lean4-info-plain nil)
-  (lean4-info-refresh-even-if-invisible t)
+  (lean4-info-plain t)
+  (lean4-info-refresh-even-if-invisible nil)
   :bind (:map lean4-mode-map
               ("C-c C-k" . quail-show-key))
   :config
+  (setopt lean4-idle-delay 0.2)
+  (setopt lean4-auto-start-eglot nil)
   (add-to-list 'global-auto-revert-ignore-modes 'lean4-mode)
-  (add-to-list 'lean4-workspace-roots "~/.elan/toolchains/leanprover--lean4---v4.15.0-rc1/src/lean/")
   (font-lock-add-keywords 'lean4-mode '(("`\\<\\([^`]+\\)\\>`" 1 'font-lock-constant-face prepend)))
   :defer t)
 
@@ -4622,10 +4752,12 @@ numbered variant \"equation\"."
                         "#fff59d" :foreground "black"))
   (advice-add 'lean4-info-buffer-redisplay :around #'czm-lean4-info-buffer-redisplay)
   (advice-add 'lean4-info-buffer-redisplay :after #'czm-lean4--goal-overlay-update-adapter)
-  (map-keymap
-   (lambda (key cmd)
-     (define-key lean4-mode-map (vector key) cmd))
-   copilot-completion-map))
+  (with-eval-after-load 'copilot
+    (when (boundp 'copilot-completion-map)
+      (map-keymap
+       (lambda (key cmd)
+         (define-key lean4-mode-map (vector key) cmd))
+       copilot-completion-map))))
 
 (use-package flymake-overlays
   :repo-scan
@@ -4656,6 +4788,8 @@ numbered variant \"equation\"."
   (eldoc-icebox-post-display . czm-lean4-fontify-buffer)
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
 
+;;; misc
+
 (let ((file (locate-user-emacs-file "init-personal.el")))
   (when (file-exists-p file)
     (load file)))
@@ -4669,28 +4803,28 @@ numbered variant \"equation\"."
 
 (setopt python-indent-guess-indent-offset nil)
 
-(use-package clipdiff
+(use-package-full clipdiff
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/clipdiff.el" :depth nil))
 
-(use-package cython-mode
+(use-package-full cython-mode
   :ensure t
   :defer t)
-
-(defun my/vundo (arg)
-  "With `C-u' prefix argument, call `vundo'.  Otherwise, call `undo'."
-  (interactive "P")
-  (if (equal arg '(4))
-      (vundo)
-    (undo arg)))
 
 (use-package vundo
   :ensure t
   :defer t
-  :bind (([remap undo] . my/vundo))
+  :init
+  (defun my/vundo (arg)
+    "With `C-u' prefix argument, call `vundo'.  Otherwise, call `undo'."
+    (interactive "P")
+    (if (equal arg '(4))
+        (vundo)
+      (undo arg)))
   :config
-  (setopt vundo-use-region-undo t))
+  (setopt vundo-use-region-undo t)
+  :bind (([remap undo] . my/vundo)))
 
 (with-eval-after-load 'mailcap
   (dolist (item
@@ -4698,7 +4832,7 @@ numbered variant \"equation\"."
               "application/vnd.openxmlformats-officedocument.wordprocessingml.document")))
     (add-to-list 'mailcap-mime-extensions item)))
 
-(use-package osx-dictionary
+(use-package-full osx-dictionary
   :bind (("C-z w" . osx-dictionary-search-word-at-point))
   :config
   (defun my-osx-dictionary--candidate ()
@@ -4727,7 +4861,7 @@ When used via Embark, WORD comes from the current target."
 (with-eval-after-load 'image-mode
   (keymap-unset image-mode-map "W"))
 
-(use-package diff-vc-patch
+(use-package-full diff-vc-patch
   :ensure (:host github :repo "ultronozm/diff-vc-patch.el"
                  :depth nil
                  :inherit nil)
@@ -4735,7 +4869,7 @@ When used via Embark, WORD comes from the current target."
   :demand
   :hook (diff-mode . diff-vc-patch-mode))
 
-(use-package speedread
+(use-package-full speedread
   :ensure (:host github :repo "ultronozm/speedread.el"
                  :depth nil
                  :inherit nil)
@@ -4744,9 +4878,9 @@ When used via Embark, WORD comes from the current target."
   (setopt speedread-display-style 'window)
   (setopt iread-chars 20))
 
-(use-package code-cells)
+(use-package-full code-cells)
 
-(use-package python-repl-eldoc
+(use-package-full python-repl-eldoc
   :ensure (:host github :repo "ultronozm/python-repl-eldoc.el"
                  :depth nil
                  :inherit nil)
@@ -4755,7 +4889,7 @@ When used via Embark, WORD comes from the current target."
   :config
   (python-repl-eldoc-global-mode 1))
 
-(use-package overleaf
+(use-package-full overleaf
   :defer 5
   :ensure (:host github
                  :repo "ultronozm/overleaf.el"
@@ -4776,37 +4910,6 @@ When used via Embark, WORD comes from the current target."
              :firefox-folder (expand-file-name my-firefox-folder)
              :profile "default-release")))
   (with-eval-after-load 'latex
-    (keymap-set LaTeX-mode-map "C-c o" overleaf-command-map))
+    (keymap-set LaTeX-mode-map "C-c O" overleaf-command-map))
   (with-eval-after-load 'bibtex
-    (keymap-set bibtex-mode-map "C-c o" overleaf-command-map)))
-
-(defun my-reload-elisp-dir (dir &optional hard)
-  "Reload all .el files in DIR.
-With prefix arg HARD (\\[universal-argument]), unload features first."
-  (interactive "DDirectory: \nP")
-  (let* ((files (directory-files dir t "\\.el\\'"))
-         (files (seq-remove (lambda (f)
-                              (string-match-p
-                               "\\(?:-autoloads\\.el\\|-pkg\\.el\\)\\'" f))
-                            files))
-         (features
-          (delete-dups
-           (apply #'append
-                  (mapcar
-                   (lambda (file)
-                     (with-temp-buffer
-                       (insert-file-contents file)
-                       (let (out)
-                         (goto-char (point-min))
-                         (while (re-search-forward "^(provide '\\([^)\n]+\\))" nil t)
-                           (push (intern (match-string 1)) out))
-                         out)))
-                   files)))))
-    (when hard
-      (dolist (feat features)
-        (ignore-errors (unload-feature feat t))))
-    (let ((load-prefer-newer t))
-      (dolist (f files)
-        (load (file-name-sans-extension f) nil 'nomessage)))
-    (message "Reloaded %d files from %s%s"
-             (length files) dir (if hard " (hard)" ""))))
+    (keymap-set bibtex-mode-map "C-c O" overleaf-command-map)))

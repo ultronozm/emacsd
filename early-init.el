@@ -7,9 +7,9 @@
             (or (bound-and-true-p lisp-mode-symbol-regexp)
                 "\\(?:\\sw\\|\\s_\\|\\\\.\\)+")))
        (add-to-list 'lisp-imenu-generic-expression
-                    (list nil ,use-package-form-regexp-eval 2))
+                    (list "Packages" ,use-package-form-regexp-eval 2))
        (add-to-list 'lisp-imenu-generic-expression
-                    (list nil
+                    (list "Packages"
                           (concat "^\\s-*(use-package-full\\s-+\\("
                                   symbol-regexp
                                   "\\)")
