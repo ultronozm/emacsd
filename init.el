@@ -4116,7 +4116,9 @@ The value of `calc-language` is restored after BODY has been processed."
   (abbrev-mode)
   (visual-line-mode)
   (setq fill-column 999999)
-  (czm-setup-and-activate-tex-fold))
+  (czm-setup-and-activate-tex-fold)
+  (local-set-key (kbd "C-c m") #'my-LaTeX-math-map)
+  (setq-local preview-tailor-local-multiplier 1.2))
 
 (defun my-TeX-view-master ()
   "View the entire TeX document, ignoring any active region.
@@ -4181,7 +4183,6 @@ complete document rather than just a previewed region."
   (prog-mode . my/maybe-set-preview-master-local)
   :bind
   (:map LaTeX-mode-map
-        ("C-c m" . latex-math-from-calc)
         ("C-c C-g" . czm-latex-calc-grab)
         ("C-c C-n" . nil) ; TeX-normal-mode
         ("C-c #" . nil)
@@ -4265,12 +4266,13 @@ numbered variant \"equation\"."
        ("equation" "multline")
        (_ "multline*")))))
 
-(with-eval-after-load 'latex
-  (bind-keys
-   :map LaTeX-mode-map
-   ("C-c e" . my-LaTeX-toggle-numbered)
-   ("C-c w" . my-LaTeX-toggle-align)
-   ("C-c q" . my-LaTeX-toggle-multline)))
+(defvar-keymap my-LaTeX-math-map
+  :doc "Math conversion/toggle commands for LaTeX."
+  :prefix t
+  "c" #'latex-math-from-calc
+  "n" #'my-LaTeX-toggle-numbered
+  "a" #'my-LaTeX-toggle-align
+  "m" #'my-LaTeX-toggle-multline)
 
 (defun czm-copy-standard-tex-files ()
   "Copy standard TeX files to the current directory."
