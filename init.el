@@ -1588,6 +1588,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
   :bind
   (("C-'" . avy-goto-char-timer)
+   ("C-c /" . avy-goto-char-timer)
    ("C-;" . avy-goto-line)
    ("C-c g" . avy-goto-line)
    ("M-s M-p" . avy-goto-line-above)
