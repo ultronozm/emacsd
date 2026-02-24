@@ -436,7 +436,9 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
   "3" #'split-window-right
   "o" #'other-window
   "O" #'my-other-window-backward
-  "b" #'consult-buffer
+  "b" #'tab-bar-history-back
+  "f" #'tab-bar-history-forward
+  "B" #'consult-buffer
   "i" #'consult-bookmark
   "n" #'next-buffer
   "p" #'previous-buffer
@@ -450,7 +452,7 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
    my-window-map
    t
    nil
-   "Window: h/j/k/l move, 0/1/2/3 layout, o/O win, n/p buf, x/X kill, b/i switch/bookmark"))
+   "Window: h/j/k/l move, 0/1/2/3 layout, o/O win, b/f tab-hist, n/p buf, x/X kill, B/i switch/bookmark"))
 
 (keymap-global-set "C-c w" #'my-window-map-dispatch)
 
