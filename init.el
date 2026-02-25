@@ -438,6 +438,11 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
   "1" #'delete-other-windows
   "2" #'split-window-below
   "3" #'split-window-right
+  "-" #'shrink-window-if-larger-than-buffer
+  "^" #'enlarge-window
+  "}" #'enlarge-window-horizontally
+  "{" #'shrink-window-horizontally
+  "v" #'shrink-window
   "o" #'other-window
   "O" #'my-other-window-backward
   "b" #'tab-bar-history-back
@@ -456,7 +461,9 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
    my-window-map
    t
    nil
-   "Window: h/j/k/l move, 0/1/2/3 layout, o/O win, b/f tab-hist, n/p buf, x/X kill, B/i switch/bookmark"))
+   'message
+   ;; "Window: h/j/k/l move, 0/1/2/3 layout, o/O win, b/f tab-hist, n/p buf, x/X kill, B/i switch/bookmark"
+   ))
 
 (keymap-global-set "C-c w" #'my-window-map-dispatch)
 
@@ -509,7 +516,9 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
      map
      t
      nil
-     "Struct: n/p/u/g lists, a/e list bounds, A/E kill bounds, [/] defun, m/j/+ etc mode extras")))
+     'message
+     ;; "Struct: n/p/u/g lists, a/e list bounds, A/E kill bounds, [/] defun, m/j/+ etc mode extras"
+     )))
 
 (defvar-keymap my-outline-map
   "n" #'outline-next-heading
