@@ -439,6 +439,7 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
   "2" #'split-window-below
   "3" #'split-window-right
   "-" #'shrink-window-if-larger-than-buffer
+  "=" #'balance-windows
   "^" #'enlarge-window
   "}" #'enlarge-window-horizontally
   "{" #'shrink-window-horizontally
