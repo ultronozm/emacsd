@@ -3596,19 +3596,22 @@ character instead of toggling."
 (defun codex-exec-run (instruction)
   (interactive
    (list (read-string "Codex instruction: " nil 'codex-exec-command-history)))
-  (let* ((buffer (get-buffer-create (generate-new-buffer-name "*codex-exec*"))))
+  (let* ((buffer (get-buffer-create (generate-new-buffer-name "*codex-exec*")))
+         proc)
     (with-current-buffer buffer
       (compilation-mode)
       (let ((inhibit-read-only t))
         (erase-buffer)
         (insert (format "$ codex exec --sandbox workspace-write %S\n\n"
-                        instruction))
-        (set-marker (process-mark (get-buffer-process buffer)) (point))))
-    (apply #'start-process
-           "codex-exec" buffer
-           "codex" "exec"
-           "--sandbox" "workspace-write"
-           (list instruction))
+                        instruction))))
+    (setq proc
+          (apply #'start-process
+                 "codex-exec" buffer
+                 "codex" "exec"
+                 "--sandbox" "workspace-write"
+                 (list instruction)))
+    (with-current-buffer buffer
+      (set-marker (process-mark proc) (point)))
     (pop-to-buffer buffer)))
 
 ;;; erc
