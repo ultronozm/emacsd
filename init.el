@@ -2434,6 +2434,8 @@ them at the first newline."
         ("<remap> <scroll-up-command>" . pdf-view-scroll-up-or-next-page)
         ("<remap> <scroll-down-command>" . pdf-view-scroll-down-or-previous-page)
         ("C-c g" . pdf-view-goto-page)
+        ([remap jump-to-register] . pdf-view-jump-to-register)
+        ([remap point-to-register] . pdf-view-position-to-register)
         ("s-t" . pdf-view-jump-to-register)
         ("s-T" . pdf-view-position-to-register))
   :config
