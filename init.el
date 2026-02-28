@@ -3599,7 +3599,7 @@ character instead of toggling."
 (defun codex-exec-run (instruction)
   (interactive
    (list (read-string "Codex instruction: " nil 'codex-exec-command-history)))
-  (let* ((buffer (get-buffer-create (generate-new-buffer-name "*codex-exec*")))
+  (let* ((buffer (generate-new-buffer "*codex-exec*"))
          proc)
     (with-current-buffer buffer
       (compilation-mode)
