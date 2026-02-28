@@ -3939,7 +3939,10 @@ The value of `calc-language` is restored after BODY has been processed."
   (with-eval-after-load 'diff-mode
     (keymap-set diff-mode-map "C-c d" #'czm-vc-diff-dired-changed-files))
   (with-eval-after-load 'embark
-    (czm-vc-embark-setup)))
+    (czm-vc-embark-setup)
+    (my-embark--insert-target-finder-before
+     #'czm-vc-embark-target-git-commit-at-point
+     #'embark-target-identifier-at-point)))
 
 
 
