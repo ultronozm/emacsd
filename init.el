@@ -473,7 +473,6 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
 
 (bind-keys
  :map structural-edit-map
- :repeat-map structural-edit-map
  ("n" . forward-list)
  ("p" . backward-list)
  ("u" . backward-up-list)
@@ -485,7 +484,6 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
  ("e" . end-of-list)
  ("[" . beginning-of-defun)
  ("]" . end-of-defun)
- :continue-only
  ("M-g" . backward-down-list)
  ("A" . kill-to-beginning-of-list)
  ("E" . kill-to-end-of-list)
@@ -4606,7 +4604,7 @@ numbered variant \"equation\"."
    tex-parens-delimiter-size-repeat-map
    ("=" . tex-parens-increase-delimiter-size)
    ("-" . tex-parens-decrease-delimiter-size))
-  (:repeat-map
+  (:map
    tex-parens-structural-edit-repeat-map
    ("n" . tex-parens-forward-list)
    ("p" . tex-parens-backward-list)
@@ -4614,7 +4612,6 @@ numbered variant \"equation\"."
    ("M-u" . tex-parens-up-list)
    ("g" . tex-parens-down-list)
    ("M-g" . tex-parens-backward-down-list)
-   :continue-only
    ("f" . tex-parens-forward-sexp)
    ("b" . tex-parens-backward-sexp)
    ("a" . tex-parens-beginning-of-list)
