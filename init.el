@@ -4514,10 +4514,44 @@ numbered variant \"equation\"."
   (setq preview-protect-point t)
   (setq preview-locating-previews-message nil)
   (setq preview-leave-open-previews-visible t)
+  (defun czm-setup-tex-file--local-common-tex-file ()
+    "Return local path to common.tex for current buffer, or nil."
+    (let* ((dir (file-name-directory (or buffer-file-name default-directory)))
+           (path (and dir (expand-file-name "common.tex" dir))))
+      (when (and path (file-readable-p path))
+        path)))
+  (defun czm-setup-tex-file-experimental ()
+    "Experimental command-based replacement for `czm-setup-tex-file'."
+    (interactive)
+    (insert "ltx")
+    (call-interactively #'dynexp-space)
+    (save-buffer)
+    (call-interactively #'outline-previous-heading)
+    (call-interactively #'foldout-zoom-subtree)
+    (forward-line 2)
+    (if (czm-setup-tex-file--local-common-tex-file)
+        (progn
+          (unless (bound-and-true-p preview-auto-mode)
+            (preview-auto-mode 1))
+          ;; Defer preamble caching so preview-auto/timers settle first.
+          (let ((buf (current-buffer)))
+            (run-with-timer
+             0.05 nil
+             (lambda (b)
+               (when (buffer-live-p b)
+                 (with-current-buffer b
+                   (ignore-errors
+                     (call-interactively #'preview-cache-preamble)))))
+             buf)))
+      (message
+       "czm-setup-tex-file: missing `common.tex' in %s; skipping preview setup (M-x czm-copy-standard-tex-files)"
+       (abbreviate-file-name
+        (or (file-name-directory (or buffer-file-name default-directory))
+            default-directory)))))
   (defalias 'czm-setup-tex-file
-    (kmacro "l t x SPC s-s s-p z C-n C-n C-c C-p C-a C-c C-p C-f"))
+    (kmacro "l t x SPC s-s C-c o p z C-n C-n C-c C-p C-a C-c C-p C-f"))
   (add-to-list 'auto-insert-alist
-               '("\\.tex\\'" . czm-setup-tex-file))
+               '("\\.tex\\'" . czm-setup-tex-file-experimental))
   :custom
   (preview-auto-interval 0.1))
 
