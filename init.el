@@ -1616,20 +1616,23 @@ If the predicate is true, add NAME to `repo-scan-repos'."
                  :depth nil
                  :inherit nil :pin t)
   :bind (("s-@" . czm-misc-split-window-below-variant)
-         ("s-#" . czm-misc-split-window-right-variant)
-         ("s-4" . czm-misc-double-split-window-below-and-delete)
-         ("s-5" . czm-misc-double-split-window-right-and-delete)
-         ("s-6" . czm-misc-delete-indentation-nil)
-         ("s-7" . czm-misc-delete-indentation-t)
-         ("C-w" . czm-misc-kill-or-delete-region)
-         ("C-x c" . czm-misc-clone-indirect-buffer-same-window)
-         ("M-o" . czm-misc-split-line-below)
-         ("C-S-SPC" . czm-misc-delete-horizontal-space-on-line)
-         ("s-j" . czm-misc-avy-jump)
-         ("s-c" . czm-misc-avy-copy)
-         ("C-x j" . czm-misc-dired-popup))
-  (:map minibuffer-local-map
-        ("C-c d" . czm-misc-insert-date)))
+	 ("s-#" . czm-misc-split-window-right-variant)
+	 ("s-4" . czm-misc-double-split-window-below-and-delete)
+	 ("s-5" . czm-misc-double-split-window-right-and-delete)
+	 ("s-6" . czm-misc-delete-indentation-nil)
+	 ("s-7" . czm-misc-delete-indentation-t)
+	 ("C-w" . czm-misc-kill-or-delete-region)
+	 ("C-x c" . czm-misc-clone-indirect-buffer-same-window)
+	 ("M-o" . czm-misc-split-line-below)
+	 ("C-S-SPC" . czm-misc-delete-horizontal-space-on-line)
+	 ("s-j" . czm-misc-avy-jump)
+	 ("s-c" . czm-misc-avy-copy)
+	 ("C-x j" . czm-misc-dired-popup)
+	 (:map minibuffer-local-map
+               ("C-c d" . czm-misc-insert-date)))
+  :init
+  (keymap-set my-window-map "4" #'czm-misc-double-split-window-below-and-delete)
+  (keymap-set my-window-map "5" #'czm-misc-double-split-window-right-and-delete))
 
 (use-package pulsar
   :bind (("s-l" . pulsar-pulse-line))
