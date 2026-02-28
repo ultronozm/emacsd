@@ -263,7 +263,7 @@ All other prefix arguments work as in `eval-expression'."
   "Fill the previous paragraph."
   (interactive)
   (save-excursion
-    (previous-line)
+    (forward-line -1)
     (fill-paragraph)))
 
 (defun ediff-current-kill ()
@@ -892,7 +892,7 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
 (defun modify-abbrev-table (table abbrevs)
   "Define abbreviations in TABLE given by ABBREVS."
   (unless table
-    (error "Abbrev table does not exist" table))  ;; Message could be improved
+    (error "Abbrev table does not exist: %S" table))
   (dolist (abbrev abbrevs)
     (define-abbrev table (car abbrev) (cadr abbrev) (caddr abbrev))))
 
@@ -1579,10 +1579,10 @@ If the predicate is true, add NAME to `repo-scan-repos'."
         (save-excursion
           (goto-char pt)
           (kill-whole-line)
-          (avy-resume)))
-    (select-window
-     (cdr
-      (ring-ref avy-ring 0)))
+          (avy-resume))
+      (select-window
+       (cdr
+        (ring-ref avy-ring 0))))
     t)
 
   (defun avy-action-yank-whole-line (pt)
@@ -2525,8 +2525,8 @@ in all current and future PDF buffers."
 (defun gt-eldoc-documentation-function (callback)
   "Return translation at point via eldoc's callback mechanism."
   (condition-case nil
-      (let ((translator (clone gt-default-translator)))
-        (oset translator render
+      (let* ((translator (clone gt-default-translator))
+             (render-fn
               (lambda (fn)
                 (let (result)
                   (funcall fn
@@ -2534,7 +2534,16 @@ in all current and future PDF buffers."
                   (when (and callback result)
                     (funcall callback result
                              :face 'font-lock-doc-face)))))
-        (gt-start translator))
+             (slot-set nil))
+        (dolist (slot '(render renderer))
+          (unless slot-set
+            (condition-case nil
+                (progn
+                  (setf (slot-value translator slot) render-fn)
+                  (setq slot-set t))
+              (invalid-slot-name nil))))
+        (when slot-set
+          (gt-start translator)))
     (error nil))
   nil)
 
@@ -3874,6 +3883,16 @@ character instead of toggling."
 
 ;;; calc
 
+(defmacro with-calc-language (lang &rest body)
+  "Execute the forms in BODY with `calc-language` set to LANG.
+The value of `calc-language` is restored after BODY has been processed."
+  `(let ((old-lang calc-language))
+     (unwind-protect
+         (progn
+           (calc-set-language ,lang)
+           ,@body)
+       (calc-set-language old-lang))))
+
 (defun calcFunc-sage-factor ()
   "Use SAGE to factor the top element of the stack in Emacs Calc."
   (interactive)
@@ -3906,16 +3925,6 @@ character instead of toggling."
   (with-calc-language 'latex
                       (calc-grab-region beg end arg))
   (calc-refresh))
-
-(defmacro with-calc-language (lang &rest body)
-  "Execute the forms in BODY with `calc-language` set to LANG.
-The value of `calc-language` is restored after BODY has been processed."
-  `(let ((old-lang calc-language))
-     (unwind-protect
-         (progn
-           (calc-set-language ,lang)
-           ,@body)
-       (calc-set-language old-lang))))
 
 ;;; git
 
@@ -4689,22 +4698,6 @@ numbered variant \"equation\"."
                  (shell-quote-argument
                   (file-relative-name (buffer-file-name))))))
     (call-interactively #'pdb)))
-
-(defun calcFunc-sage-factor ()
-  "Use SAGE to factor the top element of the stack in Emacs Calc."
-  (interactive)
-  (if (equal (length calc-stack) 0)
-      (error "Stack is empty"))
-  (let* ((top-of-stack (calc-top))
-         (top-of-stack-string (math-format-value top-of-stack))
-         (sage-code
-          (format "SR(\"%s\").factor()" top-of-stack-string))
-         (modified-string (symtex-evaluate sage-code))
-         (modified-value (math-read-exprs modified-string)))
-    (if (eq (car-safe modified-value) 'error)
-        (error "Parsing error: %s" (nth 1 modified-value))
-      (calc-pop 1)
-      (calc-push (car modified-value)))))
 
 (use-package-full mmm-mode
   :defer t
