@@ -426,6 +426,26 @@ With prefix arg HARD (\\[universal-argument]), unload features first."
     (message "Reloaded %d files from %s%s"
              (length files) dir (if hard " (hard)" ""))))
 
+(defun copy-file-name-line-number-at-point (&optional absolute)
+  "Copy the file name and line number at point to the kill ring.
+The format is FILE:LINE, e.g. \"foo.el:42\".
+
+By default, use a project-relative path if the file belongs to a
+project, otherwise a plain file name.  With a prefix argument ABSOLUTE,
+use the absolute path instead."
+  (interactive "P")
+  (let* ((file (or (buffer-file-name)
+                   (user-error "Buffer is not visiting a file")))
+         (line (line-number-at-pos))
+         (name (cond
+                (absolute file)
+                ((and (fboundp 'project-current)
+                      (project-current))
+                 (file-relative-name file (project-root (project-current))))
+                (t (file-name-nondirectory file)))))
+    (kill-new (format "%s:%d" name line))
+    (message "%s:%d" name line)))
+
 ;;; keymaps
 
 (defvar-keymap my-window-map
