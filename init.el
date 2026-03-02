@@ -3980,7 +3980,9 @@ The value of `calc-language` is restored after BODY has been processed."
     (keymap-set vc-prefix-map "C" #'czm-vc-diff-staged)
     (keymap-set vc-prefix-map "N" #'czm-vc-create-directory-with-git-repo))
   (with-eval-after-load 'vc-git
-    (keymap-global-set "C-x C-g" #'czm-vc-switch-to-git-status-file))
+    (keymap-global-set "C-x C-g" #'czm-vc-switch-to-git-status-file)
+    (add-hook 'vc-git-log-edit-mode-hook
+              #'czm-vc-git-log-edit-add-orig-head-to-future-history))
   (with-eval-after-load 'vc-dir
     (keymap-set vc-dir-mode-map "C-c d" #'czm-vc-dir-dired-marked))
   (with-eval-after-load 'log-view
