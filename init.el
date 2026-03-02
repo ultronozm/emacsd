@@ -4605,8 +4605,9 @@ numbered variant \"equation\"."
     (kmacro "l t x SPC s-s C-c o p z C-n C-n C-c C-p C-a C-c C-p C-f"))
   (add-to-list 'auto-insert-alist
                '("\\.tex\\'" . czm-setup-tex-file-experimental))
-  :custom
-  (preview-auto-interval 0.1))
+  (setopt preview-auto-chars-above 1200)
+  (setopt preview-auto-chars-below 1800)
+  (setopt preview-auto-interval 0.3))
 
 (use-package-full buframe)
 
