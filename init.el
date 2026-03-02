@@ -1501,11 +1501,18 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (with-eval-after-load 'follow
     (diminish 'follow-mode)))
 
+(defun my/aggressive-indent-latex-tuning ()
+  "Reduce aggressive-indent churn in LaTeX buffers."
+  (setq-local aggressive-indent-sit-for-time 0.12)
+  (setq-local aggressive-indent-protected-current-commands
+              (cons 'dynexp-space aggressive-indent-protected-current-commands)))
+
 (use-package aggressive-indent
   :defer t
   :diminish
   :hook
-  ((emacs-lisp-mode LaTeX-mode rust-mode) . aggressive-indent-mode))
+  ((emacs-lisp-mode LaTeX-mode rust-mode) . aggressive-indent-mode)
+  (LaTeX-mode . my/aggressive-indent-latex-tuning))
 
 ;; Remove "%n" from mode-line-modes -- I know when I'm narrowing.
 (setq mode-line-modes (delete "%n" mode-line-modes))
