@@ -1796,6 +1796,30 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (setq project-switch-commands
         (cl-remove 'project-find-regexp project-switch-commands :key #'car)))
 
+(defun my/consult-buffer-global ()
+  "Run `consult-buffer' with all buffers."
+  (interactive)
+  (let ((consult-buffer-list-function #'buffer-list))
+    (consult-buffer)))
+
+(defun my/consult-buffer-local ()
+  (interactive)
+  (let ((consult-buffer-list-function #'bufferlo-local-buffers)
+        (consult-buffer-sources '(consult-source-buffer)))
+    (consult-buffer)))
+
+(use-package bufferlo
+  :ensure t
+  :after consult
+  :demand t
+  :bind
+  (("C-x B" . my/consult-buffer-global)
+   ("C-x b" . my/consult-buffer-local)
+   ("s-b" . my/consult-buffer-local))
+  :config
+  (setq consult-buffer-list-function #'bufferlo-local-buffers)
+  (bufferlo-mode 1))
+
 (with-eval-after-load 'consult-imenu
   (require 'cl-lib)
   (when-let* ((config (alist-get 'emacs-lisp-mode consult-imenu-config)))
