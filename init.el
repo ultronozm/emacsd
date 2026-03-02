@@ -2158,47 +2158,37 @@ them at the first newline."
   (add-to-list 'attrap-flymake-backends-alist
                '(eglot-flymake-backend . attrap-python-fixer)))
 
+(defun my/treesit-auto-enable-current-buffer ()
+  "Install and activate the tree-sitter mode for the current buffer."
+  (interactive)
+  (require 'treesit-auto)
+  (let* ((treesit-language-source-alist (treesit-auto--build-treesit-source-alist))
+         (recipe (or (treesit-auto--get-mode-recipe)
+                     (treesit-auto--get-buffer-recipe)))
+         (lang (and recipe (treesit-auto-recipe-lang recipe)))
+         (ts-mode (and recipe (treesit-auto-recipe-ts-mode recipe))))
+    (unless recipe
+      (user-error "No treesit-auto recipe for %s" major-mode))
+    (dolist (req-lang (ensure-list (treesit-auto-recipe-requires recipe)))
+      (unless (treesit-ready-p req-lang t)
+        (treesit-auto--prompt-to-install-package req-lang)))
+    (unless (treesit-ready-p lang t)
+      (treesit-auto--prompt-to-install-package lang))
+    (treesit-auto-add-to-auto-mode-alist (list lang))
+    (unless (fboundp ts-mode)
+      (user-error "Mode not available: %S" ts-mode))
+    (funcall ts-mode)))
+
 (use-package treesit-auto
   :defer t
   :custom
   (treesit-auto-install 'prompt)
-  (global-treesit-auto-modes
-   '(yaml-mode yaml-ts-mode wgsl-mode wgsl-ts-mode wat-mode wat-ts-mode
-               wat-mode wat-ts-wast-mode vue-mode vue-ts-mode vhdl-mode
-               vhdl-ts-mode verilog-mode verilog-ts-mode typst-mode
-               typst-ts-mode typescript-mode typescript-ts-mode
-               typescript-tsx-mode tsx-ts-mode toml-mode conf-toml-mode
-               toml-ts-mode surface-mode surface-ts-mode sql-mode
-               sql-ts-mode scala-mode scala-ts-mode rust-mode rust-ts-mode
-               ruby-mode ruby-ts-mode ess-mode r-ts-mode python-mode
-               python-ts-mode protobuf-mode protobuf-ts-mode perl-mode
-               perl-ts-mode org-mode org-ts-mode nushell-mode
-               nushell-ts-mode nix-mode nix-ts-mode markdown-mode
-               poly-markdown-mode markdown-ts-mode makefile-mode
-               makefile-ts-mode magik-mode magik-ts-mode lua-mode
-               lua-ts-mode latex-mode latex-ts-mode kotlin-mode
-               kotlin-ts-mode julia-mode julia-ts-mode js-json-mode
-               json-ts-mode js2-mode javascript-mode js-mode js-ts-mode
-               java-mode java-ts-mode janet-mode janet-ts-mode sgml-mode
-               mhtml-mode html-ts-mode heex-mode heex-ts-mode go-mod-mode
-               go-mod-ts-mode go-mode go-ts-mode glsl-mode glsl-ts-mode
-               elixir-mode elixir-ts-mode dockerfile-mode
-               dockerfile-ts-mode dart-mode dart-ts-mode css-mode
-               css-ts-mode common-lisp-mode
-               commonlisp-ts-mode cmake-mode cmake-ts-mode clojurec-mode
-               clojurescript-mode clojure-mode clojure-ts-mode csharp-mode
-               csharp-ts-mode blueprint-mode
-               blueprint-ts-mode bibtex-mode bibtex-ts-mode sh-mode
-               bash-ts-mode awk-mode awk-ts-mode))
   (treesit-auto-langs
    '(awk bash bibtex blueprint c-sharp clojure cmake commonlisp css dart
          dockerfile elixir glsl go gomod heex html janet java javascript
          json julia kotlin latex lua magik make markdown nix nu org perl
          proto python r ruby rust scala sql surface toml tsx typescript
-         typst verilog vhdl vue wast wat wgsl yaml))
-  :config
-  (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode))
+         typst verilog vhdl vue wast wat wgsl yaml)))
 
 (use-package eglot
   :ensure nil
