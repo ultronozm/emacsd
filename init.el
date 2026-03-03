@@ -1768,7 +1768,8 @@ If the predicate is true, add NAME to `repo-scan-repos'."
    ("M-s" . consult-history)
    ("M-r" . consult-history))
   (:map project-prefix-map
-        ("g" . consult-ripgrep))
+        ("g" . consult-ripgrep)
+        ("B" . my/consult-project-buffer-global))
   :init
   (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format)
@@ -1807,6 +1808,12 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (let ((consult-buffer-list-function #'bufferlo-local-buffers)
         (consult-buffer-sources '(consult-source-buffer)))
     (consult-buffer)))
+
+(defun my/consult-project-buffer-global ()
+  "Run `consult-project-buffer' without local `bufferlo' filtering."
+  (interactive)
+  (let ((consult-buffer-list-function #'buffer-list))
+    (consult-project-buffer)))
 
 (use-package bufferlo
   :ensure t
