@@ -1068,7 +1068,7 @@ positions you navigated to during the Ediff session."
   (setq tramp-default-remote-shell "/bin/bash"
         tramp-remote-shell-args '("-lc")
         tramp-verbose 1
-        tramp-use-ssh-controlmaster-options t)
+        tramp-use-connection-share nil)
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 
   ;; Make async remote processes (used by Eglot/LSP) reliable over SSH:
