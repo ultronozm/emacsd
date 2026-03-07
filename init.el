@@ -3241,7 +3241,7 @@ Skips empty days and diary holidays."
                  :pin t)
   :config
   (setopt shell-maker-transcript-default-path
-          (expand-file-name my-agent-shell-transcripts-dir))
+          (my/agent-shell-transcripts-dir))
   (setopt shell-maker-transcript-default-filename
           (lambda ()
             (format "%s--transcript.txt"
@@ -3516,6 +3516,17 @@ The following placeholders are replaced using `format-spec':
 
 ;;;;; package
 
+(defvar my-agent-shell-transcripts-dir nil
+  "Directory for agent-shell transcript files.")
+
+(defun my/agent-shell-transcripts-dir ()
+  "Return the configured transcript directory.
+
+Signal an error when `my-agent-shell-transcripts-dir' is unset."
+  (if-let ((dir-name (my-setting-string 'my-agent-shell-transcripts-dir)))
+      (file-name-as-directory (expand-file-name dir-name))
+    (user-error "`my-agent-shell-transcripts-dir' is not set")))
+
 (defun my/agent-shell-transcript-file-path-function ()
   "Generate a file path for saving agent shell transcripts."
   (expand-file-name
@@ -3529,7 +3540,7 @@ The following placeholders are replaced using `format-spec':
                 (goto-char (point-min))
                 (when (re-search-forward "[a-z0-9][a-z0-9-]*$")
                   (concat "-" (match-string 0)))))))
-   my-agent-shell-transcripts-dir))
+   (my/agent-shell-transcripts-dir)))
 
 (defun my/agent-shell-mode-hook ()
   (my/set-TeX-master-preview)
