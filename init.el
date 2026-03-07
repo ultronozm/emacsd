@@ -491,6 +491,9 @@ use the absolute path instead."
 (defvar structural-edit-map (make-sparse-keymap)
   "Structural editing keymap.")
 
+(defvar tex-parens-structural-edit-map (make-sparse-keymap)
+  "Structural editing keymap used by `tex-parens-mode'.")
+
 (bind-keys
  :map structural-edit-map
  ("n" . forward-list)
@@ -525,8 +528,8 @@ use the absolute path instead."
   (interactive)
   (let ((map (cond
               ((and (bound-and-true-p tex-parens-mode)
-                    (boundp 'tex-parens-structural-edit-repeat-map))
-               tex-parens-structural-edit-repeat-map)
+                    (boundp 'tex-parens-structural-edit-map))
+               tex-parens-structural-edit-map)
               ((boundp 'structural-edit-map)
                structural-edit-map))))
     (unless map
@@ -3985,7 +3988,8 @@ The value of `calc-language` is restored after BODY has been processed."
   (with-eval-after-load 'vc
     (keymap-set vc-prefix-map "K" #'czm-vc-root-shortlog-all)
     (keymap-set vc-prefix-map "C" #'czm-vc-diff-staged)
-    (keymap-set vc-prefix-map "N" #'czm-vc-create-directory-with-git-repo))
+    (keymap-set vc-prefix-map "N" #'czm-vc-create-directory-with-git-repo)
+    (keymap-set vc-prefix-map "z" #'czm-vc-git-sparse-map))
   (with-eval-after-load 'vc-git
     (keymap-global-set "C-x C-g" #'czm-vc-switch-to-git-status-file)
     (add-hook 'vc-git-log-edit-mode-hook
@@ -4231,7 +4235,7 @@ complete document rather than just a previewed region."
   (setopt preview-image-type 'dvi*)
   (setq TeX-data-directory (expand-file-name "elpaca/builds/auctex" user-emacs-directory))
   (setq TeX-lisp-directory TeX-data-directory)
-  (add-to-list 'TeX-file-extensions "tex\\.~[^~]+~")
+  (add-to-list 'TeX-file-extensions "tex#?\\.~[^~]+~")
   (with-eval-after-load 'org-src
     (push '("latex" . LaTeX) org-src-lang-modes))
   (put 'LaTeX-narrow-to-environment 'disabled nil)
@@ -4647,25 +4651,8 @@ numbered variant \"equation\"."
     (save-excursion (insert "<++>"))
     (call-interactively #'tex-parens-backward-down-list))
   (add-to-list 'preview-auto-reveal-commands #'czm-tex-jump-back-with-breadcrumb)
-  :bind
-  (:map
-   LaTeX-mode-map
-   ("M-i" . tex-parens-mark-inner)
-   ("s-j" . tex-parens-avy-jump-to-math)
-   ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
-   ("s-c" . tex-parens-avy-copy-math)
-   ("s-e" . tex-parens-end-of-list)
-   ("s-a" . tex-parens-beginning-of-list)
-   ("s-E" . tex-parens-kill-to-end-of-list)
-   ("s-A" . tex-parens-kill-to-beginning-of-list)
-   ("C-c p =" . tex-parens-increase-delimiter-size)
-   ("C-c p -" . tex-parens-decrease-delimiter-size))
-  (:repeat-map
-   tex-parens-delimiter-size-repeat-map
-   ("=" . tex-parens-increase-delimiter-size)
-   ("-" . tex-parens-decrease-delimiter-size))
-  (:map
-   tex-parens-structural-edit-repeat-map
+  (bind-keys
+   :map tex-parens-structural-edit-map
    ("n" . tex-parens-forward-list)
    ("p" . tex-parens-backward-list)
    ("u" . tex-parens-backward-up-list)
@@ -4692,6 +4679,23 @@ numbered variant \"equation\"."
    ("M-w" . kill-ring-save)
    ("y" . yank)
    ("RET" . TeX-newline))
+  :bind
+  (:map
+   LaTeX-mode-map
+   ("M-i" . tex-parens-mark-inner)
+   ("s-j" . tex-parens-avy-jump-to-math)
+   ("C-M-j" . czm-tex-jump-back-with-breadcrumb)
+   ("s-c" . tex-parens-avy-copy-math)
+   ("s-e" . tex-parens-end-of-list)
+   ("s-a" . tex-parens-beginning-of-list)
+   ("s-E" . tex-parens-kill-to-end-of-list)
+   ("s-A" . tex-parens-kill-to-beginning-of-list)
+   ("C-c p =" . tex-parens-increase-delimiter-size)
+   ("C-c p -" . tex-parens-decrease-delimiter-size))
+  (:repeat-map
+   tex-parens-delimiter-size-repeat-map
+   ("=" . tex-parens-increase-delimiter-size)
+   ("-" . tex-parens-decrease-delimiter-size))
   :hook
   (LaTeX-mode . tex-parens-mode))
 
