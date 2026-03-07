@@ -4042,6 +4042,7 @@ The value of `calc-language` is restored after BODY has been processed."
    ("u" . magit-smerge-keep-upper))
   (:map
    vc-prefix-map
+   ("b C" . magit-branch-configure)
    ("b d" . magit-branch-delete)
    ("b r" . magit-rebase-branch)
    ("b x h" . magit-reset-hard)
