@@ -645,6 +645,7 @@ use the absolute path instead."
    ("C-s-o" . other-frame)
    ("C-x C-M-t" . transpose-regions)
    ("C-x C-b" . ibuffer)
+   ("C-x Q" . bury-buffer)
    ("C-x v /"  . vc-log-search)
    ("C-z" . nil)
    ("C-z c" . calendar)
