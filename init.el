@@ -1944,8 +1944,9 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
          (cons window type)))
      nil "[ace-window]")
     (message "Use `ace-window' to display next command buffer..."))
+  (when cfg-full
+    (keymap-global-set "C-x o" #'ace-window-prefix))
   :bind
-  ("C-x o" . ace-window)
   ("C-x 4 o" . ace-window-prefix))
 
 ;; https://www.jamescherti.com/emacs-customize-ellipsis-outline-minor-mode/
