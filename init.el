@@ -4884,6 +4884,29 @@ numbered variant \"equation\"."
   ;; :hook (flymake-mode . flymake-overlays-mode)
   )
 
+(use-package lean4-indent
+  :ensure (:host github
+                 :repo "ultronozm/lean4-indent.el"
+                 :depth nil)
+  :demand t
+  :after lean4-mode
+  :config
+  (add-hook 'lean4-mode-hook
+            (lambda ()
+              (setq-local indent-line-function #'lean4-indent-line-function))))
+
+(use-package lean4-imenu
+  :ensure (:host github
+                 :repo "ultronozm/lean4-imenu.el"
+                 :depth nil)
+  :demand t
+  :after lean4-mode
+  :config
+  (add-hook 'lean4-mode-hook
+            (lambda ()
+              (setq-local eglot-stay-out-of (cons 'imenu eglot-stay-out-of))
+              (setq-local imenu-create-index-function #'lean4-imenu-create-index))))
+
 (defun czm-add-lean4-eldoc ()
   (when (with-current-buffer eldoc-icebox-parent-buffer
           (or (eq major-mode 'lean4-mode)
