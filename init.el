@@ -758,10 +758,6 @@ use the absolute path instead."
   (isearch-allow-scroll t)
   (search-upper-case t)
   (doc-view-resolution 300)
-  (auto-save-file-name-transforms
-   `((".*" ,(expand-file-name
-             (concat user-emacs-directory "auto-save/"))
-      t)))
   (ediff-window-setup-function 'ediff-setup-windows-plain)
   (display-time-default-load-average nil)
   (recentf-max-saved-items 100)
@@ -779,6 +775,13 @@ use the absolute path instead."
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt auto-save-file-name-transforms
+          `((".*" ,(expand-file-name
+                    (let ((dir-name (expand-file-name "auto-save" user-emacs-directory)))
+                      (unless (file-exists-p dir-name)
+                        (make-directory dir-name))
+                      dir-name))
+             t)))
   (setopt mail-dont-reply-to-names
           (concat
            (and (stringp user-mail-address)
