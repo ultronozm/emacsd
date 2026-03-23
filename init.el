@@ -4905,7 +4905,9 @@ numbered variant \"equation\"."
   :demand t
   :after lean4-mode
   :config
-  (add-hook 'lean4-mode-hook #'lean4-indent-setup-buffer))
+  (add-hook 'lean4-mode-hook #'lean4-indent-setup-buffer)
+  (define-key lean4-mode-map (kbd "C-c <") #'lean4-indent-shift-left)
+  (define-key lean4-mode-map (kbd "C-c >") #'lean4-indent-shift-right))
 
 (use-package lean4-imenu
   :ensure (:host github
