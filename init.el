@@ -2941,14 +2941,17 @@ The content is escaped to prevent org syntax interpretation."
   :ensure (eat :inherit elpaca-menu-non-gnu-elpa)
   :config
   (add-hook 'eat-mode-hook #'abbrev-mode)
-  (let ((key [?\C-\\]))
+  (let ((pass-through-key [?\C-\\])
+        (non-bound-key [?\C-z]))
     (setq-default
      eat-semi-char-non-bound-keys
-     (seq-remove (lambda (k) (equal k key))
-                 eat-semi-char-non-bound-keys)
+     (cons non-bound-key
+           (seq-remove (lambda (k) (equal k pass-through-key))
+                       eat-semi-char-non-bound-keys))
      eat-eshell-semi-char-non-bound-keys
-     (seq-remove (lambda (k) (equal k key))
-                 eat-eshell-semi-char-non-bound-keys))
+     (cons non-bound-key
+           (seq-remove (lambda (k) (equal k pass-through-key))
+                       eat-eshell-semi-char-non-bound-keys)))
     (eat-update-semi-char-mode-map)
     (eat-eshell-update-semi-char-mode-map)
     (eat-reload))
