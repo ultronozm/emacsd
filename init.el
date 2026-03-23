@@ -4902,9 +4902,7 @@ numbered variant \"equation\"."
   :demand t
   :after lean4-mode
   :config
-  (add-hook 'lean4-mode-hook
-            (lambda ()
-              (setq-local indent-line-function #'lean4-indent-line-function))))
+  (add-hook 'lean4-mode-hook #'lean4-indent-setup-buffer))
 
 (use-package lean4-imenu
   :ensure (:host github
