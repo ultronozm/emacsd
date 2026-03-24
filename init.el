@@ -4817,7 +4817,6 @@ numbered variant \"equation\"."
   ;; over TRAMP.  Prefer the async plain-goal path for remote buffers.
   (when (file-remote-p default-directory)
     (setq-local lean4-info-plain t)
-    (setq-local lean4-info-refresh-even-if-invisible nil)
     (setq-local lean4-idle-delay 0.2)))
 
 (use-package lean4-mode
@@ -4834,7 +4833,6 @@ numbered variant \"equation\"."
   (lean4-mode . czm-set-lean4-local-variables)
   :custom
   (lean4-info-plain t)
-  (lean4-info-refresh-even-if-invisible nil)
   :bind (:map lean4-mode-map
               ("C-c C-k" . quail-show-key))
   :config
