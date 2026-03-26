@@ -1949,7 +1949,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
      nil "[ace-window]")
     (message "Use `ace-window' to display next command buffer..."))
   (when cfg-full
-    (keymap-global-set "C-x o" #'ace-window-prefix))
+    (keymap-global-set "C-x o" #'ace-window))
   :bind
   ("C-x 4 o" . ace-window-prefix))
 
