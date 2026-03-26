@@ -1519,7 +1519,9 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   :diminish
   :hook
   ((emacs-lisp-mode LaTeX-mode rust-mode) . aggressive-indent-mode)
-  (LaTeX-mode . my/aggressive-indent-latex-tuning))
+  (LaTeX-mode . my/aggressive-indent-latex-tuning)
+  :config
+  (setq aggressive-indent-dont-electric-modes t))
 
 ;; Remove "%n" from mode-line-modes -- I know when I'm narrowing.
 (setq mode-line-modes (delete "%n" mode-line-modes))
@@ -1998,10 +2000,15 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :bind
   (:map global-map ("C-c e" . eldoc-box-help-at-point)))
 
+(defun my-rust-hook ()
+  "Custom configurations for Rust mode."
+  (electric-indent-local-mode -1))
+
 (use-package-full rust-mode
   :defer t
   :hook
-  (rust-mode . eglot-ensure))
+  (rust-mode . eglot-ensure)
+  (rust-mode . my-rust-hook))
 
 (use-package xr
   :defer t
