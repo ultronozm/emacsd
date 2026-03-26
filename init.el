@@ -872,9 +872,7 @@ use the absolute path instead."
 
 (add-to-list 'display-buffer-alist
              '("\\`\\*\\(?:.*-\\)?compilation\\*\\(?:<[^>]+>\\)?\\'"
-               (display-buffer-reuse-window display-buffer-in-side-window)
-               (side . bottom)
-               (reusable-frames . visible)
+               (display-buffer-reuse-window display-buffer-below-selected)
                (window-height . 0.3)))
 
 ;; Detect if a Help buffer is being displayed for
