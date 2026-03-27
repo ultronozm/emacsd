@@ -1484,6 +1484,16 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (unless elpaca-install-info-executable
     (warn "install-info executable not found even after exec-path-from-shell")))
 
+(defun my/shell-getenv (variable)
+  "Return environment VARIABLE without invoking login shells from Tramp buffers.
+Prefer the current Emacs process environment, which
+`exec-path-from-shell-initialize' populates early in startup.  Only fall
+back to `exec-path-from-shell-getenv' from local buffers."
+  (or (getenv variable)
+      (when (and (featurep 'exec-path-from-shell)
+                 (not (file-remote-p default-directory)))
+        (exec-path-from-shell-getenv variable))))
+
 (elpaca-wait)
 
 ;;; lots of packages
@@ -3105,7 +3115,7 @@ The content is escaped to prevent org syntax interpretation."
         (gptel-make-anthropic
             "Claude"
           :stream t
-          :key (lambda () (exec-path-from-shell-getenv "ANTHROPIC_KEY"))
+          :key (lambda () (my/shell-getenv "ANTHROPIC_KEY"))
           :models '(claude-sonnet-4-6)))
   (setq gptel-model 'claude-sonnet-4-6))
 
@@ -3279,8 +3289,7 @@ Skips empty days and diary holidays."
 
 (defun my/mcp-server-github (&optional token)
   (let ((pat (or token
-                 (exec-path-from-shell-getenv "GITHUB_MCP_PAT")
-                 (getenv "GITHUB_MCP_PAT"))))
+                 (my/shell-getenv "GITHUB_MCP_PAT"))))
     `((name . "github")
       (type . "http")
       (url . "https://api.githubcopilot.com/mcp")
@@ -3598,7 +3607,7 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
   (setopt agent-shell-file-completion-enabled nil)
   (setopt agent-shell-openai-codex-environment
           (agent-shell-make-environment-variables
-           "GITHUB_MCP_PAT" (exec-path-from-shell-getenv "GITHUB_MCP_PAT")))
+           "GITHUB_MCP_PAT" (my/shell-getenv "GITHUB_MCP_PAT")))
   (setopt agent-shell-mcp-servers
           (list
            ;; my/mcp-server-elisp-dev
@@ -4119,7 +4128,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (require 'content-quoter)
   (setq llm-vc-commit-model
         (make-llm-claude
-         :key (exec-path-from-shell-getenv "ANTHROPIC_KEY")
+         :key (my/shell-getenv "ANTHROPIC_KEY")
          :chat-model "claude-sonnet-4-6")))
 
 (defun my/diff-hl-mode-hook ()
