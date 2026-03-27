@@ -1446,6 +1446,12 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (when (eq window-system 'w32)
   (elpaca-no-symlink-mode))
 
+(defun my-elpaca-pin-all-recipes (_recipe)
+  "Default all Elpaca-managed packages to `:pin t'."
+  '(:pin t))
+
+(add-hook 'elpaca-recipe-functions #'my-elpaca-pin-all-recipes)
+
 (elpaca elpaca-use-package
   (elpaca-use-package-mode)
   (setq use-package-always-ensure t))
@@ -1656,7 +1662,7 @@ back to `exec-path-from-shell-getenv' from local buffers."
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-misc.el"
                  :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :bind (("s-@" . czm-misc-split-window-below-variant)
 	 ("s-#" . czm-misc-split-window-right-variant)
 	 ("s-4" . czm-misc-double-split-window-below-and-delete)
@@ -2015,7 +2021,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :after latex
   :ensure (:host github :repo "ultronozm/outline-skip.el"
                  :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :hook (LaTeX-mode . outline-skip-mode))
 
 (use-package-full perfect-margin
@@ -2114,7 +2120,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :repo-scan
   :defer 1
   :ensure (:host github :repo "ultronozm/emacs-src-redirect.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :config
   (emacs-src-redirect-mode))
 
@@ -2216,8 +2222,7 @@ them at the first newline."
                  :repo "ultronozm/attrap.el"
                  :remotes (("upstream" :repo "jyp/attrap"))
                  :depth nil
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :defer t
   :after flycheck
   :config
@@ -2269,13 +2274,13 @@ them at the first newline."
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil
-                 :inherit nil :pin t))
+                 :inherit nil))
 
 (use-package czm-spell
   :repo-scan
   :defer 10
   :ensure (:host github :repo "ultronozm/czm-spell.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   ;; :after latex
   :bind ("s-;" . czm-spell-then-abbrev)
   ;; :bind ("s-;" . czm-spell-correct-backward-lines)
@@ -2380,8 +2385,7 @@ them at the first newline."
                  :repo "ultronozm/embark"
                  :remotes (("upstream" :repo "oantolin/embark"))
                  :depth nil
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
   :config
@@ -2504,7 +2508,7 @@ them at the first newline."
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :ensure (:host github :repo "vedang/pdf-tools"
                  :depth nil
-                 :inherit nil :pin t
+                 :inherit nil
                  ;; :remotes (("orgtre" :repo "orgtre/pdf-tools"))
                  ;; pdf-tools builds `epdfinfo' from `build/server'.  With Elpaca's
                  ;; default symlinks, building would write artifacts into the git
@@ -2567,21 +2571,21 @@ them at the first newline."
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/doc-view-follow.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :custom (doc-view-follow-hijack t))
 
 (use-package-full pdf-extract
   :defer t
   :repo-scan
   :ensure (:host github :repo "ultronozm/pdf-extract.el"
-                 :inherit nil :pin t))
+                 :inherit nil))
 
 (use-package-full pdf-tools-org-extract
   :repo-scan
   :after pdf-annot
   :demand
   :ensure (:host github :repo "ultronozm/pdf-tools-org-extract.el"
-                 :inherit nil :pin t)
+                 :inherit nil)
   :bind (:map pdf-view-mode-map
               ("C-c C-a e" . pdf-tools-org-extract-annotations)))
 
@@ -2970,7 +2974,7 @@ The content is escaped to prevent org syntax interpretation."
   :after rmail
   :demand
   :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :bind
   ("C-z C-@" . czm-mail-mailrc-add-entry)
   (:map rmail-mode-map
@@ -3026,8 +3030,7 @@ The content is escaped to prevent org syntax interpretation."
                  :files ("*.el" "dist")
                  :depth nil
                  :remotes (("ultronozm" :repo "ultronozm/copilot.el"))
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :diminish " Co"
   :hook
   ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
@@ -3110,14 +3113,12 @@ The content is escaped to prevent org syntax interpretation."
                  :repo "skissue/llm-tool-collection"
                  :depth nil
                  :remotes (("ultronozm" :repo "ultronozm/llm-tool-collection"))
-                 :inherit nil
-                 :pin t))
+                 :inherit nil))
 
 (use-package-full ai-org-chat
   :repo-scan
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
                  :inherit nil
-                 :pin t
                  :depth nil)
   :defer t
   :bind
@@ -3143,8 +3144,7 @@ The content is escaped to prevent org syntax interpretation."
 (use-package-full gptel
   :ensure (:host github :repo "karthink/gptel"
                  :remotes (("ultronozm" :repo "ultronozm/gptel"))
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :after exec-path-from-shell
   :defer t
   :bind
@@ -3258,7 +3258,7 @@ Skips empty days and diary holidays."
   :repo-scan
   :ensure (:host github :repo "ultronozm/content-quoter.el"
                  :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :bind ("s-u" . content-quoter-dwim)
   :defer t)
 
@@ -3311,8 +3311,7 @@ Skips empty days and diary holidays."
 (use-package-full shell-maker
   :ensure (:host github :repo "xenodium/shell-maker"
                  :depth nil
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :config
   (setopt shell-maker-transcript-default-path
           (my/agent-shell-transcripts-dir))
@@ -3324,8 +3323,7 @@ Skips empty days and diary holidays."
 (use-package-full acp
   :ensure (:host github :repo "xenodium/acp.el"
                  :depth nil
-                 :inherit nil
-                 :pin t))
+                 :inherit nil))
 
 (defconst my/mcp-server-life-mail
   '((name . "life-mail")
@@ -3714,14 +3712,13 @@ character instead of toggling."
   :defer t
   :ensure (:host github :repo "konrad1977/knockknock"
                  :depth nil
-                 :inherit nil
-                 :pin t))
+                 :inherit nil))
 
 (use-package-full agent-shell-attention
   :repo-scan
   :ensure (:host github :repo "ultronozm/agent-shell-attention.el"
                  :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :after agent-shell
   :demand
   :bind (("C-z a" . agent-shell-attention-jump))
@@ -3980,7 +3977,7 @@ character instead of toggling."
 (use-package-full czm-cpp
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-cpp.el" :files ("*.el" "template") :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :defer t
   :custom
   (czm-cpp-scratch-directory my-scratch-cpp-dir))
@@ -4193,6 +4190,10 @@ The value of `calc-language` is restored after BODY has been processed."
     (diff-hl-margin-local-mode (if diff-hl-mode 1 -1))))
 
 (use-package diff-hl
+  :ensure (:host github
+                 :repo "ultronozm/diff-hl"
+                 :branch "ediff"
+                 :remotes (("upstream" :repo "dgutov/diff-hl")))
   :defer t
   :bind
   ("H-d" . diff-hl-mode)
@@ -4263,8 +4264,7 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package-full edit-indirect
   :ensure (:host github :repo "Fanael/edit-indirect"
                  :depth nil
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :commands (edit-indirect-region
              edit-indirect-commit
              edit-indirect-abort edit-indirect-save)
@@ -4570,7 +4570,7 @@ numbered variant \"equation\"."
 (use-package-full czm-tex-jump
   :repo-scan
   :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   ;; :after avy
   :after latex
   :bind
@@ -4612,7 +4612,7 @@ numbered variant \"equation\"."
 (use-package-full czm-tex-edit
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :after latex dynexp
   ;; :demand ; should come after latex and dynexp
   :bind
@@ -4896,8 +4896,7 @@ numbered variant \"equation\"."
                  :files ("*.el" "data")
                  :remotes (("bustercopley" :repo "bustercopley/lean4-mode")
                            ("leanprover-community" :repo "leanprover-community/lean4-mode"))
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :diminish
   :hook
   (lean4-mode . czm-set-lean4-local-variables)
@@ -4915,7 +4914,7 @@ numbered variant \"equation\"."
 (use-package czm-lean4
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-lean4.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :after lean4-mode
   :hook
   (lean4-mode . czm-lean4-mode-hook)
@@ -5131,8 +5130,7 @@ When used via Embark, WORD comes from the current target."
                  :repo "ultronozm/overleaf.el"
                  :remotes (("upstream" :repo "vale981/overleaf.el"))
                  :depth nil
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :config
   (with-eval-after-load 'overleaf
     (add-hook 'overleaf-mode-hook
