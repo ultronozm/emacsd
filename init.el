@@ -2956,6 +2956,9 @@ The content is escaped to prevent org syntax interpretation."
   (with-eval-after-load 'embark
     (keymap-set embark-region-map "C-m" #'org-remark-mark)))
 
+(use-package annotate
+  :defer t)
+
 ;;; more mail
 
 (use-package-full czm-mail
