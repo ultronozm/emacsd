@@ -1961,7 +1961,22 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   (when cfg-full
     (keymap-global-set "C-x o" #'ace-window))
   :bind
-  ("C-x 4 o" . ace-window-prefix))
+  ("C-x 4 o" . ace-window-prefix)
+  ("C-x O" . ace-window-one-command))
+
+;; https://karthinks.com/software/emacs-window-management-almanac/#aw-select-the-completing-read-for-emacs-windows
+(defun ace-window-one-command ()
+  (interactive)
+  (require 'ace-window)
+  (let ((win (aw-select " ACE")))
+    (when (windowp win)
+      (with-selected-window win
+        (let* ((command (key-binding
+                         (read-key-sequence
+                          (format "Run in %s..." (buffer-name)))))
+               (this-command command))
+          (call-interactively command))))))
+
 
 ;; https://www.jamescherti.com/emacs-customize-ellipsis-outline-minor-mode/
 (defun my-outline-set-global-ellipsis (ellipsis)
