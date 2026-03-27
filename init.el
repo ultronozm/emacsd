@@ -5087,6 +5087,12 @@ When used via Embark, WORD comes from the current target."
 (with-eval-after-load 'image-mode
   (keymap-unset image-mode-map "W"))
 
+(use-package ignore-mouse
+  :ensure (:host github :repo "dradetsky/ignore-mouse" :inherit nil)
+  :defer t
+  ;; (ignore-mouse-global-mode)
+  )
+
 (use-package-full diff-vc-patch
   :ensure (:host github :repo "ultronozm/diff-vc-patch.el"
                  :depth nil
