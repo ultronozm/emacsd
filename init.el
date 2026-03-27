@@ -5041,6 +5041,17 @@ numbered variant \"equation\"."
   (setopt vundo-use-region-undo t)
   :bind (([remap undo] . my/vundo)))
 
+(use-package command-log-mode
+  :defer t
+  :config
+  (dolist (item '(dynexp-space
+                  dynexp-next
+                  LaTeX-babel-insert-hyphen
+                  LaTeX-insert-left-brace
+                  TeX-newline
+                  TeX-insert-backslash))
+    (add-to-list 'clm/log-command-exceptions* item)))
+
 (with-eval-after-load 'mailcap
   (dolist (item
            '((".docx" .
