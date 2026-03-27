@@ -3168,6 +3168,17 @@ The content is escaped to prevent org syntax interpretation."
   (with-eval-after-load 'embark
     (define-key embark-general-map (kbd "?") #'gptel-quick)))
 
+(use-package whisper
+  :disabled
+  :load-path "path/to/whisper.el"
+  :bind ("C-H-r" . whisper-run)
+  :config
+  (setq whisper-install-directory "/tmp/"
+        whisper-model "base"
+        whisper-language "en"
+        whisper-translate nil
+        whisper-use-threads (/ (num-processors) 2)))
+
 ;; I use the following functions to provide context to ai-org-chat
 
 (defun my/agenda-for-today ()
