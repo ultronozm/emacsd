@@ -2742,6 +2742,10 @@ The content is escaped to prevent org syntax interpretation."
   (setq-local preview-tailor-local-multiplier 0.7))
 
 (add-hook 'markdown-mode-hook #'my-markdown-hook)
+(add-to-list 'major-mode-remap-alist '(markdown-ts-mode . markdown-mode))
+(setq auto-mode-alist
+      (delete '("\\.\\(?:md\\|markdown\\|mkd\\|mdown\\|mkdn\\|mdwn\\)\\'" . markdown-ts-mode)
+              auto-mode-alist))
 
 (defun czm-diff-preview-setup ()
   "Set up diff buffer for use with preview-auto-mode."
