@@ -4057,6 +4057,9 @@ The value of `calc-language` is restored after BODY has been processed."
   :ensure t
   :demand t)
 
+(use-package llama
+  :ensure t)
+
 (use-package magit
   :defer t
   :hook
