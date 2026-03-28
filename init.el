@@ -4817,6 +4817,7 @@ numbered variant \"equation\"."
 (defun czm-set-lean4-local-variables ()
   (setq-local preview-tailor-local-multiplier 0.7)
   (my/maybe-set-preview-master-local)
+  (setq-local flymake-show-diagnostics-at-end-of-line nil)
   ;; lean4-mode's non-plain info buffer uses a synchronous JSON-RPC
   ;; request (`$/lean/rpc/connect`), which can make Emacs feel stuck
   ;; over TRAMP.  Prefer the async plain-goal path for remote buffers.
