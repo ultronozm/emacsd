@@ -13,3 +13,4 @@
 _region_.*
 
 prv_*
+/.agent-shell/
