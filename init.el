@@ -1404,15 +1404,16 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 ;;; elpaca
 
-(defvar elpaca-installer-version 0.11)
+(defvar elpaca-installer-version 0.12)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-sources-directory (expand-file-name "repos/" elpaca-directory))
+(defvaralias 'elpaca-repos-directory 'elpaca-sources-directory)
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
                               :ref nil :depth 1 :inherit ignore
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+                              :build (:not elpaca-activate)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
        (order (cdr elpaca-order))
        (default-directory repo))
@@ -1445,6 +1446,23 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 (when (eq window-system 'w32)
   (elpaca-no-symlink-mode))
+
+(defun my-elpaca-normalize-order-add-git-type (orig-fun order)
+  "Preserve old Elpaca behavior for explicit git recipes in ORDER.
+When a declaration specifies `:repo' but omits `:type', default to
+`:type git' even if `:inherit' is nil."
+  (let ((normalized (funcall orig-fun order)))
+    (if (or (plist-member normalized :type)
+            (not (plist-member normalized :repo)))
+        normalized
+      (plist-put normalized :type 'git))))
+
+(advice-add #'elpaca--normalize-order :around
+            #'my-elpaca-normalize-order-add-git-type)
+
+(setq elpaca-lock-file 
+      (expand-file-name "elpaca.lock"
+                        (file-name-directory (file-truename user-init-file))))
 
 (defun my-elpaca-pin-all-recipes (_recipe)
   "Default all Elpaca-managed packages to `:pin t'."
@@ -1864,7 +1882,7 @@ back to `exec-path-from-shell-getenv' from local buffers."
 (use-package bufferlo
   :ensure t
   :after consult
-  :demand t
+  :commands (bufferlo-local-buffers bufferlo-mode)
   :bind
   (("C-x B" . my/consult-buffer-global)
    ("C-x b" . my/consult-buffer-local)
@@ -2959,8 +2977,8 @@ The content is escaped to prevent org syntax interpretation."
 
 (use-package-full org-remark
   :after org
-  :demand
-  :config
+  :commands (org-remark-mark)
+  :init
   (with-eval-after-load 'embark
     (keymap-set embark-region-map "C-m" #'org-remark-mark)))
 
@@ -3002,7 +3020,7 @@ The content is escaped to prevent org syntax interpretation."
 ;; (keymap-set project-prefix-map "T" #'eat-tmux-orchestrator)
 
 (use-package-full eat
-  :ensure (eat :inherit elpaca-menu-non-gnu-elpa)
+  :ensure (eat :inherit elpaca-menu-nongnu-elpa)
   :config
   (add-hook 'eat-mode-hook #'abbrev-mode)
   (let ((pass-through-key [?\C-\\])
@@ -3025,6 +3043,7 @@ The content is escaped to prevent org syntax interpretation."
 ;;; ai stuff
 
 (use-package-full copilot
+  :defer 3
   :ensure (:host github
                  :repo "zerolfx/copilot.el"
                  :files ("*.el" "dist")
@@ -3262,48 +3281,6 @@ Skips empty days and diary holidays."
   :bind ("s-u" . content-quoter-dwim)
   :defer t)
 
-;;;; mcp
-
-(use-package mcp-server-lib)
-
-(use-package-full life-mail-mcp
-  :load-path "~/repos/life-mail-mcp"
-  :after mcp-server-lib
-  :config
-  (setopt life-mail-mcp-default-mail-file
-          (expand-file-name "~/mail/inbox.rmail"))
-  (life-mail-mcp-init))
-
-(use-package-full elisp-dev-mcp
-  :ensure (:host github :repo "laurynas-biveinis/elisp-dev-mcp"
-                 :depth nil)
-  :after mcp-server-lib
-  :config
-  (elisp-dev-mcp-enable))
-
-(use-package-full mcp
-  :ensure t
-  :custom (mcp-hub-servers
-           `(("filesystem" . (:command "npx"
-                                       :args ("-y" "@modelcontextprotocol/server-filesystem")
-                                       :roots ("/home/lizqwer/MyProject/")))
-             ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
-             ("qdrant" . (:url "http://localhost:8000/sse"))
-             ("graphlit" . (
-                            :command "npx"
-                            :args ("-y" "graphlit-mcp-server")
-                            :env (
-                                  :GRAPHLIT_ORGANIZATION_ID "your-organization-id"
-                                  :GRAPHLIT_ENVIRONMENT_ID "your-environment-id"
-                                  :GRAPHLIT_JWT_SECRET "your-jwt-secret")))
-             ("life-mail"
-              . (:command "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh"
-                          :args ("--init-function=life-mail-mcp-init"
-                                 "--stop-function=life-mail-mcp-stop")
-                          :env (:EMACS_MCP_DEBUG_LOG "/tmp/life-mail.log")))))
-  :config (require 'mcp-hub)
-  :hook (after-init . mcp-hub-start-all-server))
-
 ;;;; agent-shell
 
 ;;;;; supporting packages
@@ -3312,7 +3289,8 @@ Skips empty days and diary holidays."
   :ensure (:host github :repo "xenodium/shell-maker"
                  :depth nil
                  :inherit nil)
-  :config
+  :defer t
+  :init
   (setopt shell-maker-transcript-default-path
           (my/agent-shell-transcripts-dir))
   (setopt shell-maker-transcript-default-filename
@@ -3323,49 +3301,8 @@ Skips empty days and diary holidays."
 (use-package-full acp
   :ensure (:host github :repo "xenodium/acp.el"
                  :depth nil
-                 :inherit nil))
-
-(defconst my/mcp-server-life-mail
-  '((name . "life-mail")
-    (command . "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh")
-    (args . ("--init-function=life-mail-mcp-init"
-             "--stop-function=life-mail-mcp-stop"))
-    (env  . (((name . "EMACS_MCP_DEBUG_LOG")
-              (value . "/tmp/life-mail.log"))))))
-
-(defconst my/mcp-server-elisp-dev
-  '((name . "elisp-dev")
-    (command . "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh")
-    (args . ("--init-function=elisp-dev-mcp-enable"
-             "--stop-function=elisp-dev-mcp-disable"))
-    (env  . (((name . "EMACS_MCP_DEBUG_LOG")
-              (value . "/tmp/elisp-dev-mcp.log"))))))
-
-(defun my/mcp-server-github (&optional token)
-  (let ((pat (or token
-                 (my/shell-getenv "GITHUB_MCP_PAT"))))
-    `((name . "github")
-      (type . "http")
-      (url . "https://api.githubcopilot.com/mcp")
-      (headers . ,(when (and pat (not (string-empty-p pat)))
-                    `(((name . "Authorization")
-                       (value . ,(format "Bearer %s" pat)))))))))
-
-(defconst my/mcp-server-fetch
-  '((name . "fetch")
-    (command . "uvx")
-    (args . ("mcp-server-fetch"))))
-
-(defconst my/mcp-server-filesystem
-  '((name . "filesystem")
-    (command . "npx")
-    (args . ("-y" "@modelcontextprotocol/server-filesystem"
-             "/home/lizqwer/MyProject/"))))
-
-(defconst my/mcp-server-qdrant
-  '((name . "qdrant")
-    (type . "sse")
-    (url . "http://localhost:8000/sse")))
+                 :inherit nil)
+  :defer t)
 
 ;;;;; container support
 
@@ -3662,12 +3599,6 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
   (setopt agent-shell-openai-codex-environment
           (agent-shell-make-environment-variables
            "GITHUB_MCP_PAT" (my/shell-getenv "GITHUB_MCP_PAT")))
-  (setopt agent-shell-mcp-servers
-          (list
-           ;; my/mcp-server-elisp-dev
-           ;; my/mcp-server-life-mail
-           ;; (my/mcp-server-github)
-           ))
   (setopt agent-shell-transcript-file-path-function
           #'my/agent-shell-transcript-file-path-function))
 
@@ -4308,6 +4239,16 @@ complete document rather than just a previewed region."
   (let ((TeX-current-process-region-p nil))
     (call-interactively #'TeX-view)))
 
+(defun my-elpaca-build-auctex-info (e)
+  "Build AUCTeX Info manuals for Elpaca package E."
+  (if-let ((makeinfo elpaca-makeinfo-executable))
+      (let ((default-directory (expand-file-name "doc" (elpaca<-source-dir e))))
+        (dolist (manual '("auctex.texi" "preview-latex.texi"))
+          (unless (zerop (elpaca--call-with-log e 0 makeinfo "--no-split" manual))
+            (elpaca--fail e (format "makeinfo failed for %s" manual))))
+        (elpaca--continue-build e "AUCTeX Info compiled"))
+    (elpaca--continue-build e "No elpaca-makeinfo-executable")))
+
 (use-package-full latex
   :ensure `(auctex
             :host nil
@@ -4316,9 +4257,7 @@ complete document rather than just a previewed region."
                      "https://git.savannah.gnu.org/git/auctex.git")
             :depth nil
             :inherit nil
-            :pre-build (("sh" "-lc" "cd doc && makeinfo --no-split auctex.texi")
-                        ("sh" "-lc" "cd doc && makeinfo --no-split preview-latex.texi"))
-            :build (:not elpaca--compile-info)
+            :build (:sub elpaca-build-docs my-elpaca-build-auctex-info)
             :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
   ;; :demand                             ; otherwise, madness ensues.
   :config
@@ -4712,7 +4651,8 @@ numbered variant \"equation\"."
   (setopt preview-auto-chars-below 1800)
   (setopt preview-auto-interval 0.3))
 
-(use-package-full buframe)
+(use-package-full buframe
+  :defer t)
 
 (use-package-full auctex-label-numbers
   :repo-scan
@@ -5113,16 +5053,15 @@ When used via Embark, WORD comes from the current target."
   (setopt speedread-display-style 'window)
   (setopt iread-chars 20))
 
-(use-package-full code-cells)
+(use-package-full code-cells
+  :defer t)
 
 (use-package-full python-repl-eldoc
   :ensure (:host github :repo "ultronozm/python-repl-eldoc.el"
                  :depth nil
                  :inherit nil)
   :after python
-  :demand
-  :config
-  (python-repl-eldoc-global-mode 1))
+  :hook (python-base-mode . python-repl-eldoc-mode))
 
 (use-package-full overleaf
   :defer 5
