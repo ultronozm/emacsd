@@ -1286,7 +1286,24 @@ This keeps summary navigation commands in the summary window while making
   (add-to-list 'display-buffer-alist
                '(my-display-buffer-rmail-unsent-p
                  display-buffer-same-window
-                 (inhibit-same-window . nil))))
+                 (inhibit-same-window . nil)))
+  (defun my-rmail-summary-rmail-buffer-p (buffer _action)
+    (let ((buf (get-buffer buffer)))
+      (and (buffer-live-p buf)
+           (boundp 'rmail-buffer)
+           (eq buf rmail-buffer))))
+  (defvar my-rmail-summary-silent-display-rule
+    '((and my-rmail-summary-rmail-buffer-p
+           (this-command
+            . (rmail-summary-next-msg
+               rmail-summary-previous-msg
+               rmail-summary-next-all
+               rmail-summary-previous-all
+               rmail-summary-delete-forward
+               rmail-summary-delete-backward)))
+      (display-buffer-no-window)
+      (allow-no-window . t)))
+  (add-to-list 'display-buffer-alist my-rmail-summary-silent-display-rule))
 
 (use-package-full sendmail
   :ensure nil
