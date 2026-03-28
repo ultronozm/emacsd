@@ -3538,7 +3538,7 @@ The following placeholders are replaced using `format-spec':
   "Return the configured transcript directory.
 
 Signal an error when `my-agent-shell-transcripts-dir' is unset."
-  (if-let ((dir-name (my-setting-string 'my-agent-shell-transcripts-dir)))
+  (if-let* ((dir-name (my-setting-string 'my-agent-shell-transcripts-dir)))
       (file-name-as-directory (expand-file-name dir-name))
     (user-error "`my-agent-shell-transcripts-dir' is not set")))
 
@@ -4248,7 +4248,7 @@ complete document rather than just a previewed region."
 
 (defun my-elpaca-build-auctex-info (e)
   "Build AUCTeX Info manuals for Elpaca package E."
-  (if-let ((makeinfo elpaca-makeinfo-executable))
+  (if-let* ((makeinfo elpaca-makeinfo-executable))
       (let ((default-directory (expand-file-name "doc" (elpaca<-source-dir e))))
         (dolist (manual '("auctex.texi" "preview-latex.texi"))
           (unless (zerop (elpaca--call-with-log e 0 makeinfo "--no-split" manual))
