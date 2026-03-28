@@ -1213,6 +1213,8 @@ This keeps summary navigation commands in the summary window while making
 (use-package-full rmail
   :ensure nil
   :defer t
+  :mode (("\\.rmail\\'" . rmail-mode)
+         ("\\.mbox\\'" . rmail-mode))
   :bind
   ("C-z r" . rmail)
   (:map rmail-mode-map
@@ -1260,8 +1262,6 @@ This keeps summary navigation commands in the summary window while making
   (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
   (rmail-delete-after-output t)
   :config
-  (add-to-list 'auto-mode-alist '("\\.rmail$" . rmail-mode))
-  (add-to-list 'auto-mode-alist '("\\.mbox$" . rmail-mode))
   (with-eval-after-load 'rmailsum
     (define-key rmail-summary-mode-map "O"
                 #'my-rmail-summary-output-and-store-link)
