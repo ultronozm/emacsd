@@ -881,9 +881,7 @@ use the absolute path instead."
 
 (add-to-list 'display-buffer-alist
              '("\\`\\*\\(?:.*-\\)?compilation\\*\\(?:<[^>]+>\\)?\\'"
-               (display-buffer-reuse-window display-buffer-in-side-window)
-               (side . bottom)
-               (reusable-frames . visible)
+               (display-buffer-reuse-window display-buffer-below-selected)
                (window-height . 0.3)))
 
 ;; Detect if a Help buffer is being displayed for
@@ -1415,15 +1413,16 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 ;;; elpaca
 
-(defvar elpaca-installer-version 0.11)
+(defvar elpaca-installer-version 0.12)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-sources-directory (expand-file-name "repos/" elpaca-directory))
+(defvaralias 'elpaca-repos-directory 'elpaca-sources-directory)
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
                               :ref nil :depth 1 :inherit ignore
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+                              :build (:not elpaca-activate)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
        (order (cdr elpaca-order))
        (default-directory repo))
@@ -1456,6 +1455,29 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 
 (when (eq window-system 'w32)
   (elpaca-no-symlink-mode))
+
+(defun my-elpaca-normalize-order-add-git-type (orig-fun order)
+  "Preserve old Elpaca behavior for explicit git recipes in ORDER.
+When a declaration specifies `:repo' but omits `:type', default to
+`:type git' even if `:inherit' is nil."
+  (let ((normalized (funcall orig-fun order)))
+    (if (or (plist-member normalized :type)
+            (not (plist-member normalized :repo)))
+        normalized
+      (plist-put normalized :type 'git))))
+
+(advice-add #'elpaca--normalize-order :around
+            #'my-elpaca-normalize-order-add-git-type)
+
+(setq elpaca-lock-file 
+      (expand-file-name "elpaca.lock"
+                        (file-name-directory (file-truename user-init-file))))
+
+(defun my-elpaca-pin-all-recipes (_recipe)
+  "Default all Elpaca-managed packages to `:pin t'."
+  '(:pin t))
+
+(add-hook 'elpaca-recipe-functions #'my-elpaca-pin-all-recipes)
 
 (elpaca elpaca-use-package
   (elpaca-use-package-mode)
@@ -1495,6 +1517,16 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   (unless elpaca-install-info-executable
     (warn "install-info executable not found even after exec-path-from-shell")))
 
+(defun my/shell-getenv (variable)
+  "Return environment VARIABLE without invoking login shells from Tramp buffers.
+Prefer the current Emacs process environment, which
+`exec-path-from-shell-initialize' populates early in startup.  Only fall
+back to `exec-path-from-shell-getenv' from local buffers."
+  (or (getenv variable)
+      (when (and (featurep 'exec-path-from-shell)
+                 (not (file-remote-p default-directory)))
+        (exec-path-from-shell-getenv variable))))
+
 (elpaca-wait)
 
 ;;; lots of packages
@@ -1528,7 +1560,9 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   :diminish
   :hook
   ((emacs-lisp-mode LaTeX-mode rust-mode) . aggressive-indent-mode)
-  (LaTeX-mode . my/aggressive-indent-latex-tuning))
+  (LaTeX-mode . my/aggressive-indent-latex-tuning)
+  :config
+  (setq aggressive-indent-dont-electric-modes t))
 
 ;; Remove "%n" from mode-line-modes -- I know when I'm narrowing.
 (setq mode-line-modes (delete "%n" mode-line-modes))
@@ -1655,7 +1689,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-misc.el"
                  :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :bind (("s-@" . czm-misc-split-window-below-variant)
 	 ("s-#" . czm-misc-split-window-right-variant)
 	 ("s-4" . czm-misc-double-split-window-below-and-delete)
@@ -1725,6 +1759,29 @@ If the predicate is true, add NAME to `repo-scan-repos'."
    ;; ("M-." . corfu-info-location)
    ;; ("C-h" . corfu-info-documentation)
    ))
+
+(use-package cape
+  :defer 5
+  :ensure t
+  ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
+  ;; Press C-c p ? to for help.
+  ;; :bind ("C-c p" . cape-prefix-map) ;; Alternative keys: M-p, M-+, ...
+  ;; Alternatively bind Cape commands individually.
+  ;; :bind (("C-c p d" . cape-dabbrev)
+  ;;        ("C-c p h" . cape-history)
+  ;;        ("C-c p f" . cape-file)
+  ;;        ...)
+  :init
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.  The order of the functions matters, the
+  ;; first function returning a result wins.  Note that the list of buffer-local
+  ;; completion functions takes precedence over the global list.
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-elisp-block)
+  ;; (add-hook 'completion-at-point-functions #'cape-history)
+  ;; ...
+  )
 
 (use-package vertico
   :ensure t
@@ -1834,7 +1891,7 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (use-package bufferlo
   :ensure t
   :after consult
-  :demand t
+  :commands (bufferlo-local-buffers bufferlo-mode)
   :bind
   (("C-x B" . my/consult-buffer-global)
    ("C-x b" . my/consult-buffer-local)
@@ -1958,9 +2015,24 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
      nil "[ace-window]")
     (message "Use `ace-window' to display next command buffer..."))
   (when cfg-full
-    (keymap-global-set "C-x o" #'ace-window-prefix))
+    (keymap-global-set "C-x o" #'ace-window))
   :bind
-  ("C-x 4 o" . ace-window-prefix))
+  ("C-x 4 o" . ace-window-prefix)
+  ("C-x O" . ace-window-one-command))
+
+;; https://karthinks.com/software/emacs-window-management-almanac/#aw-select-the-completing-read-for-emacs-windows
+(defun ace-window-one-command ()
+  (interactive)
+  (require 'ace-window)
+  (let ((win (aw-select " ACE")))
+    (when (windowp win)
+      (with-selected-window win
+        (let* ((command (key-binding
+                         (read-key-sequence
+                          (format "Run in %s..." (buffer-name)))))
+               (this-command command))
+          (call-interactively command))))))
+
 
 ;; https://www.jamescherti.com/emacs-customize-ellipsis-outline-minor-mode/
 (defun my-outline-set-global-ellipsis (ellipsis)
@@ -1976,7 +2048,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :after latex
   :ensure (:host github :repo "ultronozm/outline-skip.el"
                  :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :hook (LaTeX-mode . outline-skip-mode))
 
 (use-package-full perfect-margin
@@ -2007,10 +2079,15 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :bind
   (:map global-map ("C-c e" . eldoc-box-help-at-point)))
 
+(defun my-rust-hook ()
+  "Custom configurations for Rust mode."
+  (electric-indent-local-mode -1))
+
 (use-package-full rust-mode
   :defer t
   :hook
-  (rust-mode . eglot-ensure))
+  (rust-mode . eglot-ensure)
+  (rust-mode . my-rust-hook))
 
 (use-package xr
   :defer t
@@ -2070,7 +2147,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :repo-scan
   :defer 1
   :ensure (:host github :repo "ultronozm/emacs-src-redirect.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :config
   (emacs-src-redirect-mode))
 
@@ -2172,8 +2249,7 @@ them at the first newline."
                  :repo "ultronozm/attrap.el"
                  :remotes (("upstream" :repo "jyp/attrap"))
                  :depth nil
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :defer t
   :after flycheck
   :config
@@ -2225,13 +2301,13 @@ them at the first newline."
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/consult-abbrev.el" :depth nil
-                 :inherit nil :pin t))
+                 :inherit nil))
 
 (use-package czm-spell
   :repo-scan
   :defer 10
   :ensure (:host github :repo "ultronozm/czm-spell.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   ;; :after latex
   :bind ("s-;" . czm-spell-then-abbrev)
   ;; :bind ("s-;" . czm-spell-correct-backward-lines)
@@ -2336,8 +2412,7 @@ them at the first newline."
                  :repo "ultronozm/embark"
                  :remotes (("upstream" :repo "oantolin/embark"))
                  :depth nil
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
   :config
@@ -2460,7 +2535,7 @@ them at the first newline."
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :ensure (:host github :repo "vedang/pdf-tools"
                  :depth nil
-                 :inherit nil :pin t
+                 :inherit nil
                  ;; :remotes (("orgtre" :repo "orgtre/pdf-tools"))
                  ;; pdf-tools builds `epdfinfo' from `build/server'.  With Elpaca's
                  ;; default symlinks, building would write artifacts into the git
@@ -2523,21 +2598,21 @@ them at the first newline."
   :repo-scan
   :defer t
   :ensure (:host github :repo "ultronozm/doc-view-follow.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :custom (doc-view-follow-hijack t))
 
 (use-package-full pdf-extract
   :defer t
   :repo-scan
   :ensure (:host github :repo "ultronozm/pdf-extract.el"
-                 :inherit nil :pin t))
+                 :inherit nil))
 
 (use-package-full pdf-tools-org-extract
   :repo-scan
   :after pdf-annot
   :demand
   :ensure (:host github :repo "ultronozm/pdf-tools-org-extract.el"
-                 :inherit nil :pin t)
+                 :inherit nil)
   :bind (:map pdf-view-mode-map
               ("C-c C-a e" . pdf-tools-org-extract-annotations)))
 
@@ -2698,6 +2773,10 @@ The content is escaped to prevent org syntax interpretation."
   (setq-local preview-tailor-local-multiplier 0.7))
 
 (add-hook 'markdown-mode-hook #'my-markdown-hook)
+(add-to-list 'major-mode-remap-alist '(markdown-ts-mode . markdown-mode))
+(setq auto-mode-alist
+      (delete '("\\.\\(?:md\\|markdown\\|mkd\\|mdown\\|mkdn\\|mdwn\\)\\'" . markdown-ts-mode)
+              auto-mode-alist))
 
 (defun czm-diff-preview-setup ()
   "Set up diff buffer for use with preview-auto-mode."
@@ -2907,10 +2986,13 @@ The content is escaped to prevent org syntax interpretation."
 
 (use-package-full org-remark
   :after org
-  :demand
-  :config
+  :commands (org-remark-mark)
+  :init
   (with-eval-after-load 'embark
     (keymap-set embark-region-map "C-m" #'org-remark-mark)))
+
+(use-package annotate
+  :defer t)
 
 ;;; more mail
 
@@ -2919,7 +3001,7 @@ The content is escaped to prevent org syntax interpretation."
   :after rmail
   :demand
   :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :bind
   ("C-z C-@" . czm-mail-mailrc-add-entry)
   (:map rmail-mode-map
@@ -2947,7 +3029,7 @@ The content is escaped to prevent org syntax interpretation."
 ;; (keymap-set project-prefix-map "T" #'eat-tmux-orchestrator)
 
 (use-package-full eat
-  :ensure (eat :inherit elpaca-menu-non-gnu-elpa)
+  :ensure (eat :inherit elpaca-menu-nongnu-elpa)
   :config
   (add-hook 'eat-mode-hook #'abbrev-mode)
   (let ((pass-through-key [?\C-\\])
@@ -2970,13 +3052,13 @@ The content is escaped to prevent org syntax interpretation."
 ;;; ai stuff
 
 (use-package-full copilot
+  :defer 3
   :ensure (:host github
                  :repo "zerolfx/copilot.el"
                  :files ("*.el" "dist")
                  :depth nil
                  :remotes (("ultronozm" :repo "ultronozm/copilot.el"))
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :diminish " Co"
   :hook
   ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
@@ -3059,14 +3141,12 @@ The content is escaped to prevent org syntax interpretation."
                  :repo "skissue/llm-tool-collection"
                  :depth nil
                  :remotes (("ultronozm" :repo "ultronozm/llm-tool-collection"))
-                 :inherit nil
-                 :pin t))
+                 :inherit nil))
 
 (use-package-full ai-org-chat
   :repo-scan
   :ensure (:host github :repo "ultronozm/ai-org-chat.el"
                  :inherit nil
-                 :pin t
                  :depth nil)
   :defer t
   :bind
@@ -3091,8 +3171,8 @@ The content is escaped to prevent org syntax interpretation."
 (use-package-full gptel
   :ensure (:host github :repo "karthink/gptel"
                  :remotes (("ultronozm" :repo "ultronozm/gptel"))
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
+  :after exec-path-from-shell
   :defer t
   :bind
   (("C-c <return>" . gptel-send)
@@ -3117,6 +3197,17 @@ The content is escaped to prevent org syntax interpretation."
   :config
   (with-eval-after-load 'embark
     (define-key embark-general-map (kbd "?") #'gptel-quick)))
+
+(use-package whisper
+  :disabled
+  :load-path "path/to/whisper.el"
+  :bind ("C-H-r" . whisper-run)
+  :config
+  (setq whisper-install-directory "/tmp/"
+        whisper-model "base"
+        whisper-language "en"
+        whisper-translate nil
+        whisper-use-threads (/ (num-processors) 2)))
 
 ;; I use the following functions to provide context to ai-org-chat
 
@@ -3193,51 +3284,9 @@ Skips empty days and diary holidays."
   :repo-scan
   :ensure (:host github :repo "ultronozm/content-quoter.el"
                  :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :bind ("s-u" . content-quoter-dwim)
   :defer t)
-
-;;;; mcp
-
-(use-package mcp-server-lib)
-
-(use-package-full life-mail-mcp
-  :load-path "~/repos/life-mail-mcp"
-  :after mcp-server-lib
-  :config
-  (setopt life-mail-mcp-default-mail-file
-          (expand-file-name "~/mail/inbox.rmail"))
-  (life-mail-mcp-init))
-
-(use-package-full elisp-dev-mcp
-  :ensure (:host github :repo "laurynas-biveinis/elisp-dev-mcp"
-                 :depth nil)
-  :after mcp-server-lib
-  :config
-  (elisp-dev-mcp-enable))
-
-(use-package-full mcp
-  :ensure t
-  :custom (mcp-hub-servers
-           `(("filesystem" . (:command "npx"
-                                       :args ("-y" "@modelcontextprotocol/server-filesystem")
-                                       :roots ("/home/lizqwer/MyProject/")))
-             ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
-             ("qdrant" . (:url "http://localhost:8000/sse"))
-             ("graphlit" . (
-                            :command "npx"
-                            :args ("-y" "graphlit-mcp-server")
-                            :env (
-                                  :GRAPHLIT_ORGANIZATION_ID "your-organization-id"
-                                  :GRAPHLIT_ENVIRONMENT_ID "your-environment-id"
-                                  :GRAPHLIT_JWT_SECRET "your-jwt-secret")))
-             ("life-mail"
-              . (:command "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh"
-                          :args ("--init-function=life-mail-mcp-init"
-                                 "--stop-function=life-mail-mcp-stop")
-                          :env (:EMACS_MCP_DEBUG_LOG "/tmp/life-mail.log")))))
-  :config (require 'mcp-hub)
-  :hook (after-init . mcp-hub-start-all-server))
 
 ;;;; agent-shell
 
@@ -3246,9 +3295,9 @@ Skips empty days and diary holidays."
 (use-package-full shell-maker
   :ensure (:host github :repo "xenodium/shell-maker"
                  :depth nil
-                 :inherit nil
-                 :pin t)
-  :config
+                 :inherit nil)
+  :defer t
+  :init
   (setopt shell-maker-transcript-default-path
           (my/agent-shell-transcripts-dir))
   (setopt shell-maker-transcript-default-filename
@@ -3259,50 +3308,8 @@ Skips empty days and diary holidays."
 (use-package-full acp
   :ensure (:host github :repo "xenodium/acp.el"
                  :depth nil
-                 :inherit nil
-                 :pin t))
-
-(defconst my/mcp-server-life-mail
-  '((name . "life-mail")
-    (command . "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh")
-    (args . ("--init-function=life-mail-mcp-init"
-             "--stop-function=life-mail-mcp-stop"))
-    (env  . (((name . "EMACS_MCP_DEBUG_LOG")
-              (value . "/tmp/life-mail.log"))))))
-
-(defconst my/mcp-server-elisp-dev
-  '((name . "elisp-dev")
-    (command . "/Users/au710211/.emacs.d/emacs-mcp-stdio.sh")
-    (args . ("--init-function=elisp-dev-mcp-enable"
-             "--stop-function=elisp-dev-mcp-disable"))
-    (env  . (((name . "EMACS_MCP_DEBUG_LOG")
-              (value . "/tmp/elisp-dev-mcp.log"))))))
-
-(defun my/mcp-server-github (&optional token)
-  (let ((pat (or token
-                 (my/getenv "GITHUB_MCP_PAT"))))
-    `((name . "github")
-      (type . "http")
-      (url . "https://api.githubcopilot.com/mcp")
-      (headers . ,(when (and pat (not (string-empty-p pat)))
-                    `(((name . "Authorization")
-                       (value . ,(format "Bearer %s" pat)))))))))
-
-(defconst my/mcp-server-fetch
-  '((name . "fetch")
-    (command . "uvx")
-    (args . ("mcp-server-fetch"))))
-
-(defconst my/mcp-server-filesystem
-  '((name . "filesystem")
-    (command . "npx")
-    (args . ("-y" "@modelcontextprotocol/server-filesystem"
-             "/home/lizqwer/MyProject/"))))
-
-(defconst my/mcp-server-qdrant
-  '((name . "qdrant")
-    (type . "sse")
-    (url . "http://localhost:8000/sse")))
+                 :inherit nil)
+  :defer t)
 
 ;;;;; container support
 
@@ -3599,12 +3606,6 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
   (setopt agent-shell-openai-codex-environment
           (agent-shell-make-environment-variables
            "GITHUB_MCP_PAT" (my/getenv "GITHUB_MCP_PAT")))
-  (setopt agent-shell-mcp-servers
-          (list
-           ;; my/mcp-server-elisp-dev
-           ;; my/mcp-server-life-mail
-           ;; (my/mcp-server-github)
-           ))
   (setopt agent-shell-transcript-file-path-function
           #'my/agent-shell-transcript-file-path-function))
 
@@ -3649,14 +3650,13 @@ character instead of toggling."
   :defer t
   :ensure (:host github :repo "konrad1977/knockknock"
                  :depth nil
-                 :inherit nil
-                 :pin t))
+                 :inherit nil))
 
 (use-package-full agent-shell-attention
   :repo-scan
   :ensure (:host github :repo "ultronozm/agent-shell-attention.el"
                  :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :after agent-shell
   :demand
   :bind (("C-z a" . agent-shell-attention-jump))
@@ -3915,7 +3915,7 @@ character instead of toggling."
 (use-package-full czm-cpp
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-cpp.el" :files ("*.el" "template") :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :defer t
   :custom
   (czm-cpp-scratch-directory my-scratch-cpp-dir))
@@ -4128,6 +4128,10 @@ The value of `calc-language` is restored after BODY has been processed."
     (diff-hl-margin-local-mode (if diff-hl-mode 1 -1))))
 
 (use-package diff-hl
+  :ensure (:host github
+                 :repo "ultronozm/diff-hl"
+                 :branch "ediff"
+                 :remotes (("upstream" :repo "dgutov/diff-hl")))
   :defer t
   :bind
   ("H-d" . diff-hl-mode)
@@ -4198,8 +4202,7 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package-full edit-indirect
   :ensure (:host github :repo "Fanael/edit-indirect"
                  :depth nil
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :commands (edit-indirect-region
              edit-indirect-commit
              edit-indirect-abort edit-indirect-save)
@@ -4243,6 +4246,16 @@ complete document rather than just a previewed region."
   (let ((TeX-current-process-region-p nil))
     (call-interactively #'TeX-view)))
 
+(defun my-elpaca-build-auctex-info (e)
+  "Build AUCTeX Info manuals for Elpaca package E."
+  (if-let ((makeinfo elpaca-makeinfo-executable))
+      (let ((default-directory (expand-file-name "doc" (elpaca<-source-dir e))))
+        (dolist (manual '("auctex.texi" "preview-latex.texi"))
+          (unless (zerop (elpaca--call-with-log e 0 makeinfo "--no-split" manual))
+            (elpaca--fail e (format "makeinfo failed for %s" manual))))
+        (elpaca--continue-build e "AUCTeX Info compiled"))
+    (elpaca--continue-build e "No elpaca-makeinfo-executable")))
+
 (use-package-full latex
   :ensure `(auctex
             :host nil
@@ -4251,9 +4264,7 @@ complete document rather than just a previewed region."
                      "https://git.savannah.gnu.org/git/auctex.git")
             :depth nil
             :inherit nil
-            :pre-build (("sh" "-lc" "cd doc && makeinfo --no-split auctex.texi")
-                        ("sh" "-lc" "cd doc && makeinfo --no-split preview-latex.texi"))
-            :build (:not elpaca--compile-info)
+            :build (:sub elpaca-build-docs my-elpaca-build-auctex-info)
             :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
   ;; :demand                             ; otherwise, madness ensues.
   :config
@@ -4505,7 +4516,7 @@ numbered variant \"equation\"."
 (use-package-full czm-tex-jump
   :repo-scan
   :ensure (:host github :repo "https://github.com/ultronozm/czm-tex-jump.el.git" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   ;; :after avy
   :after latex
   :bind
@@ -4547,7 +4558,7 @@ numbered variant \"equation\"."
 (use-package-full czm-tex-edit
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-tex-edit.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :after latex dynexp
   ;; :demand ; should come after latex and dynexp
   :bind
@@ -4647,7 +4658,8 @@ numbered variant \"equation\"."
   (setopt preview-auto-chars-below 1800)
   (setopt preview-auto-interval 0.3))
 
-(use-package-full buframe)
+(use-package-full buframe
+  :defer t)
 
 (use-package-full auctex-label-numbers
   :repo-scan
@@ -4823,7 +4835,6 @@ numbered variant \"equation\"."
   ;; over TRAMP.  Prefer the async plain-goal path for remote buffers.
   (when (file-remote-p default-directory)
     (setq-local lean4-info-plain t)
-    (setq-local lean4-info-refresh-even-if-invisible nil)
     (setq-local lean4-idle-delay 0.2)))
 
 (use-package lean4-mode
@@ -4833,14 +4844,12 @@ numbered variant \"equation\"."
                  :files ("*.el" "data")
                  :remotes (("bustercopley" :repo "bustercopley/lean4-mode")
                            ("leanprover-community" :repo "leanprover-community/lean4-mode"))
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :diminish
   :hook
   (lean4-mode . czm-set-lean4-local-variables)
   :custom
   (lean4-info-plain t)
-  (lean4-info-refresh-even-if-invisible nil)
   :bind (:map lean4-mode-map
               ("C-c C-k" . quail-show-key))
   :config
@@ -4853,7 +4862,7 @@ numbered variant \"equation\"."
 (use-package czm-lean4
   :repo-scan
   :ensure (:host github :repo "ultronozm/czm-lean4.el" :depth nil
-                 :inherit nil :pin t)
+                 :inherit nil)
   :after lean4-mode
   :hook
   (lean4-mode . czm-lean4-mode-hook)
@@ -4983,6 +4992,17 @@ numbered variant \"equation\"."
   (setopt vundo-use-region-undo t)
   :bind (([remap undo] . my/vundo)))
 
+(use-package command-log-mode
+  :defer t
+  :config
+  (dolist (item '(dynexp-space
+                  dynexp-next
+                  LaTeX-babel-insert-hyphen
+                  LaTeX-insert-left-brace
+                  TeX-newline
+                  TeX-insert-backslash))
+    (add-to-list 'clm/log-command-exceptions* item)))
+
 (with-eval-after-load 'mailcap
   (dolist (item
            '((".docx" .
@@ -5018,6 +5038,12 @@ When used via Embark, WORD comes from the current target."
 (with-eval-after-load 'image-mode
   (keymap-unset image-mode-map "W"))
 
+(use-package ignore-mouse
+  :ensure (:host github :repo "dradetsky/ignore-mouse" :inherit nil)
+  :defer t
+  ;; (ignore-mouse-global-mode)
+  )
+
 (use-package-full diff-vc-patch
   :ensure (:host github :repo "ultronozm/diff-vc-patch.el"
                  :depth nil
@@ -5035,16 +5061,15 @@ When used via Embark, WORD comes from the current target."
   (setopt speedread-display-style 'window)
   (setopt iread-chars 20))
 
-(use-package-full code-cells)
+(use-package-full code-cells
+  :defer t)
 
 (use-package-full python-repl-eldoc
   :ensure (:host github :repo "ultronozm/python-repl-eldoc.el"
                  :depth nil
                  :inherit nil)
   :after python
-  :demand
-  :config
-  (python-repl-eldoc-global-mode 1))
+  :hook (python-base-mode . python-repl-eldoc-mode))
 
 (use-package-full overleaf
   :defer 5
@@ -5052,8 +5077,7 @@ When used via Embark, WORD comes from the current target."
                  :repo "ultronozm/overleaf.el"
                  :remotes (("upstream" :repo "vale981/overleaf.el"))
                  :depth nil
-                 :inherit nil
-                 :pin t)
+                 :inherit nil)
   :config
   (with-eval-after-load 'overleaf
     (add-hook 'overleaf-mode-hook
