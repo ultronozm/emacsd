@@ -53,6 +53,15 @@
   "Return configured file paths from SYMS, omitting unset values."
   (delq nil (mapcar #'my-setting-string syms)))
 
+(defun my/getenv (name)
+  "Return environment variable NAME from Emacs or the login shell.
+
+Prefer the current Emacs environment.  Fall back to
+`exec-path-from-shell-getenv' when available."
+  (or (getenv name)
+      (when (fboundp 'exec-path-from-shell-getenv)
+        (exec-path-from-shell-getenv name))))
+
 (defun my/maybe-set-preview-master-local ()
   "Set local `TeX-master' from `my-preview-master' when enabled."
   (interactive)
@@ -3154,7 +3163,6 @@ The content is escaped to prevent org syntax interpretation."
   :config
   (add-hook 'llm-tool-collection-post-define-functions #'ai-org-chat-register-tool-spec)
   (mapcar #'ai-org-chat-register-tool-spec (llm-tool-collection-get-all))
-  (require 'exec-path-from-shell)
   (ai-org-chat-select-model "sonnet 4.6")
   (add-hook 'ai-org-chat-response-finished-functions
             #'ai-org-chat-auto-format-response
@@ -3173,13 +3181,12 @@ The content is escaped to prevent org syntax interpretation."
   (gptel-default-mode 'org-mode)
   (gptel-log-level nil)
   :config
-  (require 'exec-path-from-shell)
   (setopt gptel-rewrite-default-action 'accept)
   (setq gptel-backend
         (gptel-make-anthropic
             "Claude"
           :stream t
-          :key (lambda () (my/shell-getenv "ANTHROPIC_KEY"))
+          :key (lambda () (my/getenv "ANTHROPIC_KEY"))
           :models '(claude-sonnet-4-6)))
   (setq gptel-model 'claude-sonnet-4-6))
 
@@ -3567,7 +3574,7 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
   (yank)
   (insert "\n```\n"))
 
-(use-package-full agent-shell
+(use-package agent-shell
   :ensure (:host github :repo "xenodium/agent-shell"
                  :depth nil
                  :inherit nil)
@@ -3598,7 +3605,7 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
   (setopt agent-shell-file-completion-enabled nil)
   (setopt agent-shell-openai-codex-environment
           (agent-shell-make-environment-variables
-           "GITHUB_MCP_PAT" (my/shell-getenv "GITHUB_MCP_PAT")))
+           "GITHUB_MCP_PAT" (my/getenv "GITHUB_MCP_PAT")))
   (setopt agent-shell-transcript-file-path-function
           #'my/agent-shell-transcript-file-path-function))
 
@@ -4112,7 +4119,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (require 'content-quoter)
   (setq llm-vc-commit-model
         (make-llm-claude
-         :key (my/shell-getenv "ANTHROPIC_KEY")
+         :key (my/getenv "ANTHROPIC_KEY")
          :chat-model "claude-sonnet-4-6")))
 
 (defun my/diff-hl-mode-hook ()
