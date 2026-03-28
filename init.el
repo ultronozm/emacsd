@@ -1490,6 +1490,121 @@ When a declaration specifies `:repo' but omits `:type', default to
       (expand-file-name "elpaca.lock"
                         (file-name-directory (file-truename user-init-file))))
 
+(defun my-elpaca-lock-file-entries ()
+  "Return the current Elpaca lock file entries."
+  (unless (and elpaca-lock-file (file-exists-p elpaca-lock-file))
+    (user-error "Elpaca lock file not found: %S" elpaca-lock-file))
+  (elpaca--read-file elpaca-lock-file))
+
+(defun my-elpaca--git-output (dir &rest args)
+  "Return trimmed git output for ARGS in DIR, or nil on failure."
+  (with-temp-buffer
+    (let ((default-directory dir))
+      (when (zerop (apply #'process-file "git" nil t nil args))
+        (string-trim (buffer-string))))))
+
+(defun my-elpaca--tracked-dirty-p (dir)
+  "Return non-nil when DIR has tracked git changes.
+Untracked files are ignored so stray build artifacts do not block sync."
+  (when-let* ((status (my-elpaca--git-output dir "status" "--porcelain" "--untracked-files=no")))
+    (not (string-empty-p status))))
+
+(defun my-elpaca--lock-sync-items (&optional force)
+  "Return lock-file sync items.
+When FORCE is non-nil, do not block checkout for tracked modifications."
+  (cl-loop
+   for (id . plist) in (my-elpaca-lock-file-entries)
+   for e = (elpaca-get id)
+   for recipe = (plist-get plist :recipe)
+   for ref = (plist-get recipe :ref)
+   for repo = (and e (ignore-errors (elpaca<-source-dir e)))
+   for head = (and repo (file-directory-p repo)
+                   (my-elpaca--git-output repo "rev-parse" "HEAD"))
+   for dirty = (and repo (file-directory-p repo) (my-elpaca--tracked-dirty-p repo))
+   collect
+   (list :id id
+         :elpaca e
+         :repo repo
+         :ref ref
+         :head head
+         :dirty dirty
+         :status
+         (cond
+          ((not e) 'missing-package)
+          ((not ref) 'no-ref)
+          ((not (and repo (file-directory-p repo))) 'missing-repo)
+          ((null head) 'git-error)
+          ((equal head ref) 'ok)
+          ((and dirty (not force)) 'tracked-dirty)
+          (t 'checkout)))))
+
+(defun my-elpaca--lock-sync-buffer (items title)
+  "Display lock sync ITEMS in a report buffer titled TITLE."
+  (with-current-buffer (get-buffer-create "*elpaca-lock-sync*")
+    (setq buffer-read-only nil)
+    (erase-buffer)
+    (insert (format "%s\n\n" title))
+    (dolist (status '(checkout tracked-dirty missing-package missing-repo no-ref git-error ok))
+      (let ((count (cl-count status items :key (lambda (item) (plist-get item :status)))))
+        (when (> count 0)
+          (insert (format "%-14s %d\n" status count)))))
+    (insert "\n")
+    (dolist (item items)
+      (insert
+       (format "%-18s %-14s %s\n"
+               (plist-get item :id)
+               (plist-get item :status)
+               (or (plist-get item :repo) "")))
+      (when-let* ((head (plist-get item :head))
+                  (ref (plist-get item :ref))
+                  ((not (equal head ref))))
+        (insert (format "  head %s\n  lock %s\n" head ref))))
+    (goto-char (point-min))
+    (special-mode)
+    (display-buffer (current-buffer))))
+
+(defun my-elpaca-lock-sync-dry-run (&optional force)
+  "Show what syncing installed packages to `elpaca-lock-file' would do.
+With prefix argument FORCE, include repos with tracked modifications."
+  (interactive "P")
+  (my-elpaca--lock-sync-buffer
+   (my-elpaca--lock-sync-items force)
+   (if force
+       "Elpaca lock sync dry run (forced)"
+     "Elpaca lock sync dry run")))
+
+(defun my-elpaca-sync-to-lock-file (&optional force)
+  "Move clean installed Elpaca repos to the refs in `elpaca-lock-file'.
+Tracked modifications block checkout unless FORCE is non-nil.
+Untracked files are ignored. Changed packages are queued for rebuild."
+  (interactive "P")
+  (let ((items (my-elpaca--lock-sync-items force))
+        changed)
+    (dolist (item items)
+      (when (eq (plist-get item :status) 'checkout)
+        (let* ((id (plist-get item :id))
+               (repo (plist-get item :repo))
+               (ref (plist-get item :ref))
+               (e (plist-get item :elpaca)))
+          (with-temp-buffer
+            (let ((default-directory repo))
+              (if (zerop (process-file "git" nil t t "checkout" ref))
+                  (progn
+                    (plist-put item :status 'checked-out)
+                    (push id changed)
+                    (when e (elpaca-rebuild id)))
+                (plist-put item :status 'checkout-failed)
+                (plist-put item :error (string-trim (buffer-string)))))))))
+    (when changed
+      (elpaca-process-queues))
+    (with-current-buffer (get-buffer-create "*elpaca-lock-sync*")
+      (my-elpaca--lock-sync-buffer
+       items
+       (if changed
+           (format "Elpaca lock sync applied (%d rebuilds queued)" (length changed))
+         "Elpaca lock sync applied (no changes)")))
+    changed))
+
 (defun my-elpaca-pin-all-recipes (_recipe)
   "Default all Elpaca-managed packages to `:pin t'."
   '(:pin t))
