@@ -3066,6 +3066,7 @@ The content is escaped to prevent org syntax interpretation."
         ("f" . org-drag-element-forward)
         ("b" . org-drag-element-backward))
   :config
+  (setopt org-fontify-quote-and-verse-blocks t)
   (require 'ob-shell)
   (setopt org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)
                           ("\\.xlsx\\'" . system)
