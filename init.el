@@ -736,7 +736,8 @@ use the absolute path instead."
    ("s-v" . nil)
    ("s-w" . nil) ; delete frame
    ("s-x" . nil)
-   ("s-z" . nil))
+   ("s-z" . nil)
+   ("s-&" . nil))
   :custom
   (Man-notify-method 'pushy)
   (diff-entire-buffers nil)
