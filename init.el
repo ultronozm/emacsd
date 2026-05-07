@@ -785,6 +785,7 @@ use the absolute path instead."
   (outline-minor-mode-cycle nil)
   (revert-without-query '("\\.pdf$"))
   :config
+  (setopt bookmark-version-control 'never)
   (setopt auto-save-file-name-transforms
           `((".*" ,(expand-file-name
                     (let ((dir-name (expand-file-name "auto-save" user-emacs-directory)))
