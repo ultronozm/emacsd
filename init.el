@@ -871,7 +871,6 @@ use the absolute path instead."
   :hook
   (prog-mode . outline-minor-mode)
   (dired-mode . dired-hide-details-mode)
-  (dired-mode . dired-omit-mode)
   (dired-mode . hl-line-mode))
 
 
