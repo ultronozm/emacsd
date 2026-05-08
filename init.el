@@ -2783,11 +2783,11 @@ in all current and future PDF buffers."
   (setopt gt-buffer-render-window-config
           '((display-buffer-reuse-window display-buffer-below-selected)
             (window-height . 0.25)))
+  (with-eval-after-load 'view-mode
+    (keymap-set view-mode-map "t" #'gt-translate))
   :bind
   (("C-z t" . gt-translate)
-   ("C-z T" . gt-eldoc-mode)
-   :map view-mode-map
-   ("t" . gt-translate)))
+   ("C-z T" . gt-eldoc-mode)))
 
 ;; (gt-start
 ;;  (gt-translator
