@@ -3794,8 +3794,6 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
   (setopt agent-shell-session-strategy 'prompt)
   (setopt agent-shell-openai-authentication
           (agent-shell-openai-make-authentication :login t))
-  (setopt agent-shell-anthropic-default-model-id "opus")
-
   (setopt agent-shell-file-completion-enabled nil)
   (setopt agent-shell-openai-codex-environment
           (agent-shell-make-environment-variables
