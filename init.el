@@ -1048,6 +1048,7 @@ positions you navigated to during the Ediff session."
    (lambda (sym) (add-to-list 'tex--prettify-symbols-alist sym))
    '(("\\eps" . ?ε)
      ("\\ " . 9141) ; Literal ?⎵ breaks indentation
+     ("\\noindent" . ?⇤)
      ("\\begin{equation*}" . ?↴)
      ("\\begin{equation}" . ?↴)
      ("\\end{equation*}" . ?↲)
