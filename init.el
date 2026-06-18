@@ -3884,13 +3884,12 @@ character instead of toggling."
       (compilation-mode)
       (let ((inhibit-read-only t))
         (erase-buffer)
-        (insert (format "$ codex exec --sandbox workspace-write %S\n\n"
+        (insert (format "$ codex exec %S\n\n"
                         instruction))))
     (setq proc
           (apply #'start-process
                  "codex-exec" buffer
                  "codex" "exec"
-                 "--sandbox" "workspace-write"
                  (list instruction)))
     (with-current-buffer buffer
       (set-marker (process-mark proc) (point)))
