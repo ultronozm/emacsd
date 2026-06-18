@@ -2377,7 +2377,7 @@ them at the first newline."
 (use-package-full attrap
   :repo-scan
   :ensure (:host github
-                 :repo "ultronozm/attrap.el"
+                 :repo "ultronozm/attrap"
                  :remotes (("upstream" :repo "jyp/attrap"))
                  :depth nil
                  :inherit nil)
