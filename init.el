@@ -801,9 +801,6 @@ use the absolute path instead."
            "@noreply"))
   (setopt isearch-lazy-count t)
   (setopt vc-handled-backends '(Git))
-  (setopt safe-local-variable-directories
-          '("/Users/au710211/repos/nla-main/"
-            "/Users/au710211/repos/nla-prep/"))
   (setopt safe-local-variable-values
           '((aggressive-indent-mode)
             (cmake-build-project-root . "./cpp")
