@@ -26,23 +26,23 @@
       my-scratch-org-dir "~/scratch/org"
       my-scratch-cpp-dir "~/scratch/cpp"
       my-scratch-gpt-dir "~/scratch/gpt"
+      my-scratch-markdown-dir "~/scratch/markdown"
       my-face-heights '((default . 150)
                         (mode-line . 120)
                         (mode-line-inactive . 120)
-                        (tab-bar . 120))
+                        (tab-bar . 120)
+                        (mode-line-active . 120))
       my-auctex-git-permissions nil
       my-latex-buffer-face '(:height 216 :width normal
                                      :family "Andale Mono")
-      my-agent-shell-transcripts-dir "~/agent-transcripts/"
+      my-agent-shell-transcripts-dir "~/Dropbox/agent-transcripts/excerpts"
+      my-emacs-source-dir "~/gnu-emacs/"
       my-firefox-folder "~/Library/Application Support/Firefox")
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")
 
-(setenv "LIBRARY_PATH"
-        (mapconcat
-         #'identity
-         '("/opt/homebrew/opt/gcc/lib/gcc/14"
-           "/opt/homebrew/opt/libgccjit/lib/gcc/14"
-           "/opt/homebrew/opt/gcc/lib/gcc/14/gcc/aarch64-apple-darwin23/14")
-         ":"))
+(setopt safe-local-variable-directories
+        '("~/repos/nla-main/" "~/repos/nla-prep/"))
+
+(setq epa-file-encrypt-to '("CA22DA3EDC6B89A12CFFE1643DA49C122A95D133"))
