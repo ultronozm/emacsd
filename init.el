@@ -5173,7 +5173,9 @@ numbered variant \"equation\"."
   :defer t)
 
 (use-package vundo
-  :ensure t
+  :ensure (:host github :repo "ultronozm/vundo"
+                 :remotes (("upstream" :repo "casouri/vundo"))
+                 :branch "region-undo")
   :defer t
   :init
   (defun my/vundo (arg)
