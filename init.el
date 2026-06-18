@@ -2664,7 +2664,9 @@ them at the first newline."
 (use-package-full pdf-tools
   ;; :disabled
   :mode ("\\.pdf\\'" . pdf-view-mode)
-  :ensure (:host github :repo "vedang/pdf-tools"
+  :ensure (:host github :repo "ultronozm/pdf-tools"
+                 :remotes (("upstream" :repo "vedang/pdf-tools"))
+                 :branch "fix/window-args"
                  :depth nil
                  :inherit nil
                  ;; :remotes (("orgtre" :repo "orgtre/pdf-tools"))
