@@ -1416,8 +1416,13 @@ If the predicate is true, add NAME to `repo-scan-repos'."
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-sources-directory (expand-file-name "repos/" elpaca-directory))
 (defvaralias 'elpaca-repos-directory 'elpaca-sources-directory)
+;; `:depth nil' (full clone), not the upstream installer's `:depth 1'.
+;; elpaca-use-package ships inside this repo (extensions/) and may be
+;; pinned to a non-tip commit; a shallow clone need not contain it, so a
+;; later checkout of that pin (e.g. `my-elpaca-sync-to-lock-file') fails.
+;; A full clone of this one small repo keeps every pinned ref reachable.
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1 :inherit ignore
+                              :ref nil :depth nil :inherit ignore
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
                               :build (:not elpaca-activate)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
@@ -1489,6 +1494,42 @@ When a declaration specifies `:repo' but omits `:type', default to
 Untracked files are ignored so stray build artifacts do not block sync."
   (when-let* ((status (my-elpaca--git-output dir "status" "--porcelain" "--untracked-files=no")))
     (not (string-empty-p status))))
+
+(defcustom my-elpaca-unpinned-owners '("ultronozm")
+  "Repo owners whose packages track branch tips and are never pinned.
+These are repos the user maintains; pinning them in `elpaca-lock-file'
+would only freeze them at stale commits.  Matched against a recipe's
+:repo, whether \"owner/name\" or a full URL on any forge."
+  :type '(repeat string)
+  :group 'elpaca)
+
+(defun my-elpaca-own-recipe-p (recipe)
+  "Return non-nil when RECIPE's :repo is owned per `my-elpaca-unpinned-owners'.
+Matches \"owner/name\" or a full URL on any forge; the leading boundary
+keeps \"notowner/...\" from matching."
+  (when-let* ((repo (plist-get recipe :repo)) ((stringp repo)))
+    (cl-some (lambda (owner)
+               (string-match-p
+                (concat "\\(?:\\`\\|[:/]\\)" (regexp-quote owner) "/") repo))
+             my-elpaca-unpinned-owners)))
+
+(defun my-elpaca-bootstrap-recipe-p (recipe)
+  "Return non-nil when RECIPE is for elpaca or elpaca-use-package.
+These share one source repo and are controlled by `elpaca-order', not by
+the lock file or by pinning."
+  (member (plist-get recipe :package) '("elpaca" "elpaca-use-package")))
+
+(defun my-elpaca-lock-file-skip-own (e)
+  "Return nil to omit E from the lock file.
+For `elpaca-lock-file-functions'.  Omits the user's own packages (which
+track their branch tips, see `my-elpaca-unpinned-owners') and the
+bootstrap packages (see `my-elpaca-bootstrap-recipe-p'), so that a lock
+sync cannot move them to a stale pin."
+  (let ((recipe (elpaca<-recipe e)))
+    (not (or (my-elpaca-own-recipe-p recipe)
+             (my-elpaca-bootstrap-recipe-p recipe)))))
+
+(add-hook 'elpaca-lock-file-functions #'my-elpaca-lock-file-skip-own)
 
 (defun my-elpaca--lock-sync-items (&optional force)
   "Return lock-file sync items.
@@ -1586,11 +1627,17 @@ Untracked files are ignored. Changed packages are queued for rebuild."
          "Elpaca lock sync applied (no changes)")))
     changed))
 
-(defun my-elpaca-pin-all-recipes (_recipe)
-  "Default all Elpaca-managed packages to `:pin t'."
-  '(:pin t))
+(defun my-elpaca-pin-third-party-recipes (recipe)
+  "Pin third-party packages to `elpaca-lock-file'; leave others tracking tips.
+For `elpaca-recipe-functions'.  Own packages (see `my-elpaca-unpinned-owners')
+and bootstrap packages (see `my-elpaca-bootstrap-recipe-p') are left unpinned,
+so `elpaca-update' advances them.  The bootstrap exclusion matters because
+elpaca-use-package shares elpaca's repo: pinning it would pin elpaca too."
+  (unless (or (my-elpaca-own-recipe-p recipe)
+              (my-elpaca-bootstrap-recipe-p recipe))
+    '(:pin t)))
 
-(add-hook 'elpaca-recipe-functions #'my-elpaca-pin-all-recipes)
+(add-hook 'elpaca-recipe-functions #'my-elpaca-pin-third-party-recipes)
 
 (elpaca elpaca-use-package
   (elpaca-use-package-mode)
