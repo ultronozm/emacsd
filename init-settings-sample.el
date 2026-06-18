@@ -43,6 +43,16 @@
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")
 
 (setopt safe-local-variable-directories
-        '("~/repos/nla-main/" "~/repos/nla-prep/"))
+        (mapcar #'expand-file-name
+                '("~/repos/nla-main/"
+                  "~/repos/nla-prep/"
+                  "~/ua/"
+                  "~/OneDrive - Aarhus universitet/Paul's OneDrive folder/DNRF/application/"
+                  "/Users/Shared/workspace/noobajit/")))
+
+(setq my-extra-safe-local-variable-values
+      '((eval add-to-list 'LaTeX-indent-begin-exceptions-list "ifs")
+        (czm-preview-TeX-master
+         . "~/doit/preview-master-principal_cg.tex")))
 
 (setq epa-file-encrypt-to '("CA22DA3EDC6B89A12CFFE1643DA49C122A95D133"))

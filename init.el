@@ -32,6 +32,9 @@
 
 ;;; optional settings defaults
 
+(defvar my-extra-safe-local-variable-values nil
+  "Machine-local additions to `safe-local-variable-values'.")
+
 (defvar my-todo-file nil
   "Primary todo Org file path, or nil when not configured.")
 
@@ -802,23 +805,25 @@ use the absolute path instead."
   (setopt isearch-lazy-count t)
   (setopt vc-handled-backends '(Git))
   (setopt safe-local-variable-values
-          '((aggressive-indent-mode)
-            (cmake-build-project-root . "./cpp")
-            (checkdoc-minor-mode . t)
-            (eval TeX-run-style-hooks "nla-notes")
-            (eval outline-hide-sublevels 5)
-            (eval defun agent-shell-run-all-tests nil
-                  "Run all agent-shell tests in batch mode." (interactive)
-                  (let
-                      ((test-dir
-                        (expand-file-name "tests/"
-                                          (project-root (project-current t)))))
-                    (dolist
-                        (file (directory-files-recursively test-dir "\\.el$"))
-                      (unless (string-match-p "/\\." file) (load file)))
-                    (if noninteractive
-                        (ert-run-tests-batch-and-exit "^agent-shell")
-                      (ert "^agent-shell"))))))
+          (append
+           '((aggressive-indent-mode)
+             (cmake-build-project-root . "./cpp")
+             (checkdoc-minor-mode . t)
+             (eval TeX-run-style-hooks "nla-notes")
+             (eval outline-hide-sublevels 5)
+             (eval defun agent-shell-run-all-tests nil
+                   "Run all agent-shell tests in batch mode." (interactive)
+                   (let
+                       ((test-dir
+                         (expand-file-name "tests/"
+                                           (project-root (project-current t)))))
+                     (dolist
+                         (file (directory-files-recursively test-dir "\\.el$"))
+                       (unless (string-match-p "/\\." file) (load file)))
+                     (if noninteractive
+                         (ert-run-tests-batch-and-exit "^agent-shell")
+                       (ert "^agent-shell")))))
+           my-extra-safe-local-variable-values))
   (setopt vc-deduce-backend-nonvc-modes t)
   (setopt ispell-save-corrections-as-abbrevs t)
   (setopt tab-bar-format
