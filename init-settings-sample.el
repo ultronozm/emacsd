@@ -1,32 +1,42 @@
 ;; -*- lexical-binding: t; -*-
 
-;; rename this file to "init-settings.el" and edit the following: 
+;; rename this file to "init-settings.el" and edit the following.
+;; Relocate everything by editing the three path roots below; the rest derive.
 
 (setq my-first-name "Paul"
-      my-master-bib-file "~/doit/refs.bib"
-      my-common-tex-file "~/doit/common.tex"
-      my-todo-file "~/doit/todo.org"
-      my-projects-file "~/doit/projects.org"
-      my-log-file "~/doit/log.org"
-      my-mail-folder "~/mail"
+      ;; --- path roots (edit these to relocate) ---
+      my-doit-dir    "~/doit"      ; work monorepo (kept top-level)
+      my-work-dir    "~/work"      ; catch-all parent for working repos
+      my-scratch-dir "~/scratch"   ; disposable capture space (not migrated)
+      ;; --- doit files (derived) ---
+      my-master-bib-file (expand-file-name "refs.bib" my-doit-dir)
+      my-common-tex-file (expand-file-name "common.tex" my-doit-dir)
+      my-todo-file       (expand-file-name "todo.org" my-doit-dir)
+      my-projects-file   (expand-file-name "projects.org" my-doit-dir)
+      my-log-file        (expand-file-name "log.org" my-doit-dir)
+      my-old-log-file    (expand-file-name "log-old.org" my-doit-dir)
+      my-preview-master  (expand-file-name "preview-master.tex" my-doit-dir)
+      ;; --- mail (mboxes live in Dropbox, not git) ---
+      my-mail-folder "~/Dropbox/mail"
       my-mail-host "gmail.com"
       my-mail-host-imap "imap.gmail.com"
       my-mail-port "993"
       my-mail-user "ultrono@gmail.com"
       my-mail-inbox "imaps://ultrono%40gmail.com@imap.gmail.com:993/n"
-      my-old-log-file "~/doit/log-old.org"
-      my-preview-master "~/doit/preview-master.tex"
+      ;; --- other folders ---
       my-downloads-folder "~/Downloads"
       my-pdf-folder "~/Dropbox/math documents/unsorted/"
       my-math-folder "~/Dropbox/math documents/"
-      my-publish-math-repo "~/math"
-      my-scratch-sage-dir "~/scratch/sage"
+      my-publish-math-repo (expand-file-name "math" my-work-dir)
+      ;; --- scratch subdirs (derived) ---
+      my-scratch-sage-dir     (expand-file-name "sage" my-scratch-dir)
       my-sage-exe "/usr/local/bin/sage"
-      my-scratch-tex-dir "~/scratch/tex"
-      my-scratch-org-dir "~/scratch/org"
-      my-scratch-cpp-dir "~/scratch/cpp"
-      my-scratch-gpt-dir "~/scratch/gpt"
-      my-scratch-markdown-dir "~/scratch/markdown"
+      my-scratch-tex-dir      (expand-file-name "tex" my-scratch-dir)
+      my-scratch-org-dir      (expand-file-name "org" my-scratch-dir)
+      my-scratch-cpp-dir      (expand-file-name "cpp" my-scratch-dir)
+      my-scratch-gpt-dir      (expand-file-name "gpt" my-scratch-dir)
+      my-scratch-markdown-dir (expand-file-name "markdown" my-scratch-dir)
+      ;; --- ui / misc ---
       my-face-heights '((default . 150)
                         (mode-line . 120)
                         (mode-line-inactive . 120)
@@ -36,7 +46,7 @@
       my-latex-buffer-face '(:height 216 :width normal
                                      :family "Andale Mono")
       my-agent-shell-transcripts-dir "~/Dropbox/agent-transcripts/excerpts"
-      my-emacs-source-dir "~/gnu-emacs/"
+      my-emacs-source-dir "~/work/emacs/"
       my-firefox-folder "~/Library/Application Support/Firefox")
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
