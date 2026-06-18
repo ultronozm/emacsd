@@ -42,9 +42,8 @@
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")
 
-;; Machine-local additions appended by init.el to
-;; `safe-local-variable-directories' and `safe-local-variable-values'.
+;; Machine-local safe local variables.
 (setopt safe-local-variable-directories nil)
-(setq my-extra-safe-local-variable-values nil)
+(setopt safe-local-variable-values nil)
 
 (setq epa-file-encrypt-to '("CA22DA3EDC6B89A12CFFE1643DA49C122A95D133"))
