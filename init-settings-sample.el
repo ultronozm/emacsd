@@ -42,6 +42,8 @@
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")
 
+;; Machine-local directories whose .dir-locals.el files should be trusted.
+;; Keep this narrow, and remove paths that do not exist on a given machine.
 (setopt safe-local-variable-directories
         (mapcar #'expand-file-name
                 '("~/repos/nla-main/"
@@ -50,6 +52,8 @@
                   "~/OneDrive - Aarhus universitet/Paul's OneDrive folder/DNRF/application/"
                   "/Users/Shared/workspace/noobajit/")))
 
+;; Machine-local additions appended by init.el to `safe-local-variable-values'.
+;; Put project-specific safe forms here instead of using Customize.
 (setq my-extra-safe-local-variable-values
       '((eval add-to-list 'LaTeX-indent-begin-exceptions-list "ifs")
         (czm-preview-TeX-master
