@@ -4308,7 +4308,7 @@ The value of `calc-language` is restored after BODY has been processed."
               ("C-c C-r" . llm-vc-commit-generate-message))
   :config
   (setq llm-vc-commit-contribute-file
-        (expand-file-name "CONTRIBUTE" "~/gnu-emacs/"))
+        (expand-file-name "CONTRIBUTE" my-emacs-source-dir))
   (require 'llm-claude)
   (require 'content-quoter)
   (setq llm-vc-commit-model
