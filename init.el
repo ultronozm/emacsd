@@ -3392,17 +3392,17 @@ matching `STRING'. `TYPE' can be :video or :audio."
   "The default audio device to use for whisper.el and outher audio processes."
   :type 'string)
 
-(defun rkHey, just testing real quick. What's up nerds?/select-default-audio-device (&optional device-name)
-       "Interactively select an audio device to use for whisper.el and other audio processes.
+(defun rk/select-default-audio-device (&optional device-name)
+  "Interactively select an audio device to use for whisper.el and other audio processes.
 If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
-       (interactive)
-       (let* ((audio-devices (cadr (rk/get-ffmpeg-device)))
-              (indexes (mapcar #'car audio-devices))
-              (names (mapcar #'cdr audio-devices))
-              (name (or device-name (completing-read "Select audio device: " names nil t))))
-         (setq rk/default-audio-device (rk/find-device-matching name :audio))
-         (when (boundp 'whisper--ffmpeg-input-device)
-           (setq whisper--ffmpeg-input-device (format ":%s" rk/default-audio-device)))))
+  (interactive)
+  (let* ((audio-devices (cadr (rk/get-ffmpeg-device)))
+         (indexes (mapcar #'car audio-devices))
+         (names (mapcar #'cdr audio-devices))
+         (name (or device-name (completing-read "Select audio device: " names nil t))))
+    (setq rk/default-audio-device (rk/find-device-matching name :audio))
+    (when (boundp 'whisper--ffmpeg-input-device)
+      (setq whisper--ffmpeg-input-device (format ":%s" rk/default-audio-device)))))
 
 ;; I use the following functions to provide context to ai-org-chat
 
