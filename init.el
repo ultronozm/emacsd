@@ -1635,6 +1635,21 @@ Untracked files are ignored. Changed packages are queued for rebuild."
 
 (elpaca-wait)
 
+;; Fail loudly if elpaca-use-package didn't build.  When its build is
+;; missing, `elpaca-use-package-mode' is undefined, `:ensure' silently
+;; falls back to package.el, and every package declaration below errors
+;; in a confusing cascade.  Surface the real cause instead.  Usual fix:
+;; `M-x elpaca-rebuild RET elpaca-use-package', or delete its build dir
+;; under `elpaca-builds-directory' and restart.
+(unless (fboundp 'elpaca-use-package-mode)
+  (display-warning
+   'elpaca
+   "elpaca-use-package failed to build: `elpaca-use-package-mode' is undefined.
+All `:ensure' forms below will misbehave.  Fix with `M-x elpaca-rebuild
+RET elpaca-use-package' (or delete its build dir and restart), then check
+the *elpaca-log* buffer for the underlying build error."
+   :emergency))
+
 ;; (error)
 
 ;;; exec-path-from-shell
@@ -2514,11 +2529,9 @@ them at the first newline."
 
 (use-package-full debbugs
   :defer t
-  :ensure (debbugs
-           :host github :repo "emacs-mirror/debbugs"
-           :branch "externals/debbugs"
-           :source "GNU ELPA"
-           :files (:defaults (:exclude ".git" "dir") "Debbugs.wsdl"))
+  ;; debbugs is a GNU ELPA package; let elpaca's GNU ELPA menu supply the
+  ;; recipe (the old github "emacs-mirror/debbugs" repo 404s).
+  :ensure t
   :custom
   (debbugs-gnu-mail-backend 'rmail)
   (debbugs-cache-expiry nil))
@@ -2685,7 +2698,9 @@ them at the first newline."
   ;; :disabled
   :mode ("\\.pdf\\'" . pdf-view-mode)
   :ensure (:host github :repo "ultronozm/pdf-tools"
-                 :remotes (("upstream" :repo "vedang/pdf-tools"))
+                 ;; "origin" first so the branch tracks origin/fix/window-args
+                 ;; (our fork), not upstream/fix/window-args (vedang).
+                 :remotes ("origin" ("upstream" :repo "vedang/pdf-tools"))
                  :branch "fix/window-args"
                  :depth nil
                  :inherit nil
@@ -4333,7 +4348,14 @@ The value of `calc-language` is restored after BODY has been processed."
   :ensure (:host github
                  :repo "ultronozm/diff-hl"
                  :branch "ediff"
-                 :remotes (("upstream" :repo "dgutov/diff-hl")))
+                 ;; Full clone: fetching the upstream remote into elpaca's
+                 ;; default treeless (--filter=tree:0) clone fails the object
+                 ;; connectivity check ("missing blob object").
+                 :depth nil
+                 ;; Track the branch on origin (our fork): list "origin" first
+                 ;; so elpaca-git--checkout-ref tracks origin/ediff, not
+                 ;; upstream/ediff (dgutov deleted that branch after merging).
+                 :remotes ("origin" ("upstream" :repo "dgutov/diff-hl")))
   :defer t
   :bind
   ("H-d" . diff-hl-mode)
@@ -5182,7 +5204,11 @@ numbered variant \"equation\"."
 
 (use-package vundo
   :ensure (:host github :repo "ultronozm/vundo"
-                 :remotes (("upstream" :repo "casouri/vundo"))
+                 ;; Full clone so fetching upstream doesn't fail the treeless
+                 ;; partial-clone object check; list "origin" first so the
+                 ;; branch tracks origin/region-undo (our fork), not upstream.
+                 :depth nil
+                 :remotes ("origin" ("upstream" :repo "casouri/vundo"))
                  :branch "region-undo")
   :defer t
   :init

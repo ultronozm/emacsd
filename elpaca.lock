@@ -246,14 +246,6 @@
                  :depth treeless :ref
                  "d3a84021dbe48dba63b52ef7665651e0cf02e915" :id dash
                  :type git))
- (debbugs :source "elpaca-menu-lock-file" :recipe
-          (:source "GNU ELPA" :package "debbugs" :id debbugs :host
-                   github :repo "emacs-mirror/debbugs" :branch
-                   "externals/debbugs" :files
-                   (:defaults (:exclude ".git" "dir") "Debbugs.wsdl")
-                   :inherit t :type git :ref
-                   "b8b8dfc65dea9bfdd370b8f84e3883974a044a2b"
-                   :protocol https :depth treeless))
  (diminish :source "elpaca-menu-lock-file" :recipe
            (:package "diminish" :fetcher github :repo
                      "myrjola/diminish.el" :files
