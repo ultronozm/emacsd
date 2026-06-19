@@ -1660,9 +1660,11 @@ the *elpaca-log* buffer for the underlying build error."
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns x))
   :init
-  ;; ;; With this next option, it's important that PATH is set up inside
-  ;; ;; .zshenv rather than .zshrc.
-  ;; (setq exec-path-from-shell-arguments nil)
+  ;; Use a non-interactive, non-login shell: it sources only ~/.zshenv,
+  ;; which is where PATH/MANPATH *and* the secrets (API keys) are set.
+  ;; This skips ~/.zshrc (conda/fzf/compinit, ~0.5s).  Keep the secrets
+  ;; load in .zshenv, not .zshrc, or the keys below won't be picked up.
+  (setq exec-path-from-shell-arguments nil)
   (setopt exec-path-from-shell-variables
           '("PATH" "MANPATH"
             "OPENAI_KEY" "OPENAI_API_KEY"
