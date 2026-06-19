@@ -316,13 +316,6 @@
                 elpaca-menu-nongnu-elpa :type git :protocol https
                 :depth treeless :ref
                 "c8d54d649872bfe7b2b9f49ae5c2addbf12d3b99"))
- (edit-indirect :source "elpaca-menu-lock-file" :recipe
-                (:source "elpaca-menu-lock-file" :package
-                         "edit-indirect" :id edit-indirect :host
-                         github :repo "Fanael/edit-indirect" :depth
-                         nil :inherit t :type git :ref
-                         "991c4f23dee24d6a6d323cb19f1770de45de9ceb"
-                         :protocol https))
  (eglot-jl :source "elpaca-menu-lock-file" :recipe
            (:package "eglot-jl" :fetcher github :repo
                      "non-Jedi/eglot-jl" :files
@@ -377,7 +370,7 @@
                                  :source "elpaca-menu-lock-file"
                                  :protocol https :inherit t :depth
                                  treeless :ref
-                                 "7552abf032a383ff761e7d90e6b5cbb4658a728a"
+                                 "292efe52d57d87ee9f46eeb849fcab43913c0b94"
                                  :id exec-path-from-shell :type git))
  (f :source "elpaca-menu-lock-file" :recipe
     (:package "f" :fetcher github :repo "rejeep/f.el" :files
@@ -420,7 +413,7 @@
                                         "README*" "*-pkg.el"))
                              :source "elpaca-menu-lock-file" :protocol
                              https :inherit t :depth treeless :ref
-                             "75efa098cf17dc14c363e2ca9b68afdac7766b5b"
+                             "a52e4e95f3151898b36739dfdb4a98b368626fc0"
                              :id flycheck-package :type git))
  (forge :source "elpaca-menu-lock-file" :recipe
         (:package "forge" :fetcher github :repo "magit/forge" :files
@@ -482,7 +475,7 @@
                              "README*" "*-pkg.el"))
                   :source "elpaca-menu-lock-file" :protocol https
                   :inherit t :depth treeless :ref
-                  "27c61866b1b9b8d77629ac702e5f48e67dfe0d3b" :id iedit
+                  "14161daa295332a49dda92b97c00d62efd38acfe" :id iedit
                   :type git))
  (ignore-mouse :source "elpaca-menu-lock-file" :recipe
                (:source "elpaca-menu-lock-file" :package
@@ -751,7 +744,7 @@
                          (:defaults "data" (:exclude "*flymake.el"))
                          :source "elpaca-menu-lock-file" :protocol
                          https :inherit t :depth treeless :ref
-                         "1c37329703a507fa357302cf6fc29d4f2fe631a8"
+                         "7e2dfcf99011fa82d92baba973841db717657964"
                          :id package-lint :type git))
  (pdd :source "elpaca-menu-lock-file" :recipe
       (:package "pdd" :fetcher github :repo "lorniu/pdd.el" :files

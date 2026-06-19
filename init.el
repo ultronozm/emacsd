@@ -4402,7 +4402,9 @@ The value of `calc-language` is restored after BODY has been processed."
     (edit-indirect-region beg end t)))
 
 (use-package-full edit-indirect
-  :ensure (:host github :repo "Fanael/edit-indirect"
+  :ensure (:host github :repo "ultronozm/edit-indirect"
+                 :branch "empty-regions"
+                 :remotes (("upstream" :repo "Fanael/edit-indirect"))
                  :depth nil)
   :commands (edit-indirect-region
              edit-indirect-commit
@@ -5040,6 +5042,7 @@ numbered variant \"equation\"."
   :repo-scan
   :ensure (:host github
                  :repo "ultronozm/lean4-mode"
+                 :branch "eglot"
                  :files ("*.el" "data")
                  :remotes (("bustercopley" :repo "bustercopley/lean4-mode")
                            ("leanprover-community" :repo "leanprover-community/lean4-mode"))
