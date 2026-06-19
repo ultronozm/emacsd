@@ -1495,34 +1495,34 @@ Untracked files are ignored so stray build artifacts do not block sync."
   (when-let* ((status (my-elpaca--git-output dir "status" "--porcelain" "--untracked-files=no")))
     (not (string-empty-p status))))
 
-(defcustom my-elpaca-unpinned-owners '("ultronozm")
-  "Repo owners whose packages track branch tips and are never pinned.
-These are repos the user maintains; pinning them in `elpaca-lock-file'
+(defcustom my-elpaca-unlocked-owners '("ultronozm")
+  "Repo owners whose packages are omitted from `elpaca-lock-file'.
+These are repos the user maintains; locking them in `elpaca-lock-file'
 would only freeze them at stale commits.  Matched against a recipe's
 :repo, whether \"owner/name\" or a full URL on any forge."
   :type '(repeat string)
   :group 'elpaca)
 
 (defun my-elpaca-own-recipe-p (recipe)
-  "Return non-nil when RECIPE's :repo is owned per `my-elpaca-unpinned-owners'.
+  "Return non-nil when RECIPE's :repo is owned per `my-elpaca-unlocked-owners'.
 Matches \"owner/name\" or a full URL on any forge; the leading boundary
 keeps \"notowner/...\" from matching."
   (when-let* ((repo (plist-get recipe :repo)) ((stringp repo)))
     (cl-some (lambda (owner)
                (string-match-p
                 (concat "\\(?:\\`\\|[:/]\\)" (regexp-quote owner) "/") repo))
-             my-elpaca-unpinned-owners)))
+             my-elpaca-unlocked-owners)))
 
 (defun my-elpaca-bootstrap-recipe-p (recipe)
   "Return non-nil when RECIPE is for elpaca or elpaca-use-package.
 These share one source repo and are controlled by `elpaca-order', not by
-the lock file or by pinning."
+the lock file."
   (member (plist-get recipe :package) '("elpaca" "elpaca-use-package")))
 
 (defun my-elpaca-lock-file-skip-own (e)
   "Return nil to omit E from the lock file.
 For `elpaca-lock-file-functions'.  Omits the user's own packages (which
-track their branch tips, see `my-elpaca-unpinned-owners') and the
+track their branch tips, see `my-elpaca-unlocked-owners') and the
 bootstrap packages (see `my-elpaca-bootstrap-recipe-p'), so that a lock
 sync cannot move them to a stale pin."
   (let ((recipe (elpaca<-recipe e)))
@@ -1626,18 +1626,6 @@ Untracked files are ignored. Changed packages are queued for rebuild."
            (format "Elpaca lock sync applied (%d rebuilds queued)" (length changed))
          "Elpaca lock sync applied (no changes)")))
     changed))
-
-(defun my-elpaca-pin-third-party-recipes (recipe)
-  "Pin third-party packages to `elpaca-lock-file'; leave others tracking tips.
-For `elpaca-recipe-functions'.  Own packages (see `my-elpaca-unpinned-owners')
-and bootstrap packages (see `my-elpaca-bootstrap-recipe-p') are left unpinned,
-so `elpaca-update' advances them.  The bootstrap exclusion matters because
-elpaca-use-package shares elpaca's repo: pinning it would pin elpaca too."
-  (unless (or (my-elpaca-own-recipe-p recipe)
-              (my-elpaca-bootstrap-recipe-p recipe))
-    '(:pin t)))
-
-(add-hook 'elpaca-recipe-functions #'my-elpaca-pin-third-party-recipes)
 
 (elpaca elpaca-use-package
   (elpaca-use-package-mode)
@@ -2482,7 +2470,7 @@ them at the first newline."
   :defer t)
 
 (use-package-full julia-ts-mode
-  :ensure (:host github :repo "dhanak/julia-ts-mode"
+  :ensure (:host github :repo "JuliaEditorSupport/julia-ts-mode"
                  :depth nil
                  :inherit nil)
   :mode "\\.jl$")
@@ -3217,7 +3205,7 @@ The content is escaped to prevent org syntax interpretation."
 (use-package-full copilot
   :defer 3
   :ensure (:host github
-                 :repo "zerolfx/copilot.el"
+                 :repo "copilot-emacs/copilot.el"
                  :files ("*.el" "dist")
                  :depth nil
                  :remotes (("ultronozm" :repo "ultronozm/copilot.el"))
