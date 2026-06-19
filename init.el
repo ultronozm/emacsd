@@ -1679,6 +1679,11 @@ back to `exec-path-from-shell-getenv' from local buffers."
 
 ;;; lots of packages
 
+(use-package compat
+  :defer t)
+
+(elpaca-wait)
+
 (use-package diminish
   :demand t
   :config
