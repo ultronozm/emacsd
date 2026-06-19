@@ -75,13 +75,13 @@
                      annotate :type git))
  (auctex :source "elpaca-menu-lock-file" :recipe
          (:source nil :package "auctex" :id auctex :host nil :repo
-                  "git@git.savannah.gnu.org:/srv/git/auctex.git"
-                  :depth nil :inherit nil :build
+                  "https://git.savannah.gnu.org/git/auctex.git" :depth
+                  nil :inherit nil :build
                   (:sub elpaca-build-docs my-elpaca-build-auctex-info)
                   :files
                   ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
                   :type git :ref
-                  "cba5f2a35ad29f160ac603fc9bdc3e902b5da11b"))
+                  "9316f5c71df63322eb54b0e536b63756dc7f8c76"))
  (avy :source "elpaca-menu-lock-file" :recipe
       (:package "avy" :repo "abo-abo/avy" :fetcher github :files
                 ("*.el" "*.el.in" "dir" "*.info" "*.texi" "*.texinfo"
@@ -246,6 +246,15 @@
                  :depth treeless :ref
                  "d3a84021dbe48dba63b52ef7665651e0cf02e915" :id dash
                  :type git))
+ (debbugs :source "elpaca-menu-lock-file" :recipe
+          (:package "debbugs" :repo
+                    ("https://github.com/emacsmirror/gnu_elpa"
+                     . "debbugs")
+                    :tar "0.46" :host gnu :branch "externals/debbugs"
+                    :files ("*" (:exclude ".git")) :source "GNU ELPA"
+                    :id debbugs :type git :protocol https :inherit t
+                    :depth treeless :ref
+                    "b8b8dfc65dea9bfdd370b8f84e3883974a044a2b"))
  (diminish :source "elpaca-menu-lock-file" :recipe
            (:package "diminish" :fetcher github :repo
                      "myrjola/diminish.el" :files
@@ -768,12 +777,12 @@
                            https :inherit t :depth treeless :ref
                            "d38a2ff6b89dde81da03e8f4a83c0cad2baade0e"
                            :id perfect-margin :type git))
- (plz :source "elpaca-menu-lock-file" :recipe
-      (:source "elpaca-menu-lock-file" :package "plz" :id plz :host
-               github :repo "alphapapa/plz.el" :depth nil :inherit t
-               :type git :ref
-               "e2d07838e3b64ee5ebe59d4c3c9011adefb7b58e" :protocol
-               https))
+ (plz :source "elpaca-menu-lock-file"
+   :recipe
+   (:source "elpaca-menu-lock-file" :package "plz" :id plz :host
+            github :repo "alphapapa/plz.el" :depth nil :inherit t
+            :type git :ref "e2d07838e3b64ee5ebe59d4c3c9011adefb7b58e"
+            :protocol https))
  (plz-event-source :source "elpaca-menu-lock-file" :recipe
                    (:source "elpaca-menu-lock-file" :package
                             "plz-event-source" :id plz-event-source
