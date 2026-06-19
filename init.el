@@ -2139,7 +2139,7 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
 (keymap-global-set "M-s r" my-ripgrep-map)
 
 (use-package info-colors
-  :ensure (:host github :repo "ubolonton/info-colors" :inherit nil)
+  :ensure (:host github :repo "ubolonton/info-colors")
   :hook (Info-selection . info-colors-fontify-node))
 
 (use-package ace-window
@@ -2471,8 +2471,7 @@ them at the first newline."
 
 (use-package-full julia-ts-mode
   :ensure (:host github :repo "JuliaEditorSupport/julia-ts-mode"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :mode "\\.jl$")
 
 (use-package-full eglot-jl
@@ -2514,8 +2513,7 @@ them at the first newline."
            :host github :repo "emacs-mirror/debbugs"
            :branch "externals/debbugs"
            :source "GNU ELPA"
-           :files (:defaults (:exclude ".git" "dir") "Debbugs.wsdl")
-           :inherit nil)
+           :files (:defaults (:exclude ".git" "dir") "Debbugs.wsdl"))
   :custom
   (debbugs-gnu-mail-backend 'rmail)
   (debbugs-cache-expiry nil))
@@ -2762,7 +2760,7 @@ them at the first newline."
   :after pdf-annot
   :demand
   :ensure (:host github :repo "ultronozm/pdf-tools-org-extract.el"
-                 :inherit nil)
+                 :depth nil)
   :bind (:map pdf-view-mode-map
               ("C-c C-a e" . pdf-tools-org-extract-annotations)))
 
@@ -3151,8 +3149,7 @@ The content is escaped to prevent org syntax interpretation."
   :repo-scan
   :after rmail
   :demand
-  :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil
-                 :inherit nil)
+  :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil)
   :bind
   ("C-z C-@" . czm-mail-mailrc-add-entry)
   (:map rmail-mode-map
@@ -3208,8 +3205,7 @@ The content is escaped to prevent org syntax interpretation."
                  :repo "copilot-emacs/copilot.el"
                  :files ("*.el" "dist")
                  :depth nil
-                 :remotes (("ultronozm" :repo "ultronozm/copilot.el"))
-                 :inherit nil)
+                 :remotes (("ultronozm" :repo "ultronozm/copilot.el")))
   :diminish " Co"
   :hook
   ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
@@ -3258,14 +3254,12 @@ The content is escaped to prevent org syntax interpretation."
 (use-package-full plz
   :defer t
   :ensure (:host github :repo "alphapapa/plz.el"
-                 :depth nil
-                 :inherit nil))
+                 :depth nil))
 
 (use-package-full plz-event-source
   :defer t
   :ensure (:host github :repo "r0man/plz-event-source"
-                 :depth nil
-                 :inherit nil))
+                 :depth nil))
 
 
 (use-package-full llm
@@ -3273,8 +3267,7 @@ The content is escaped to prevent org syntax interpretation."
   :ensure (:host github
                  :repo "ahyatt/llm"
                  :depth nil
-                 :remotes (("ultronozm" :repo "ultronozm/llm"))
-                 :inherit nil)
+                 :remotes (("ultronozm" :repo "ultronozm/llm")))
   ;; :init
   ;; (require 'llm-openai)
   ;; (require 'llm-gemini)
@@ -3291,8 +3284,7 @@ The content is escaped to prevent org syntax interpretation."
   :ensure (:host github
                  :repo "skissue/llm-tool-collection"
                  :depth nil
-                 :remotes (("ultronozm" :repo "ultronozm/llm-tool-collection"))
-                 :inherit nil))
+                 :remotes (("ultronozm" :repo "ultronozm/llm-tool-collection"))))
 
 (use-package-full ai-org-chat
   :repo-scan
@@ -3321,8 +3313,7 @@ The content is escaped to prevent org syntax interpretation."
 
 (use-package-full gptel
   :ensure (:host github :repo "karthink/gptel"
-                 :remotes (("ultronozm" :repo "ultronozm/gptel"))
-                 :inherit nil)
+                 :remotes (("ultronozm" :repo "ultronozm/gptel")))
   :after exec-path-from-shell
   :defer t
   :bind
@@ -3343,7 +3334,7 @@ The content is escaped to prevent org syntax interpretation."
 
 (use-package-full gptel-quick
   :defer 2
-  :ensure (:host github :repo "karthink/gptel-quick" :inherit nil)
+  :ensure (:host github :repo "karthink/gptel-quick")
   :demand
   :config
   (with-eval-after-load 'embark
@@ -3505,8 +3496,7 @@ Skips empty days and diary holidays."
 
 (use-package-full shell-maker
   :ensure (:host github :repo "xenodium/shell-maker"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :defer t
   :init
   (setopt shell-maker-transcript-default-path
@@ -3518,8 +3508,7 @@ Skips empty days and diary holidays."
 
 (use-package-full acp
   :ensure (:host github :repo "xenodium/acp.el"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :defer t)
 
 ;;;;; container support
@@ -3787,8 +3776,7 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
 
 (use-package agent-shell
   :ensure (:host github :repo "xenodium/agent-shell"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :bind
   (:map agent-shell-mode-map
         ("o" . my/agent-shell-ui-toggle-fragment-at-point-or-self-insert)
@@ -3858,8 +3846,7 @@ character instead of toggling."
 (use-package-full knockknock
   :defer t
   :ensure (:host github :repo "konrad1977/knockknock"
-                 :depth nil
-                 :inherit nil))
+                 :depth nil))
 
 (use-package-full agent-shell-attention
   :repo-scan
@@ -4213,8 +4200,7 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package czm-vc
   :ensure (:host github :repo "ultronozm/czm-vc.el"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :after vc
   :config
   (with-eval-after-load 'vc
@@ -4412,8 +4398,7 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package-full edit-indirect
   :ensure (:host github :repo "Fanael/edit-indirect"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :commands (edit-indirect-region
              edit-indirect-commit
              edit-indirect-abort edit-indirect-save)
@@ -4667,8 +4652,7 @@ numbered variant \"equation\"."
 
 (use-package-full czm-pythontex
   :ensure (:host github :repo "ultronozm/czm-pythontex.el"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :after latex
   :bind (:map LaTeX-mode-map
               ("C-c '" . czm-tex-pythontex-edit-indirect))
@@ -4971,8 +4955,7 @@ numbered variant \"equation\"."
                  :remotes
                  (("upstream" :repo "https://codeberg.org/rahguzar/sage-mode"))
                  :depth nil
-                 :main "sage.el"
-                 :inherit nil)
+                 :main "sage.el")
   :defer t
   :config
   (defun my/setup-sage ()
@@ -5252,23 +5235,21 @@ When used via Embark, WORD comes from the current target."
   (keymap-unset image-mode-map "W"))
 
 (use-package ignore-mouse
-  :ensure (:host github :repo "dradetsky/ignore-mouse" :inherit nil)
+  :ensure (:host github :repo "dradetsky/ignore-mouse")
   :defer t
   ;; (ignore-mouse-global-mode)
   )
 
 (use-package-full diff-vc-patch
   :ensure (:host github :repo "ultronozm/diff-vc-patch.el"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :after diff-mode
   :demand
   :hook (diff-mode . diff-vc-patch-mode))
 
 (use-package-full speedread
   :ensure (:host github :repo "ultronozm/speedread.el"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :defer t
   :config
   (setopt speedread-display-style 'window)
@@ -5279,8 +5260,7 @@ When used via Embark, WORD comes from the current target."
 
 (use-package-full python-repl-eldoc
   :ensure (:host github :repo "ultronozm/python-repl-eldoc.el"
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :after python
   :hook (python-base-mode . python-repl-eldoc-mode))
 
@@ -5289,8 +5269,7 @@ When used via Embark, WORD comes from the current target."
   :ensure (:host github
                  :repo "ultronozm/overleaf.el"
                  :remotes (("upstream" :repo "vale981/overleaf.el"))
-                 :depth nil
-                 :inherit nil)
+                 :depth nil)
   :config
   (with-eval-after-load 'overleaf
     (add-hook 'overleaf-mode-hook
