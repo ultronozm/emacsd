@@ -339,14 +339,6 @@
                     :depth treeless :ref
                     "d811bbefcb5e27841af55cae53aa939ba720de77" :id
                     emacsql :type git :pin t))
- (embark-consult :source "elpaca-menu-lock-file" :recipe
-                 (:package "embark-consult" :repo "oantolin/embark"
-                           :fetcher github :files
-                           ("embark-consult.el") :source
-                           "elpaca-menu-lock-file" :protocol https
-                           :inherit t :depth treeless :pin t :ref
-                           "7b3b2fa239c34c2e304eab4367a4f5924c047e2b"
-                           :id embark-consult :type git))
  (exec-path-from-shell :source "elpaca-menu-lock-file" :recipe
                        (:package "exec-path-from-shell" :fetcher
                                  github :repo
