@@ -1503,6 +1503,14 @@ would only freeze them at stale commits.  Matched against a recipe's
   :type '(repeat string)
   :group 'elpaca)
 
+(defcustom my-elpaca-review-remotes '("upstream" "bustercopley")
+  "Remote names whose default branch counts as review backlog in the doctor.
+Reference-only remotes (e.g. a distant fork's origin you will never merge
+from, like lean4-mode's \"leanprover-community\") keep any other name and
+are ignored for backlog purposes."
+  :type '(repeat string)
+  :group 'elpaca)
+
 ;; Forked packages should use the fork as `:repo'.  When declaring side
 ;; remotes, list "origin" first so Elpaca's `:branch' checkout tracks the
 ;; fork branch rather than an upstream/alternate remote.
@@ -1638,6 +1646,387 @@ Untracked files are ignored. Changed packages are queued for rebuild."
            (format "Elpaca lock sync applied (%d rebuilds queued)" (length changed))
          "Elpaca lock sync applied (no changes)")))
     changed))
+
+(defun my-elpaca--git-success-p (dir &rest args)
+  "Return non-nil when git ARGS exits successfully in DIR."
+  (let ((default-directory dir))
+    (zerop (apply #'process-file "git" nil nil nil args))))
+
+(defun my-elpaca--git-lines (dir &rest args)
+  "Return git ARGS output as non-empty lines in DIR, or nil on failure."
+  (when-let* ((output (apply #'my-elpaca--git-output dir args)))
+    (split-string output "\n" 'omit-nulls)))
+
+(defun my-elpaca--git-ahead-count (dir revspec)
+  "Return count of commits in REVSPEC in DIR, or nil on failure."
+  (when-let* ((output (my-elpaca--git-output dir "rev-list" "--count" revspec)))
+    (string-to-number output)))
+
+(defun my-elpaca--repo-root ()
+  "Return the config repository root."
+  (or (my-elpaca--git-output (file-name-directory (file-truename user-init-file))
+                             "rev-parse" "--show-toplevel")
+      (file-name-directory (file-truename user-init-file))))
+
+(defun my-elpaca--remote-name (spec)
+  "Return the remote name described by SPEC."
+  (cond
+   ((stringp spec) spec)
+   ((consp spec) (car spec))))
+
+(defun my-elpaca--repo-slug (url-or-repo)
+  "Return the downcased OWNER/NAME slug for URL-OR-REPO, or nil.
+Accepts a full git URL (https or ssh) or an \"owner/name\" shorthand, and
+ignores host and a trailing .git so recipe and on-disk remotes compare."
+  (when (and (stringp url-or-repo) (not (string-empty-p url-or-repo)))
+    (let* ((s (replace-regexp-in-string "\\.git/?\\'" "" url-or-repo))
+           (s (replace-regexp-in-string "/\\'" "" s))
+           (s (replace-regexp-in-string "\\`[a-z][a-z0-9+.-]*://[^/]+/" "" s)) ; proto://host/
+           (s (replace-regexp-in-string "\\`[^/@]+@[^:/]+:" "" s))             ; git@host:
+           (parts (split-string s "/" t)))
+      (when (>= (length parts) 2)
+        (downcase (string-join (last parts 2) "/"))))))
+
+(defun my-elpaca--recipe-has-owned-side-remote-p (recipe)
+  "Return non-nil when RECIPE declares an owned side remote."
+  (cl-some
+   (lambda (spec)
+     (and (consp spec)
+          (my-elpaca-own-recipe-p (cdr spec))))
+   (plist-get recipe :remotes)))
+
+(defun my-elpaca--lock-entry (id)
+  "Return lock entry for ID."
+  (alist-get id (my-elpaca-lock-file-entries)))
+
+(defun my-elpaca--locked-ids ()
+  "Return package ids present in `elpaca-lock-file'."
+  (mapcar #'car (my-elpaca-lock-file-entries)))
+
+(defun my-elpaca--read-locked-package (&optional prompt)
+  "Read a package id from `elpaca-lock-file'."
+  (intern
+   (completing-read
+    (or prompt "Locked package: ")
+    (mapcar #'symbol-name (my-elpaca--locked-ids))
+    nil t)))
+
+(defun my-elpaca--remote-default-ref (dir &optional remote)
+  "Return REMOTE's default remote-tracking ref in DIR.
+REMOTE defaults to \"origin\"."
+  (let ((remote (or remote "origin")))
+    (or (my-elpaca--git-output
+         dir "symbolic-ref" "-q" "--short"
+         (format "refs/remotes/%s/HEAD" remote))
+        (cl-loop for branch in '("main" "master")
+                 for ref = (format "%s/%s" remote branch)
+                 when (my-elpaca--git-success-p
+                       dir "rev-parse" "--verify" "--quiet" ref)
+                 return ref))))
+
+(defun my-elpaca--dep-bump-item (id)
+  "Return dependency bump state for locked package ID."
+  (let* ((entry (my-elpaca--lock-entry id))
+         (lock-recipe (plist-get entry :recipe))
+         (ref (plist-get lock-recipe :ref))
+         (e (elpaca-get id))
+         (repo (and e (ignore-errors (elpaca<-source-dir e))))
+         target target-sha status count dirty)
+    (when (and repo (file-directory-p repo))
+      (setq dirty (my-elpaca--tracked-dirty-p repo)
+            target (my-elpaca--remote-default-ref repo)
+            target-sha (and target
+                            (my-elpaca--git-output repo "rev-parse" target))))
+    (setq
+     status
+     (cond
+      ((not e) 'missing-package)
+      ((not ref) 'no-ref)
+      ((not (and repo (file-directory-p repo))) 'missing-repo)
+      (dirty 'tracked-dirty)
+      ((not target) 'no-target)
+      ((not target-sha) 'git-error)
+      ((equal ref target-sha) 'ok)
+      ((my-elpaca--git-success-p repo "merge-base" "--is-ancestor" ref target-sha)
+       (setq count (my-elpaca--git-ahead-count repo (format "%s..%s" ref target-sha)))
+       'update)
+      ((my-elpaca--git-success-p repo "merge-base" "--is-ancestor" target-sha ref)
+       'installed-ahead)
+      (t 'diverged)))
+    (list :id id
+          :entry entry
+          :elpaca e
+          :repo repo
+          :ref ref
+          :target target
+          :target-sha target-sha
+          :count count
+          :status status
+          :dirty dirty)))
+
+(defun my-elpaca--dep-bump-items ()
+  "Return dependency bump state for all locked packages."
+  (mapcar #'my-elpaca--dep-bump-item (my-elpaca--locked-ids)))
+
+(defun my-elpaca--fetch-repo (repo)
+  "Fetch REPO's remotes and make ancestry/default-branch queries reliable.
+Deepens a shallow clone (so `merge-base' can resolve) and records
+origin's default branch (so `my-elpaca--remote-default-ref' resolves
+without guessing main/master).  Returns non-nil on a successful fetch."
+  (prog1 (my-elpaca--git-success-p repo "fetch" "--all" "--prune")
+    (when (equal (my-elpaca--git-output repo "rev-parse" "--is-shallow-repository")
+                 "true")
+      (my-elpaca--git-success-p repo "fetch" "--unshallow"))
+    (my-elpaca--git-success-p repo "remote" "set-head" "origin" "--auto")))
+
+(defun my-elpaca-dep-bump-fetch-all ()
+  "Fetch remotes for all installed locked packages."
+  (interactive)
+  (let ((count 0)
+        failed)
+    (dolist (item (my-elpaca--dep-bump-items))
+      (when-let* ((repo (plist-get item :repo))
+                  ((file-directory-p repo)))
+        (if (my-elpaca--fetch-repo repo)
+            (cl-incf count)
+          (push (plist-get item :id) failed))))
+    (if failed
+        (message "Fetched %d repos; failed: %s"
+                 count
+                 (mapconcat #'symbol-name (nreverse failed) ", "))
+      (message "Fetched %d locked package repos" count))))
+
+(defun my-elpaca-dep-bump-fetch (id)
+  "Fetch remotes for locked package ID."
+  (interactive (list (my-elpaca--read-locked-package "Fetch locked package: ")))
+  (let* ((item (my-elpaca--dep-bump-item id))
+         (repo (plist-get item :repo)))
+    (unless (and repo (file-directory-p repo))
+      (user-error "No installed repo for %S" id))
+    (unless (my-elpaca--fetch-repo repo)
+      (user-error "Fetch failed for %S" id))
+    (message "Fetched %S" id)))
+
+(defun my-elpaca-dep-bump-list (&optional fetch)
+  "Show locked dependency update candidates.
+With prefix argument FETCH, fetch all locked package remotes first."
+  (interactive "P")
+  (when fetch
+    (my-elpaca-dep-bump-fetch-all))
+  (let* ((items (my-elpaca--dep-bump-items))
+         (updates (cl-count 'update items :key (lambda (item) (plist-get item :status))))
+         (omitted (cl-count-if
+                   (lambda (item)
+                     (memq (plist-get item :status) '(ok missing-package)))
+                   items)))
+    (with-current-buffer (get-buffer-create "*elpaca-dep-bumps*")
+      (setq buffer-read-only nil)
+      (erase-buffer)
+      (insert (format "Elpaca locked dependency bumps (%d updates)\n\n" updates))
+      (dolist (status '(update diverged installed-ahead tracked-dirty missing-package
+                               missing-repo no-ref no-target git-error ok))
+        (unless (memq status '(ok missing-package))
+        (let ((matches (cl-remove-if-not
+                        (lambda (item) (eq (plist-get item :status) status))
+                        items)))
+          (when matches
+            (insert (format "%s\n" status))
+            (dolist (item matches)
+              (insert
+               (format "  %-24s %-14s %s -> %s%s\n"
+                       (plist-get item :id)
+                       (or (plist-get item :target) "")
+                       (if-let* ((ref (plist-get item :ref)))
+                           (substring ref 0 8)
+                         "")
+                       (if-let* ((target (plist-get item :target-sha)))
+                           (substring target 0 8)
+                         "")
+                       (if-let* ((count (plist-get item :count)))
+                           (format " (%d commits)" count)
+                         ""))))
+            (insert "\n")))))
+      (when (> omitted 0)
+        (insert (format "Omitted %d ok/not-queued lock entries.\n" omitted)))
+      (goto-char (point-min))
+      (special-mode)
+      (display-buffer (current-buffer)))))
+
+(defun my-elpaca-dep-bump-log (id)
+  "Show the locked-to-target commit log for package ID."
+  (interactive (list (my-elpaca--read-locked-package "Log locked package: ")))
+  (let* ((item (my-elpaca--dep-bump-item id))
+         (repo (plist-get item :repo))
+         (ref (plist-get item :ref))
+         (target (plist-get item :target-sha)))
+    (unless (and repo ref target)
+      (user-error "No review range for %S" id))
+    (with-current-buffer (get-buffer-create "*elpaca-dep-bump-log*")
+      (setq buffer-read-only nil)
+      (erase-buffer)
+      (let ((default-directory repo))
+        (unless (zerop (process-file "git" nil t nil "log" "--oneline" "--decorate"
+                                     (format "%s..%s" ref target)))
+          (user-error "git log failed for %S" id)))
+      (goto-char (point-min))
+      (special-mode)
+      (display-buffer (current-buffer)))))
+
+(defun my-elpaca-dep-bump-accept (id)
+  "Accept the current default-remote target for locked package ID.
+This checks out the target commit, queues a rebuild, and writes
+`elpaca-lock-file'.  Note: when the installed commit is `installed-ahead'
+of, or `diverged' from, the remote default, accepting moves the package
+*onto the remote tip* — i.e. a downgrade/sideways move, not a fast-forward."
+  (interactive (list (my-elpaca--read-locked-package "Accept bump for: ")))
+  (let* ((item (my-elpaca--dep-bump-item id))
+         (repo (plist-get item :repo))
+         (target (plist-get item :target))
+         (target-sha (plist-get item :target-sha))
+         (status (plist-get item :status)))
+    (unless (memq status '(update installed-ahead diverged))
+      (user-error "No acceptable target for %S: %S" id status))
+    (unless (yes-or-no-p
+             (format "Checkout %S to %s (%s)%s? "
+                     id
+                     (substring target-sha 0 8)
+                     target
+                     (if (eq status 'update) "" " [NOT a fast-forward!]")))
+      (user-error "Aborted"))
+    (with-temp-buffer
+      (let ((default-directory repo))
+        (unless (zerop (process-file "git" nil t t "checkout" target-sha))
+          (user-error "Checkout failed for %S: %s" id (string-trim (buffer-string))))))
+    (elpaca-rebuild id)
+    (elpaca-process-queues)
+    (my-elpaca-write-lock-file)
+    (message "Accepted %S at %s" id (substring target-sha 0 8))))
+
+(defun my-elpaca--doctor-insert-section (title items)
+  "Insert TITLE and ITEMS into current buffer."
+  (when items
+    (insert (format "%s\n" title))
+    (dolist (item (nreverse items))
+      (insert (format "  - %s\n" item)))
+    (insert "\n")))
+
+(defun my-elpaca-doctor ()
+  "Report package-management issues for the current Elpaca workflow."
+  (interactive)
+  (let (lock-items sync-items config-items fork-items remote-items review-items)
+    (dolist (entry (my-elpaca-lock-file-entries))
+      (let ((id (car entry))
+            (recipe (plist-get (cdr entry) :recipe)))
+        (when (my-elpaca-own-recipe-p recipe)
+          (push (format "%S is fork-managed but present in the lock" id) lock-items))))
+    (dolist (item (my-elpaca--lock-sync-items))
+      (pcase (plist-get item :status)
+        ('ok nil)
+        ('missing-package nil)
+        (status
+         (push (format "%S lock-sync status: %S" (plist-get item :id) status)
+               sync-items))))
+    (let* ((root (my-elpaca--repo-root))
+           (dirty (my-elpaca--git-output root "status" "--porcelain" "--untracked-files=no"))
+           (ahead (my-elpaca--git-ahead-count root "@{upstream}..HEAD")))
+      (when (and dirty (not (string-empty-p dirty)))
+        (push "config repo has tracked uncommitted changes" config-items))
+      (when (and ahead (> ahead 0))
+        (push (format "config repo has %d unpushed commit(s)" ahead) config-items)))
+    (dolist (pair (elpaca--queued))
+      (let* ((id (car pair))
+             (e (cdr pair))
+             (recipe (elpaca<-recipe e)))
+        (cond
+         ((and (not (my-elpaca-own-recipe-p recipe))
+               (my-elpaca--recipe-has-owned-side-remote-p recipe))
+          (push (format "%S has an ultronozm side remote but is not fork-managed" id)
+                remote-items))
+         ((my-elpaca-own-recipe-p recipe)
+          (let* ((repo (ignore-errors (elpaca<-source-dir e)))
+                 (remotes (plist-get recipe :remotes))
+                 (branch (and repo (file-directory-p repo)
+                              (my-elpaca--git-output repo "branch" "--show-current"))))
+            (cond
+             ((not (and repo (file-directory-p repo)))
+              (push (format "%S source repo is missing" id) fork-items))
+             ((my-elpaca--tracked-dirty-p repo)
+              (push (format "%S has tracked dirty changes" id) fork-items)))
+            (when (and repo (file-directory-p repo))
+              (when (and remotes
+                         (not (equal (my-elpaca--remote-name (car remotes)) "origin")))
+                (push (format "%S declares side remotes without \"origin\" first" id)
+                      remote-items))
+              ;; Verify each declared remote exists locally AND points where the
+              ;; recipe says (catches origin pointing at upstream, or an upstream
+              ;; remote left at a moved/old URL).
+              (dolist (pair (cons
+                             (cons "origin" (my-elpaca--repo-slug (plist-get recipe :repo)))
+                             (cl-loop for spec in remotes
+                                      when (consp spec)
+                                      collect (cons (car spec)
+                                                    (my-elpaca--repo-slug
+                                                     (plist-get (cdr spec) :repo))))))
+                (let* ((name (car pair))
+                       (want (cdr pair))
+                       (have (my-elpaca--git-output repo "remote" "get-url" name)))
+                  (cond
+                   ((not have)
+                    (push (format "%S is missing local remote %s" id name) remote-items))
+                   ((and want (not (equal want (my-elpaca--repo-slug have))))
+                    (push (format "%S remote %s is %s, recipe wants %s"
+                                  id name (my-elpaca--repo-slug have) want)
+                          remote-items)))))
+              (if (or (not branch) (string-empty-p branch))
+                  (push (format "%S is detached" id) fork-items)
+                (let* ((upstream (my-elpaca--git-output
+                                  repo "rev-parse" "--abbrev-ref"
+                                  "--symbolic-full-name" "@{upstream}"))
+                       (expected (format "origin/%s" branch))
+                       (ahead (my-elpaca--git-ahead-count repo "@{upstream}..HEAD"))
+                       (behind (my-elpaca--git-ahead-count repo "HEAD..@{upstream}")))
+                  (unless (equal upstream expected)
+                    (push (format "%S tracks %s, expected %s" id upstream expected)
+                          fork-items))
+                  (when (and ahead (> ahead 0))
+                    (push (format "%S has %d unpushed commit(s)" id ahead) fork-items))
+                  (when (and behind (> behind 0))
+                    (push (format "%S is %d commit(s) behind %s" id behind upstream)
+                          fork-items))
+                  (when-let* ((declared-branch (plist-get recipe :branch)))
+                    (unless (my-elpaca--git-success-p
+                             repo "rev-parse" "--verify" "--quiet"
+                             (format "origin/%s" declared-branch))
+                      (push (format "%S declares :branch %s but origin/%s is missing"
+                                    id declared-branch declared-branch)
+                            fork-items)))
+                  (dolist (remote (delq nil (mapcar #'my-elpaca--remote-name remotes)))
+                    (when (member remote my-elpaca-review-remotes)
+                      ;; Compare against the side remote's *default* branch, not
+                      ;; the fork's current branch name (they often differ).
+                      (let* ((remote-ref (my-elpaca--remote-default-ref repo remote))
+                             (backlog (and remote-ref
+                                           (my-elpaca--git-ahead-count
+                                            repo (format "HEAD..%s" remote-ref)))))
+                        (when (and backlog (> backlog 0))
+                          (push (format "%S has %d commit(s) available on %s"
+                                        id backlog remote-ref)
+                                review-items)))))))))))))
+    (with-current-buffer (get-buffer-create "*elpaca-doctor*")
+      (setq buffer-read-only nil)
+      (erase-buffer)
+      (insert "Elpaca doctor\n\n")
+      (if (not (or lock-items sync-items config-items fork-items remote-items review-items))
+          (insert "No issues found.\n")
+        (my-elpaca--doctor-insert-section "Lock" lock-items)
+        (my-elpaca--doctor-insert-section "Lock sync" sync-items)
+        (my-elpaca--doctor-insert-section "Config repo" config-items)
+        (my-elpaca--doctor-insert-section "Fork packages" fork-items)
+        (my-elpaca--doctor-insert-section "Remote topology" remote-items)
+        (my-elpaca--doctor-insert-section "Review backlog" review-items))
+      (goto-char (point-min))
+      (special-mode)
+      (display-buffer (current-buffer)))))
 
 (elpaca elpaca-use-package
   (elpaca-use-package-mode)
@@ -2607,7 +2996,12 @@ them at the first newline."
    ("C-h B" . embark-bindings)))
 
 (use-package embark-consult
-  :ensure t
+  :ensure (:host github
+                 :repo "ultronozm/embark"
+                 :files ("embark-consult.el")
+                 :remotes ("origin" ("upstream" :repo "oantolin/embark"))
+                 :depth nil
+                 :inherit nil)
   ;; only need to install it, embark loads it after consult if found
   :after (embark consult))
 
