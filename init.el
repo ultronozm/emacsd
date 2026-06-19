@@ -1531,6 +1531,14 @@ sync cannot move them to a stale pin."
 
 (add-hook 'elpaca-lock-file-functions #'my-elpaca-lock-file-skip-own)
 
+(defun my-elpaca-write-lock-file ()
+  "Write the Elpaca lock file to `elpaca-lock-file'.
+Convenience wrapper around `elpaca-write-lock-file' that targets the
+configured lock path instead of prompting."
+  (interactive)
+  (elpaca-write-lock-file elpaca-lock-file)
+  (message "Wrote %s" elpaca-lock-file))
+
 (defun my-elpaca--lock-sync-items (&optional force)
   "Return lock-file sync items.
 When FORCE is non-nil, do not block checkout for tracked modifications."
