@@ -1699,6 +1699,20 @@ ignores host and a trailing .git so recipe and on-disk remotes compare."
   "Return lock entry for ID."
   (alist-get id (my-elpaca-lock-file-entries)))
 
+(defun my-elpaca--unpinned-recipe (e)
+  "Return E's recipe without `elpaca-menu-lock-file' influence.
+This is metadata for update review only; it does not mutate E or disable
+`elpaca-lock-file' globally."
+  (when e
+    (let ((elpaca-menu-functions
+           (remove #'elpaca-menu-lock-file elpaca-menu-functions)))
+      (ignore-errors
+        (elpaca-recipe (elpaca<-order e))))))
+
+(defun my-elpaca--recipe-repo-slug (recipe)
+  "Return RECIPE's OWNER/NAME slug when it is cheaply knowable."
+  (my-elpaca--repo-slug (plist-get recipe :repo)))
+
 (defun my-elpaca--locked-ids ()
   "Return package ids present in `elpaca-lock-file'."
   (mapcar #'car (my-elpaca-lock-file-entries)))
@@ -1724,6 +1738,20 @@ REMOTE defaults to \"origin\"."
                        dir "rev-parse" "--verify" "--quiet" ref)
                  return ref))))
 
+(defun my-elpaca--dep-bump-target-ref (dir recipe &optional remote)
+  "Return the remote-tracking ref RECIPE should be bumped toward in DIR.
+Prefer RECIPE's explicit :branch before falling back to REMOTE's default
+branch, because some lock entries intentionally track non-default
+branches."
+  (let* ((remote (or remote "origin"))
+         (branch (plist-get recipe :branch))
+         (branch-ref (and branch (format "%s/%s" remote branch))))
+    (or (and branch-ref
+             (my-elpaca--git-success-p
+              dir "rev-parse" "--verify" "--quiet" branch-ref)
+             branch-ref)
+        (my-elpaca--remote-default-ref dir remote))))
+
 (defun my-elpaca--dep-bump-item (id)
   "Return dependency bump state for locked package ID."
   (let* ((entry (my-elpaca--lock-entry id))
@@ -1731,10 +1759,15 @@ REMOTE defaults to \"origin\"."
          (ref (plist-get lock-recipe :ref))
          (e (elpaca-get id))
          (repo (and e (ignore-errors (elpaca<-source-dir e))))
-         target target-sha status count dirty)
+         (live-recipe (my-elpaca--unpinned-recipe e))
+         (target-recipe (or live-recipe lock-recipe))
+         target target-sha status count dirty expected-origin actual-origin)
     (when (and repo (file-directory-p repo))
       (setq dirty (my-elpaca--tracked-dirty-p repo)
-            target (my-elpaca--remote-default-ref repo)
+            expected-origin (my-elpaca--recipe-repo-slug target-recipe)
+            actual-origin (my-elpaca--repo-slug
+                           (my-elpaca--git-output repo "remote" "get-url" "origin"))
+            target (my-elpaca--dep-bump-target-ref repo target-recipe)
             target-sha (and target
                             (my-elpaca--git-output repo "rev-parse" target))))
     (setq
@@ -1744,6 +1777,9 @@ REMOTE defaults to \"origin\"."
       ((not ref) 'no-ref)
       ((not (and repo (file-directory-p repo))) 'missing-repo)
       (dirty 'tracked-dirty)
+      ((and expected-origin actual-origin
+            (not (equal expected-origin actual-origin)))
+       'remote-mismatch)
       ((not target) 'no-target)
       ((not target-sha) 'git-error)
       ((equal ref target-sha) 'ok)
@@ -1760,6 +1796,9 @@ REMOTE defaults to \"origin\"."
           :ref ref
           :target target
           :target-sha target-sha
+          :target-recipe target-recipe
+          :expected-origin expected-origin
+          :actual-origin actual-origin
           :count count
           :status status
           :dirty dirty)))
@@ -1823,29 +1862,35 @@ With prefix argument FETCH, fetch all locked package remotes first."
       (setq buffer-read-only nil)
       (erase-buffer)
       (insert (format "Elpaca locked dependency bumps (%d updates)\n\n" updates))
-      (dolist (status '(update diverged installed-ahead tracked-dirty missing-package
-                               missing-repo no-ref no-target git-error ok))
+      (dolist (status '(update diverged installed-ahead remote-mismatch
+                               tracked-dirty missing-package missing-repo no-ref
+                               no-target git-error ok))
         (unless (memq status '(ok missing-package))
-        (let ((matches (cl-remove-if-not
-                        (lambda (item) (eq (plist-get item :status) status))
-                        items)))
-          (when matches
-            (insert (format "%s\n" status))
-            (dolist (item matches)
-              (insert
-               (format "  %-24s %-14s %s -> %s%s\n"
-                       (plist-get item :id)
-                       (or (plist-get item :target) "")
-                       (if-let* ((ref (plist-get item :ref)))
-                           (substring ref 0 8)
-                         "")
-                       (if-let* ((target (plist-get item :target-sha)))
-                           (substring target 0 8)
-                         "")
-                       (if-let* ((count (plist-get item :count)))
-                           (format " (%d commits)" count)
-                         ""))))
-            (insert "\n")))))
+          (let ((matches (cl-remove-if-not
+                          (lambda (item) (eq (plist-get item :status) status))
+                          items)))
+            (when matches
+              (insert (format "%s\n" status))
+              (dolist (item matches)
+                (insert
+                 (format "  %-24s %-14s %s -> %s%s\n"
+                         (plist-get item :id)
+                         (or (plist-get item :target) "")
+                         (if-let* ((ref (plist-get item :ref)))
+                             (substring ref 0 8)
+                           "")
+                         (if-let* ((target (plist-get item :target-sha)))
+                             (substring target 0 8)
+                           "")
+                         (if-let* ((count (plist-get item :count)))
+                             (format " (%d commits)" count)
+                           "")))
+                (when (eq (plist-get item :status) 'remote-mismatch)
+                  (insert
+                   (format "    origin: %s; recipe wants: %s\n"
+                           (or (plist-get item :actual-origin) "?")
+                           (or (plist-get item :expected-origin) "?")))))
+              (insert "\n")))))
       (when (> omitted 0)
         (insert (format "Omitted %d ok/not-queued lock entries.\n" omitted)))
       (goto-char (point-min))
