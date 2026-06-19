@@ -1503,6 +1503,10 @@ would only freeze them at stale commits.  Matched against a recipe's
   :type '(repeat string)
   :group 'elpaca)
 
+;; Forked packages should use the fork as `:repo'.  When declaring side
+;; remotes, list "origin" first so Elpaca's `:branch' checkout tracks the
+;; fork branch rather than an upstream/alternate remote.
+
 (defun my-elpaca-own-recipe-p (recipe)
   "Return non-nil when RECIPE's :repo is owned per `my-elpaca-unlocked-owners'.
 Matches \"owner/name\" or a full URL on any forge; the leading boundary
@@ -2425,7 +2429,7 @@ them at the first newline."
   :repo-scan
   :ensure (:host github
                  :repo "ultronozm/attrap"
-                 :remotes (("upstream" :repo "jyp/attrap"))
+                 :remotes ("origin" ("upstream" :repo "jyp/attrap"))
                  :depth nil
                  :inherit nil)
   :defer t
@@ -2584,7 +2588,7 @@ them at the first newline."
   :repo-scan
   :ensure (:host github
                  :repo "ultronozm/embark"
-                 :remotes (("upstream" :repo "oantolin/embark"))
+                 :remotes ("origin" ("upstream" :repo "oantolin/embark"))
                  :depth nil
                  :inherit nil)
   :init
@@ -3232,10 +3236,10 @@ The content is escaped to prevent org syntax interpretation."
 (use-package-full copilot
   :defer 3
   :ensure (:host github
-                 :repo "copilot-emacs/copilot.el"
+                 :repo "ultronozm/copilot.el"
                  :files ("*.el" "dist")
                  :depth nil
-                 :remotes (("ultronozm" :repo "ultronozm/copilot.el")))
+                 :remotes ("origin" ("upstream" :repo "copilot-emacs/copilot.el")))
   :diminish " Co"
   :hook
   ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
@@ -3295,9 +3299,9 @@ The content is escaped to prevent org syntax interpretation."
 (use-package-full llm
   :defer t
   :ensure (:host github
-                 :repo "ahyatt/llm"
+                 :repo "ultronozm/llm"
                  :depth nil
-                 :remotes (("ultronozm" :repo "ultronozm/llm")))
+                 :remotes ("origin" ("upstream" :repo "ahyatt/llm")))
   ;; :init
   ;; (require 'llm-openai)
   ;; (require 'llm-gemini)
@@ -3312,9 +3316,9 @@ The content is escaped to prevent org syntax interpretation."
   :defer t
   :after llm
   :ensure (:host github
-                 :repo "skissue/llm-tool-collection"
+                 :repo "ultronozm/llm-tool-collection"
                  :depth nil
-                 :remotes (("ultronozm" :repo "ultronozm/llm-tool-collection"))))
+                 :remotes ("origin" ("upstream" :repo "skissue/llm-tool-collection"))))
 
 (use-package-full ai-org-chat
   :repo-scan
@@ -3342,8 +3346,8 @@ The content is escaped to prevent org syntax interpretation."
             t))
 
 (use-package-full gptel
-  :ensure (:host github :repo "karthink/gptel"
-                 :remotes (("ultronozm" :repo "ultronozm/gptel")))
+  :ensure (:host github :repo "ultronozm/gptel"
+                 :remotes ("origin" ("upstream" :repo "karthink/gptel")))
   :after exec-path-from-shell
   :defer t
   :bind
@@ -4436,7 +4440,7 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package-full edit-indirect
   :ensure (:host github :repo "ultronozm/edit-indirect"
                  :branch "empty-regions"
-                 :remotes (("upstream" :repo "Fanael/edit-indirect"))
+                 :remotes ("origin" ("upstream" :repo "Fanael/edit-indirect"))
                  :depth nil)
   :commands (edit-indirect-region
              edit-indirect-commit
@@ -4992,7 +4996,8 @@ numbered variant \"equation\"."
 (use-package-full sage
   :ensure (:host nil :repo "https://codeberg.org/ultronozm/sage-mode"
                  :remotes
-                 (("upstream" :repo "https://codeberg.org/rahguzar/sage-mode"))
+                 ("origin"
+                  ("upstream" :repo "https://codeberg.org/rahguzar/sage-mode"))
                  :depth nil
                  :main "sage.el")
   :defer t
@@ -5076,7 +5081,8 @@ numbered variant \"equation\"."
                  :repo "ultronozm/lean4-mode"
                  :branch "eglot"
                  :files ("*.el" "data")
-                 :remotes (("bustercopley" :repo "bustercopley/lean4-mode")
+                 :remotes ("origin"
+                           ("bustercopley" :repo "bustercopley/lean4-mode")
                            ("leanprover-community" :repo "leanprover-community/lean4-mode"))
                  :inherit nil)
   :diminish
@@ -5312,7 +5318,7 @@ When used via Embark, WORD comes from the current target."
   :defer 5
   :ensure (:host github
                  :repo "ultronozm/overleaf.el"
-                 :remotes (("upstream" :repo "vale981/overleaf.el"))
+                 :remotes ("origin" ("upstream" :repo "vale981/overleaf.el"))
                  :depth nil)
   :config
   (with-eval-after-load 'overleaf

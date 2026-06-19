@@ -210,15 +210,6 @@
                     :inherit t :depth treeless :pin t :ref
                     "540ad1e59ef80b1c8dd712cbbaae8957533ad02c" :id
                     consult :type git))
- (copilot :source "elpaca-menu-lock-file" :recipe
-          (:source "elpaca-menu-lock-file" :package "copilot" :id
-                   copilot :host github :repo
-                   "copilot-emacs/copilot.el" :files ("*.el" "dist")
-                   :depth nil :remotes
-                   (("ultronozm" :repo "ultronozm/copilot.el"))
-                   :inherit t :type git :ref
-                   "4870dac784b49fdcf2319d3b1eea9b643432f767"
-                   :protocol https))
  (corfu :source "elpaca-menu-lock-file" :recipe
         (:package "corfu" :repo "minad/corfu" :files
                   (:defaults "extensions/corfu-*.el") :fetcher github
@@ -433,13 +424,6 @@
                  :depth treeless :ref
                  "2fd797537556f7959580bcf5bfea041aee1a24b3" :id ghub
                  :type git :pin t))
- (gptel :source "elpaca-menu-lock-file" :recipe
-        (:source "elpaca-menu-lock-file" :package "gptel" :id gptel
-                 :host github :repo "karthink/gptel" :remotes
-                 (("ultronozm" :repo "ultronozm/gptel")) :inherit t
-                 :type git :ref
-                 "983cb1fece13b245b99da252b396cc163f591b09" :protocol
-                 https :depth treeless))
  (gptel-quick :source "elpaca-menu-lock-file" :recipe
               (:source "elpaca-menu-lock-file" :package "gptel-quick"
                        :id gptel-quick :host github :repo
@@ -548,23 +532,6 @@
                   "elpaca-menu-lock-file" :id llama :type git
                   :protocol https :inherit t :depth treeless :pin t
                   :ref "4d4024048053b898a01521046e0f063ee47615b0"))
- (llm :source "elpaca-menu-lock-file" :recipe
-      (:source "elpaca-menu-lock-file" :package "llm" :id llm :host
-               github :repo "ahyatt/llm" :depth nil :remotes
-               (("ultronozm" :repo "ultronozm/llm")) :inherit t :type
-               git :ref "f7977825b6d91b525c4374480496421e667eeb37"
-               :protocol https))
- (llm-tool-collection :source "elpaca-menu-lock-file" :recipe
-                      (:source "elpaca-menu-lock-file" :package
-                               "llm-tool-collection" :id
-                               llm-tool-collection :host github :repo
-                               "skissue/llm-tool-collection" :depth
-                               nil :remotes
-                               (("ultronozm" :repo
-                                 "ultronozm/llm-tool-collection"))
-                               :inherit t :type git :ref
-                               "b9fd45bedf3e0fb07d289730991199ae18785157"
-                               :protocol https))
  (lv :source "elpaca-menu-lock-file" :recipe
      (:package "lv" :repo "abo-abo/hydra" :fetcher github :files
                ("lv.el") :source "elpaca-menu-lock-file" :protocol
