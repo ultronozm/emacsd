@@ -825,6 +825,7 @@ use the absolute path instead."
           '((text-mode "text/plain" nil)
             (diff-mode "text/x-patch" nil)))
   (setopt diff-default-read-only t)
+  (setopt find-library-include-other-files nil)
   (put 'upcase-region 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
   (put 'erase-buffer 'disabled nil)
