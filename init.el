@@ -4339,6 +4339,21 @@ character instead of toggling."
   (setopt agent-shell-attention-indicator-location 'global-mode-string)
   (agent-shell-attention-mode))
 
+;;;;; links
+
+(use-package agent-shell-links
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/agent-shell-links.el"
+                 :depth nil
+                 :inherit nil)
+  :demand
+  :config
+  (agent-shell-links-bookmark-setup)
+  (with-eval-after-load 'ol
+    (org-link-set-parameters
+     "agent-shell"
+     :follow #'agent-shell-links-org-follow
+     :store #'agent-shell-links-org-store)))
 
 ;;;; codex CLI wrapper
 
