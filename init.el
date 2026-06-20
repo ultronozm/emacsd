@@ -3141,6 +3141,29 @@ them at the first newline."
 
 ;;; pdf
 
+(defun my/pdf-tools-copy-server-into-build (elpaca)
+  "Copy pdf-tools server sources into ELPACA's build directory."
+  (let* ((source-dir (elpaca<-source-dir elpaca))
+         (build-dir (elpaca<-build-dir elpaca))
+         (src (expand-file-name "server" source-dir))
+         (dst (expand-file-name "build/server" build-dir)))
+    (unless (file-directory-p src)
+      (error "pdf-tools: missing server sources: %s" src))
+    (when (file-exists-p dst)
+      (cond
+       ((file-symlink-p dst) (delete-file dst))
+       ((file-directory-p dst) (delete-directory dst t))
+       (t (delete-file dst))))
+    (make-directory (file-name-directory dst) t)
+    (copy-directory src dst t t t)
+    ;; Regenerate autotools outputs in the copied tree so builds do not depend
+    ;; on stale files like `aclocal-1.16' from the source checkout.
+    (when (executable-find "autoreconf")
+      (let ((default-directory dst))
+        (unless (zerop (call-process "autoreconf" nil "*elpaca pdf-tools autoreconf*" t "-i"))
+          (error "pdf-tools: autoreconf failed in %s" default-directory)))))
+  (elpaca-continue elpaca))
+
 (use-package-full pdf-tools
   ;; :disabled
   :mode ("\\.pdf\\'" . pdf-view-mode)
@@ -3152,32 +3175,10 @@ them at the first newline."
                  :depth nil
                  :inherit nil
                  ;; :remotes (("orgtre" :repo "orgtre/pdf-tools"))
-                 ;; pdf-tools builds `epdfinfo' from `build/server'.  With Elpaca's
-                 ;; default symlinks, building would write artifacts into the git
-                 ;; checkout under `repos/'.  Copy server sources into the build dir
-                 ;; so building stays under `builds/'.
-                 :post-build
-                 (let* ((repo default-directory)
-                        (pkg (file-name-nondirectory (directory-file-name repo)))
-                        (build (expand-file-name (file-name-as-directory pkg) elpaca-builds-directory))
-                        (src (expand-file-name "server" repo))
-                        (dst (expand-file-name "build/server" build)))
-	                  (when (file-directory-p src)
-	                    (when (file-exists-p dst)
-	                      (cond
-	                       ((file-symlink-p dst) (delete-file dst))
-	                       ((file-directory-p dst) (delete-directory dst t))
-	                       (t (delete-file dst))))
-		                   (make-directory (file-name-directory dst) t)
-		                   (copy-directory src dst t t t)
-		                   ;; Always regenerate autotools outputs in the copied build
-		                   ;; tree (if available). This avoids brittle version checks
-		                   ;; like `aclocal-1.16` and keeps all generated files under
-		                   ;; `elpaca/builds/`.
-		                   (when (executable-find "autoreconf")
-		                     (let ((default-directory dst))
-		                       (unless (zerop (call-process "autoreconf" nil "*elpaca pdf-tools autoreconf*" t "-i"))
-		                         (error "pdf-tools: autoreconf failed in %s" default-directory)))))))
+                 ;; pdf-tools builds `epdfinfo' from `build/server'.  Copy the
+                 ;; server tree into `builds/' so autotools writes there instead
+                 ;; of through Elpaca's symlinks into `repos/'.
+                 :build (:after elpaca-build-link my/pdf-tools-copy-server-into-build))
   :custom
   (TeX-view-program-selection '((output-pdf "PDF Tools")))
   (pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
