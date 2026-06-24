@@ -5800,3 +5800,12 @@ When used via Embark, WORD comes from the current target."
     (keymap-set LaTeX-mode-map "C-c O" overleaf-command-map))
   (with-eval-after-load 'bibtex
     (keymap-set bibtex-mode-map "C-c O" overleaf-command-map)))
+
+(use-package-full repo-dashboard
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/repo-dashboard.el"
+                 :depth nil
+                 :inherit nil)
+  :defer t
+  :custom
+  (repo-dashboard-manifest-files '("~/dotfiles/repos.manifest")))
