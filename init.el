@@ -1476,6 +1476,15 @@ When a declaration specifies `:repo' but omits `:type', default to
     (user-error "Elpaca lock file not found: %S" elpaca-lock-file))
   (elpaca--read-file elpaca-lock-file))
 
+(defun my-elpaca--source-dir (e)
+  "Return E's source/repo directory across Elpaca struct versions."
+  (when e
+    (let ((accessor (cond
+                     ((fboundp 'elpaca<-source-dir) #'elpaca<-source-dir)
+                     ((fboundp 'elpaca<-repo-dir) #'elpaca<-repo-dir))))
+      (when accessor
+        (ignore-errors (funcall accessor e))))))
+
 (defun my-elpaca--git-output (dir &rest args)
   "Return trimmed git output for ARGS in DIR, or nil on failure."
   (with-temp-buffer
@@ -1553,7 +1562,7 @@ When FORCE is non-nil, do not block checkout for tracked modifications."
    for e = (elpaca-get id)
    for recipe = (plist-get plist :recipe)
    for ref = (plist-get recipe :ref)
-   for repo = (and e (ignore-errors (elpaca<-source-dir e)))
+   for repo = (my-elpaca--source-dir e)
    for head = (and repo (file-directory-p repo)
                    (my-elpaca--git-output repo "rev-parse" "HEAD"))
    for dirty = (and repo (file-directory-p repo) (my-elpaca--tracked-dirty-p repo))
@@ -1752,7 +1761,7 @@ branches."
          (lock-recipe (plist-get entry :recipe))
          (ref (plist-get lock-recipe :ref))
          (e (elpaca-get id))
-         (repo (and e (ignore-errors (elpaca<-source-dir e))))
+         (repo (my-elpaca--source-dir e))
          (live-recipe (my-elpaca--unpinned-recipe e))
          (target-recipe (or live-recipe lock-recipe))
          target target-sha status count dirty expected-origin actual-origin)
@@ -1982,7 +1991,7 @@ of, or `diverged' from, the remote default, accepting moves the package
           (push (format "%S has an ultronozm side remote but is not fork-managed" id)
                 remote-items))
          ((my-elpaca-own-recipe-p recipe)
-          (let* ((repo (ignore-errors (elpaca<-source-dir e)))
+          (let* ((repo (my-elpaca--source-dir e))
                  (remotes (plist-get recipe :remotes))
                  (branch (and repo (file-directory-p repo)
                               (my-elpaca--git-output repo "branch" "--show-current"))))
