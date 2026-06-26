@@ -39,7 +39,9 @@
   "Projects Org file path, or nil when not configured.")
 
 (defvar my-log-file nil
-  "Org log/journal file path, or nil when not configured.")
+  "Org log/journal file path, or nil when not configured.
+
+The value may contain `format-time-string' escapes such as %Y.")
 
 (defvar my-face-heights nil
   "Face height alist used by `czm-set-face-heights'.")
@@ -48,6 +50,11 @@
   "Return SYM value when it is a non-empty string, else nil."
   (let ((val (and (boundp sym) (symbol-value sym))))
     (and (stringp val) (> (length val) 0) val)))
+
+(defun my-current-log-file ()
+  "Return the configured log file for the current date."
+  (when-let* ((file (my-setting-string 'my-log-file)))
+    (expand-file-name (format-time-string file))))
 
 (defun my-setting-files (&rest syms)
   "Return configured file paths from SYMS, omitting unset values."
@@ -3506,7 +3513,7 @@ The content is escaped to prevent org syntax interpretation."
         `(("i" "Inbox" entry (file+headline ,todo-file "Inbox")
            "* %?\n  %i")))
       (when log-file
-        `(("j" "Journal" entry (file+datetree ,log-file)
+        `(("j" "Journal" entry (file+datetree my-current-log-file)
            "* %?\nEntered on %U\n")))
       (when todo-file
         `(("a" "Inbox (annotated)" entry (file+headline ,todo-file "Inbox")
