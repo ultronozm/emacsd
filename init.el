@@ -1311,9 +1311,15 @@ This keeps summary navigation commands in the summary window while making
     (if (message-point-in-header-p)
         (call-interactively #'mail-abbrev-insert-alias)
       (message-tab)))
+  (defvar-keymap my-message-debbugs-cc-minibuffer-map
+    :parent minibuffer-local-map
+    "TAB" #'mail-abbrev-insert-alias)
   (defun my-message-insert-debbugs-cc (address)
     "Insert an X-Debbugs-Cc header with ADDRESS."
-    (interactive (list (read-string "X-Debbugs-Cc: " nil nil "bug-gnu-emacs@gnu.org")))
+    (interactive
+     (list (let ((minibuffer-local-map my-message-debbugs-cc-minibuffer-map))
+             (read-string "X-Debbugs-Cc: " nil nil
+                          "bug-gnu-emacs@gnu.org"))))
     (save-excursion
       (message-add-header (format "X-Debbugs-Cc: %s" address))))
   :bind (:map message-mode-map
