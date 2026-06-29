@@ -40,15 +40,21 @@ Most of the functionality of my config has been extracted into the following pac
 
 ** Other
 - [[https://github.com/ultronozm/ai-org-chat.el][ai-org-chat.el]] :: threaded chat with AI agent in org buffers
+- [[https://github.com/ultronozm/agent-shell-attention.el][agent-shell-attention.el]] :: mode-line attention tracker for agent-shell
+- [[https://github.com/ultronozm/agent-shell-links.el][agent-shell-links.el]] :: bookmarks and Org links for agent-shell sessions
 - [[https://github.com/ultronozm/czm-cpp.el][czm-cpp.el]] :: cpp convenience functions, e.g., for project management
 - [[https://github.com/ultronozm/czm-lean4.el][czm-lean4.el]] :: embellishments for lean4-mode
 - [[https://github.com/ultronozm/czm-spell.el][czm-spell.el]] :: spell-check that saves corrections in abbrevs
 - [[https://github.com/ultronozm/czm-misc.el][czm-misc.el]] :: miscellaneous elisp functions
-- [[https://github.com/ultronozm/doc-follow.el][doc-follow.el]] :: sync windows showing the same document
+- [[https://github.com/ultronozm/doc-view-follow.el][doc-view-follow.el]] :: synchronize windows showing the same document
+- [[https://github.com/ultronozm/eat-tmux.el][eat-tmux.el]] :: tmux views in Eat
 - [[https://github.com/ultronozm/eldoc-icebox.el][eldoc-icebox.el]] :: pop-up buffer with frozen copy of eldoc
+- [[https://github.com/ultronozm/flymake-overlays.el][flymake-overlays.el]] :: toggleable overlays for Flymake diagnostics
 - [[https://github.com/ultronozm/library.el][library.el]] :: helper functions for managing downloaded papers
+- [[https://github.com/ultronozm/llm-vc-commit.el][llm-vc-commit.el]] :: LLM-based commit message generator
 - [[https://github.com/ultronozm/magit-fill-column.el][magit-fill-column.el]] :: set magit commit message fill-column based on project
 - [[https://github.com/ultronozm/publish.el][publish.el]] :: convenience functions for pushing files to a git repo
+- [[https://github.com/ultronozm/repo-dashboard.el][repo-dashboard.el]] :: dashboard for a manifest of Git repos
 - [[https://github.com/ultronozm/repo-scan.el][repo-scan.el]] :: display status of some collection of GIT repositories
 - [[https://github.com/ultronozm/auto-hide.el][auto-hide.el]] :: automatically hide function bodies
 - [[https://github.com/ultronozm/consult-abbrev.el][consult-abbrev.el]] :: preview abbrevs using consult
