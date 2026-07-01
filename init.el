@@ -1244,6 +1244,7 @@ This keeps summary navigation commands in the summary window while making
   (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
   (rmail-delete-after-output t)
   :config
+  (modify-coding-system-alist 'file "\\.rmail\\'" 'no-conversion)
   (with-eval-after-load 'rmailsum
     (define-key rmail-summary-mode-map "O"
                 #'my-rmail-summary-output-and-store-link)
