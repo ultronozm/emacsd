@@ -2132,6 +2132,7 @@ the *elpaca-log* buffer for the underlying build error."
           '("PATH" "MANPATH"
             "OPENAI_KEY" "OPENAI_API_KEY"
             "ANTHROPIC_KEY"
+            "ASSIST_API_KEY"
             "GEMINI_KEY"
             "DEEPSEEK_KEY"
             "GITHUB_MCP_PAT"
@@ -4226,6 +4227,21 @@ The following placeholders are replaced using `format-spec':
   (my/agent-shell--start-discuss-with-config
    (agent-shell-anthropic-make-claude-code-config)))
 
+(defun my/agent-shell-opencode-discuss ()
+  "Start OpenCode and prefill a discuss prompt from active selection."
+  (interactive)
+  (require 'agent-shell-opencode)
+  (my/agent-shell--start-discuss-with-config
+   (agent-shell-opencode-make-agent-config)))
+
+(defun my/agent-shell-opencode-local-discuss ()
+  "Start OpenCode on the local Ollama coding model."
+  (interactive)
+  (require 'agent-shell-opencode)
+  (let ((agent-shell-opencode-default-model-id "ollama/qwen3-coder-30b"))
+    (my/agent-shell--start-discuss-with-config
+     (agent-shell-opencode-make-agent-config))))
+
 ;;;;; package
 
 (defvar my-agent-shell-transcripts-dir nil
@@ -4281,18 +4297,26 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
         ("C-c m" . my/agent-shell-yank-fenced-block))
   (:map project-prefix-map
         ("z x" . my/agent-shell-codex-discuss)
-        ("z c" . my/agent-shell-claude-discuss))
+        ("z c" . my/agent-shell-claude-discuss)
+        ("z o" . my/agent-shell-opencode-discuss)
+        ("z l" . my/agent-shell-opencode-local-discuss))
   :init
   (add-to-list 'project-switch-commands
                '(my/agent-shell-codex-discuss "Codex"))
   (add-to-list 'project-switch-commands
                '(my/agent-shell-claude-discuss "Claude"))
+  (add-to-list 'project-switch-commands
+               '(my/agent-shell-opencode-discuss "OpenCode"))
+  (add-to-list 'project-switch-commands
+               '(my/agent-shell-opencode-local-discuss "Local LLM"))
   :commands (agent-shell-openai-start-codex
-             agent-shell-anthropic-start-claude-code)
+             agent-shell-anthropic-start-claude-code
+             agent-shell-opencode-start-agent)
   :hook
   ((agent-shell-mode . abbrev-mode)
    (agent-shell-mode . my/agent-shell-mode-hook))
   :config
+  (require 'agent-shell-opencode)
   (setopt agent-shell-session-strategy 'prompt)
   (setopt agent-shell-openai-authentication
           (agent-shell-openai-make-authentication :login t))
@@ -4300,6 +4324,14 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
   (setopt agent-shell-openai-codex-environment
           (agent-shell-make-environment-variables
            "GITHUB_MCP_PAT" (my/getenv "GITHUB_MCP_PAT")))
+  (setopt agent-shell-opencode-authentication
+          (agent-shell-opencode-make-authentication :none t))
+  (setopt agent-shell-opencode-default-model-id "assist/kimi")
+  (setopt agent-shell-opencode-environment
+          (append
+           (when-let* ((key (my/getenv "ASSIST_API_KEY")))
+             (list (format "ASSIST_API_KEY=%s" key)))
+           (agent-shell-make-environment-variables :inherit-env t)))
   (setopt agent-shell-transcript-file-path-function
           #'my/agent-shell-transcript-file-path-function))
 
