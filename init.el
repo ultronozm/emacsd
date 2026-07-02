@@ -3731,6 +3731,7 @@ The content is escaped to prevent org syntax interpretation."
         ("H-x" . copilot-mode)
         ("§" . copilot-accept-completion))
   (:map copilot-completion-map
+        ("`" . copilot-accept-completion)
         ("§" . copilot-accept-completion)
         ("M-§" . copilot-accept-completion-by-word)
         ("C-§" . copilot-accept-completion-by-line)
