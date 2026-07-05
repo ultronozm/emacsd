@@ -855,6 +855,13 @@ use the absolute path instead."
   (savehist-mode)
   (add-to-list 'savehist-additional-variables 'register-alist)
   (vc-auto-revert-mode)
+  ;; Requires the proposed patch on feature/man-completion-method (see
+  ;; working-branches.txt); the config-based predecessor is archived in
+  ;; init-graveyard.el.  No-op on unpatched Emacs, where M-x man
+  ;; completion stays slow on macOS.
+  (with-eval-after-load 'man
+    (when (boundp 'Man-completion-method)
+      (setopt Man-completion-method 'filenames)))
   :hook
   (prog-mode . outline-minor-mode)
   (dired-mode . dired-hide-details-mode)
