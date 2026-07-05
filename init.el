@@ -5718,11 +5718,15 @@ numbered variant \"equation\"."
 ;; Claim the `server' socket for this (intentionally launched) Emacs.  Never
 ;; silently defer: if some other process owns the socket, emacsclient would
 ;; talk to that invisible instance instead of this one, so warn loudly.
+;; Only installed instances (e.g. the promoted /Applications app) take part:
+;; `installation-directory' is non-nil when running uninstalled out of a build
+;; tree, and such instances are experiments that should leave the socket alone.
 (run-with-idle-timer
  5 nil
  (lambda ()
    (require 'server)
    (cond
+    (installation-directory)
     ((not (server-running-p))
      (server-start))
     ((not (and (bound-and-true-p server-process)
