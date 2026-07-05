@@ -1199,7 +1199,6 @@ This keeps summary navigation commands in the summary window while making
   ("C-z r" . rmail)
   (:map rmail-mode-map
         ("S" . my-rmail-refile-and-store-link)
-        ("q" . rmail-bury)
         ("M-m" . nil))
   :hook (rmail-mode . my-rmail-mode-hook)
   :custom
