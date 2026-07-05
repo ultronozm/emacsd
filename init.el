@@ -3713,8 +3713,7 @@ The content is escaped to prevent org syntax interpretation."
            (seq-remove (lambda (k) (equal k pass-through-key))
                        eat-eshell-semi-char-non-bound-keys)))
     (eat-update-semi-char-mode-map)
-    (eat-eshell-update-semi-char-mode-map)
-    (eat-reload)))
+    (eat-eshell-update-semi-char-mode-map)))
 
 ;;; ai stuff
 
