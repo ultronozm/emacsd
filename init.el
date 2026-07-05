@@ -2508,9 +2508,9 @@ back to `exec-path-from-shell-getenv' from local buffers."
                    #'completion--in-region)
                  args)))
   (with-eval-after-load 'project
-    (add-to-list 'project-switch-commands '(consult-ripgrep "Ripgrep")))
-  (setq project-switch-commands
-        (cl-remove 'project-find-regexp project-switch-commands :key #'car)))
+    (add-to-list 'project-switch-commands '(consult-ripgrep "Ripgrep"))
+    (setq project-switch-commands
+          (cl-remove 'project-find-regexp project-switch-commands :key #'car))))
 
 (defun my/consult-buffer-global ()
   "Run `consult-buffer' with all buffers."
@@ -4311,14 +4311,15 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
         ("z o" . my/agent-shell-opencode-discuss)
         ("z l" . my/agent-shell-opencode-local-discuss))
   :init
-  (add-to-list 'project-switch-commands
-               '(my/agent-shell-codex-discuss "Codex"))
-  (add-to-list 'project-switch-commands
-               '(my/agent-shell-claude-discuss "Claude"))
-  (add-to-list 'project-switch-commands
-               '(my/agent-shell-opencode-discuss "OpenCode"))
-  (add-to-list 'project-switch-commands
-               '(my/agent-shell-opencode-local-discuss "Local LLM"))
+  (with-eval-after-load 'project
+    (add-to-list 'project-switch-commands
+                 '(my/agent-shell-codex-discuss "Codex"))
+    (add-to-list 'project-switch-commands
+                 '(my/agent-shell-claude-discuss "Claude"))
+    (add-to-list 'project-switch-commands
+                 '(my/agent-shell-opencode-discuss "OpenCode"))
+    (add-to-list 'project-switch-commands
+                 '(my/agent-shell-opencode-local-discuss "Local LLM")))
   :commands (agent-shell-openai-start-codex
              agent-shell-anthropic-start-claude-code
              agent-shell-opencode-start-agent)
@@ -4796,7 +4797,8 @@ The value of `calc-language` is restored after BODY has been processed."
   :hook
   (magit-status-mode . visual-line-mode)
   :init
-  (add-to-list 'project-switch-commands '(magit-project-status "Magit"))
+  (with-eval-after-load 'project
+    (add-to-list 'project-switch-commands '(magit-project-status "Magit")))
   :config
   (setopt magit-commit-diff-inhibit-same-window t)
   (add-to-list 'display-buffer-alist
