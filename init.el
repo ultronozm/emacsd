@@ -1064,6 +1064,7 @@ positions you navigated to during the Ediff session."
 
 (use-package-full tramp
   :ensure nil
+  :defer t
   :config
   ;; Use a login shell remotely so PATH/tool setup is available to Eglot/LSP.
   ;; Keep startup files quiet: any output from shell init can break TRAMP parsing.
@@ -3348,7 +3349,7 @@ in all current and future PDF buffers."
 ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2024-06/msg01858.html
 (use-package org
   :ensure nil
-  :demand)
+  :defer t)
 
 (defun my/set-TeX-master-preview ()
   (interactive)
@@ -3685,6 +3686,12 @@ The content is escaped to prevent org syntax interpretation."
 
 (use-package-full eat
   :ensure (eat :inherit elpaca-menu-nongnu-elpa)
+  ;; Deferred: eat.el has a top-level (require 'tramp), which would
+  ;; otherwise pull TRAMP into startup.
+  :defer t
+  :init
+  (add-hook 'eshell-load-hook #'eat-eshell-mode)
+  (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode)
   :config
   (add-hook 'eat-mode-hook #'abbrev-mode)
   (let ((pass-through-key [?\C-\\])
@@ -3700,9 +3707,7 @@ The content is escaped to prevent org syntax interpretation."
                        eat-eshell-semi-char-non-bound-keys)))
     (eat-update-semi-char-mode-map)
     (eat-eshell-update-semi-char-mode-map)
-    (eat-reload))
-  (add-hook 'eshell-load-hook #'eat-eshell-mode)
-  (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode))
+    (eat-reload)))
 
 ;;; ai stuff
 
@@ -4787,7 +4792,7 @@ The value of `calc-language` is restored after BODY has been processed."
 
 (use-package transient
   :ensure t
-  :demand t)
+  :defer t)
 
 (use-package llama
   :ensure t)
