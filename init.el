@@ -1240,11 +1240,12 @@ This keeps summary navigation commands in the summary window while making
            secret)))))
   (rmail-displayed-headers "^\\(?:Cc\\|Date\\|From\\|Subject\\|To\\|Sender\\):")
   (rmail-delete-after-output t)
-  :config
+  :init
   (add-to-list 'auto-mode-alist '("\\.rmail\\'" . rmail-mode)) ;; unnecessary in Emacs 32+
   (add-to-list 'auto-mode-alist '("\\.mbox\\'" . rmail-mode))
   (modify-coding-system-alist 'file "\\.rmail\\'" 'no-conversion)
   (modify-coding-system-alist 'file "\\.mbox\\'" 'no-conversion)
+  :config
   (with-eval-after-load 'rmailsum
     (define-key rmail-summary-mode-map "O"
                 #'my-rmail-summary-output-and-store-link)
