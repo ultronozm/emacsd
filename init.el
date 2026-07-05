@@ -5870,4 +5870,18 @@ When used via Embark, WORD comes from the current target."
                  :inherit nil)
   :defer t
   :custom
-  (repo-dashboard-manifest-files '("~/dotfiles/repos.manifest")))
+  (repo-dashboard-manifest-files '("~/dotfiles/repos.manifest"))
+  :config
+  ;; Bridge: show the packages collected via the :repo-scan use-package
+  ;; keyword in the dashboard, alongside the manifest repos.  The
+  ;; dashboard dedupes by path, so overlap with the manifest is fine.
+  (defun my/repo-dashboard-source-repo-scan ()
+    "Repo descriptors for the packages tagged with :repo-scan."
+    (require 'repo-scan)
+    (let ((base (expand-file-name "elpaca/repos" user-emacs-directory)))
+      (mapcar (lambda (name)
+                (list :path (expand-file-name name base)
+                      :group "elisp packages"
+                      :source 'repo-scan))
+              (bound-and-true-p repo-scan-repos))))
+  (add-to-list 'repo-dashboard-sources #'my/repo-dashboard-source-repo-scan t))
