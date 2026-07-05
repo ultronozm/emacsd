@@ -3537,7 +3537,7 @@ The content is escaped to prevent org syntax interpretation."
         `(("i" "Inbox" entry (file+headline ,todo-file "Inbox")
            "* %?\n  %i")))
       (when log-file
-        `(("j" "Journal" entry (file+datetree my-current-log-file)
+        `(("j" "Journal" entry (file+olp+datetree my-current-log-file)
            "* %?\nEntered on %U\n")))
       (when todo-file
         `(("a" "Inbox (annotated)" entry (file+headline ,todo-file "Inbox")
