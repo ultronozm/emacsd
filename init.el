@@ -4538,91 +4538,93 @@ character instead of toggling."
 
 ;;; c/c++
 
-(c-add-style
- "llvm4"
- '("gnu"
-   (c-basic-offset . 2)     ; Guessed value
-   (c-offsets-alist
-    (access-label . -)         ; Guessed value
-    (block-close . 0)          ; Guessed value
-    (class-close . 0)          ; Guessed value
-    (defun-block-intro . ++) ; Guessed value
-    ;; (defun-block-intro . ++)     ; Guessed value
-    (inclass . ++)  ; Guessed value
-    (inline-close . 0)      ; Guessed value
-    ;; (inline-close . 0)                   ; Guessed value
-    (statement . 0)        ; Guessed value
-    (statement-block-intro . ++) ; Guessed value
-    ;; (statement-cont . llvm-lineup-statement) ; Guessed value
-    (statement-cont . ++)                ; Guessed value
-    (substatement . ++)        ; Guessed value
-    (topmost-intro . nil)      ; Guessed value
-    (topmost-intro-cont . +) ; Guessed value
-    (annotation-top-cont . 0)
-    (annotation-var-cont . +)
-    (arglist-close . c-lineup-close-paren)
-    (arglist-cont c-lineup-gcc-asm-reg 0)
-    ;; (arglist-cont-nonempty c-lineup-gcc-asm-reg 0)
-    (arglist-cont-nonempty . c-lineup-arglist)
-    (arglist-intro . ++)
-    ;; (arglist-intro . c-lineup-arglist-intro-after-paren)
-    (block-open . 0)
-    (brace-entry-open . 0)
-    (brace-list-close . 0)
-    (brace-list-entry . c-lineup-string-cont)
-    (brace-list-intro first c-lineup-2nd-brace-entry-in-arglist c-lineup-class-decl-init-+ +)
-    (brace-list-open . +)
-    (c . c-lineup-C-comments)
-    (case-label . 0)
-    (catch-clause . 0)
-    (class-open . 0)
-    (comment-intro . c-lineup-comment)
-    (composition-close . 0)
-    (composition-open . 0)
-    (cpp-define-intro c-lineup-cpp-define +)
-    (cpp-macro . -1000)
-    (cpp-macro-cont . +)
-    (defun-close . 0)
-    (defun-open . 0)
-    (do-while-closure . 0)
-    (else-clause . 0)
-    (extern-lang-close . 0)
-    (extern-lang-open . 0)
-    (friend . 0)
-    (func-decl-cont . +)
-    (incomposition . +)
-    (inexpr-class . +)
-    (inexpr-statement . +)
-    (inextern-lang . +)
-    (inher-cont . c-lineup-multi-inher)
-    (inher-intro . +)
-    (inlambda . 0)
-    (inline-open . 0)
-    (inmodule . +)
-    (innamespace . 0)
-    (knr-argdecl . 0)
-    (knr-argdecl-intro . 5)
-    (label . 0)
-    (lambda-intro-cont . +)
-    (member-init-cont . c-lineup-multi-inher)
-    (member-init-intro . 4)
-    (module-close . 0)
-    (module-open . 0)
-    (namespace-close . 0)
-    (namespace-open . 0)
-    (objc-method-args-cont . c-lineup-ObjC-method-args)
-    (objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
-    (objc-method-intro .
-                       [0])
-    (statement-case-intro . ++)
-    (statement-case-open . +)
-    (stream-op . c-lineup-streamop)
-    (string . c-lineup-string-cont)
-    (substatement-label . 0)
-    (substatement-open . 0)
-    (template-args-cont c-lineup-template-args +))))
+;; Kept as data so cc-mode isn't loaded at startup; the style is
+;; registered in `czm-c-mode-common-hook'.
+(defconst my/c-style-llvm4
+  '("gnu"
+    (c-basic-offset . 2)     ; Guessed value
+    (c-offsets-alist
+     (access-label . -)         ; Guessed value
+     (block-close . 0)          ; Guessed value
+     (class-close . 0)          ; Guessed value
+     (defun-block-intro . ++) ; Guessed value
+     ;; (defun-block-intro . ++)     ; Guessed value
+     (inclass . ++)  ; Guessed value
+     (inline-close . 0)      ; Guessed value
+     ;; (inline-close . 0)                   ; Guessed value
+     (statement . 0)        ; Guessed value
+     (statement-block-intro . ++) ; Guessed value
+     ;; (statement-cont . llvm-lineup-statement) ; Guessed value
+     (statement-cont . ++)                ; Guessed value
+     (substatement . ++)        ; Guessed value
+     (topmost-intro . nil)      ; Guessed value
+     (topmost-intro-cont . +) ; Guessed value
+     (annotation-top-cont . 0)
+     (annotation-var-cont . +)
+     (arglist-close . c-lineup-close-paren)
+     (arglist-cont c-lineup-gcc-asm-reg 0)
+     ;; (arglist-cont-nonempty c-lineup-gcc-asm-reg 0)
+     (arglist-cont-nonempty . c-lineup-arglist)
+     (arglist-intro . ++)
+     ;; (arglist-intro . c-lineup-arglist-intro-after-paren)
+     (block-open . 0)
+     (brace-entry-open . 0)
+     (brace-list-close . 0)
+     (brace-list-entry . c-lineup-string-cont)
+     (brace-list-intro first c-lineup-2nd-brace-entry-in-arglist c-lineup-class-decl-init-+ +)
+     (brace-list-open . +)
+     (c . c-lineup-C-comments)
+     (case-label . 0)
+     (catch-clause . 0)
+     (class-open . 0)
+     (comment-intro . c-lineup-comment)
+     (composition-close . 0)
+     (composition-open . 0)
+     (cpp-define-intro c-lineup-cpp-define +)
+     (cpp-macro . -1000)
+     (cpp-macro-cont . +)
+     (defun-close . 0)
+     (defun-open . 0)
+     (do-while-closure . 0)
+     (else-clause . 0)
+     (extern-lang-close . 0)
+     (extern-lang-open . 0)
+     (friend . 0)
+     (func-decl-cont . +)
+     (incomposition . +)
+     (inexpr-class . +)
+     (inexpr-statement . +)
+     (inextern-lang . +)
+     (inher-cont . c-lineup-multi-inher)
+     (inher-intro . +)
+     (inlambda . 0)
+     (inline-open . 0)
+     (inmodule . +)
+     (innamespace . 0)
+     (knr-argdecl . 0)
+     (knr-argdecl-intro . 5)
+     (label . 0)
+     (lambda-intro-cont . +)
+     (member-init-cont . c-lineup-multi-inher)
+     (member-init-intro . 4)
+     (module-close . 0)
+     (module-open . 0)
+     (namespace-close . 0)
+     (namespace-open . 0)
+     (objc-method-args-cont . c-lineup-ObjC-method-args)
+     (objc-method-call-cont c-lineup-ObjC-method-call-colons c-lineup-ObjC-method-call +)
+     (objc-method-intro .
+                        [0])
+     (statement-case-intro . ++)
+     (statement-case-open . +)
+     (stream-op . c-lineup-streamop)
+     (string . c-lineup-string-cont)
+     (substatement-label . 0)
+     (substatement-open . 0)
+     (template-args-cont c-lineup-template-args +))))
 
 (defun czm-c-mode-common-hook ()
+  (c-add-style "llvm4" my/c-style-llvm4)
   (c-set-style "llvm4")
   (set-fill-column 120)
   (setq next-error-function #'flymake-goto-next-error))
