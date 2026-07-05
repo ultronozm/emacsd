@@ -5713,12 +5713,25 @@ numbered variant \"equation\"."
   (when (file-exists-p file)
     (load file)))
 
+;; Claim the `server' socket for this (intentionally launched) Emacs.  Never
+;; silently defer: if some other process owns the socket, emacsclient would
+;; talk to that invisible instance instead of this one, so warn loudly.
 (run-with-idle-timer
  5 nil
  (lambda ()
    (require 'server)
-   (unless (server-running-p)
-     (server-start))))
+   (cond
+    ((not (server-running-p))
+     (server-start))
+    ((not (and (bound-and-true-p server-process)
+               (process-live-p server-process)))
+     (display-warning
+      'server
+      (format "Another Emacs owns the %S socket; emacsclient will not reach \
+this instance.  Kill it with: emacsclient -s %s --eval '(kill-emacs)' and \
+then M-x server-start here."
+              server-name server-name)
+      :warning)))))
 
 (setopt python-indent-guess-indent-offset nil)
 
