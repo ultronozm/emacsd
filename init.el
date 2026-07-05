@@ -2835,11 +2835,18 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :config
   (setq flycheck-emacs-lisp-load-path 'inherit))
 
+(defun my/flycheck-package-setup-maybe ()
+  "Run `flycheck-package-setup' for file-visiting buffers only.
+Keeps *scratch* (which runs `emacs-lisp-mode-hook' right after
+startup) from dragging flycheck and package-lint into startup."
+  (when buffer-file-name
+    (flycheck-package-setup)))
+
 (use-package-full flycheck-package
   :ensure t
   :defer t
   :hook
-  (emacs-lisp-mode . flycheck-package-setup))
+  (emacs-lisp-mode . my/flycheck-package-setup-maybe))
 
 (use-package flymake
   :ensure nil
@@ -3711,6 +3718,14 @@ The content is escaped to prevent org syntax interpretation."
 
 ;;; ai stuff
 
+(defun my/copilot-mode-maybe ()
+  "Enable `copilot-mode' in file-visiting buffers only.
+Loading copilot starts its agent, which blocks for ~2s; *scratch*
+enters `lisp-interaction-mode' right after startup, so a bare
+`prog-mode' hook would pay that cost before first input."
+  (when buffer-file-name
+    (copilot-mode)))
+
 (use-package-full copilot
   :defer 3
   :ensure (:host github
@@ -3720,7 +3735,7 @@ The content is escaped to prevent org syntax interpretation."
                  :remotes ("origin" ("upstream" :repo "copilot-emacs/copilot.el")))
   :diminish " Co"
   :hook
-  ((prog-mode LaTeX-mode git-commit-setup) . copilot-mode)
+  ((prog-mode LaTeX-mode git-commit-setup) . my/copilot-mode-maybe)
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
   (lean4-mode . (lambda () (setq tab-width 2)))
   (c++-mode . (lambda () (setq tab-width 4)))
