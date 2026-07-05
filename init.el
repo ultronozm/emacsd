@@ -3583,6 +3583,7 @@ The content is escaped to prevent org syntax interpretation."
   (setopt org-fontify-quote-and-verse-blocks t)
   (require 'ob-shell)
   (setopt org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)
+                          (directory . emacs)
                           ("\\.xlsx\\'" . system)
                           ("\\.docx\\'" . system)))
   (add-hook 'org-src-mode-hook #'hack-dir-local-variables-non-file-buffer)
