@@ -4913,7 +4913,9 @@ The value of `calc-language` is restored after BODY has been processed."
 (use-package-full repo-scan
   :repo-scan
   :ensure (:host github :repo "ultronozm/repo-scan.el" :depth nil)
-  :defer t)
+  :defer t
+  :custom
+  (repo-scan-manifest-files '("~/dotfiles/repos.manifest")))
 
 ;;; edit-indirect
 
@@ -5862,26 +5864,3 @@ When used via Embark, WORD comes from the current target."
     (keymap-set LaTeX-mode-map "C-c O" overleaf-command-map))
   (with-eval-after-load 'bibtex
     (keymap-set bibtex-mode-map "C-c O" overleaf-command-map)))
-
-(use-package-full repo-dashboard
-  :repo-scan
-  :ensure (:host github :repo "ultronozm/repo-dashboard.el"
-                 :depth nil
-                 :inherit nil)
-  :defer t
-  :custom
-  (repo-dashboard-manifest-files '("~/dotfiles/repos.manifest"))
-  :config
-  ;; Bridge: show the packages collected via the :repo-scan use-package
-  ;; keyword in the dashboard, alongside the manifest repos.  The
-  ;; dashboard dedupes by path, so overlap with the manifest is fine.
-  (defun my/repo-dashboard-source-repo-scan ()
-    "Repo descriptors for the packages tagged with :repo-scan."
-    (require 'repo-scan)
-    (let ((base (expand-file-name "elpaca/repos" user-emacs-directory)))
-      (mapcar (lambda (name)
-                (list :path (expand-file-name name base)
-                      :group "elisp packages"
-                      :source 'repo-scan))
-              (bound-and-true-p repo-scan-repos))))
-  (add-to-list 'repo-dashboard-sources #'my/repo-dashboard-source-repo-scan t))
