@@ -54,8 +54,7 @@ Most of the functionality of my config has been extracted into the following pac
 - [[https://github.com/ultronozm/llm-vc-commit.el][llm-vc-commit.el]] :: LLM-based commit message generator
 - [[https://github.com/ultronozm/magit-fill-column.el][magit-fill-column.el]] :: set magit commit message fill-column based on project
 - [[https://github.com/ultronozm/publish.el][publish.el]] :: convenience functions for pushing files to a git repo
-- [[https://github.com/ultronozm/repo-dashboard.el][repo-dashboard.el]] :: dashboard for a manifest of Git repos
-- [[https://github.com/ultronozm/repo-scan.el][repo-scan.el]] :: display status of some collection of GIT repositories
+- [[https://github.com/ultronozm/repo-scan.el][repo-scan.el]] :: Dired-like dashboard for a collection of Git repos
 - [[https://github.com/ultronozm/auto-hide.el][auto-hide.el]] :: automatically hide function bodies
 - [[https://github.com/ultronozm/consult-abbrev.el][consult-abbrev.el]] :: preview abbrevs using consult
 - [[https://github.com/ultronozm/content-quoter.el][content-quoter.el]] :: quote buffer and file contents
