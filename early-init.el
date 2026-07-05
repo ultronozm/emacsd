@@ -1,5 +1,24 @@
 ;; -*- lexical-binding: t; -*-
 
+;; Disable GC and file-name handlers during startup; restored below.
+;; The handler restore merges rather than assigns, in case anything
+;; registered a handler during init.  The timer is a fallback in case
+;; an error in an earlier `emacs-startup-hook' entry skips the rest of
+;; the hook.
+(defvar my/file-name-handler-alist file-name-handler-alist)
+(setq gc-cons-threshold most-positive-fixnum
+      file-name-handler-alist nil)
+(defun my/restore-startup-defaults ()
+  ;; Must stay idempotent: it runs from both the hook and the timer.
+  ;; `append' (never `nconc') -- with shared list structure, nconc
+  ;; would build a circular list and delete-dups would hang.
+  (setq gc-cons-threshold (* 32 1024 1024))
+  (setq file-name-handler-alist
+        (delete-dups (append file-name-handler-alist
+                             my/file-name-handler-alist))))
+(add-hook 'emacs-startup-hook #'my/restore-startup-defaults 90)
+(run-with-timer 10 nil #'my/restore-startup-defaults)
+
 (setq package-enable-at-startup nil)
 (with-eval-after-load 'use-package-core
   (eval-after-load 'lisp-mode
