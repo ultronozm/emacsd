@@ -3183,7 +3183,7 @@ them at the first newline."
 
 (defun my/pdf-tools-copy-server-into-build (elpaca)
   "Copy pdf-tools server sources into ELPACA's build directory."
-  (let* ((source-dir (elpaca<-source-dir elpaca))
+  (let* ((source-dir (my-elpaca--source-dir elpaca))
          (build-dir (elpaca<-build-dir elpaca))
          (src (expand-file-name "server" source-dir))
          (dst (expand-file-name "build/server" build-dir)))
