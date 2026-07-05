@@ -3519,7 +3519,6 @@ The content is escaped to prevent org syntax interpretation."
   (org-agenda-skip-deadline-if-done t)
   (org-src-preserve-indentation t)
   (org-agenda-skip-scheduled-if-done t)
-  (org-agenda-start-with-log-mode 'closed)
   (org-agenda-prefix-format
    '((agenda . " %i %-12:c%?-12t%6e %s")
      (todo . " %i %-12:c")
@@ -3596,6 +3595,7 @@ The content is escaped to prevent org syntax interpretation."
         ("f" . org-drag-element-forward)
         ("b" . org-drag-element-backward))
   :config
+  (setopt org-agenda-start-with-log-mode '(closed))
   (setopt org-fontify-quote-and-verse-blocks t)
   (require 'ob-shell)
   (setopt org-file-apps '((auto-mode . emacs) ("\\.x?html?\\'" . default)
