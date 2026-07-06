@@ -1422,9 +1422,9 @@ If the predicate is true, add NAME to `repo-scan-repos'."
          (add-to-list 'repo-scan-repos ,(symbol-name name)))))
    (use-package-process-keywords name rest state)))
 
-(unless (memq :repo-scan use-package-keywords)
-  (setq use-package-keywords
-        (use-package-list-insert :repo-scan use-package-keywords :init)))
+(setq use-package-keywords
+      (use-package-list-insert
+       :repo-scan (remove :repo-scan use-package-keywords) :after))
 
 ;;; elpaca
 
