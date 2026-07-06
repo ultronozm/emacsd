@@ -4389,6 +4389,23 @@ character instead of toggling."
   (interactive)
   (my/agent-shell--call-or-self-insert #'agent-shell-ui-toggle-fragment-at-point))
 
+(use-package agent-shell-math-renderer
+  :ensure (:host github :repo "ultronozm/agent-shell-math-renderer"
+                 :depth nil
+                 ;; Local agent-shell has the needed API but still advertises 0.57.3.
+                 :main nil
+                 :build (:not elpaca-build-compile)
+                 :remotes ("origin"
+                           ("upstream" :repo "alberti42/agent-shell-math-renderer")))
+  :after agent-shell
+  :demand t
+  :config
+  (setopt agent-shell-math-renderer-enabled t
+          ;; Generic tex/latex fences often contain prose snippets, not
+          ;; standalone equations.  Render only explicit math fences.
+          agent-shell-math-renderer-fence-languages '("math")
+          agent-shell-math-renderer-render-submitted-prompts t))
+
 ;; (use-package-full preview-auto
 ;;   :after preview
 ;;   :demand
