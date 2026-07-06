@@ -2792,7 +2792,8 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :ensure (:host github :repo "ultronozm/emacs-src-redirect.el" :depth nil
                  :inherit nil)
   :config
-  (emacs-src-redirect-mode))
+  (emacs-src-redirect-mode)
+  (setopt emacs-src-redirect-lisp-dir "~/work/emacs/lisp"))
 
 (defun czm-xref-restrict-to-project-advice (orig-fun &rest args)
   "Advice to restrict xref searches to the current project root."
