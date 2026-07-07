@@ -2791,9 +2791,10 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
   :defer 1
   :ensure (:host github :repo "ultronozm/emacs-src-redirect.el" :depth nil
                  :inherit nil)
+  :custom
+  (emacs-src-redirect-lisp-dir "~/work/emacs/lisp")
   :config
-  (emacs-src-redirect-mode)
-  (setopt emacs-src-redirect-lisp-dir "~/work/emacs/lisp"))
+  (emacs-src-redirect-mode))
 
 (defun czm-xref-restrict-to-project-advice (orig-fun &rest args)
   "Advice to restrict xref searches to the current project root."
@@ -4400,12 +4401,12 @@ character instead of toggling."
                            ("upstream" :repo "alberti42/agent-shell-math-renderer")))
   :after agent-shell
   :demand t
-  :config
-  (setopt agent-shell-math-renderer-enabled t
-          ;; Generic tex/latex fences often contain prose snippets, not
-          ;; standalone equations.  Render only explicit math fences.
-          agent-shell-math-renderer-fence-languages '("math")
-          agent-shell-math-renderer-render-submitted-prompts t))
+  :custom
+  (agent-shell-math-renderer-enabled t)
+  ;; Generic tex/latex fences often contain prose snippets, not
+  ;; standalone equations.  Render only explicit math fences.
+  (agent-shell-math-renderer-fence-languages '("math"))
+  (agent-shell-math-renderer-render-submitted-prompts t))
 
 ;; (use-package-full preview-auto
 ;;   :after preview
