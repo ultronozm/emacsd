@@ -3624,6 +3624,7 @@ The content is escaped to prevent org syntax interpretation."
 (defun my/org-archive-done-tasks ()
   "Archive all done tasks in the current buffer."
   (interactive)
+  (require 'org-archive)
   (org-archive-all-matches
    (lambda (_beg _end)
      (looking-at
