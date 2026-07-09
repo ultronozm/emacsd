@@ -4332,9 +4332,168 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
                   (concat "-" (match-string 0)))))))
    (my/agent-shell-transcripts-dir)))
 
+(defconst my/agent-shell--mouse-commands
+  '(mwheel-scroll mac-mwheel-scroll pixel-scroll-precision
+    pixel-scroll-start-momentum pixel-scroll-interpolate-down
+    pixel-scroll-interpolate-up mouse-set-point mouse-drag-region
+    mouse-save-then-kill scroll-bar-toolkit-scroll
+    scroll-bar-scroll-down scroll-bar-scroll-up)
+  "Mouse commands that should not let agent-shell hover UI move the view.")
+
+(defconst my/agent-shell--scroll-commands
+  '(mwheel-scroll mac-mwheel-scroll pixel-scroll-precision
+    pixel-scroll-start-momentum pixel-scroll-interpolate-down
+    pixel-scroll-interpolate-up scroll-bar-toolkit-scroll
+    scroll-bar-scroll-down scroll-bar-scroll-up)
+  "Mouse scrolling commands after which agent-shell point should follow the view.")
+
+(defconst my/agent-shell--mouse-events
+  '(wheel-up wheel-down wheel-left wheel-right touch-end
+    mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7)
+  "Mouse event basic types that should not let agent-shell hover UI move the view.")
+
+(defconst my/agent-shell--scroll-events
+  '(wheel-up wheel-down wheel-left wheel-right touch-end)
+  "Mouse event basic types that scroll agent-shell buffers.")
+
+(defun my/agent-shell--event-window (event)
+  "Return EVENT's live window, if any."
+  (when (and event (eventp event))
+    (let* ((start (ignore-errors (event-start event)))
+           (window (and start (posn-window start))))
+      (when (window-live-p window)
+        window))))
+
+(defun my/agent-shell--buffer-p (&optional buffer)
+  "Return non-nil when BUFFER is an agent-shell buffer."
+  (let ((buffer (or buffer (current-buffer))))
+    (and (buffer-live-p buffer)
+         (with-current-buffer buffer
+           (derived-mode-p 'agent-shell-mode)))))
+
+(defun my/agent-shell--window-p (window)
+  "Return non-nil when WINDOW displays an agent-shell buffer."
+  (and (window-live-p window)
+       (my/agent-shell--buffer-p (window-buffer window))))
+
+(defun my/agent-shell--command-window ()
+  "Return the live window affected by the current mouse command."
+  (or (my/agent-shell--event-window last-input-event)
+      (selected-window)))
+
+(defun my/agent-shell--event-basic-type ()
+  "Return `last-input-event' basic type, ignoring non-events."
+  (when (eventp last-input-event)
+    (ignore-errors (event-basic-type last-input-event))))
+
+(defun my/agent-shell--mouse-command-p ()
+  "Return non-nil when the current command came from mouse input."
+  (or (memq this-command my/agent-shell--mouse-commands)
+      (memq (my/agent-shell--event-basic-type)
+            my/agent-shell--mouse-events)))
+
+(defun my/agent-shell--mouse-command-in-buffer-p ()
+  "Return non-nil for mouse commands affecting an agent-shell buffer."
+  (and (my/agent-shell--mouse-command-p)
+       (or (my/agent-shell--buffer-p)
+           (my/agent-shell--window-p (my/agent-shell--command-window)))))
+
+(defun my/agent-shell--scroll-command-p ()
+  "Return non-nil when the current command scrolls via mouse input."
+  (or (memq this-command my/agent-shell--scroll-commands)
+      (memq (my/agent-shell--event-basic-type)
+            my/agent-shell--scroll-events)))
+
+(defun my/agent-shell--point-outside-display (pos)
+  "Return a nearby POS outside display text properties."
+  (if (get-text-property pos 'display)
+      (or (next-single-property-change pos 'display nil (point-max))
+          (point-max))
+    pos))
+
+(defun my/agent-shell--visible-window-point (window)
+  "Return a stable visible buffer position for WINDOW."
+  (with-current-buffer (window-buffer window)
+    (save-excursion
+      (goto-char (window-start window))
+      (ignore-errors
+        (vertical-motion (max 0 (/ (max 1 (window-body-height window)) 3))
+                         window))
+      (let ((pos (my/agent-shell--point-outside-display (point))))
+        (if (pos-visible-in-window-p pos window t)
+            pos
+          (window-start window))))))
+
+(defun my/agent-shell--stable-window-point (window)
+  "Return WINDOW's current point if visible, otherwise a visible anchor."
+  (with-current-buffer (window-buffer window)
+    (or (catch 'pos
+          (dolist (pos (list (point) (window-point window)))
+            (let ((pos (my/agent-shell--point-outside-display pos)))
+              (when (pos-visible-in-window-p pos window t)
+                (throw 'pos pos)))))
+        (my/agent-shell--visible-window-point window))))
+
+(defun my/agent-shell--stabilize-window-after-scroll (window)
+  "Keep agent-shell WINDOW anchored after mouse scrolling."
+  (when (my/agent-shell--window-p window)
+    (let ((start (window-start window))
+          (vscroll (window-vscroll window t))
+          (pos (my/agent-shell--stable-window-point window)))
+      (with-current-buffer (window-buffer window)
+        (setq disable-point-adjustment t)
+        (goto-char pos)
+        (set-window-point window pos))
+      (set-window-start window start t)
+      (set-window-vscroll window vscroll t))))
+
+(defun my/agent-shell--preserve-point-for-mouse (orig &rest args)
+  "Run ORIG, then anchor agent-shell buffers after mouse scrolling."
+  (let ((window (my/agent-shell--command-window)))
+    (prog1 (apply orig args)
+      (when (and (my/agent-shell--mouse-command-p)
+                 (my/agent-shell--window-p window))
+        (with-current-buffer (window-buffer window)
+          (setq disable-point-adjustment t))
+        (when (my/agent-shell--scroll-command-p)
+          (my/agent-shell--stabilize-window-after-scroll window))))))
+
+(defun my/agent-shell--skip-mouse-preview-point-motion (orig &rest args)
+  "Avoid AUCTeX preview point motion during agent-shell mouse activity."
+  (if (my/agent-shell--mouse-command-in-buffer-p)
+      (setq disable-point-adjustment t)
+    (apply orig args)))
+
+(defun my/agent-shell--quiet-tooltip-help (orig event)
+  "Suppress hover help when EVENT is in an agent-shell window."
+  (unless (my/agent-shell--window-p (my/agent-shell--event-window event))
+    (funcall orig event)))
+
+(defun my/agent-shell-stabilize-display ()
+  "Keep agent-shell hover UI from moving the viewport around."
+  (setq-local make-cursor-line-fully-visible nil)
+  (setq-local auto-window-vscroll nil)
+  (setq-local show-help-function nil)
+  (setq-local mouse-highlight nil))
+
+(advice-remove 'tooltip-help-tips #'my/agent-shell--quiet-tooltip-help)
+(advice-add 'tooltip-help-tips :around #'my/agent-shell--quiet-tooltip-help)
+
+(when (fboundp 'preview-move-point)
+  (advice-remove 'preview-move-point
+                 #'my/agent-shell--skip-mouse-preview-point-motion)
+  (advice-add 'preview-move-point
+              :around #'my/agent-shell--skip-mouse-preview-point-motion))
+
+(dolist (cmd my/agent-shell--mouse-commands)
+  (when (fboundp cmd)
+    (advice-remove cmd #'my/agent-shell--preserve-point-for-mouse)
+    (advice-add cmd :around #'my/agent-shell--preserve-point-for-mouse)))
+
 (defun my/agent-shell-mode-hook ()
   (my/set-TeX-master-preview)
-  (setq-local preview-tailor-local-multiplier 0.8))
+  (setq-local preview-tailor-local-multiplier 0.8)
+  (my/agent-shell-stabilize-display))
 
 (defun my/agent-shell-insert-org-timestamp ()
   "Insert an Org timestamp with time at point."
@@ -5459,7 +5618,206 @@ numbered variant \"equation\"."
           '(preview-LaTeX-disable-pdfoutput))
   (setq preview-protect-point t)
   (setq preview-locating-previews-message nil)
-  (setq preview-leave-open-previews-visible t)
+  (setopt preview-visibility-style 'always
+          preview-keep-stale-images t)
+  (defun my/auctex-preview-stabilize-display ()
+    "Keep AUCTeX preview redisplay from moving the viewport around."
+    (setq-local make-cursor-line-fully-visible nil)
+    (setq-local auto-window-vscroll nil)
+    (setq-local show-help-function nil)
+    (setq-local TeX-fold-help-echo-max-length 0)
+    (setq-local TeX-fold-auto-reveal-commands
+                (remove 'mouse-set-point TeX-fold-auto-reveal-commands))
+    (my/auctex-preview-sanitize-buffer-overlays))
+  (defun my/auctex-preview-sanitize-string (string)
+    "Remove hover-only properties from STRING."
+    (when (stringp string)
+      (ignore-errors
+        (remove-text-properties 0 (length string)
+                                '(help-echo nil mouse-face nil)
+                                string)))
+    string)
+  (defun my/auctex-preview-sanitize-overlay (ov)
+    "Remove hover-only properties from AUCTeX preview/fold overlay OV."
+    (when (overlayp ov)
+      (when (memq (overlay-get ov 'category) '(preview-overlay TeX-fold))
+        (overlay-put ov 'help-echo nil)
+        (overlay-put ov 'mouse-face nil)
+        (when-let ((strings (overlay-get ov 'strings)))
+          (my/auctex-preview-sanitize-string (car-safe strings))
+          (my/auctex-preview-sanitize-string (cdr-safe strings))))))
+  (defun my/auctex-preview-sanitize-buffer-overlays ()
+    "Remove hover-only AUCTeX overlay properties in the current buffer."
+    (when (derived-mode-p 'tex-mode)
+      (dolist (ov (overlays-in (point-min) (point-max)))
+        (my/auctex-preview-sanitize-overlay ov))))
+  (defun my/auctex-preview-sanitize-overlay-advice (orig &rest args)
+    "Run ORIG, then strip hover-only properties from preview/fold overlays."
+    (prog1 (apply orig args)
+      (when-let ((ov (car-safe args)))
+        (my/auctex-preview-sanitize-overlay ov))
+      (my/auctex-preview-sanitize-buffer-overlays)))
+  (add-hook 'LaTeX-mode-hook #'my/auctex-preview-stabilize-display)
+  (add-hook 'TeX-mode-hook #'my/auctex-preview-stabilize-display)
+  (dolist (fn '(preview-toggle preview-overlay-updated TeX-fold-hide-item))
+    (when (fboundp fn)
+      (advice-remove fn #'my/auctex-preview-sanitize-overlay-advice)
+      (advice-add fn :around #'my/auctex-preview-sanitize-overlay-advice)))
+  (defconst my/auctex-preview--mouse-commands
+    '(mwheel-scroll mac-mwheel-scroll pixel-scroll-precision
+      pixel-scroll-start-momentum pixel-scroll-interpolate-down
+      pixel-scroll-interpolate-up mouse-set-point mouse-drag-region
+      mouse-save-then-kill scroll-bar-toolkit-scroll
+      scroll-bar-scroll-down scroll-bar-scroll-up)
+    "Mouse commands that should not reveal AUCTeX previews or folds.")
+  (defconst my/auctex-preview--scroll-commands
+    '(mwheel-scroll mac-mwheel-scroll pixel-scroll-precision
+      pixel-scroll-start-momentum pixel-scroll-interpolate-down
+      pixel-scroll-interpolate-up scroll-bar-toolkit-scroll
+      scroll-bar-scroll-down scroll-bar-scroll-up)
+    "Mouse scrolling commands after which TeX point should follow the view.")
+  (defconst my/auctex-preview--mouse-events
+    '(wheel-up wheel-down wheel-left wheel-right touch-end
+      mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7)
+    "Mouse event basic types that should not reveal AUCTeX previews or folds.")
+  (defconst my/auctex-preview--scroll-events
+    '(wheel-up wheel-down wheel-left wheel-right touch-end)
+    "Mouse event basic types that scroll TeX buffers.")
+  (defun my/auctex-preview--event-window (event)
+    "Return EVENT's live window, if any."
+    (when (and event (eventp event))
+      (let* ((start (ignore-errors (event-start event)))
+             (window (and start (posn-window start))))
+        (when (window-live-p window)
+          window))))
+  (defun my/auctex-preview--event-window-buffer (event)
+    "Return EVENT's window buffer, if EVENT points at a live window."
+    (when-let ((window (my/auctex-preview--event-window event)))
+      (window-buffer window)))
+  (defun my/auctex-preview--buffer-p (&optional buffer)
+    "Return non-nil when BUFFER is a TeX buffer using automatic previews."
+    (let ((buffer (or buffer (current-buffer))))
+      (and (buffer-live-p buffer)
+           (with-current-buffer buffer
+             (and (derived-mode-p 'tex-mode)
+                  (bound-and-true-p preview-auto-mode))))))
+  (defun my/auctex-preview--window-p (window)
+    "Return non-nil when WINDOW displays an automatic-preview TeX buffer."
+    (and (window-live-p window)
+         (my/auctex-preview--buffer-p (window-buffer window))))
+  (defun my/auctex-preview--command-window ()
+    "Return the live window affected by the current mouse command."
+    (or (my/auctex-preview--event-window last-input-event)
+        (selected-window)))
+  (defun my/auctex-preview--event-basic-type ()
+    "Return `last-input-event' basic type, ignoring non-events."
+    (when (eventp last-input-event)
+      (ignore-errors (event-basic-type last-input-event))))
+  (defun my/auctex-preview--mouse-command-p ()
+    "Return non-nil when the current command came from mouse scrolling/clicking."
+    (or (memq this-command my/auctex-preview--mouse-commands)
+        (memq (my/auctex-preview--event-basic-type)
+              my/auctex-preview--mouse-events)))
+  (defun my/auctex-preview--scroll-command-p ()
+    "Return non-nil when the current command scrolls via mouse input."
+    (or (memq this-command my/auctex-preview--scroll-commands)
+        (memq (my/auctex-preview--event-basic-type)
+              my/auctex-preview--scroll-events)))
+  (defun my/auctex-preview--mouse-command-in-preview-buffer-p ()
+    "Return non-nil for mouse commands affecting an automatic-preview buffer."
+    (and (my/auctex-preview--mouse-command-p)
+         (or (my/auctex-preview--buffer-p)
+             (my/auctex-preview--window-p
+              (my/auctex-preview--command-window)))))
+  (defun my/auctex-preview--point-outside-display-overlay (pos)
+    "Return a nearby POS outside AUCTeX display overlays."
+    (catch 'pos
+      (dolist (ov (overlays-at pos))
+        (when (or (eq (overlay-get ov 'category) 'TeX-fold)
+                  (and (eq (overlay-get ov 'category) 'preview-overlay)
+                       (eq (overlay-get ov 'preview-state) 'active)))
+          (let ((end (overlay-end ov)))
+            (when (and (integerp end) (<= end (point-max)))
+              (throw 'pos end)))))
+      pos))
+  (defun my/auctex-preview--visible-window-point (window)
+    "Return a stable visible buffer position for WINDOW."
+    (with-current-buffer (window-buffer window)
+      (save-excursion
+        (goto-char (window-start window))
+        (ignore-errors
+          (vertical-motion (max 0 (/ (max 1 (window-body-height window)) 3))
+                           window))
+        (let ((pos (my/auctex-preview--point-outside-display-overlay
+                    (point))))
+          (if (pos-visible-in-window-p pos window t)
+              pos
+            (window-start window))))))
+  (defun my/auctex-preview--stable-window-point (window)
+    "Return WINDOW's current point if visible, otherwise a visible anchor."
+    (with-current-buffer (window-buffer window)
+      (or (catch 'pos
+            (dolist (pos (list (point) (window-point window)))
+              (let ((pos (my/auctex-preview--point-outside-display-overlay
+                          pos)))
+                (when (pos-visible-in-window-p pos window t)
+                  (throw 'pos pos)))))
+          (my/auctex-preview--visible-window-point window))))
+  (defun my/auctex-preview--stabilize-window-after-scroll (window)
+    "Keep automatic-preview TeX WINDOW anchored after mouse scrolling."
+    (when (my/auctex-preview--window-p window)
+      (let ((start (window-start window))
+            (vscroll (window-vscroll window t))
+            (pos (my/auctex-preview--stable-window-point window)))
+        (with-current-buffer (window-buffer window)
+          (setq disable-point-adjustment t)
+          (goto-char pos)
+          (set-window-point window pos))
+        (set-window-start window start t)
+        (set-window-vscroll window vscroll t))))
+  (defun my/auctex-preview--skip-mouse-point-motion (orig &rest args)
+    "Avoid `preview-move-point' shoving point during mouse activity."
+    (if (my/auctex-preview--mouse-command-in-preview-buffer-p)
+        (setq disable-point-adjustment t)
+      (apply orig args)))
+  (defun my/auctex-preview--skip-mouse-fold-reveal (orig &rest args)
+    "Avoid `TeX-fold-post-command' opening/closing folds during mouse activity."
+    (unless (my/auctex-preview--mouse-command-in-preview-buffer-p)
+      (apply orig args)))
+  (defun my/auctex-preview--no-mouse-auto-reveal (orig &rest args)
+    "Do not treat mouse activity as an AUCTeX reveal command."
+    (and (not (my/auctex-preview--mouse-command-in-preview-buffer-p))
+         (apply orig args)))
+  (defun my/auctex-preview--preserve-point-for-mouse (orig &rest args)
+    "Run ORIG, then anchor preview TeX buffers after mouse scrolling."
+    (let ((window (my/auctex-preview--command-window)))
+      (prog1 (apply orig args)
+        (when (and (my/auctex-preview--mouse-command-p)
+                   (my/auctex-preview--window-p window))
+          (with-current-buffer (window-buffer window)
+            (setq disable-point-adjustment t))
+          (when (my/auctex-preview--scroll-command-p)
+            (my/auctex-preview--stabilize-window-after-scroll window))))))
+  (advice-remove 'preview-move-point
+                 #'my/auctex-preview--skip-mouse-point-motion)
+  (advice-add 'preview-move-point
+              :around #'my/auctex-preview--skip-mouse-point-motion)
+  (dolist (fn '(TeX-fold-post-command
+                preview-auto-reveal-p TeX-fold-auto-reveal-p))
+    (when (fboundp fn)
+      (advice-remove fn #'my/auctex-preview--skip-mouse-fold-reveal)
+      (advice-remove fn #'my/auctex-preview--no-mouse-auto-reveal)))
+  (when (fboundp 'TeX-fold-post-command)
+    (advice-add 'TeX-fold-post-command
+                :around #'my/auctex-preview--skip-mouse-fold-reveal))
+  (dolist (fn '(preview-auto-reveal-p TeX-fold-auto-reveal-p))
+    (when (fboundp fn)
+      (advice-add fn :around #'my/auctex-preview--no-mouse-auto-reveal)))
+  (dolist (cmd my/auctex-preview--mouse-commands)
+    (when (fboundp cmd)
+      (advice-remove cmd #'my/auctex-preview--preserve-point-for-mouse)
+      (advice-add cmd :around
+                  #'my/auctex-preview--preserve-point-for-mouse)))
   (defun czm-setup-tex-file--local-common-tex-file ()
     "Return local path to common.tex for current buffer, or nil."
     (let* ((dir (file-name-directory (or buffer-file-name default-directory)))
