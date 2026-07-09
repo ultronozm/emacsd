@@ -32,6 +32,10 @@
 
 ;;; optional settings defaults
 
+(defvar my-doit-dir nil
+  "Directory containing the org GTD files, or nil when not configured.
+When nil, the org agenda/capture/refile wiring quietly disables.")
+
 (defvar my-face-heights nil
   "Face height alist used by `czm-set-face-heights'.")
 
@@ -46,12 +50,12 @@
     (expand-file-name file dir)))
 
 (defun my-doit-files (files)
-  "Return the absolute path to FILE in `my-doit-dir', or nil if unset."
+  "Return absolute paths to FILES in `my-doit-dir', omitting them if unset."
   (delq nil (mapcar #'my-doit-file files)))
 
 (defun my-current-log-file ()
   "Return the configured log file for the current date."
-  (when-let* ((file (my-doit-file "log-Y%.org")))
+  (when-let* ((file (my-doit-file "log-%Y.org")))
     (expand-file-name (format-time-string file))))
 
 (defun my/getenv (name)
@@ -3552,7 +3556,7 @@ The content is escaped to prevent org syntax interpretation."
   (setopt org-default-notes-file (or (my-doit-file "todo.org")
                                      (expand-file-name "notes.org" user-emacs-directory)))
   (setopt org-directory "~/")
-  (setopt org-agenda-files (my-doit-files 
+  (setopt org-agenda-files (my-doit-files
                             '("todo.org" "projects.org" "reading.org"
                               "trips.org" "proj-emacs-dev.org")))
   (setopt org-goto-auto-isearch nil)
@@ -3567,11 +3571,13 @@ The content is escaped to prevent org syntax interpretation."
   (setopt org-hide-leading-stars t)
   (setopt org-list-allow-alphabetical t)
   (setopt org-refile-targets
-          `((nil :level . 1)
-            (,(my-doit-files '("reading.org" "trips.org" "projects.org"))
-             :level . 1)
-            (,(my-doit-files '("proj-emacs-dev.org")) :maxlevel . 2)
-            (,(my-doit-files '("reference.org")) :level . 1)))
+          (append
+           '((nil :level . 1))
+           (when (my-setting-string 'my-doit-dir)
+             `((,(my-doit-files '("reading.org" "trips.org" "projects.org"))
+                :level . 1)
+               (,(my-doit-files '("proj-emacs-dev.org")) :maxlevel . 2)
+               (,(my-doit-files '("reference.org")) :level . 1)))))
   (setopt org-refile-use-outline-path nil)
   ;; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
   (setopt org-agenda-skip-deadline-if-done t)
@@ -3587,14 +3593,14 @@ The content is escaped to prevent org syntax interpretation."
           '((sequence "TODO(t)" "|" "DONE(d)" "CANCELED(c)")))
   (setopt org-use-speed-commands t)
   (setopt org-capture-templates
-          (let ((todo-file (my-doit-file "todo.org"))
-                (log-file (my-current-log-file)))
+          (let ((todo-file (my-doit-file "todo.org")))
             (append
              (when todo-file
                `(("i" "Inbox" entry (file+headline ,todo-file "Inbox")
                   "* %?\n  %i")))
-             (when log-file
-               `(("j" "Journal" entry (file+olp+datetree log-file)
+             ;; Function target so %Y resolves at capture time, not startup.
+             (when (my-current-log-file)
+               '(("j" "Journal" entry (file+olp+datetree my-current-log-file)
                   "* %?\nEntered on %U\n")))
              (when todo-file
                `(("a" "Inbox (annotated)" entry (file+headline ,todo-file "Inbox")
@@ -4008,7 +4014,7 @@ Skips empty days and diary holidays."
     (require 'org-agenda)
     (let ((trips-file (my-doit-file "trips.org")))
       (unless trips-file
-        (user-error "Set my-trips-file in init-settings.el to use this command"))
+        (user-error "Set my-doit-dir in init-settings.el to use this command"))
       (let ((org-agenda-files (list trips-file))
             (org-agenda-span 365)
             (org-agenda-start-on-weekday nil)

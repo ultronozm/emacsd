@@ -8,12 +8,9 @@
       my-doit-dir    "~/doit"      ; work monorepo (kept top-level)
       my-work-dir    "~/work"      ; catch-all parent for working repos
       my-scratch-dir "~/scratch"   ; disposable capture space (not migrated)
-      ;; --- doit files (derived) ---
+      ;; --- doit files (derived; org files derive inside init.el) ---
       my-master-bib-file (expand-file-name "refs.bib" my-doit-dir)
       my-common-tex-file (expand-file-name "common.tex" my-doit-dir)
-      my-todo-file       (expand-file-name "todo.org" my-doit-dir)
-      my-projects-file   (expand-file-name "projects.org" my-doit-dir)
-      my-log-file        (expand-file-name "log-%Y.org" my-doit-dir)
       my-old-log-file    (expand-file-name "log-old.org" my-doit-dir)
       my-preview-master  (expand-file-name "preview-master.tex" my-doit-dir)
       ;; --- mail (mboxes live in Dropbox, not git) ---
