@@ -32,26 +32,6 @@
 
 ;;; optional settings defaults
 
-(defvar my-todo-file nil
-  "Primary todo Org file path, or nil when not configured.")
-
-(defvar my-projects-file nil
-  "Projects Org file path, or nil when not configured.")
-
-(defvar my-reading-file nil
-  "Reading-list Org file path, or nil when not configured.")
-
-(defvar my-trips-file nil
-  "Trips/events Org file path, or nil when not configured.")
-
-(defvar my-emacs-dev-file nil
-  "Emacs development ledger Org file path, or nil when not configured.")
-
-(defvar my-log-file nil
-  "Org log/journal file path, or nil when not configured.
-
-The value may contain `format-time-string' escapes such as %Y.")
-
 (defvar my-face-heights nil
   "Face height alist used by `czm-set-face-heights'.")
 
@@ -60,14 +40,19 @@ The value may contain `format-time-string' escapes such as %Y.")
   (let ((val (and (boundp sym) (symbol-value sym))))
     (and (stringp val) (> (length val) 0) val)))
 
+(defun my-doit-file (file)
+  "Return the absolute path to FILE in `my-doit-dir', or nil if unset."
+  (when-let* ((dir (my-setting-string 'my-doit-dir)))
+    (expand-file-name file dir)))
+
+(defun my-doit-files (files)
+  "Return the absolute path to FILE in `my-doit-dir', or nil if unset."
+  (delq nil (mapcar #'my-doit-file files)))
+
 (defun my-current-log-file ()
   "Return the configured log file for the current date."
-  (when-let* ((file (my-setting-string 'my-log-file)))
+  (when-let* ((file (my-doit-file "log-Y%.org")))
     (expand-file-name (format-time-string file))))
-
-(defun my-setting-files (&rest syms)
-  "Return configured file paths from SYMS, omitting unset values."
-  (delq nil (mapcar #'my-setting-string syms)))
 
 (defun my/getenv (name)
   "Return environment variable NAME from Emacs or the login shell.
@@ -2587,12 +2572,10 @@ If DEFAULT-EXTRA-ARGS is non-nil, append them to `consult-ripgrep-args'."
   (interactive)
   (let ((files
          (append
-          (my-setting-files 'my-todo-file 'my-projects-file
-                            'my-reading-file 'my-trips-file
-                            'my-emacs-dev-file)
-          (list "~/doit/reference.org"
-                "~/doit/recruitment.org"
-                (expand-file-name "diary" user-emacs-directory)))))
+          (my-doit-files
+           '("todo.org" "projects.org" "reading.org" "trips.org"
+             "proj-emacs-dev.org" "reference.org" "recruitment.org"))
+          (list (expand-file-name "diary" user-emacs-directory)))))
     (consult-ripgrep--files
      "Ripgrep todo notes"
      files
@@ -3487,100 +3470,6 @@ The content is escaped to prevent org syntax interpretation."
   (org-mode . (lambda () (setq fill-column 999999)))
   (org-mode . abbrev-mode)
   (org-mode . czm-org-preview-setup)
-  :custom
-  (org-hide-emphasis-markers t)
-  (org-agenda-custom-commands
-   (append
-    '(("n" "Agenda and all TODOs"
-       ((agenda "")
-        (todo "TODO")
-        (tags "CLOSED>=\"<today>\""
-              ((org-agenda-overriding-header "\nCompleted today\n"))))))
-    (when-let* ((trips-file (or (my-setting-string 'my-trips-file)
-                                (my-setting-string 'my-projects-file))))
-      `(("y" "Year view"
-         ((agenda ""
-                  ((org-agenda-files (list ,trips-file))
-                   (org-agenda-span 365)
-                   (org-agenda-start-on-weekday nil)
-                   (org-agenda-start-day (format-time-string "%Y-%m-%d"))
-                   (org-agenda-prefix-format
-                    '((agenda . "  %-12:c%?-12t%6e  %s")))
-                   (org-agenda-show-all-dates nil)
-                   (diary-show-holidays-flag nil)
-                   (org-agenda-include-diary t))))
-         ((org-agenda-skip-function
-           '(org-agenda-skip-entry-if 'todo 'done))))))
-    (when-let* ((emacs-dev-file (my-setting-string 'my-emacs-dev-file)))
-      `(("e" "Emacs dev pipeline"
-         ((todo "READY" ((org-agenda-overriding-header "Ready to send")))
-          (todo "REVIEW" ((org-agenda-overriding-header "Needs your review")))
-          (todo "STARTED" ((org-agenda-overriding-header "In progress")))
-          (todo "TODO" ((org-agenda-overriding-header "Picked up, not begun")))
-          (todo "SENT" ((org-agenda-overriding-header "Sent; waiting on upstream"))))
-         ((org-agenda-files (list ,emacs-dev-file))))))))
-  (org-default-notes-file
-   (or (my-setting-string 'my-todo-file)
-       (expand-file-name "notes.org" user-emacs-directory)))
-  (org-directory "~/")
-  (org-agenda-files (my-setting-files 'my-todo-file 'my-projects-file
-                                      'my-reading-file 'my-trips-file
-                                      'my-emacs-dev-file))
-  (org-goto-auto-isearch nil)
-  (org-agenda-include-diary t)
-  (org-babel-load-languages '((latex . t) (emacs-lisp . t)
-                              (python . t) (R . t)
-                              (shell . t) (sql . t)))
-  (org-babel-python-command "python3")
-  (org-confirm-babel-evaluate nil)
-  (org-link-elisp-confirm-function nil)
-  (org-enforce-todo-dependencies t)
-  (org-hide-leading-stars t)
-  (org-list-allow-alphabetical t)
-  (org-refile-targets
-   `((nil :level . 1)
-     (,(my-setting-files 'my-reading-file 'my-trips-file 'my-projects-file)
-      :level . 1)
-     (,(my-setting-files 'my-emacs-dev-file) :maxlevel . 2)
-     ("~/doit/reference.org" :level . 1)))
-  (org-refile-use-outline-path nil)
-  ;; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
-  (org-agenda-skip-deadline-if-done t)
-  (org-src-preserve-indentation t)
-  (org-agenda-skip-scheduled-if-done t)
-  (org-agenda-prefix-format
-   '((agenda . " %i %-12:c%?-12t%6e %s")
-     (todo . " %i %-12:c")
-     (tags . " %i %-12:c")
-     (search . " %i %-12:c")))
-  (org-tags-column -70)
-  (org-todo-keywords
-   '((sequence "TODO(t)" "|" "DONE(d)" "CANCELED(c)")))
-  (org-use-speed-commands t)
-  (org-capture-templates
-   (let ((todo-file (my-setting-string 'my-todo-file))
-         (log-file (my-setting-string 'my-log-file)))
-     (append
-      (when todo-file
-        `(("i" "Inbox" entry (file+headline ,todo-file "Inbox")
-           "* %?\n  %i")))
-      (when log-file
-        `(("j" "Journal" entry (file+olp+datetree my-current-log-file)
-           "* %?\nEntered on %U\n")))
-      (when todo-file
-        `(("a" "Inbox (annotated)" entry (file+headline ,todo-file "Inbox")
-           "* %?\n%a")
-          ("k" "Interruptions" entry (file+headline ,todo-file "Interruptions")
-           "* %?\n%U\n" :clock-in t :clock-resume t)))
-      (when-let* ((reading-file (my-setting-string 'my-reading-file)))
-        `(("r" "Reading" entry (file+headline ,reading-file "Papers and books")
-           "* %?\n%i")))
-      (when-let* ((emacs-dev-file (my-setting-string 'my-emacs-dev-file)))
-        `(("e" "Emacs dev backlog" entry (file+headline ,emacs-dev-file "Backlog")
-           "* %?\n%i")))
-      '(("d" "Diary" entry (file+datetree simple-journal-db-file)
-         "* %U \n%?%i\n" :tree-type week)))))
-  (org-src-window-setup 'current-window)
   :bind
   (:map org-mode-map
         ("C-c 1" .
@@ -3630,6 +3519,95 @@ The content is escaped to prevent org syntax interpretation."
         ("f" . org-drag-element-forward)
         ("b" . org-drag-element-backward))
   :config
+  (setopt org-hide-emphasis-markers t)
+  (setopt org-agenda-custom-commands
+          (append
+           '(("n" "Agenda and all TODOs"
+              ((agenda "")
+               (todo "TODO")
+               (tags "CLOSED>=\"<today>\""
+                     ((org-agenda-overriding-header "\nCompleted today\n"))))))
+           (when-let* ((trips-file (my-doit-file "trips.org")))
+             `(("y" "Year view"
+                ((agenda ""
+                         ((org-agenda-files (list ,trips-file))
+                          (org-agenda-span 365)
+                          (org-agenda-start-on-weekday nil)
+                          (org-agenda-start-day (format-time-string "%Y-%m-%d"))
+                          (org-agenda-prefix-format
+                           '((agenda . "  %-12:c%?-12t%6e  %s")))
+                          (org-agenda-show-all-dates nil)
+                          (diary-show-holidays-flag nil)
+                          (org-agenda-include-diary t))))
+                ((org-agenda-skip-function
+                  '(org-agenda-skip-entry-if 'todo 'done))))))
+           (when-let* ((emacs-dev-file (my-doit-file "proj-emacs-dev.org")))
+             `(("e" "Emacs dev pipeline"
+                ((todo "READY" ((org-agenda-overriding-header "Ready to send")))
+                 (todo "REVIEW" ((org-agenda-overriding-header "Needs your review")))
+                 (todo "STARTED" ((org-agenda-overriding-header "In progress")))
+                 (todo "TODO" ((org-agenda-overriding-header "Picked up, not begun")))
+                 (todo "SENT" ((org-agenda-overriding-header "Sent; waiting on upstream"))))
+                ((org-agenda-files (list ,emacs-dev-file))))))))
+  (setopt org-default-notes-file (or (my-doit-file "todo.org")
+                                     (expand-file-name "notes.org" user-emacs-directory)))
+  (setopt org-directory "~/")
+  (setopt org-agenda-files (my-doit-files 
+                            '("todo.org" "projects.org" "reading.org"
+                              "trips.org" "proj-emacs-dev.org")))
+  (setopt org-goto-auto-isearch nil)
+  (setopt org-agenda-include-diary t)
+  (setopt org-babel-load-languages '((latex . t) (emacs-lisp . t)
+                                     (python . t) (R . t)
+                                     (shell . t) (sql . t)))
+  (setopt org-babel-python-command "python3")
+  (setopt org-confirm-babel-evaluate nil)
+  (setopt org-link-elisp-confirm-function nil)
+  (setopt org-enforce-todo-dependencies t)
+  (setopt org-hide-leading-stars t)
+  (setopt org-list-allow-alphabetical t)
+  (setopt org-refile-targets
+          `((nil :level . 1)
+            (,(my-doit-files '("reading.org" "trips.org" "projects.org"))
+             :level . 1)
+            (,(my-doit-files '("proj-emacs-dev.org")) :maxlevel . 2)
+            (,(my-doit-files '("reference.org")) :level . 1)))
+  (setopt org-refile-use-outline-path nil)
+  ;; should add to list:  (org-speed-commands '(("B" . org-tree-to-indirect-buffer)))
+  (setopt org-agenda-skip-deadline-if-done t)
+  (setopt org-src-preserve-indentation t)
+  (setopt org-agenda-skip-scheduled-if-done t)
+  (setopt org-agenda-prefix-format
+          '((agenda . " %i %-12:c%?-12t%6e %s")
+            (todo . " %i %-12:c")
+            (tags . " %i %-12:c")
+            (search . " %i %-12:c")))
+  (setopt org-tags-column -70)
+  (setopt org-todo-keywords
+          '((sequence "TODO(t)" "|" "DONE(d)" "CANCELED(c)")))
+  (setopt org-use-speed-commands t)
+  (setopt org-capture-templates
+          (let ((todo-file (my-doit-file "todo.org"))
+                (log-file (my-current-log-file)))
+            (append
+             (when todo-file
+               `(("i" "Inbox" entry (file+headline ,todo-file "Inbox")
+                  "* %?\n  %i")))
+             (when log-file
+               `(("j" "Journal" entry (file+olp+datetree log-file)
+                  "* %?\nEntered on %U\n")))
+             (when todo-file
+               `(("a" "Inbox (annotated)" entry (file+headline ,todo-file "Inbox")
+                  "* %?\n%a")
+                 ("k" "Interruptions" entry (file+headline ,todo-file "Interruptions")
+                  "* %?\n%U\n" :clock-in t :clock-resume t)))
+             (when-let* ((reading-file (my-doit-file "reading.org")))
+               `(("r" "Reading" entry (file+headline ,reading-file "Papers and books")
+                  "* %?\n%i")))
+             (when-let* ((emacs-dev-file (my-doit-file "proj-emacs-dev.org")))
+               `(("e" "Emacs dev backlog" entry (file+headline ,emacs-dev-file "Backlog")
+                  "* %?\n%i"))))))
+  (setopt org-src-window-setup 'current-window)
   (setopt org-agenda-start-with-log-mode '(closed))
   (setopt org-fontify-quote-and-verse-blocks t)
   (require 'ob-shell)
@@ -4028,8 +4006,7 @@ Skips empty days and diary holidays."
   (interactive)
   (save-window-excursion
     (require 'org-agenda)
-    (let ((trips-file (or (my-setting-string 'my-trips-file)
-                          (my-setting-string 'my-projects-file))))
+    (let ((trips-file (my-doit-file "trips.org")))
       (unless trips-file
         (user-error "Set my-trips-file in init-settings.el to use this command"))
       (let ((org-agenda-files (list trips-file))
