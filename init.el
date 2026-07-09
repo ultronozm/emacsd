@@ -39,6 +39,11 @@ When nil, the org agenda/capture/refile wiring quietly disables.")
 (defvar my-face-heights nil
   "Face height alist used by `czm-set-face-heights'.")
 
+(defvar my-copilot-bind-grave-key nil
+  "Non-nil means bind grave to accept Copilot completions.
+
+This is a machine-local setting from init-settings.el.")
+
 (defun my-setting-string (sym)
   "Return SYM value when it is a non-empty string, else nil."
   (let ((val (and (boundp sym) (symbol-value sym))))
@@ -3779,13 +3784,11 @@ enters `lisp-interaction-mode' right after startup, so a bare
         ("H-x" . copilot-mode)
         ("§" . copilot-accept-completion))
   (:map copilot-completion-map
-        ("`" . copilot-accept-completion)
         ("§" . copilot-accept-completion)
         ("M-§" . copilot-accept-completion-by-word)
         ("C-§" . copilot-accept-completion-by-line)
         ("s-§" . copilot-accept-completion-by-sentence)
         ("C-M-§" . copilot-accept-completion-by-paragraph)
-        ("`" . nil)
         ("M-`" . copilot-accept-completion-by-word)
         ("C-`" . copilot-accept-completion-by-line)
         ("s-`" . copilot-accept-completion-by-sentence)
@@ -3794,6 +3797,16 @@ enters `lisp-interaction-mode' right after startup, so a bare
         ("C-M-`" . copilot-accept-completion-by-paragraph)
         ("C-M-<down>" . copilot-next-completion)
         ("C-M-<up>" . copilot-previous-completion)))
+
+(defun my/copilot-apply-local-keybindings ()
+  "Apply machine-local Copilot completion key bindings."
+  (when (boundp 'copilot-completion-map)
+    (if my-copilot-bind-grave-key
+        (keymap-set copilot-completion-map "`" #'copilot-accept-completion)
+      (keymap-unset copilot-completion-map "`" t))))
+
+(with-eval-after-load 'copilot
+  (my/copilot-apply-local-keybindings))
 
 ;; (keymap-set copilot-completion-map "<remap> <zap-to-char>" #'copilot-accept-completion-to-char)
 ;; (keymap-set copilot-completion-map "<remap> <zap-up-to-char>" #'copilot-accept-completion-up-to-char)

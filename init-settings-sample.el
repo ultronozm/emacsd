@@ -44,7 +44,8 @@
                                      :family "Andale Mono")
       my-agent-shell-transcripts-dir "~/Dropbox/agent-transcripts/excerpts"
       my-emacs-source-dir "~/work/emacs/"
-      my-firefox-folder "~/Library/Application Support/Firefox")
+      my-firefox-folder "~/Library/Application Support/Firefox"
+      my-copilot-bind-grave-key nil)
 
 (customize-set-variable 'user-full-name "Paul D. Nelson")
 (customize-set-variable 'user-mail-address "ultrono@gmail.com")
