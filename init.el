@@ -4686,6 +4686,15 @@ character instead of toggling."
      :follow #'agent-shell-links-org-follow
      :store #'agent-shell-links-org-store)))
 
+(use-package agent-shell-bookmark
+  ;; Installed for evaluating migration from `agent-shell-links'.  Keep it
+  ;; unloaded for now so `agent-shell-ol' does not replace the current Org
+  ;; link handler before existing links are converted.
+  :ensure (:host github :repo "dcluna/agent-shell-bookmark"
+                 :depth nil
+                 :inherit nil)
+  :defer t)
+
 ;;;; codex CLI wrapper
 
 (defvar codex-exec-command-history nil
