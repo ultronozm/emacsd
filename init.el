@@ -4440,7 +4440,10 @@ character instead of toggling."
   (agent-shell-math-renderer-render-submitted-prompts t))
 
 (use-package agent-shell-preview-auto
-  :load-path "~/.emacs.d/elpaca/repos/agent-shell-preview-auto"
+  :repo-scan
+  :ensure (:host github :repo "ultronozm/agent-shell-preview-auto.el"
+                 :depth nil
+                 :inherit nil)  
   :after agent-shell
   :custom
   (agent-shell-preview-auto-TeX-master my-preview-master)
