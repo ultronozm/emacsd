@@ -3904,11 +3904,11 @@ enters `lisp-interaction-mode' right after startup, so a bare
   :ensure (:host github :repo "natrys/whisper.el" :inherit nil)
   :bind ("H-q" . whisper-run)
   :config
-  (setq whisper-install-directory "/tmp/"
-        whisper-model "base"
-        whisper-language "en"
-        whisper-translate nil
-        whisper-use-threads (/ (num-processors) 2)))
+  (setopt whisper-install-directory (locate-user-emacs-file ".cache/")
+          whisper-model "base"
+          whisper-language "en"
+          whisper-translate nil
+          whisper-use-threads (/ (num-processors) 2)))
 
 (defun rk/get-ffmpeg-device ()
   "Gets the list of devices available to ffmpeg.
@@ -3955,21 +3955,39 @@ matching `STRING'. `TYPE' can be :video or :audio."
              when (string-match-p string (cdr device))
              return (car device))))
 
+(defcustom rk/default-audio-device-name "MacBook Pro Microphone"
+  "The default audio device name to use for whisper.el and other audio processes."
+  :type '(choice (const :tag "No default" nil) string))
+
 (defcustom rk/default-audio-device nil
-  "The default audio device to use for whisper.el and outher audio processes."
-  :type 'string)
+  "The default audio device index to use for whisper.el and other audio processes."
+  :type '(choice (const :tag "No default" nil) integer))
 
 (defun rk/select-default-audio-device (&optional device-name)
   "Interactively select an audio device to use for whisper.el and other audio processes.
 If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
   (interactive)
   (let* ((audio-devices (cadr (rk/get-ffmpeg-device)))
-         (indexes (mapcar #'car audio-devices))
          (names (mapcar #'cdr audio-devices))
-         (name (or device-name (completing-read "Select audio device: " names nil t))))
-    (setq rk/default-audio-device (rk/find-device-matching name :audio))
+         (name (or device-name (completing-read "Select audio device: " names nil t)))
+         (device-index (rk/find-device-matching name :audio)))
+    (unless device-index
+      (error "No audio device matching %S" name))
+    (setq rk/default-audio-device-name name
+          rk/default-audio-device device-index)
     (when (boundp 'whisper--ffmpeg-input-device)
       (setq whisper--ffmpeg-input-device (format ":%s" rk/default-audio-device)))))
+
+(defun rk/apply-default-audio-device ()
+  "Apply `rk/default-audio-device-name' when FFmpeg can see that device."
+  (interactive)
+  (when (and rk/default-audio-device-name
+             (executable-find "ffmpeg"))
+    (rk/select-default-audio-device rk/default-audio-device-name)))
+
+(with-eval-after-load 'whisper
+  (ignore-errors
+    (rk/apply-default-audio-device)))
 
 ;; I use the following functions to provide context to ai-org-chat
 
