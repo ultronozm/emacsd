@@ -4561,8 +4561,11 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
   (setopt agent-shell-openai-authentication
           (agent-shell-openai-make-authentication :login t))
   (setopt agent-shell-file-completion-enabled nil)
+  (setopt agent-shell-openai-default-session-mode-id
+          "agent-full-access")
   (setopt agent-shell-openai-codex-environment
           (agent-shell-make-environment-variables
+           "INITIAL_AGENT_MODE" "agent-full-access"
            "GITHUB_MCP_PAT" (my/getenv "GITHUB_MCP_PAT")))
   (setopt agent-shell-opencode-authentication
           (agent-shell-opencode-make-authentication :none t))
