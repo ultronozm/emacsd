@@ -3687,7 +3687,6 @@ The content is escaped to prevent org syntax interpretation."
 
 (use-package-full czm-mail
   :repo-scan
-  :after rmail
   :demand
   :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil)
   :bind
