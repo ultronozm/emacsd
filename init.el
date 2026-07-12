@@ -3725,19 +3725,14 @@ The content is escaped to prevent org syntax interpretation."
   (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode)
   :config
   (add-hook 'eat-mode-hook #'abbrev-mode)
-  (let ((pass-through-key [?\C-\\])
-        (non-bound-key [?\C-z]))
-    (setq-default
-     eat-semi-char-non-bound-keys
-     (cons non-bound-key
-           (seq-remove (lambda (k) (equal k pass-through-key))
-                       eat-semi-char-non-bound-keys))
-     eat-eshell-semi-char-non-bound-keys
-     (cons non-bound-key
-           (seq-remove (lambda (k) (equal k pass-through-key))
-                       eat-eshell-semi-char-non-bound-keys)))
-    (eat-update-semi-char-mode-map)
-    (eat-eshell-update-semi-char-mode-map)))
+  ;; Mutate the live keymaps rather than customizing
+  ;; `eat-*-semi-char-non-bound-keys': the update functions those
+  ;; require replace the keymap object, but `eat--semi-char-mode'
+  ;; captures the original at load time, so changes only take effect
+  ;; after an `eat-reload' -- which loops under :defer t.
+  (dolist (map (list eat-semi-char-mode-map eat-eshell-semi-char-mode-map))
+    (keymap-set map "C-\\" #'eat-self-input)
+    (keymap-unset map "C-z" t)))
 
 ;;; ai stuff
 
