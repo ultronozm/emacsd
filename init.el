@@ -3745,6 +3745,7 @@ enters `lisp-interaction-mode' right after startup, so a bare
     (copilot-mode)))
 
 (use-package-full copilot
+  :repo-scan
   :defer 3
   :ensure (:host github
                  :repo "ultronozm/copilot.el"
