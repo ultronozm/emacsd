@@ -5492,6 +5492,10 @@ numbered variant \"equation\"."
   :config
   (czm-tex-pythontex-flush-left-begin-end-mode 1))
 
+(defun my-TeX-fold-mathrm (&optional argument)
+  "Fold a braced \\mathrm ARGUMENT, but leave unbraced uses alone."
+  (or argument 'abort))
+
 (defun czm-setup-and-activate-tex-fold ()
   (require 'czm-pythontex)
   (require 'czm-tex-jump)
@@ -5521,7 +5525,7 @@ numbered variant \"equation\"."
                   (,(lambda (text) (propertize text 'face '(:strike-through t)))
                    ("sout"))))
     (add-to-list 'TeX-fold-macro-spec-list item))
-  (dolist (item `((1 ("mathrm"))))
+  (dolist (item `(((my-TeX-fold-mathrm . (0 . 1)) ("mathrm"))))
     (add-to-list 'TeX-fold-macro-spec-list item))
   (dolist (item `((("🌅" . "🌇") ("document"))
                   (("⚡" . "⚡") ("minted" "minted*"))
