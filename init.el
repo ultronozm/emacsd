@@ -4310,10 +4310,10 @@ The following placeholders are replaced using `format-spec':
    (agent-shell-opencode-make-agent-config)))
 
 (defun my/agent-shell-opencode-local-discuss ()
-  "Start OpenCode on the local Ollama coding model."
+  "Start OpenCode on a local Ollama model."
   (interactive)
   (require 'agent-shell-opencode)
-  (let ((agent-shell-opencode-default-model-id "ollama/qwen3-coder-30b"))
+  (let ((agent-shell-opencode-default-model-id "ollama/gemma4-31b"))
     (my/agent-shell--start-discuss-with-config
      (agent-shell-opencode-make-agent-config))))
 
