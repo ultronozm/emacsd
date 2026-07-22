@@ -5163,6 +5163,7 @@ The value of `calc-language` is restored after BODY has been processed."
   ("H-d" . diff-hl-mode)
   ("H-D" . diff-hl-set-reference-rev-in-project)
   :config
+  (keymap-set diff-hl-command-map "e" #'diff-hl-ediff-current-hunk)
   (add-hook 'diff-hl-mode-hook #'my/diff-hl-mode-hook)
   (setopt diff-hl-goto-hunk-old-revisions t)
   (setopt diff-hl-show-staged-changes nil)
