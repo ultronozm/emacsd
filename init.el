@@ -4526,7 +4526,7 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
                  :depth nil)
   :bind
   (:map agent-shell-mode-map
-        ("o" . my/agent-shell-ui-toggle-fragment-at-point-or-self-insert)
+        ("o" . my/agent-shell-ui-toggle-fragment-or-self-insert)
         ("C-c t" . my/agent-shell-insert-org-timestamp)
         ("C-c m" . my/agent-shell-yank-fenced-block))
   (:map project-prefix-map
@@ -4588,14 +4588,14 @@ insert the character instead of invoking COMMAND."
       (self-insert-command 1)
     (funcall command)))
 
-(defun my/agent-shell-ui-toggle-fragment-at-point-or-self-insert ()
+(defun my/agent-shell-ui-toggle-fragment-or-self-insert ()
   "Toggle visibility of fragment body at point or insert at prompt.
 
-Behaves like `agent-shell-ui-toggle-fragment-at-point', but if point is
-at the input prompt and a character key was pressed, insert the
-character instead of toggling."
+Behaves like `agent-shell-ui-toggle-fragment', but if point is at the
+input prompt and a character key was pressed, insert the character
+instead of toggling."
   (interactive)
-  (my/agent-shell--call-or-self-insert #'agent-shell-ui-toggle-fragment-at-point))
+  (my/agent-shell--call-or-self-insert #'agent-shell-ui-toggle-fragment))
 
 (use-package agent-shell-math-renderer
   :ensure (:host github :repo "ultronozm/agent-shell-math-renderer"
