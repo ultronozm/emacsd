@@ -2456,6 +2456,14 @@ back to `exec-path-from-shell-getenv' from local buffers."
   :custom
   (completion-styles '(orderless basic)))
 
+(defun my-consult-line-from-isearch ()
+  "Continue isearch with document search in LaTeX, or line search elsewhere."
+  (interactive)
+  (call-interactively
+   (if (derived-mode-p 'LaTeX-mode 'latex-mode)
+       #'my-consult-document
+     #'consult-line)))
+
 (use-package consult
   :ensure t
   :bind
@@ -2491,7 +2499,7 @@ back to `exec-path-from-shell-getenv' from local buffers."
    ("M-s e" . consult-isearch-history)
    :map isearch-mode-map
    ([remap isearch-edit-string] . consult-isearch-history)
-   ("M-s l" . consult-line)
+   ("M-s l" . my-consult-line-from-isearch)
    ("M-s L" . consult-line-multi)
    :map minibuffer-local-map
    ("M-s" . consult-history)
@@ -5277,6 +5285,28 @@ The value of `calc-language` is restored after BODY has been processed."
 
 ;;; latex
 
+(defun my-consult-document ()
+  "Search the current RefTeX document, excluding common.tex."
+  (interactive)
+  (require 'reftex)
+  (require 'consult)
+  (require 'seq)
+  (reftex-access-scan-info)
+  (let* ((files
+          (seq-remove
+           (lambda (file)
+             (and (stringp file)
+                  (equal (file-name-nondirectory file) "common.tex")))
+           (reftex-all-document-files)))
+         (buffers
+          (mapcar (lambda (file)
+                    (if (bufferp file)
+                        file
+                      (find-file-noselect file)))
+                  files)))
+    (consult-line-multi
+     (list :buffer-list buffers :sort nil :filter nil))))
+
 (defun my-LaTeX-mode-setup ()
   (turn-on-reftex)
   (apply #'LaTeX-add-environments
@@ -5374,6 +5404,7 @@ complete document rather than just a previewed region."
   (prog-mode . my/maybe-set-preview-master-local)
   :bind
   (:map LaTeX-mode-map
+        ("M-s l" . my-consult-document)
         ("C-c C-g" . czm-latex-calc-grab)
         ("C-c C-n" . nil) ; TeX-normal-mode
         ("C-c #" . nil)
