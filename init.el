@@ -5113,6 +5113,35 @@ The value of `calc-language` is restored after BODY has been processed."
 
 ;;; git
 
+(defun czm/vc-git-log-edit-insert-merge-msg ()
+  "Prefill an empty Git log buffer from .git/MERGE_MSG.
+Does nothing unless a merge is in progress (MERGE_HEAD exists).
+Intended for `log-edit-hook', after `log-edit-insert-message-template'."
+  (when-let* (((derived-mode-p 'vc-git-log-edit-mode))
+              ((log-edit-empty-buffer-p))
+              (git-path
+               (lambda (name)
+                 (expand-file-name
+                  (car (process-lines "git" "rev-parse" "--git-path" name)))))
+              ((ignore-errors (file-exists-p (funcall git-path "MERGE_HEAD"))))
+              (file (funcall git-path "MERGE_MSG"))
+              ((file-readable-p file)))
+    (let (summary body)
+      (with-temp-buffer
+        (insert-file-contents file)
+        ;; git strips these itself only when it runs an editor.
+        (goto-char (point-min))
+        (flush-lines "^#")
+        (goto-char (point-min))
+        (setq summary (buffer-substring-no-properties (point) (pos-eol))
+              body (string-trim (buffer-substring-no-properties
+                                 (pos-eol) (point-max)))))
+      (unless (string-empty-p summary)
+        (log-edit-set-header "Summary" summary)
+        (goto-char (point-max))
+        (unless (string-empty-p body)
+          (insert body "\n"))))))
+
 (use-package czm-vc
   :ensure (:host github :repo "ultronozm/czm-vc.el"
                  :depth nil)
@@ -5127,6 +5156,9 @@ The value of `calc-language` is restored after BODY has been processed."
     (keymap-global-set "C-x C-g" #'czm-vc-switch-to-git-status-file)
     (add-hook 'vc-git-log-edit-mode-hook
               #'czm-vc-git-log-edit-add-orig-head-to-future-history))
+  ;; After `log-edit' loads, so as not to clobber the defcustom's default.
+  (with-eval-after-load 'log-edit
+    (add-hook 'log-edit-hook #'czm/vc-git-log-edit-insert-merge-msg t))
   (with-eval-after-load 'vc-dir
     (keymap-set vc-dir-mode-map "C-c d" #'czm-vc-dir-dired-marked))
   (with-eval-after-load 'log-view
