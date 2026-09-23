@@ -5148,6 +5148,7 @@ Intended for `log-edit-hook', after `log-edit-insert-message-template'."
   :after vc
   :config
   (with-eval-after-load 'vc
+    (keymap-set vc-prefix-map "I" #'czm-vc-root-log-incoming)
     (keymap-set vc-prefix-map "K" #'czm-vc-root-shortlog-all)
     (keymap-set vc-prefix-map "C" #'czm-vc-diff-staged)
     (keymap-set vc-prefix-map "N" #'czm-vc-create-directory-with-git-repo)
