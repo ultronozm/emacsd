@@ -3296,25 +3296,70 @@ them at the first newline."
   :bind (:map pdf-view-mode-map
               ("C-c C-a e" . pdf-tools-org-extract-annotations)))
 
+(defvar czm--pdf-midnight-applied (make-hash-table :test #'equal)
+  "Map server file name to the epdfinfo queue its midnight colors were set on.")
+
+(defun czm--pdf-midnight-options ()
+  (list :render/foreground (or (car pdf-view-midnight-colors) "black")
+        :render/background (or (cdr pdf-view-midnight-colors) "white")
+        :render/gamma pdf-view-midnight-gamma
+        :render/gammabeforeinvert pdf-view-midnight-gamma-before-invert
+        :render/usecolors (if pdf-view-midnight-invert 2 1)))
+
+(defun czm--pdf-midnight-before-query (cmd &rest args)
+  "Re-apply midnight colors before rendering if the server lost them.
+epdfinfo keeps render options per open document, so they vanish when
+the document is closed (e.g., another buffer on the same file is
+killed) or the server restarts, while `pdf-view-midnight-minor-mode'
+stays on.  Track the queue each file was configured on, and set the
+options again before any render on a different queue or after a close."
+  (when (and global-pdf-view-midnight-minor-mode
+             (string-prefix-p "renderpage" (format "%s" cmd))
+             (stringp (car args)))
+    (let ((file (car args)))
+      ;; Replace a dead server's queue now, so the comparison sees it.
+      (pdf-info-process-assert-running)
+      (unless (and (gethash file czm--pdf-midnight-applied)
+                   (eq (gethash file czm--pdf-midnight-applied)
+                       pdf-info--queue))
+        (let ((pdf-info-asynchronous nil))
+          (apply #'pdf-info-setoptions file (czm--pdf-midnight-options)))
+        (puthash file pdf-info--queue czm--pdf-midnight-applied)))))
+
+(defun czm--pdf-midnight-forget (&optional file-or-buffer)
+  (ignore-errors
+    (remhash (pdf-info--normalize-file-or-buffer file-or-buffer)
+             czm--pdf-midnight-applied)))
+
+(with-eval-after-load 'pdf-info
+  (advice-add 'pdf-info-query :before #'czm--pdf-midnight-before-query)
+  (advice-add 'pdf-info-close :before #'czm--pdf-midnight-forget))
+
+(defun czm--pdf-view-set-midnight (enable)
+  (condition-case err
+      (pdf-view-midnight-minor-mode (if enable 1 -1))
+    (error
+     (message "PDF midnight toggle failed in %s: %s"
+              (buffer-name) (error-message-string err)))))
+
+(defun czm--pdf-view-midnight-setup ()
+  (when global-pdf-view-midnight-minor-mode
+    (czm--pdf-view-set-midnight t)))
+
+(add-hook 'pdf-view-mode-hook #'czm--pdf-view-midnight-setup)
+
 (define-minor-mode global-pdf-view-midnight-minor-mode
   "Toggle PDF-View-Midnight mode in all PDF buffers.
 When enabled, automatically turns on `pdf-view-midnight-minor-mode'
-in all current and future PDF buffers."
+in all current and future PDF buffers, and restores the colors
+before rendering whenever epdfinfo has lost them."
   :global t
   :init-value nil
-  (let ((process-pdf-buffers
-         (lambda (enable)
-           (dolist (buf (buffer-list))
-             (with-current-buffer buf
-               (when (derived-mode-p 'pdf-view-mode)
-                 (ignore-errors
-                   (pdf-view-midnight-minor-mode (if enable 1 -1)))))))))
-    (if global-pdf-view-midnight-minor-mode
-        (progn
-          (funcall process-pdf-buffers t)
-          (add-hook 'pdf-view-mode-hook #'pdf-view-midnight-minor-mode))
-      (funcall process-pdf-buffers nil)
-      (remove-hook 'pdf-view-mode-hook #'pdf-view-midnight-minor-mode))))
+  (clrhash czm--pdf-midnight-applied)
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (derived-mode-p 'pdf-view-mode)
+        (czm--pdf-view-set-midnight global-pdf-view-midnight-minor-mode)))))
 
 ;;; translation
 
