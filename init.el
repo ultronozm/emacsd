@@ -3921,10 +3921,11 @@ enters `lisp-interaction-mode' right after startup, so a bare
   (ai-org-chat-user-name my-first-name)
   (ai-org-chat-dir my-scratch-gpt-dir)
   (ai-org-chat-content-wrapper #'ai-org-chat--wrap-xml)
+  (ai-org-chat-default-model "sonnet 5")
   :config
   (add-hook 'llm-tool-collection-post-define-functions #'ai-org-chat-register-tool-spec)
   (mapcar #'ai-org-chat-register-tool-spec (llm-tool-collection-get-all))
-  (ai-org-chat-select-model "sonnet 4.6")
+  (ai-org-chat-select-model ai-org-chat-default-model)
   (add-hook 'ai-org-chat-response-finished-functions
             #'ai-org-chat-auto-format-response
             t))
@@ -5230,7 +5231,7 @@ The value of `calc-language` is restored after BODY has been processed."
   (setq llm-vc-commit-model
         (make-llm-claude
          :key (my/getenv "ANTHROPIC_KEY")
-         :chat-model "claude-sonnet-4-6")))
+         :chat-model "claude-sonnet-5")))
 
 (defun my/diff-hl-mode-hook ()
   "Enable `diff-hl-margin-mode' in `lean4-mode' buffers."
