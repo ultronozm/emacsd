@@ -4633,7 +4633,9 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
           (append
            (when-let* ((key (my/getenv "ASSIST_API_KEY")))
              (list (format "ASSIST_API_KEY=%s" key)))
-           (agent-shell-make-environment-variables :inherit-env t)))
+           (agent-shell-make-environment-variables
+            "OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX" "128000"
+            :inherit-env t)))
   (setopt agent-shell-transcript-file-path-function
           #'my/agent-shell-transcript-file-path-function))
 
