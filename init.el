@@ -419,10 +419,16 @@ Any prefix ARG →  call `diff-current-kill`.
 With prefix arg HARD (\\[universal-argument]), unload features first."
   (interactive "DDirectory: \nP")
   (let* ((files (directory-files dir t "\\.el\\'"))
-         (files (seq-remove (lambda (f)
-                              (string-match-p
-                               "\\(?:-autoloads\\.el\\|-pkg\\.el\\)\\'" f))
-                            files))
+         ;; Skip dotfiles (.dir-locals.el, .#lock files), generated
+         ;; autoload/loaddefs/package descriptor files, and flymake temps.
+         (files (seq-remove
+                 (lambda (f)
+                   (string-match-p
+                    (rx (or (seq bos (or "." "flymake_"))
+                            (seq (or "-autoloads" "-loaddefs" "-pkg")
+                                 ".el" eos)))
+                    (file-name-nondirectory f)))
+                 files))
          (features
           (delete-dups
            (apply #'append
