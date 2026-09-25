@@ -4813,6 +4813,25 @@ instead of toggling."
       (set-marker (process-mark proc) (point)))
     (pop-to-buffer buffer)))
 
+;;; matrix
+
+(use-package-full ement
+  :ensure t
+  :commands (ement-connect ement-disconnect ement-list-rooms ement-view-room)
+  :init
+  ;; Taxy passes a nil section, but Emacs 32's shortdoc requires a string.
+  ;; Install before loading shortdoc, since Taxy registers an after-load hook.
+  (defun my-taxy-shortdoc-section (args)
+    "Supply the missing section name in Taxy's shortdoc ARGS."
+    (if (and (eq (car args) 'taxy) (null (cadr args)))
+        (list 'taxy "Functions" (nth 2 args))
+      args))
+  (advice-add 'shortdoc-add-function :filter-args #'my-taxy-shortdoc-section)
+  :custom
+  ;; Reuse the login token across Emacs restarts (stored outside this repo).
+  (ement-save-sessions t)
+  (ement-room-compose-method 'compose-buffer))
+
 ;;; erc
 
 (use-package-full erc
