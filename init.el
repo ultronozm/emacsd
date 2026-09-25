@@ -6357,6 +6357,77 @@ numbered variant \"equation\"."
   (eldoc-icebox-post-display . czm-lean4-fontify-buffer)
   (eldoc-icebox-post-display . czm-add-lean4-eldoc))
 
+;;; forms
+
+(defun my-form (fields function)
+  "Show a form with FIELDS and a button that calls FUNCTION.
+FIELDS is a list of symbols.  FUNCTION receives the entered values,
+in the order of FIELDS."
+  (require 'wid-edit)
+  (switch-to-buffer (generate-new-buffer "*Form*"))
+  (kill-all-local-variables)
+  (let ((inhibit-read-only t))
+    (erase-buffer))
+  (remove-overlays)
+  (let ((widgets (mapcar (lambda (field)
+                           (widget-create
+                            'text :format (format "%s: %%v"
+                                                  (capitalize
+                                                   (symbol-name field)))))
+                         fields)))
+    (widget-insert "\n")
+    (widget-create 'push-button
+                   :notify (lambda (&rest _)
+                             (apply function
+                                    (mapcar (lambda (w)
+                                              (string-trim (widget-value w)))
+                                            widgets)))
+                   "Submit"))
+  (widget-insert "\n")
+  (use-local-map widget-keymap)
+  (widget-setup)
+  (goto-char (point-min))
+  (widget-forward 1))
+
+(defmacro my-with-form (fields &rest body)
+  "Show a form with FIELDS; on submit, run BODY with them bound.
+FIELDS is a list of symbols, each bound to the entered string."
+  (declare (indent 1))
+  `(my-form ',fields (lambda ,fields ,@body)))
+
+(defmacro my-lex-format (string)
+  "Interpolate each ${VAR} in STRING with the string value of VAR."
+  (let ((pos 0) parts)
+    (while (string-match "\\${\\([^}]+\\)}" string pos)
+      (push (substring string pos (match-beginning 0)) parts)
+      (push (intern (match-string 1 string)) parts)
+      (setq pos (match-end 0)))
+    `(concat ,@(nreverse parts) ,(substring string pos))))
+
+(defun my-seminar-announcement ()
+  "Draft a seminar announcement email from a form."
+  (interactive)
+  (my-with-form (speaker title abstract coordinates)
+    (compose-mail nil (concat "Seminar " coordinates))
+    (save-excursion
+      (rfc822-goto-eoh)
+      (forward-line)
+      (insert (my-lex-format "Dear all,
+
+${speaker} will give a talk at the time and place noted in the subject.  \
+Please see below for the title/abstract.  Hope to see you there!
+
+Thanks, best,
+
+Paul
+
+—
+
+${title}
+
+${abstract}
+")))))
+
 ;;; misc
 
 (let ((file (locate-user-emacs-file "init-personal.el")))
