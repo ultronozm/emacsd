@@ -1028,4 +1028,48 @@
                      :source "elpaca-menu-lock-file" :protocol https
                      :inherit t :depth treeless :ref
                      "32857c6c4b9b0bcbed14d825a10b91a98d5fed0a" :id
-                     zoutline :type git :pin t)))
+                     zoutline :type git :pin t))
+ (ement :source "elpaca-menu-lock-file" :recipe
+        (:package "ement" :repo
+                  ("https://github.com/alphapapa/ement.el.git"
+                   . "ement")
+                  :tar "0.17" :host gnu :files ("*" (:exclude ".git"))
+                  :source "GNU ELPA" :id ement :type git :protocol
+                  https :inherit t :depth treeless :ref
+                  "790aee7d8fdd658bd1740b5e59a5e64c3842014b"))
+ (persist :source "elpaca-menu-lock-file" :recipe
+          (:package "persist" :repo
+                    ("https://github.com/emacsmirror/gnu_elpa"
+                     . "persist")
+                    :tar "0.8" :host gnu :branch "externals/persist"
+                    :files ("*" (:exclude ".git")) :source "GNU ELPA"
+                    :id persist :type git :protocol https :inherit t
+                    :depth treeless :ref
+                    "3b4b421d5185f2c33bae478aa057dff13701cc25"))
+ (svg-lib :source "elpaca-menu-lock-file" :recipe
+          (:package "svg-lib" :repo
+                    ("https://github.com/rougier/svg-lib" . "svg-lib")
+                    :tar "0.3" :host gnu :files
+                    ("*" (:exclude ".git")) :source "GNU ELPA" :id
+                    svg-lib :type git :protocol https :inherit t
+                    :depth treeless :ref
+                    "925ed4a0215c197ba836e7810a93905b34bea777"))
+ (taxy :source "elpaca-menu-lock-file" :recipe
+       (:package "taxy" :repo
+                 ("https://github.com/alphapapa/taxy.el.git" . "taxy")
+                 :tar "0.10.2" :host gnu :files
+                 ("*" (:exclude ".git" "images")) :source "GNU ELPA"
+                 :id taxy :type git :protocol https :inherit t :depth
+                 treeless :ref
+                 "c7b830cf48d639be8fb7ee0f55f53341cb185102"))
+ (taxy-magit-section :source "elpaca-menu-lock-file" :recipe
+                     (:package "taxy-magit-section" :repo
+                               ("https://github.com/alphapapa/taxy.el.git"
+                                . "taxy-magit-section")
+                               :tar "0.14.3" :host gnu :branch
+                               "package/taxy-magit-section" :files
+                               ("*" (:exclude ".git")) :source
+                               "GNU ELPA" :id taxy-magit-section :type
+                               git :protocol https :inherit t :depth
+                               treeless :ref
+                               "19c67f4d2e7a87cb9aed8e17058c4cf4dfd75406")))
