@@ -4732,7 +4732,8 @@ instead of toggling."
                  :inherit nil)
   :after agent-shell
   :demand
-  :bind (("C-z a" . agent-shell-attention-jump))
+  :bind (("C-z a" . agent-shell-attention-jump)
+         ("C-z b" . agent-shell-attention-jump-idle))
   :config
   (require 'knockknock)
   (setopt agent-shell-attention-notify-function
