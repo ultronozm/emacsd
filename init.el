@@ -6079,6 +6079,60 @@ numbered variant \"equation\"."
   (library-download-directory my-downloads-folder)
   (library-org-capture-template-key "j"))
 
+(defvar my/library-download-history nil
+  "Minibuffer history for `my/library-download-paper'.")
+
+(defun my/library-download-paper (description)
+  "Ask a new Codex shell to download and file the paper DESCRIPTION.
+Use Low thought level for this session and submit the request immediately.
+DESCRIPTION may be a title, citation, DOI, URL, arXiv ID, or local PDF path."
+  (interactive (list (read-string "Paper to download and file: "
+                                  nil 'my/library-download-history)))
+  (when (string-empty-p (string-trim description))
+    (user-error "Please describe a paper"))
+  (require 'library)
+  (require 'agent-shell)
+  (require 'agent-shell-openai)
+  (let* ((default-directory (file-name-directory
+                             (expand-file-name library-bibtex-file)))
+         (agent-shell-session-strategy 'new)
+         (config (agent-shell-openai-make-codex-config))
+         (prompt
+          (format
+           (concat
+            "Download and register this paper in my Emacs library:\n\n%s\n\n"
+            "Read %s and use its methods through emacsclient in the running "
+            "Emacs session, respecting its configured paths and live buffers. "
+            "The bibliography is %s and the PDF directory is %s.\n\n"
+            "Identify the paper and obtain accurate BibTeX from authoritative "
+            "sources. Check for an existing entry by title, DOI, and arXiv ID; "
+            "reuse its citation key and preserve existing metadata. Prefer the "
+            "published PDF when accessible; otherwise use arXiv or an author "
+            "manuscript and clearly report which version was obtained. Retain "
+            "published bibliographic details when known. Do not purchase access.\n\n"
+            "Verify the downloaded file is the correct PDF. Use library.el to "
+            "deposit the bibliography, name and file the PDF, and create the "
+            "journal entry (library--process-pdf-bibtex-with-log). For arXiv, "
+            "also fetch sources when library-download-arxiv-include-source is "
+            "enabled. Check destination files before replacing anything; "
+            "preserve an existing manuscript when upgrading to a published PDF. "
+            "For a supplied whole book, register the edited volume separately "
+            "and extract the requested chapter by verified printed page numbers; "
+            "keep its incollection entry independently usable.\n\n"
+            "Complete the download and registration, then report the local PDF "
+            "path, citation key, version, and any unavailable items.")
+           description
+           (expand-file-name "elpaca/repos/library/library.el"
+                             user-emacs-directory)
+           (expand-file-name library-bibtex-file)
+           (expand-file-name library-pdf-directory))))
+    (setf (alist-get :default-config-options config)
+          (lambda () '(("thought_level" . "low"))))
+    (let ((shell-buffer (agent-shell-start :config config)))
+      (with-current-buffer shell-buffer
+        (agent-shell-insert :text prompt :submit t :shell-buffer shell-buffer))
+      shell-buffer)))
+
 (use-package-full tex-parens
   :repo-scan
   :ensure (:host github :repo "ultronozm/tex-parens.el" :depth nil)
