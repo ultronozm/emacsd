@@ -2224,6 +2224,15 @@ back to `exec-path-from-shell-getenv' from local buffers."
 ;; Remove "%n" from mode-line-modes -- I know when I'm narrowing.
 (setq mode-line-modes (delete "%n" mode-line-modes))
 
+;; Keep long buffer names from pushing PDF page numbers out of view.
+;; A negative field width truncates the display, preserving faces and mouse maps.
+(setq-default mode-line-format
+              (mapcar (lambda (item)
+                        (if (eq item 'mode-line-buffer-identification)
+                            '(-40 ("" mode-line-buffer-identification))
+                          item))
+                      (default-value 'mode-line-format)))
+
 (add-hook 'emacs-lisp-mode-hook (lambda () (setq mode-name "E")))
 (add-hook 'lisp-interaction-mode-hook (lambda () (setq mode-name "LI")))
 
