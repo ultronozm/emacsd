@@ -5192,6 +5192,8 @@ Intended for `log-edit-hook', after `log-edit-insert-message-template'."
     (add-hook 'log-edit-hook #'czm/vc-git-log-edit-insert-merge-msg t))
   (with-eval-after-load 'vc-dir
     (keymap-set vc-dir-mode-map "C-c d" #'czm-vc-dir-dired-marked))
+  (with-eval-after-load 'diff-mode
+    (keymap-set diff-mode-map "E" #'czm-vc-diff-ediff-hunk))
   (with-eval-after-load 'log-view
     (keymap-set log-view-mode-map "E" #'czm-vc-git-fixup-staged)
     (keymap-set log-view-mode-map "w" #'czm-vc-log-view-copy-revision-or-range-as-kill)
