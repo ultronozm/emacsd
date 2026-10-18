@@ -3798,7 +3798,7 @@ The content is escaped to prevent org syntax interpretation."
 
 (use-package-full czm-mail
   :repo-scan
-  :demand
+  :hook ((rmail-mode message-mode) . czm-mail-setup)
   :ensure (:host github :repo "ultronozm/czm-mail.el" :depth nil)
   :bind
   ("C-z C-@" . czm-mail-mailrc-add-entry)
@@ -4722,7 +4722,7 @@ instead of toggling."
 
 (use-package latex-to-svg-backend
   :ensure (:host github :repo "alberti42/latex-to-svg-backend")
-  :demand t
+  :defer t
   :config
   (setopt latex-to-svg-backend-font-scale (/ 4.0 3.0))  )
 
@@ -4734,7 +4734,7 @@ instead of toggling."
                  :build (:not elpaca-build-compile)
                  :remotes ("origin"
                            ("upstream" :repo "alberti42/agent-shell-math-renderer")))
-  :after (agent-shell latex-to-svg-backend)
+  :after agent-shell
   :demand t
   :hook (agent-shell-mode . agent-shell-math-renderer-mode)
   :custom
@@ -5253,7 +5253,8 @@ Intended for `log-edit-hook', after `log-edit-insert-message-template'."
   :defer t)
 
 (use-package llama
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package magit
   :defer t
@@ -5424,15 +5425,15 @@ Intended for `log-edit-hook', after `log-edit-insert-message-template'."
   :commands (edit-indirect-region
              edit-indirect-commit
              edit-indirect-abort edit-indirect-save)
-  :demand
+  :init
+  (with-eval-after-load 'embark
+    (keymap-set embark-region-map "L" #'my/edit-indirect-region-LaTeX))
   :config
   (add-to-list 'display-buffer-alist
                '("\\`\\*edit-indirect"
                  (display-buffer-reuse-window display-buffer-below-selected)))
   (setopt edit-indirect-empty-region-indicator "|")
-  (add-hook 'edit-indirect-after-creation-hook #'my/maybe-edit-indirect-setup)
-  (with-eval-after-load 'embark
-    (keymap-set embark-region-map "L" #'my/edit-indirect-region-LaTeX)))
+  (add-hook 'edit-indirect-after-creation-hook #'my/maybe-edit-indirect-setup))
 
 ;;; latex
 
