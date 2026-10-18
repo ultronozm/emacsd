@@ -4639,6 +4639,7 @@ Signal an error when `my-agent-shell-transcripts-dir' is unset."
   :bind
   (:map agent-shell-mode-map
         ("o" . my/agent-shell-ui-toggle-fragment-or-self-insert)
+        ("C-c S" . agent-shell-prompt-steer)
         ("C-c t" . my/agent-shell-insert-org-timestamp)
         ("C-c m" . my/agent-shell-yank-fenced-block))
   (:map project-prefix-map
