@@ -278,6 +278,44 @@ All other prefix arguments work as in `eval-expression'."
         (message "Result copied to kill ring: %s" result-str)))
     result))
 
+(defun my/latex-region-to-zulip (beg end)
+  "Copy the region from BEG to END as Zulip math to the kill ring.
+Convert $...$ to $$...$$ and equation* environments to fenced math
+blocks.  Preserve escaped dollars and existing double dollars.
+Leave the source buffer unchanged.  Select complete math expressions."
+  (interactive "r")
+  (require 'subr-x)
+  (let ((text (buffer-substring-no-properties beg end)))
+    (kill-new
+     (with-temp-buffer
+       (insert text)
+       (goto-char (point-min))
+       ;; Consume escaped characters together, so \\$ is not a delimiter.
+       (while (re-search-forward
+               "\\\\begin{equation\\*}\\|\\\\.\\|\\$+" nil t)
+         (let ((token (match-string 0))
+               (start (match-beginning 0)))
+           (cond
+            ((equal token "\\begin{equation*}")
+             (let ((body-start (point)))
+               (unless (search-forward "\\end{equation*}" nil t)
+                 (user-error "Region contains an unclosed equation* environment"))
+               (let ((body (string-trim
+                            (buffer-substring-no-properties
+                             body-start (match-beginning 0)))))
+                 (delete-region start (point))
+                 ;; Fences must be on their own lines, without indentation.
+                 (when (string-blank-p
+                        (buffer-substring (line-beginning-position) (point)))
+                   (delete-region (line-beginning-position) (point)))
+                 (unless (bolp) (insert "\n"))
+                 (insert "```math\n" body "\n```")
+                 (unless (eolp) (insert "\n")))))
+            ((equal token "$")
+             (replace-match "$$" t t)))))
+       (buffer-string))))
+  (message "Copied region as Zulip math"))
+
 (defun fill-previous-paragraph ()
   "Fill the previous paragraph."
   (interactive)
