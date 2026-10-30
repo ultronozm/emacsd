@@ -281,7 +281,8 @@ All other prefix arguments work as in `eval-expression'."
 (defun my/latex-region-to-zulip (beg end)
   "Copy the region from BEG to END as Zulip math to the kill ring.
 Convert $...$ to $$...$$ and equation* environments to fenced math
-blocks.  Preserve escaped dollars and existing double dollars.
+blocks.  Convert paired LaTeX double quotes to ordinary double quotes.
+Preserve escaped dollars and existing double dollars.
 Leave the source buffer unchanged.  Select complete math expressions."
   (interactive "r")
   (require 'subr-x)
@@ -289,6 +290,11 @@ Leave the source buffer unchanged.  Select complete math expressions."
     (kill-new
      (with-temp-buffer
        (insert text)
+       (goto-char (point-min))
+       ;; Convert paired quotes before introducing Markdown backtick fences.
+       ;; Leave unpaired apostrophes, such as mathematical primes, alone.
+       (while (re-search-forward "``\\(\\(?:.\\|\n\\)*?\\)''" nil t)
+         (replace-match "\"\\1\"" t))
        (goto-char (point-min))
        ;; Consume escaped characters together, so \\$ is not a delimiter.
        (while (re-search-forward
