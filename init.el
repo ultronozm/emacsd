@@ -3869,7 +3869,7 @@ enters `lisp-interaction-mode' right after startup, so a bare
   (emacs-lisp-mode . (lambda () (setq tab-width 1)))
   (lean4-mode . (lambda () (setq tab-width 2)))
   (c++-mode . (lambda () (setq tab-width 4)))
-  (rust-mode . (lambda () (setq tab-width 4)))
+  (rust-mode . (lambda () (setq tab-width 1)))
   ;; (sage-shell:sage-mode . (lambda () (setq tab-width 4)))
   (python-mode . (lambda () (setq tab-width 4)))
   (sage-mode . (lambda () (setq tab-width 4)))
